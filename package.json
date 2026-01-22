@@ -10,6 +10,7 @@
     "build:cf": "opennextjs-cloudflare build",
     "deploy": "opennextjs-cloudflare deploy",
     "preview": "wrangler dev",
+    "postinstall": "pnpm db:generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
