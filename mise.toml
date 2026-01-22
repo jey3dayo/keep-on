@@ -1,0 +1,113 @@
+# ========================================
+# グローバル設定
+# ========================================
+
+[env]
+_.file = [".env"]
+_.path = ["./node_modules/.bin"]
+
+# ========================================
+# ツール
+# ========================================
+
+[tools]
+node = "24.12"
+pnpm = "10.27.0"
+taplo = "0.10.0"
+
+# ========================================
+# コマンド（実処理タスク）
+# ========================================
+
+# ---- フォーマット系 ----
+
+[tasks."format:code"]
+description = "TypeScript/JSX/CSSをPrettierで整形"
+run = "pnpm prettier --write \"src/**/*.{ts,tsx,js,jsx,css,json}\""
+
+[tasks."format:toml"]
+description = "mise.tomlをTaploで整形"
+run = "taplo fmt mise.toml"
+
+[tasks."format:md"]
+description = "Markdownファイルをmarkdownlint-cliで整形"
+run = "pnpm markdownlint-cli2 '**/*.md' '#node_modules' --fix"
+
+[tasks.format]
+description = "全ファイルを整形（code + toml + markdown）"
+depends = ["format:code", "format:toml", "format:md"]
+
+# ---- Lint系 ----
+
+[tasks."lint:types"]
+description = "TypeScriptの型チェックのみ"
+run = "pnpm tsc --noEmit"
+
+[tasks."lint:eslint"]
+description = "ESLintのチェックのみ（自動修正なし）"
+run = "pnpm next lint"
+
+[tasks."lint:eslint:fix"]
+description = "ESLintのチェック（自動修正あり）"
+run = "pnpm next lint --fix"
+
+[tasks."lint:md"]
+description = "Markdownファイルをmarkdownlintでチェック"
+run = "pnpm markdownlint-cli2 '**/*.md' '#node_modules'"
+
+[tasks."lint:md:fix"]
+description = "Markdownファイルをmarkdownlintで自動修正"
+run = "pnpm markdownlint-cli2 '**/*.md' '#node_modules' --fix"
+
+[tasks.test]
+description = "テストを実行（未実装）"
+run = "echo 'テストは未実装です'"
+
+[tasks.build]
+description = "Next.jsをビルド"
+run = "pnpm next build"
+
+[tasks."build:cf"]
+description = "OpenNext（Cloudflare）ビルド"
+run = "pnpm build:cf"
+
+[tasks.clean]
+description = "ビルド成果物を削除"
+run = "rm -rf .next .open-next out"
+
+[tasks."db:generate"]
+description = "Prisma Clientを生成"
+run = "pnpm db:generate"
+
+[tasks."db:push"]
+description = "Prismaスキーマをプッシュ（dev用）"
+run = "pnpm db:push"
+
+[tasks."db:migrate"]
+description = "Prismaマイグレーションを作成"
+run = "pnpm db:migrate"
+
+[tasks."db:migrate:deploy"]
+description = "Prismaマイグレーションを適用（本番）"
+run = "pnpm db:migrate:deploy"
+
+# ========================================
+# エイリアス（まとめ実行）
+# ========================================
+
+[tasks.lint]
+description = "型チェック + ESLint + Markdownチェックを実行"
+depends = ["lint:types", "lint:eslint", "lint:md"]
+
+[tasks.check]
+description = "ローカル確認（format + lint）"
+depends = ["format", "lint"]
+
+[tasks."check:quick"]
+description = "高速確認（型チェック + ESLintのみ）"
+depends = ["lint:types", "lint:eslint"]
+
+[tasks.ci]
+description = "CI 相当のチェック (lint + build)"
+depends = ["lint", "build"]
+run = "echo '✅ CI checks completed'"

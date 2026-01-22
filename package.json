@@ -1,0 +1,46 @@
+{
+  "name": "keep-on",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "build:cf": "opennextjs-cloudflare build",
+    "deploy": "opennextjs-cloudflare deploy",
+    "preview": "wrangler dev",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "env:encrypt": "dotenvx encrypt",
+    "env:run": "dotenvx run --"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.14.3",
+    "@opennextjs/cloudflare": "^1.4.0",
+    "@prisma/adapter-pg": "^6.16.0",
+    "@prisma/client": "^6.16.0",
+    "next": "^15.1.8",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@dotenvx/dotenvx": "^1.31.0",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10",
+    "eslint": "^9",
+    "eslint-config-next": "^15.1.8",
+    "markdownlint-cli2": "^0.16.0",
+    "postcss": "^8",
+    "prettier": "^3.4.2",
+    "prisma": "^6.16.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5",
+    "wrangler": "^3.99.0"
+  }
+}
