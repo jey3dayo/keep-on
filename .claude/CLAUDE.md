@@ -87,5 +87,7 @@ dotenvx による暗号化管理:
 2. `.env` に実際の認証情報を設定
 3. `pnpm env:encrypt` で環境変数を暗号化（推奨）
 4. `pnpm db:generate` で Prisma Client を生成
-5. `pnpm env:run -- pnpm dev` で開発サーバー起動
+5. 開発サーバー起動
+   - 暗号化した場合: `pnpm env:run -- pnpm dev`
+   - 暗号化していない場合: `pnpm dev`
 6. `/sign-in` でサインイン確認
