@@ -87,7 +87,7 @@ jobs:
           DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
 
       - name: Run build
-        run: pnpm env:run -- pnpm build:cf
+        run: pnpm env:run pnpm build:cf
         env:
           DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
 
