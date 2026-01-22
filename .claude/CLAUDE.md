@@ -80,6 +80,7 @@ mise run ci           # CI チェック（lint + build）
 
 1. Clerk と Supabase プロジェクトを作成
 2. `.env` に実際の認証情報を設定
-3. `pnpm db:generate` で Prisma Client を生成
-4. `pnpm dev` で開発サーバー起動
-5. `/sign-in` でサインイン確認
+3. `pnpm env:encrypt` で環境変数を暗号化（推奨）
+4. `pnpm db:generate` で Prisma Client を生成
+5. `pnpm env:run -- pnpm dev` で開発サーバー起動
+6. `/sign-in` でサインイン確認

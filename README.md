@@ -32,6 +32,17 @@ cp .env.example .env
 # .env を編集して実際の認証情報を設定
 ```
 
+#### 暗号化（推奨）
+
+機密情報を暗号化してセキュアに管理:
+
+```bash
+pnpm env:encrypt          # .env を暗号化
+pnpm env:run -- pnpm dev  # 復号して実行
+```
+
+> **Note**: CI では `.env.example` のダミー値を使用するため、暗号化は不要です。
+
 ### 3. Prisma Client の生成
 
 ```bash
