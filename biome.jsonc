@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "ultracite/biome/next"
+  ],
+  "formatter": {
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded",
+      "trailingCommas": "es5"
+    }
+  },
+  "linter": {
+    "rules": {
+      "style": {
+        "useFilenamingConvention": "off"
+      },
+      "suspicious": {
+        "noUnknownAtRules": "off"
+      }
+    }
+  },
+  "files": {
+    "includes": [
+      "!!**/node_modules",
+      "!!**/.next",
+      "!!**/.open-next",
+      "!!**/out",
+      "!!**/build",
+      "!!**/dist",
+      "!!**/src/generated",
+      "!!**/pnpm-lock.yaml"
+    ]
+  }
+}
