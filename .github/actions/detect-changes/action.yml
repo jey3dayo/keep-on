@@ -1,0 +1,81 @@
+name: 'Detect Changes'
+
+description: 'Detect docs-only changes for workflow branching'
+
+outputs:
+  docs-only:
+    description: 'True if the change contains only docs/** and/or *.md'
+    value: ${{ steps.changes.outputs.docs-only }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Detect file changes
+      id: changes
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        # PRの場合は base との差分を取得、merge_group/push の場合はGitHubコンテキストを使用
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          base_ref="${{ github.event.pull_request.base.sha }}"
+
+          # フォークPRの場合のフォールバック処理
+          if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
+            echo "Base SHA not accessible, trying base branch: ${{ github.event.pull_request.base.ref }}"
+            base_ref="origin/${{ github.event.pull_request.base.ref }}"
+
+            # それでもダメな場合は最終フォールバック
+            if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
+              echo "Base branch not accessible, using HEAD~1 as fallback"
+              base_ref="HEAD~1"
+            fi
+          fi
+
+          changed_files=$(git diff --name-only "$base_ref..HEAD")
+        elif [ "${{ github.event_name }}" = "merge_group" ]; then
+          base_sha="${{ github.event.merge_group.base_sha }}"
+          head_sha="${{ github.event.merge_group.head_sha }}"
+
+          if [ -z "$base_sha" ] || [ -z "$head_sha" ]; then
+            echo "merge_group payload missing base_sha/head_sha, falling back to HEAD~1..HEAD"
+            changed_files=$(git diff --name-only "HEAD~1..HEAD")
+          else
+            changed_files=$(git diff --name-only "$base_sha..$head_sha")
+          fi
+        else
+          # pushの場合はGitHubコンテキストを使用（初回コミットやshallow cloneに対応）
+          before_sha="${{ github.event.before }}"
+          current_sha="${{ github.sha }}"
+
+          if [ -z "$before_sha" ] || [ "$before_sha" = "0000000000000000000000000000000000000000" ]; then
+            # 初回コミットまたは空の場合は全ファイルを対象
+            echo "Initial commit or empty before SHA detected, listing all files"
+            changed_files=$(git ls-tree -r --name-only "$current_sha")
+          else
+            # 通常のpushの場合はGitHubコンテキストを使用
+            echo "Using GitHub context: $before_sha..$current_sha"
+
+            # force-push などで before_sha が到達不能な場合があるためフォールバック
+            if git rev-parse --verify "$before_sha^{commit}" >/dev/null 2>&1; then
+              changed_files=$(git diff --name-only "$before_sha..$current_sha")
+            else
+              echo "Before SHA not accessible (possibly force push). Listing all files"
+              changed_files=$(git ls-tree -r --name-only "$current_sha")
+            fi
+          fi
+        fi
+
+        echo "Changed files:"
+        echo "$changed_files"
+
+        # docs-onlyの判定（docsと*.mdファイルのみの変更）
+        code_files=$(echo "$changed_files" | grep -vE '^(docs/|.*\.md$)' || true)
+
+        if [[ -n "$changed_files" && -z "$code_files" ]]; then
+          echo "docs-only=true" >> "$GITHUB_OUTPUT"
+          echo "This is a docs-only change"
+        else
+          echo "docs-only=false" >> "$GITHUB_OUTPUT"
+          echo "This includes code changes"
+        fi

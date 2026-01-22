@@ -1,0 +1,185 @@
+name: CI
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    name: 'Prep: Detect Changes'
+    runs-on: ubuntu-latest
+    outputs:
+      docs-only: ${{ steps.changes.outputs.docs-only }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect file changes
+        id: changes
+        uses: ./.github/actions/detect-changes
+
+  actionlint:
+    name: 'Check: Actionlint'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: detect-changes
+    if: needs.detect-changes.outputs.docs-only == 'false'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run actionlint
+        uses: rhysd/actionlint@v1.7.9
+
+  lint:
+    name: 'Check: Lint'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: detect-changes
+    if: needs.detect-changes.outputs.docs-only == 'false'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node environment
+        uses: ./.github/actions/setup-node-env
+
+      - name: Run lint
+        run: pnpm lint
+
+  build:
+    name: 'Check: Build'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: detect-changes
+    if: needs.detect-changes.outputs.docs-only == 'false'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node environment
+        uses: ./.github/actions/setup-node-env
+
+      - name: Setup environment variables
+        run: cp .env.example .env
+
+      - name: Run build
+        run: pnpm build:cf
+
+  docs-quality-gate:
+    name: 'Gate: Docs-Only'
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.docs-only == 'true'
+
+    steps:
+      - name: Docs-only quality gate
+        shell: bash
+        run: |
+          echo "✅ Documentation-only changes detected"
+          echo "Skipping CI checks (lint/build)"
+          {
+            echo "## Documentation Quality Gate: PASSED ✅"
+            echo "This PR contains only documentation changes:"
+            echo "- ✅ CI checks skipped (appropriate for docs-only changes)"
+            echo "- ✅ Documentation changes approved"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  unified-quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [detect-changes, actionlint, lint, build, docs-quality-gate]
+    if: always()
+
+    steps:
+      - name: Determine overall result
+        env:
+          DETECT_CHANGES_RESULT: ${{ needs.detect-changes.result }}
+          DOCS_ONLY: ${{ needs.detect-changes.outputs.docs-only }}
+          ACTIONLINT_RESULT: ${{ needs.actionlint.result }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          DOCS_GATE_RESULT: ${{ needs.docs-quality-gate.result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "$DETECT_CHANGES_RESULT" != "success" ]; then
+            echo "❌ Detect Changes job failed"
+            {
+              echo "## ❌ Quality Gate: FAILED"
+              echo "Detect Changes job failed; cannot determine which checks to run."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          docs_only="${DOCS_ONLY:-false}"
+
+          if [ "$docs_only" = "true" ]; then
+            result="${DOCS_GATE_RESULT}"
+            echo "📝 Documentation-only change detected"
+            echo "Checking docs-quality-gate result: $result"
+
+            if [ "$result" = "success" ]; then
+              echo "✅ Quality Gate PASSED"
+              {
+                echo "## ✅ Quality Gate: PASSED"
+                echo "Documentation-only checks completed successfully."
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+
+            echo "❌ Quality Gate FAILED"
+            {
+              echo "## ❌ Quality Gate: FAILED"
+              echo "Documentation quality gate failed. Result: $result"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "💻 Code changes detected"
+
+          failed=0
+          if [ "$ACTIONLINT_RESULT" != "success" ]; then
+            echo "❌ Actionlint FAILED ($ACTIONLINT_RESULT)"
+            failed=1
+          fi
+          if [ "$LINT_RESULT" != "success" ]; then
+            echo "❌ Lint FAILED ($LINT_RESULT)"
+            failed=1
+          fi
+          if [ "$BUILD_RESULT" != "success" ]; then
+            echo "❌ Build FAILED ($BUILD_RESULT)"
+            failed=1
+          fi
+
+          if [ "$failed" -eq 0 ]; then
+            echo "✅ Quality Gate PASSED"
+            {
+              echo "## ✅ Quality Gate: PASSED"
+              echo "All required checks have been completed successfully."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "❌ Quality Gate FAILED"
+          {
+            echo "## ❌ Quality Gate: FAILED"
+            echo "Some required checks have failed."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1

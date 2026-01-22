@@ -1,0 +1,51 @@
+name: 'Setup pnpm and Cache'
+
+description: 'Setup pnpm, restore pnpm store cache, and install dependencies'
+
+inputs:
+  pnpm-version:
+    description: 'pnpm version to use'
+    required: false
+    default: '10.28.0'
+
+  lockfile:
+    description: 'Lockfile path used for cache key'
+    required: false
+    default: 'pnpm-lock.yaml'
+
+  install:
+    description: 'Install dependencies (pnpm install --frozen-lockfile)'
+    required: false
+    default: 'true'
+
+outputs:
+  cache-hit:
+    description: 'Whether the pnpm store cache was restored'
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+
+    - name: Resolve pnpm store path
+      id: store
+      shell: bash
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+    - name: Restore pnpm store cache
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.store.outputs.path }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles(format('{0}', inputs.lockfile)) }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Install dependencies
+      if: ${{ inputs.install == 'true' }}
+      shell: bash
+      run: pnpm install --frozen-lockfile
