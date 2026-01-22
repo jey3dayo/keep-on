@@ -75,12 +75,11 @@ jobs:
       - name: Setup Node environment
         uses: ./.github/actions/setup-node-env
 
+      - name: Setup environment variables
+        run: cp .env.example .env
+
       - name: Run build
         run: pnpm build:cf
-        env:
-          # Dummy environment variables for build check
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_dummy_key_for_ci_build_check
-          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
   docs-quality-gate:
     name: 'Gate: Docs-Only'
