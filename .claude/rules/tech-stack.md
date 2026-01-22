@@ -20,6 +20,7 @@ paths: "**/*.{ts,tsx}"
 ## Prisma no-engine モード
 
 **必須設定:**
+
 - `engineType = "client"` を設定（schema.prisma）
 - Driver Adapter（@prisma/adapter-pg）が必須
 - Supabase は Transaction Mode (port 6543) + `?pgbouncer=true` を使用
@@ -30,11 +31,13 @@ Cloudflare Workers では通常の Prisma Engine が動作しないため、no-e
 ## Cloudflare Workers 制約
 
 **制限事項:**
+
 - バンドルサイズ: 25MB gzipped 制限
 - nodejs_compat フラグ必須（wrangler.jsonc）
 - Node.js 固有 API は使用不可
 
 **対応方法:**
+
 - Edge Runtime 互換のコードのみ使用
 - `fs`, `path`, `crypto` などの Node.js API は避ける
 - Prisma は no-engine モード + Driver Adapter を使用

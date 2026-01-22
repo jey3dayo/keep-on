@@ -26,27 +26,20 @@ pnpm install
 
 #### 初回セットアップ（新規開発者）
 
-1. チームリーダーから `DOTENV_PRIVATE_KEY` を取得
+1. プロジェクト管理者から `DOTENV_PRIVATE_KEY` を取得
 2. 環境変数として設定:
+
    ```bash
    export DOTENV_PRIVATE_KEY="取得した秘密鍵"
    ```
+
 3. 復号して実行:
+
    ```bash
    pnpm env:run -- pnpm dev
    ```
 
-#### 環境変数の追加・変更
-
-```bash
-dotenvx set KEY "value"              # 暗号化して追加
-git add .env && git commit -m "chore: update env"
-```
-
-#### CI/CD 設定
-
-GitHub Secrets に `DOTENV_PRIVATE_KEY` を設定。
-値は `.env.keys` 内の `DOTENV_PRIVATE_KEY` です。
+詳細な使い方は `.claude/rules/dotenvx.md` を参照してください。
 
 #### 認証情報の取得先
 
@@ -93,7 +86,7 @@ mise run ci           # CI チェック
 
 ## ディレクトリ構造
 
-```
+```text
 keep-on/
 ├── .claude/          # Claude Code 設定
 ├── prisma/           # Prisma スキーマ

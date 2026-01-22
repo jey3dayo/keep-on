@@ -23,6 +23,7 @@ Next.js 15 App Router では、すべてのコンポーネントはデフォル�
 Client Component が必要な場合のみ `"use client"` ディレクティブを使用してください。
 
 **良い例:**
+
 ```tsx
 // Server Component (デフォルト)
 export default function Page() {
@@ -31,6 +32,7 @@ export default function Page() {
 ```
 
 **Client Component が必要な場合:**
+
 ```tsx
 "use client";
 
@@ -46,6 +48,7 @@ Clerk の `auth()` 関数は Server Components または Server Actions での�
 Client Components では `useAuth()` フックを使用してください。
 
 **サーバー側:**
+
 ```tsx
 import { auth } from "@clerk/nextjs/server";
 
@@ -56,6 +59,7 @@ export default async function Page() {
 ```
 
 **クライアント側:**
+
 ```tsx
 "use client";
 import { useAuth } from "@clerk/nextjs";
@@ -72,6 +76,7 @@ Prisma Client は必ず `src/lib/db.ts` でエクスポートされたインス�
 直接 `new PrismaClient()` をインスタンス化しないでください。
 
 **正しい使い方:**
+
 ```tsx
 import { prisma } from "@/lib/db";
 
@@ -79,6 +84,7 @@ const users = await prisma.user.findMany();
 ```
 
 **誤った使い方:**
+
 ```tsx
 // ❌ 直接インスタンス化しない
 import { PrismaClient } from "@prisma/client";
@@ -90,11 +96,13 @@ const prisma = new PrismaClient();
 機密情報を含む環境変数は `.env` ファイルに平文で保存せず、dotenvx で暗号化してください。
 
 **暗号化:**
+
 ```bash
 pnpm env:encrypt
 ```
 
 **復号して実行:**
+
 ```bash
 pnpm env:run -- pnpm dev
 ```
@@ -105,11 +113,13 @@ Cloudflare Workers 環境では Node.js 固有 API が使用できません。
 Edge Runtime 互換のコードのみを使用してください。
 
 **使用不可:**
+
 - `fs` (ファイルシステム)
 - `path` (Node.js の path モジュール)
 - `crypto` (Node.js の crypto モジュール)
 - その他の Node.js 組み込みモジュール
 
 **代替手段:**
+
 - Web標準APIを使用（Fetch API, Web Crypto API など）
 - Edge Runtime 互換のライブラリを選択
