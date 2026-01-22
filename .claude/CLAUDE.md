@@ -11,6 +11,7 @@ KeepOn は、Next.js 15 + Cloudflare Workers + Prisma + Supabase + Clerk で構�
 - Prisma (no-engine mode) + Supabase
 - Clerk (認証)
 - Tailwind CSS v4.x
+- Ultracite (Biome) - フォーマット/Lint
 
 詳細な技術スタック情報は `.claude/rules/tech-stack.md` を参照してください。
 
@@ -21,6 +22,9 @@ KeepOn は、Next.js 15 + Cloudflare Workers + Prisma + Supabase + Clerk で構�
 | context7 | 最新ライブラリドキュメント取得 |
 | serena | セマンティックコード解析・編集 |
 | greptile | PR/コードレビュー支援 |
+| ultracite | Ultracite AI 統合（コード品質・最適化支援） |
+
+> **Note**: ライブラリの仕様や API で困った場合は、context7 を使用して最新ドキュメントを取得してください。
 
 ## 利用 Skills
 
@@ -54,10 +58,10 @@ pnpm env:encrypt      # .env 暗号化
 pnpm env:run -- <cmd> # 復号して実行
 
 # mise タスク
-mise run format       # Prettier 整形
-mise run lint         # 型チェック + ESLint
-mise run check        # ローカル確認（format + lint）
-mise run ci           # CI チェック（lint + build）
+mise run format       # Ultracite + Taplo + Markdownlint
+mise run lint         # 型チェック + Biome + Markdown + YAML
+mise run check        # format + lint
+mise run ci           # CI相当のチェック
 ```
 
 ## 開発規約
@@ -68,6 +72,12 @@ mise run ci           # CI チェック（lint + build）
 - `.claude/rules/tech-stack.md` - 技術スタック詳細
 - `.claude/rules/security.md` - セキュリティガイドライン
 - `.claude/rules/dotenvx.md` - dotenvx 暗号化管理ガイド
+
+## フォーマット/Lint
+
+- **ツール**: Ultracite (Biome)
+- **スタイル**: シングルクォート、セミコロンなし、行幅120
+- **実行**: `mise run format` / `mise run lint`
 
 ## 環境変数設定
 

@@ -1,22 +1,16 @@
-import Link from "next/link"
+import Link from 'next/link'
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-      <div className="text-center space-y-6 p-8">
-        <h1 className="text-6xl font-bold text-white">KeepOn</h1>
-        <p className="text-xl text-slate-300">習慣トラッキングアプリ</p>
-        <div className="flex gap-4 justify-center">
-          <Link
-            href="/sign-in"
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+      <div className="space-y-6 p-8 text-center">
+        <h1 className="font-bold text-6xl text-white">KeepOn</h1>
+        <p className="text-slate-300 text-xl">習慣トラッキングアプリ</p>
+        <div className="flex justify-center gap-4">
+          <Link className="rounded-lg bg-blue-600 px-6 py-3 text-white transition hover:bg-blue-700" href="/sign-in">
             サインイン
           </Link>
-          <Link
-            href="/sign-up"
-            className="px-6 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition"
-          >
+          <Link className="rounded-lg bg-slate-700 px-6 py-3 text-white transition hover:bg-slate-600" href="/sign-up">
             新規登録
           </Link>
         </div>

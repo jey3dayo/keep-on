@@ -8,14 +8,6 @@
       "siblings_only": true
     }
   },
-  "globs": [
-    "**/*.md"
-  ],
-  "ignores": [
-    "node_modules",
-    ".next",
-    ".open-next",
-    "out",
-    "src/generated"
-  ]
+  "globs": ["**/*.md"],
+  "ignores": ["node_modules", ".next", ".open-next", "out", "src/generated"]
 }
