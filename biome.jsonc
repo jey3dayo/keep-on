@@ -25,16 +25,9 @@
       }
     }
   },
-  "files": {
-    "includes": [
-      "!!**/node_modules",
-      "!!**/.next",
-      "!!**/.open-next",
-      "!!**/out",
-      "!!**/build",
-      "!!**/dist",
-      "!!**/src/generated",
-      "!!**/pnpm-lock.yaml"
-    ]
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
   }
 }
