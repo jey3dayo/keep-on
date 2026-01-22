@@ -5,6 +5,7 @@
 KeepOn は、Next.js 15 + Cloudflare Workers + Prisma + Supabase + Clerk で構築された PWA アプリケーションです。
 
 **主要技術:**
+
 - Next.js 15 (App Router, Turbopack)
 - OpenNext + Cloudflare Workers (Edge デプロイ)
 - Prisma (no-engine mode) + Supabase
@@ -62,24 +63,28 @@ mise run ci           # CI チェック（lint + build）
 ## 開発規約
 
 コードスタイル、ディレクトリ構造、セキュリティガイドラインは以下を参照してください：
+
 - `.claude/rules/code-style.md` - コードスタイルと開発規約
 - `.claude/rules/tech-stack.md` - 技術スタック詳細
 - `.claude/rules/security.md` - セキュリティガイドライン
+- `.claude/rules/dotenvx.md` - dotenvx 暗号化管理ガイド
 
 ## 環境変数設定
 
 dotenvx による暗号化管理:
+
 - `.env` - 暗号化済み（コミット対象）
 - `.env.keys` - 秘密鍵（**絶対にコミットしない**）
 - `.env.example` - テンプレート
 
 認証情報の取得先:
+
 - **Clerk**: https://dashboard.clerk.com/
 - **Supabase**: https://supabase.com/dashboard
   - Transaction Mode (Port 6543) の接続文字列を使用
   - `?pgbouncer=true` パラメータを追加
 
-詳細は `.claude/rules/security.md` を参照してください。
+詳細は `.claude/rules/dotenvx.md` および `.claude/rules/security.md` を参照してください。
 
 ## 次のステップ
 

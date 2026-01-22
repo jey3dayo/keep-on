@@ -116,6 +116,6 @@ description = "高速確認（型チェック + ESLintのみ）"
 depends = ["lint:types", "lint:eslint"]
 
 [tasks.ci]
-description = "CI 相当のチェック (lint + build)"
-depends = ["lint", "build"]
+description = "CI 相当のチェック (lint のみ、ビルドは CI 環境で実施)"
+depends = ["lint"]
 run = "echo '✅ CI checks completed'"

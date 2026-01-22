@@ -12,6 +12,7 @@ Clerk の JWT 検証は Edge Runtime で実施してください。
 認証が必要なエンドポイントやページでは、必ず `auth()` または `currentUser()` で認証状態を確認してください。
 
 **Server Component での認証チェック:**
+
 ```tsx
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
@@ -29,6 +30,7 @@ export default async function ProtectedPage() {
 ```
 
 **API Route での認証チェック:**
+
 ```tsx
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -53,12 +55,14 @@ export async function GET() {
 この接続文字列はサーバーサイドでのみ使用し、クライアントに公開しないでください。
 
 **環境変数設定:**
+
 ```env
 # Supabase Transaction Mode (Port 6543)
 DATABASE_URL="postgresql://postgres.[project-ref]:[password]@[host]:6543/postgres?pgbouncer=true"
 ```
 
 **注意事項:**
+
 - Transaction Mode (Port 6543) を使用
 - `?pgbouncer=true` パラメータを必ず追加
 - パスワードは平文で保存せず、dotenvx で暗号化
@@ -70,6 +74,7 @@ DATABASE_URL="postgresql://postgres.[project-ref]:[password]@[host]:6543/postgre
 dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず CI/CD の Secrets で管理してください。
 
 **GitHub Actions での設定例:**
+
 ```yaml
 - name: Decrypt env
   env:
@@ -78,6 +83,7 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 ```
 
 **ローカル開発:**
+
 - `.env.keys` ファイルはローカルのみで使用
 - `.env.keys` は `.gitignore` に追加済み
 - チームメンバーには安全な方法で秘密鍵を共有（1Password, AWS Secrets Manager など）
@@ -95,6 +101,7 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
    - 環境識別子（development, production など）
 
 3. **暗号化コマンド:**
+
    ```bash
    # .env を暗号化して .env.vault を生成
    pnpm env:encrypt
@@ -110,6 +117,7 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 ユーザー入力は必ず検証してください。特にデータベースクエリに使用する前には必須です。
 
 **Zod などを使った検証例:**
+
 ```tsx
 import { z } from "zod";
 
@@ -142,6 +150,7 @@ React は自動的に XSS 対策を行いますが、`dangerouslySetInnerHTML` �
 DOMPurify などのサニタイザーを使用してください。
 
 **良い例:**
+
 ```tsx
 import DOMPurify from "isomorphic-dompurify";
 
