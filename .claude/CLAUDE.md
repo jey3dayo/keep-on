@@ -68,6 +68,11 @@ mise run ci           # CI チェック（lint + build）
 
 ## 環境変数設定
 
+dotenvx による暗号化管理:
+- `.env` - 暗号化済み（コミット対象）
+- `.env.keys` - 秘密鍵（**絶対にコミットしない**）
+- `.env.example` - テンプレート
+
 認証情報の取得先:
 - **Clerk**: https://dashboard.clerk.com/
 - **Supabase**: https://supabase.com/dashboard

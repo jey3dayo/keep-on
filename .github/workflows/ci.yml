@@ -76,10 +76,20 @@ jobs:
         uses: ./.github/actions/setup-node-env
 
       - name: Setup environment variables
-        run: cp .env.example .env
+        run: |
+          if [ -n "$DOTENV_PRIVATE_KEY" ]; then
+            echo "Using encrypted .env with dotenvx"
+          else
+            echo "DOTENV_PRIVATE_KEY not set, using .env.example"
+            cp .env.example .env
+          fi
+        env:
+          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
 
       - name: Run build
-        run: pnpm build:cf
+        run: pnpm env:run -- pnpm build:cf
+        env:
+          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
 
   docs-quality-gate:
     name: 'Gate: Docs-Only'
