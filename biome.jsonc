@@ -6,7 +6,7 @@
     "ultracite/biome/next"
   ],
   "formatter": {
-    "lineWidth": 100
+    "lineWidth": 120
   },
   "javascript": {
     "formatter": {
