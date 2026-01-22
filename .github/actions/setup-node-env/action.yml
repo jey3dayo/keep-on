@@ -1,0 +1,44 @@
+name: "Setup Node Environment"
+
+description: "Complete Node.js environment setup with pnpm and caching"
+
+inputs:
+  node-version-file:
+    description: "File to read Node.js version from (e.g. package.json engines.node)"
+    required: false
+    default: "package.json"
+
+  skip-install:
+    description: "Skip dependency installation"
+    required: false
+    default: "false"
+
+  pnpm-version:
+    description: "pnpm version to use"
+    required: false
+    default: "10.28.0"
+
+outputs:
+  node-version:
+    description: "Node.js version installed"
+    value: ${{ steps.setup-node.outputs.node-version }}
+
+  cache-hit:
+    description: "Whether the cache was restored"
+    value: ${{ steps.setup-cache.outputs.cache-hit }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set Node.js
+      id: setup-node
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: ${{ inputs.node-version-file }}
+
+    - name: Setup pnpm and Cache
+      id: setup-cache
+      if: ${{ inputs.skip-install != 'true' }}
+      uses: ./.github/actions/setup-pnpm-cache
+      with:
+        pnpm-version: ${{ inputs.pnpm-version }}
