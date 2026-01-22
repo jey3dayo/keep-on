@@ -22,6 +22,7 @@ KeepOn は、Next.js 15 + Cloudflare Workers + Prisma + Supabase + Clerk で構�
 | context7 | 最新ライブラリドキュメント取得 |
 | serena | セマンティックコード解析・編集 |
 | greptile | PR/コードレビュー支援 |
+| ultracite | Ultracite AI 統合（コード品質・最適化支援） |
 
 ## 利用 Skills
 
