@@ -58,6 +58,9 @@ jobs:
       - name: Setup Node environment
         uses: ./.github/actions/setup-node-env
 
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
       - name: Run lint
         run: pnpm lint
 
@@ -74,6 +77,9 @@ jobs:
 
       - name: Setup Node environment
         uses: ./.github/actions/setup-node-env
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
 
       - name: Run build
         run: pnpm build:cf
