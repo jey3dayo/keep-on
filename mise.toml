@@ -59,6 +59,13 @@ run = "pnpm markdownlint-cli2 '**/*.md' '#node_modules'"
 description = "Markdownファイルをmarkdownlintで自動修正"
 run = "pnpm markdownlint-cli2 '**/*.md' '#node_modules' --fix"
 
+[tasks."lint:yaml"]
+description = "YAMLファイルをチェック（prettier + yamllint）"
+run = """
+pnpm prettier --check '**/*.{yml,yaml}'
+yamllint -f parsable .github/
+"""
+
 [tasks.test]
 description = "テストを実行（未実装）"
 run = "echo 'テストは未実装です'"
@@ -96,8 +103,8 @@ run = "pnpm db:migrate:deploy"
 # ========================================
 
 [tasks.lint]
-description = "型チェック + ESLint + Markdownチェックを実行"
-depends = ["lint:types", "lint:eslint", "lint:md"]
+description = "型チェック + ESLint + Markdown + YAMLチェックを実行"
+depends = ["lint:types", "lint:eslint", "lint:md", "lint:yaml"]
 
 [tasks.check]
 description = "ローカル確認（format + lint）"

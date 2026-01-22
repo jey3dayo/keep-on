@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   detect-changes:
-    name: "Prep: Detect Changes"
+    name: 'Prep: Detect Changes'
     runs-on: ubuntu-latest
     outputs:
       docs-only: ${{ steps.changes.outputs.docs-only }}
@@ -31,7 +31,7 @@ jobs:
         uses: ./.github/actions/detect-changes
 
   actionlint:
-    name: "Check: Actionlint"
+    name: 'Check: Actionlint'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: detect-changes
@@ -45,7 +45,7 @@ jobs:
         uses: rhysd/actionlint@v1.7.9
 
   lint:
-    name: "Check: Lint"
+    name: 'Check: Lint'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: detect-changes
@@ -62,7 +62,7 @@ jobs:
         run: pnpm lint
 
   build:
-    name: "Check: Build"
+    name: 'Check: Build'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: detect-changes
@@ -79,7 +79,7 @@ jobs:
         run: pnpm build:cf
 
   docs-quality-gate:
-    name: "Gate: Docs-Only"
+    name: 'Gate: Docs-Only'
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.docs-only == 'true'
@@ -100,14 +100,7 @@ jobs:
   unified-quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
-    needs:
-      [
-        detect-changes,
-        actionlint,
-        lint,
-        build,
-        docs-quality-gate,
-      ]
+    needs: [detect-changes, actionlint, lint, build, docs-quality-gate]
     if: always()
 
     steps:
