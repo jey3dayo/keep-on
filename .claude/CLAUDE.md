@@ -68,6 +68,11 @@ mise run ci           # CI チェック（lint + build）
 
 ## 環境変数設定
 
+dotenvx による暗号化管理:
+- `.env` - 暗号化済み（コミット対象）
+- `.env.keys` - 秘密鍵（**絶対にコミットしない**）
+- `.env.example` - テンプレート
+
 認証情報の取得先:
 - **Clerk**: https://dashboard.clerk.com/
 - **Supabase**: https://supabase.com/dashboard
@@ -80,6 +85,9 @@ mise run ci           # CI チェック（lint + build）
 
 1. Clerk と Supabase プロジェクトを作成
 2. `.env` に実際の認証情報を設定
-3. `pnpm db:generate` で Prisma Client を生成
-4. `pnpm dev` で開発サーバー起動
-5. `/sign-in` でサインイン確認
+3. `pnpm env:encrypt` で環境変数を暗号化（推奨）
+4. `pnpm db:generate` で Prisma Client を生成
+5. 開発サーバー起動
+   - 暗号化した場合: `pnpm env:run -- pnpm dev`
+   - 暗号化していない場合: `pnpm dev`
+6. `/sign-in` でサインイン確認
