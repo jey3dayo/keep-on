@@ -39,9 +39,13 @@ KeepOn は、習慣形成とストリーク管理を通じてユーザーの継�
 ## 現在のステータス
 
 - ✅ プロジェクト初期セットアップ完了
-- 🔄 認証基盤（Clerk）統合済み
-- 🔄 データベーススキーマ設計完了（User, Habit, Checkin）
-- 🔄 基本機能の実装待ち
+- ✅ 認証基盤（Clerk）統合済み
+- ✅ データベーススキーマ設計完了（User, Habit, Checkin）
+- ✅ エラーハンドリング基盤（byethrow + error-factory）導入
+- ✅ テスト環境（Vitest）構築完了
+- 🔄 習慣作成機能実装中（Server Actions）
+- 🔄 ダッシュボードUI実装中
+- 🔄 チェックイン機能未実装
 - 🔄 PWA アイコン・Service Worker 未実装
 
 ## 将来的な拡張候補
