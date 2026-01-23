@@ -14,7 +14,7 @@
 <!-- 変更が影響する機能・サービスを記載 -->
 
 - [ ] フロントエンド
-- [ ] API
+- [ ] API / Server Actions
 - [ ] データベース (Prisma)
 - [ ] 認証 (Clerk)
 - [ ] PWA
@@ -30,7 +30,9 @@
 - [ ] 動作確認完了
 - [ ] 品質チェック通過 (`mise run check`)
 - [ ] Cloudflare ビルド確認 (`pnpm build:cf`)
+- [ ] Edge Runtime 制約を考慮（Node.js API の使用を避ける）
 - [ ] Prisma 変更時: スキーマ検証とマイグレーション確認
+- [ ] 環境変数の変更時: `.env` を暗号化 (`pnpm env:encrypt`)
 
 ---
 

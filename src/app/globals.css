@@ -1,59 +1,134 @@
+@config "../../tailwind.config.ts";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* Radix Colors ライムパレット - Light */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --lime-1: #fbfefa;
+    --lime-2: #f6fbf3;
+    --lime-3: #eaf7e3;
+    --lime-4: #ddf1d1;
+    --lime-5: #cde9bc;
+    --lime-6: #b9dea1;
+    --lime-7: #9fce7d;
+    --lime-8: #79b843;
+    --lime-9: #5ea500;
+    --lime-10: #549800;
+    --lime-11: #417d00;
+    --lime-12: #263c15;
+    --lime-contrast: #fff;
+
+    /* shadcn/ui 互換マッピング */
+    --background: var(--lime-1);
+    --foreground: var(--lime-12);
+    --card: var(--lime-1);
+    --card-foreground: var(--lime-12);
+    --popover: var(--lime-1);
+    --popover-foreground: var(--lime-12);
+    --primary: var(--lime-9);
+    --primary-foreground: var(--lime-contrast);
+    --secondary: var(--lime-3);
+    --secondary-foreground: var(--lime-11);
+    --muted: var(--lime-3);
+    --muted-foreground: var(--lime-11);
+    --accent: var(--lime-4);
+    --accent-foreground: var(--lime-11);
+    --destructive: #e5484d;
+    --destructive-foreground: #fff;
+    --success: var(--lime-9);
+    --success-foreground: var(--lime-contrast);
+    --border: var(--lime-6);
+    --input: var(--lime-6);
+    --ring: var(--lime-8);
+    --radius: 1rem;
   }
 
+  /* Radix Colors ライムパレット - Dark (OLED最適化) */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --lime-1: #0e130b;
+    --lime-2: #151a12;
+    --lime-3: #1e2a16;
+    --lime-4: #253914;
+    --lime-5: #2e4719;
+    --lime-6: #37561f;
+    --lime-7: #426623;
+    --lime-8: #4c7827;
+    --lime-9: #5ea500;
+    --lime-10: #529800;
+    --lime-11: #88cf4c;
+    --lime-12: #c8f0ad;
+    --lime-contrast: #fff;
+
+    --background: #000; /* 真っ黒（OLED最適化）*/
+    --foreground: var(--lime-12);
+    --card: var(--lime-2);
+    --card-foreground: var(--lime-12);
+    --popover: var(--lime-2);
+    --popover-foreground: var(--lime-12);
+    --primary: var(--lime-9);
+    --primary-foreground: var(--lime-contrast);
+    --secondary: var(--lime-3);
+    --secondary-foreground: var(--lime-11);
+    --muted: var(--lime-3);
+    --muted-foreground: var(--lime-11);
+    --accent: var(--lime-4);
+    --accent-foreground: var(--lime-11);
+    --destructive: #e5484d;
+    --destructive-foreground: #fff;
+    --success: var(--lime-11);
+    --success-foreground: var(--lime-contrast);
+    --border: var(--lime-6);
+    --input: var(--lime-6);
+    --ring: var(--lime-8);
+  }
+
+  /* テーマバリエーション（data-theme属性で切替） */
+  /* デフォルトはライム（--primaryで定義済み） */
+  [data-theme="orange"] {
+    --primary: #f76707;
+    --ring: #f76707;
+    --accent: #fff4e6;
+  }
+  [data-theme="red"] {
+    --primary: #e5484d;
+    --ring: #e5484d;
+    --accent: #ffe5e5;
+  }
+  [data-theme="pink"] {
+    --primary: #e93d82;
+    --ring: #e93d82;
+    --accent: #ffe5f1;
+  }
+  [data-theme="purple"] {
+    --primary: #8e4ec6;
+    --ring: #8e4ec6;
+    --accent: #f3e5ff;
+  }
+  [data-theme="blue"] {
+    --primary: #0090ff;
+    --ring: #0090ff;
+    --accent: #e0f2ff;
+  }
+  [data-theme="cyan"] {
+    --primary: #00a2c7;
+    --ring: #00a2c7;
+    --accent: #e0f8ff;
+  }
+  [data-theme="yellow"] {
+    --primary: #ffb224;
+    --ring: #ffb224;
+    --accent: #fff8e0;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--border);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
   }
 }
