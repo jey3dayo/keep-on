@@ -7,7 +7,7 @@
 ## 保留中のメジャーアップデート
 
 | パッケージ | 現在 | 最新 | 優先度 | 影響度 |
-|-----------|------|------|--------|--------|
+| --- | --- | --- | --- | --- |
 | Prisma (client/adapter/CLI) | 6.19.2 | 7.3.0 | 高 | 高 |
 | Next.js | 15.5.9 | 16.1.4 | 高 | 中 |
 | Wrangler | 3.114.17 | 4.60.0 | 中 | 低 |
@@ -17,13 +17,13 @@
 
 ## 1. Prisma 7 移行 (最優先)
 
-### 📚 参考資料
+### 📚 参考資料 (Prisma 7)
 
 - [公式移行ガイド](https://www.prisma.io/docs/orm/more/upgrade-guides/upgrading-versions/upgrading-to-prisma-7)
 - [Prisma 7 リリースブログ](https://www.prisma.io/blog/announcing-prisma-orm-7-0-0)
 - [GitHub Issue #28573](https://github.com/prisma/prisma/issues/28573)
 
-### 🔴 主な破壊的変更
+### 🔴 主な破壊的変更 (Prisma 7)
 
 #### 1.1 設定ファイルの移行 (`prisma.config.ts`)
 
@@ -86,33 +86,33 @@ export default defineConfig({
 
 - 現在のスキーマでEnum型を使用している場合は要確認
 
-### ⚠️ リスク評価
+### ⚠️ リスク評価 (Prisma 7)
 
 - **互換性:** 高リスク - 設定ファイル構造の大幅変更
 - **工数:** 中〜大 - スキーマ移行とテスト必須
 - **ダウンタイム:** なし（適切な移行手順で）
 
-### 📋 移行手順 (推奨)
+### 📋 移行手順 (Prisma 7 / 推奨)
 
-**Phase 1: 準備**
+#### Prisma 7 Phase 1: 準備
 
 1. 現在の Prisma 6 スキーマのバックアップ
 2. テストデータベースで検証
 
-**Phase 2: アップグレード**
+#### Prisma 7 Phase 2: アップグレード
 
 1. `prisma.config.ts` の作成
 2. `schema.prisma` から設定を移行
 3. `@prisma/adapter-pg` のインストール
 4. PrismaClient の初期化コード更新
 
-**Phase 3: 検証**
+#### Prisma 7 Phase 3: 検証
 
 1. マイグレーション実行の確認
 2. 全テストの実行
 3. 本番環境でのスモークテスト
 
-### 🎯 推奨アクション
+### 🎯 推奨アクション (Prisma 7)
 
 **当面は Prisma 6 を継続使用し、以下のマイルストーン後に移行:**
 
@@ -124,13 +124,13 @@ export default defineConfig({
 
 ## 2. Next.js 16 移行 (高優先度)
 
-### 📚 参考資料
+### 📚 参考資料 (Next.js 16)
 
 - [公式アップグレードガイド](https://nextjs.org/docs/app/guides/upgrading/version-16)
 - [Next.js 16 リリースブログ](https://nextjs.org/blog/next-16)
 - [完全移行ガイド](https://codelynx.dev/posts/nextjs-16-complete-guide)
 
-### 🔴 主な破壊的変更
+### 🔴 主な破壊的変更 (Next.js 16)
 
 #### 2.1 非同期Request API (必須対応)
 
@@ -200,33 +200,33 @@ export default async function Page({ params, searchParams }) {
 
 - 現在使用していない → 影響なし
 
-### ⚠️ リスク評価
+### ⚠️ リスク評価 (Next.js 16)
 
 - **互換性:** 中リスク - 非同期APIへの対応が必須
 - **工数:** 小〜中 - ページコンポーネントの修正のみ
 - **ダウンタイム:** なし
 
-### 📋 移行手順 (推奨)
+### 📋 移行手順 (Next.js 16 / 推奨)
 
-**Phase 1: 自動アップグレード**
+#### Next.js 16 Phase 1: 自動アップグレード
 
 ```bash
 npx @next/codemod@canary upgrade latest
 ```
 
-**Phase 2: 手動修正**
+#### Next.js 16 Phase 2: 手動修正
 
 1. 動的ルートページの非同期化
 2. `params` / `searchParams` へのawait追加
 3. Clerk認証ページの修正
 
-**Phase 3: 検証**
+#### Next.js 16 Phase 3: 検証
 
 1. 開発環境での動作確認
 2. ビルドの成功確認
 3. 全テストの実行
 
-### 🎯 推奨アクション
+### 🎯 推奨アクション (Next.js 16)
 
 **Prisma 7 より先に移行可能:**
 
@@ -243,12 +243,12 @@ npx @next/codemod@canary upgrade latest
 
 ## 3. Wrangler 4 移行 (中優先度)
 
-### 📚 参考資料
+### 📚 参考資料 (Wrangler 4)
 
 - [公式移行ガイド](https://developers.cloudflare.com/workers/wrangler/migration/update-v3-to-v4/)
 - [Wrangler v4 Changelog](https://developers.cloudflare.com/changelog/2025-03-13-wrangler-v4/)
 
-### 🟡 主な破壊的変更
+### 🟡 主な破壊的変更 (Wrangler 4)
 
 #### 3.1 Node.js サポート
 
@@ -295,31 +295,31 @@ npx @next/codemod@canary upgrade latest
 
 - 現在使用していない → 影響なし
 
-### ⚠️ リスク評価
+### ⚠️ リスク評価 (Wrangler 4)
 
 - **互換性:** 低リスク - ほとんどのユーザーに影響なし
 - **工数:** 小 - 設定確認のみ
 - **ダウンタイム:** なし
 
-### 📋 移行手順 (推奨)
+### 📋 移行手順 (Wrangler 4 / 推奨)
 
-**Phase 1: アップグレード**
+#### Wrangler 4 Phase 1: アップグレード
 
 ```bash
 pnpm add -D wrangler@^4.60.0
 ```
 
-**Phase 2: 検証**
+#### Wrangler 4 Phase 2: 検証
 
 1. `wrangler.jsonc` の設定確認
 2. ローカル開発環境での動作確認
 3. デプロイテスト
 
-**Phase 3: OpenNext 互換性確認**
+#### Wrangler 4 Phase 3: OpenNext 互換性確認
 
 - `@opennextjs/cloudflare` が Wrangler 4 を期待しているため、ピアwarning解消
 
-### 🎯 推奨アクション
+### 🎯 推奨アクション (Wrangler 4)
 
 **最も影響が少ない移行:**
 
@@ -346,7 +346,7 @@ pnpm add -D wrangler@^4.60.0
 - 現在 Node.js 24.12 を使用
 - Node.js 25 リリース後に対応
 
-### 🎯 推奨アクション
+### 🎯 推奨アクション (@types/node 25)
 
 **Node.js 25 がLTSになってから対応:**
 
@@ -372,7 +372,7 @@ graph TD
 ### タイムライン (推定)
 
 | Phase | タスク | 期間 | リスク |
-|-------|--------|------|--------|
+| --- | --- | --- | --- |
 | Phase 1 | 基本機能実装 | 2-3週 | - |
 | Phase 2 | テストカバレッジ | 1週 | - |
 | Phase 3 | Wrangler 4 移行 | 1日 | 低 |
