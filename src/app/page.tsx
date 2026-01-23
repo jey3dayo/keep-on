@@ -1,6 +1,15 @@
+import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth()
+
+  // 認証済みの場合はダッシュボードにリダイレクト
+  if (userId) {
+    redirect('/dashboard')
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
       <div className="space-y-6 p-8 text-center">
