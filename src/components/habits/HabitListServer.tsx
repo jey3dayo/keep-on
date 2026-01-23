@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db'
+import { getHabitsByUserId } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
 
 export async function HabitListServer() {
@@ -8,13 +8,14 @@ export async function HabitListServer() {
     return <p className="text-center text-slate-600 dark:text-slate-400">ログインしてください。</p>
   }
 
-  const habits = await prisma.habit.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-  })
+  const habits = await getHabitsByUserId(userId)
 
   if (habits.length === 0) {
-    return <p className="text-center text-slate-600 dark:text-slate-400">まだ習慣がありません。最初の習慣を作成しましょう！</p>
+    return (
+      <p className="text-center text-slate-600 dark:text-slate-400">
+        まだ習慣がありません。最初の習慣を作成しましょう！
+      </p>
+    )
   }
 
   return (
