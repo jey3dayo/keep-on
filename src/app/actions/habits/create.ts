@@ -12,7 +12,7 @@ import { validateHabitInput } from '@/validators/habit'
  * 認証チェック
  * @returns Result<userId, UnauthorizedError>
  */
-const authenticateUser = async (): Promise<Result.ResultAsync<string, UnauthorizedError>> => {
+const authenticateUser = async (): Result.ResultAsync<string, UnauthorizedError> => {
   const userId = await getCurrentUserId()
   if (!userId) {
     return Result.fail(new UnauthorizedError())
@@ -26,7 +26,7 @@ const authenticateUser = async (): Promise<Result.ResultAsync<string, Unauthoriz
  * @param formData - フォームデータ
  * @returns Result<void, SerializableHabitError>
  */
-export async function createHabit(formData: FormData): Promise<Result.ResultAsync<void, SerializableHabitError>> {
+export async function createHabit(formData: FormData): Result.ResultAsync<void, SerializableHabitError> {
   const userIdResult = await authenticateUser()
 
   const result = await Result.pipe(
