@@ -126,22 +126,46 @@ pnpm wrangler secret list
 
 ## CI/CD への統合
 
-GitHub Actions での自動デプロイ例：
+### GitHub Actions 自動デプロイ
 
-```yaml
-- name: Deploy to Cloudflare
-  env:
-    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-  run: |
-    pnpm build:cf
-    pnpm wrangler deploy
+`.github/workflows/deploy.yml` で自動デプロイが設定済み：
+
+- **トリガー**: `main` ブランチへのプッシュ
+- **ワークフロー**: ビルド → デプロイ
+
+#### 必要な GitHub Secrets
+
+GitHub リポジトリの Settings → Secrets and variables → Actions で設定：
+
+| Secret名 | 説明 | 取得方法 |
+|---------|------|---------|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API トークン | [API Tokens](https://dash.cloudflare.com/profile/api-tokens) |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウントID | Dashboard 右サイドバー |
+| `DOTENV_PRIVATE_KEY` | dotenvx 秘密鍵 | `.env.keys` ファイル |
+
+#### ワークフロー有効化
+
+```bash
+# GitHub Secrets を設定後、main にプッシュで自動デプロイ
+git push origin main
 ```
 
-**必要な GitHub Secrets:**
+---
+
+## Secrets自動設定スクリプト
+
+初回セットアップやSecrets更新時に使用：
+
+```bash
+# .env から読み込んで一括設定
+./scripts/setup-cloudflare-secrets.sh
+```
+
+**必要な環境変数:**
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
-- `DOTENV_PRIVATE_KEY` (dotenvx 用)
+
+スクリプトは自動的に `.env` から `DATABASE_URL` と `CLERK_SECRET_KEY` を読み込みます。
 
 ---
 

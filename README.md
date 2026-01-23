@@ -4,14 +4,19 @@
 
 ## 技術スタック
 
-- **フロントエンド**: Next.js 15 (App Router, Turbopack)
+- **フロントエンド**: Next.js 16 (App Router, Turbopack)
 - **デプロイ**: Cloudflare Workers (OpenNext)
 - **認証**: Clerk
 - **DB**: Supabase (PostgreSQL)
-- **ORM**: Prisma v6.16+ (no-engine mode)
+- **ORM**: Prisma 7 (no-engine mode)
 - **環境変数**: dotenvx
 - **テスト**: Vitest + React Testing Library
 - **PWA**: manifest.json
+
+## 本番環境
+
+- **URL**: https://keep-on.j138cm.workers.dev
+- **デプロイ**: GitHub Actions (main ブランチへのプッシュで自動デプロイ)
 
 ## セットアップ
 
@@ -121,6 +126,8 @@ mise run format       # Prettier 整形
 mise run lint         # 型チェック + ESLint
 mise run check        # ローカル確認
 mise run ci           # CI チェック
+mise run deploy       # Cloudflare デプロイ
+mise run deploy:preview # ローカルプレビュー
 ```
 
 ## ディレクトリ構造
@@ -141,9 +148,48 @@ keep-on/
 └── package.json
 ```
 
+## デプロイ
+
+### Infrastructure as Code 管理
+
+このプロジェクトは IaC で環境を管理しています：
+
+#### 設定ファイル（Git管理）
+
+- `wrangler.jsonc`: Cloudflare Workers 設定（公開環境変数、KV Namespace）
+- `.github/workflows/deploy.yml`: CI/CD パイプライン
+- `mise.toml`: デプロイタスク定義
+
+#### Secrets管理（Git管理外）
+
+初回セットアップ時に以下のスクリプトで一括設定：
+
+```bash
+./scripts/setup-cloudflare-secrets.sh
+```
+
+または手動で設定：
+
+```bash
+echo '<value>' | pnpm wrangler secret put DATABASE_URL
+echo '<value>' | pnpm wrangler secret put CLERK_SECRET_KEY
+```
+
+#### CI/CD 自動デプロイ
+
+GitHub Secrets に以下を設定後、`main` ブランチへのプッシュで自動デプロイ：
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `DOTENV_PRIVATE_KEY`
+
+詳細は `.claude/rules/cloudflare-deployment.md` を参照。
+
+---
+
 ## 注意事項
 
-- **Prisma no-engine mode**: `engineType = "client"` を使用し、Edge Runtime に最適化
+- **Prisma 7 no-engine mode**: Driver Adapter で Edge Runtime に最適化
 - **Supabase 接続**: Transaction Mode (port 6543) + `?pgbouncer=true` を使用
 - **Cloudflare Workers**: バンドルサイズ 25MB gzipped 制限に注意
 - **dotenvx**: 本番運用時は `.env` を暗号化してコミット
