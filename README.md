@@ -10,6 +10,7 @@
 - **DB**: Supabase (PostgreSQL)
 - **ORM**: Prisma v6.16+ (no-engine mode)
 - **環境変数**: dotenvx
+- **テスト**: Vitest + React Testing Library
 - **PWA**: manifest.json
 
 ## セットアップ
@@ -60,11 +61,49 @@ pnpm dev
 
 http://localhost:3000 でアプリが起動します。
 
+## テスト
+
+このプロジェクトでは Vitest を使用しています。
+
+### テストの実行
+
+```bash
+pnpm test              # watch モードでテスト実行
+pnpm test:run          # 1回だけテスト実行
+pnpm test:ui           # UI モードでテスト実行
+pnpm test:coverage     # カバレッジ付きテスト実行
+```
+
+### テストファイルの作成
+
+- ユニットテスト: `*.test.ts` または `*.test.tsx`
+- テストファイルは対象ファイルと同じディレクトリに配置
+
+### 例
+
+```typescript
+// src/lib/utils.test.ts
+import { describe, it, expect } from 'vitest';
+import { myFunction } from './utils';
+
+describe('myFunction', () => {
+  it('正しく動作する', () => {
+    expect(myFunction()).toBe('expected');
+  });
+});
+```
+
 ## コマンド
 
 ```bash
 # 開発
 pnpm dev              # 開発サーバー起動
+
+# テスト
+pnpm test             # テスト実行（watch モード）
+pnpm test:ui          # UI モードでテスト実行
+pnpm test:run         # テスト実行（1回のみ）
+pnpm test:coverage    # カバレッジ付きテスト実行
 
 # データベース
 pnpm db:generate      # Prisma Client 生成
