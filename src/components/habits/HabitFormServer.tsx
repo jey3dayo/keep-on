@@ -27,7 +27,7 @@ export function HabitFormServer() {
     // FormDataを作成してServer Actionを呼び出し
     const formData = new FormData()
     formData.append('name', data.name)
-    if (data.emoji) {
+    if (data.emoji?.trim()) {
       formData.append('emoji', data.emoji)
     }
 

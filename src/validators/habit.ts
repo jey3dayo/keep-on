@@ -22,7 +22,7 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
   const name = formData.get('name')
   const emoji = formData.get('emoji')
 
-  const parseResult = HabitInputSchema.safeParse({ name, emoji: emoji || null })
+  const parseResult = HabitInputSchema.safeParse({ name, emoji })
 
   if (!parseResult.success) {
     const firstIssue = parseResult.error.issues[0]
@@ -37,6 +37,6 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
   return Result.succeed({
     userId,
     name: parseResult.data.name,
-    emoji: parseResult.data.emoji || null,
+    emoji: parseResult.data.emoji,
   })
 }
