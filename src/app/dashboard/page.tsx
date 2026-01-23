@@ -1,9 +1,9 @@
 import { UserButton } from '@clerk/nextjs'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import { HabitListServer } from '@/components/habits/HabitListServer'
 import { syncUser } from '@/lib/user'
 import { DashboardClient } from './DashboardClient'
-import { HabitListServer } from '@/components/habits/HabitListServer'
 
 export default async function DashboardPage() {
   const { userId } = await auth()

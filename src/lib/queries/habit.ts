@@ -1,4 +1,7 @@
+import { Result } from '@praha/byethrow'
 import { prisma } from '@/lib/db'
+import { DatabaseError } from '@/lib/errors/habit'
+import type { HabitInput } from '@/validators/habit'
 
 /**
  * ユーザーの習慣一覧を取得
@@ -24,3 +27,18 @@ export async function getHabitById(id: string) {
     where: { id },
   })
 }
+
+/**
+ * 習慣をデータベースに保存
+ *
+ * @param input - 習慣の入力データ
+ * @returns Result<void, DatabaseError>
+ */
+export const saveHabit = Result.try({
+  try: async (input: HabitInput) => {
+    await prisma.habit.create({
+      data: input,
+    })
+  },
+  catch: (error) => new DatabaseError({ cause: error }),
+})

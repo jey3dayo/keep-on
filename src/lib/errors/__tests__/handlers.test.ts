@@ -19,7 +19,9 @@ describe('formatErrorMessage', () => {
   })
 
   it('DatabaseErrorを汎用メッセージに変換し、エラーをログ出力', () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {
+      // no-op for testing
+    })
     const originalError = new Error('Connection failed')
     const error = new DatabaseError({ cause: originalError })
 
@@ -32,7 +34,9 @@ describe('formatErrorMessage', () => {
   })
 
   it('DatabaseError with contextを適切にログ出力', () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {
+      // no-op for testing
+    })
     const originalError = new Error('Connection failed')
     const error = new DatabaseError({ cause: originalError })
 

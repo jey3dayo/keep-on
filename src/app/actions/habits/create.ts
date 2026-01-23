@@ -2,10 +2,10 @@
 
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
-import { prisma } from '@/lib/db'
-import { type HabitError, DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
+import { type HabitError, UnauthorizedError } from '@/lib/errors/habit'
+import { saveHabit } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
-import { type HabitInput, validateHabitInput } from '@/validators/habit'
+import { validateHabitInput } from '@/validators/habit'
 
 /**
  * 認証チェック
@@ -18,18 +18,6 @@ const authenticateUser = async (): Promise<Result.ResultAsync<string, Unauthoriz
   }
   return Result.succeed(userId)
 }
-
-/**
- * データベース保存
- */
-const saveHabit = Result.try({
-  try: async (input: HabitInput) => {
-    await prisma.habit.create({
-      data: input,
-    })
-  },
-  catch: (error) => new DatabaseError({ cause: error }),
-})
 
 /**
  * 習慣を作成するServer Action
