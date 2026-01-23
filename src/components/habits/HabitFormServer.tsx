@@ -5,6 +5,7 @@ import { Result } from '@praha/byethrow'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { createHabit } from '@/app/actions/habits/create'
+import { formatSerializableError } from '@/lib/errors/serializable'
 import { HabitInputSchema, type HabitInputSchemaType } from '@/schemas/habit'
 
 export function HabitFormServer() {
@@ -36,24 +37,8 @@ export function HabitFormServer() {
       setSuccess(true)
       form.reset()
     } else {
-      // シリアライズされたエラーの型安全なハンドリング
-      const error = result.error
-      switch (error.name) {
-        case 'UnauthorizedError':
-          setServerError('Unauthorized')
-          break
-        case 'ValidationError':
-          setServerError(error.reason)
-          break
-        case 'DatabaseError':
-          setServerError(error.message)
-          break
-        default: {
-          const _exhaustive: never = error
-          console.error('Unexpected error:', _exhaustive)
-          setServerError('An unexpected error occurred')
-        }
-      }
+      // シリアライズされたエラーをユーザー向けメッセージに変換
+      setServerError(formatSerializableError(result.error))
     }
   }
 

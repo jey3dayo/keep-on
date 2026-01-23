@@ -41,3 +41,25 @@ export function serializeHabitError(error: HabitError): SerializableHabitError {
     }
   }
 }
+
+/**
+ * シリアライズされたエラーをユーザー向けメッセージに変換
+ *
+ * @param error - シリアライズされたエラー
+ * @returns ユーザー向けエラーメッセージ
+ */
+export function formatSerializableError(error: SerializableHabitError): string {
+  switch (error.name) {
+    case 'UnauthorizedError':
+      return 'Unauthorized'
+    case 'ValidationError':
+      return error.reason
+    case 'DatabaseError':
+      return error.message
+    default: {
+      const _exhaustive: never = error
+      console.error('Unexpected error:', _exhaustive)
+      return 'An unexpected error occurred'
+    }
+  }
+}

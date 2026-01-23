@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { DatabaseError, UnauthorizedError, ValidationError } from '../habit'
-import { serializeHabitError } from '../serializable'
+import { formatSerializableError, serializeHabitError } from '../serializable'
 
 describe('serializeHabitError', () => {
   it('UnauthorizedErrorをシリアライズ', () => {
@@ -40,5 +40,35 @@ describe('serializeHabitError', () => {
     expect(consoleErrorSpy).toHaveBeenCalledWith('Database error:', originalError)
 
     consoleErrorSpy.mockRestore()
+  })
+})
+
+describe('formatSerializableError', () => {
+  it('UnauthorizedErrorを適切なメッセージに変換', () => {
+    const error = { name: 'UnauthorizedError' as const }
+    const message = formatSerializableError(error)
+
+    expect(message).toBe('Unauthorized')
+  })
+
+  it('ValidationErrorをreasonフィールドの値に変換', () => {
+    const error = {
+      name: 'ValidationError' as const,
+      field: 'name',
+      reason: 'Name is required',
+    }
+    const message = formatSerializableError(error)
+
+    expect(message).toBe('Name is required')
+  })
+
+  it('DatabaseErrorをmessageフィールドの値に変換', () => {
+    const error = {
+      name: 'DatabaseError' as const,
+      message: 'Database operation failed',
+    }
+    const message = formatSerializableError(error)
+
+    expect(message).toBe('Database operation failed')
   })
 })
