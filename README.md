@@ -1,6 +1,22 @@
 # KeepOn
 
+[![Deploy to Cloudflare Workers](https://github.com/jey3dayo/keep-on/actions/workflows/deploy.yml/badge.svg)](https://github.com/jey3dayo/keep-on/actions/workflows/deploy.yml)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma)](https://www.prisma.io/)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare)](https://workers.cloudflare.com/)
+
 ストリーク/習慣トラッキングの PWA アプリ（MVP）
+
+## 概要
+
+KeepOn は、習慣形成をサポートするモダンな Web アプリケーションです。
+
+**主な特徴:**
+- 🚀 **Edge Computing**: Cloudflare Workers で高速・低レイテンシ
+- 🔒 **セキュア**: dotenvx 暗号化 + Clerk 認証
+- 🤖 **完全自動化**: Infrastructure as Code + GitHub Actions CI/CD
+- 🎨 **モダンUI**: Radix Colors + ダークモード対応
+- 📱 **PWA**: オフライン対応可能なプログレッシブ Web アプリ
 
 ## 技術スタック
 
@@ -17,6 +33,28 @@
 
 - **URL**: https://keep-on.j138cm.workers.dev
 - **デプロイ**: GitHub Actions (main ブランチへのプッシュで自動デプロイ)
+
+## 最近のアップデート
+
+### v0.2.0 (2026-01-24) - メジャーアップグレード & IaC完全自動化
+
+**主要な変更:**
+- ⬆️ **Next.js 15 → 16**: Turbopack デフォルト化、Async Request APIs 対応
+- ⬆️ **Prisma 6 → 7**: no-engine モード最適化、prisma.config.ts 導入
+- ⬆️ **Wrangler 3 → 4**: Cloudflare Workers 最新ツール対応
+- 🤖 **CI/CD 完全自動化**: GitHub Actions でゼロタッチデプロイ実現
+- 📦 **Infrastructure as Code**: 設定ファイル・Secrets・デプロイスクリプト全てコード化
+- 🔒 **セキュリティ強化**: dotenvx 暗号化管理、Secrets分離
+
+**その他の更新:**
+- date-fns 4.1.0 追加
+- lucide-react 0.563.0 更新
+- @types/node 25 対応
+- mise.toml にデプロイタスク追加
+
+詳細は [PR #21](https://github.com/jey3dayo/keep-on/pull/21) を参照。
+
+---
 
 ## セットアップ
 
@@ -194,14 +232,48 @@ GitHub Secrets に以下を設定後、`main` ブランチへのプッシュで�
 - **Cloudflare Workers**: バンドルサイズ 25MB gzipped 制限に注意
 - **dotenvx**: 本番運用時は `.env` を暗号化してコミット
 
-## 次のステップ
+## 開発の進捗
 
-1. ✅ プロジェクト初期セットアップ完了
-2. 🔄 Clerk と Supabase の認証情報を設定
-3. 🔄 Prisma マイグレーション実行
-4. 🔄 基本機能の実装（習慣作成／チェックイン／履歴表示）
-5. 🔄 PWA アイコン作成（192x192, 512x512）
-6. 🔄 CI/CD ワークフロー構築
+### ✅ 完了
+
+- [x] プロジェクト初期セットアップ
+- [x] Next.js 16 + Prisma 7 + Wrangler 4 へのアップグレード
+- [x] Clerk 認証統合（開発環境）
+- [x] Supabase データベース接続
+- [x] Prisma マイグレーション（開発環境）
+- [x] Infrastructure as Code 完全自動化
+  - wrangler.jsonc: Workers 設定
+  - GitHub Actions: CI/CD パイプライン
+  - Secrets管理: スクリプト化
+- [x] Cloudflare Workers デプロイ
+- [x] 基本機能の実装
+  - ユーザー認証フロー
+  - 習慣作成機能
+  - ダッシュボード表示
+- [x] デザインシステム導入（Radix Colors + ダークモード）
+
+### 🔄 次のステップ
+
+1. **本番環境セットアップ**
+   - [ ] Prisma マイグレーション実行（本番DB）
+   - [ ] 本番環境動作確認
+   - [ ] エラーモニタリング設定（Sentry/Cloudflare Analytics）
+
+2. **機能拡張**
+   - [ ] チェックイン機能（習慣の記録）
+   - [ ] 履歴表示（カレンダービュー）
+   - [ ] ストリーク表示（連続記録日数）
+   - [ ] 統計ダッシュボード
+
+3. **PWA 最適化**
+   - [ ] アプリアイコン作成（192x192, 512x512）
+   - [ ] オフライン対応
+   - [ ] プッシュ通知
+
+4. **セキュリティ強化**
+   - [ ] Cloudflare API トークンローテーション
+   - [ ] セキュリティヘッダー設定
+   - [ ] レート制限実装
 
 ## ライセンス
 
