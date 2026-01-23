@@ -5,7 +5,7 @@ import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   // ハイドレーションエラーを防ぐため、マウント後にのみレンダリング
@@ -17,7 +17,7 @@ export function ThemeToggle() {
     return <div aria-hidden="true" className="h-10 w-10 animate-pulse rounded-full bg-secondary" />
   }
 
-  const isDark = theme === 'dark'
+  const isDark = resolvedTheme === 'dark'
 
   return (
     <button
