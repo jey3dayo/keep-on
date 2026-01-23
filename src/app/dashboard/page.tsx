@@ -19,8 +19,8 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-900 dark:to-slate-800">
-      <nav className="border-slate-700 border-b bg-slate-800/50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <nav className="border-slate-200 border-b bg-white/50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <h1 className="font-bold text-2xl text-white dark:text-white">KeepOn</h1>
           <div className="flex items-center gap-4">
