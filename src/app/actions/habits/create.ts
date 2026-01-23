@@ -3,18 +3,15 @@
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
-import { DatabaseError, UnauthorizedError, ValidationError } from '@/lib/errors/habit'
+import { DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
 import { type FormState, handleHabitError } from '@/lib/errors/handlers'
 import { getCurrentUserId } from '@/lib/user'
-import { HabitInputSchema } from '@/schemas/habit'
+import { type HabitInput, validateHabitInput } from '@/validators/habit'
 
-interface HabitInput {
-  userId: string
-  name: string
-  emoji: string | null
-}
-
-// 認証チェック
+/**
+ * 認証チェック
+ * @returns Result<userId, UnauthorizedError>
+ */
 const authenticateUser = async (): Promise<Result.ResultAsync<string, UnauthorizedError>> => {
   const userId = await getCurrentUserId()
   if (!userId) {
@@ -23,31 +20,9 @@ const authenticateUser = async (): Promise<Result.ResultAsync<string, Unauthoriz
   return Result.succeed(userId)
 }
 
-// バリデーション（Zod統合）
-const validateHabitInput = (userId: string, formData: FormData): Result.Result<HabitInput, ValidationError> => {
-  const name = formData.get('name')
-  const emoji = formData.get('emoji')
-
-  const parseResult = HabitInputSchema.safeParse({ name, emoji: emoji || null })
-
-  if (!parseResult.success) {
-    const firstIssue = parseResult.error.issues[0]
-    return Result.fail(
-      new ValidationError({
-        field: firstIssue?.path.join('.') || 'unknown',
-        reason: firstIssue?.message || 'Validation failed',
-      })
-    )
-  }
-
-  return Result.succeed({
-    userId,
-    name: parseResult.data.name.trim(),
-    emoji: parseResult.data.emoji || null,
-  })
-}
-
-// データベース保存
+/**
+ * データベース保存
+ */
 const saveHabit = Result.try({
   try: async (input: HabitInput) => {
     await prisma.habit.create({
@@ -57,6 +32,13 @@ const saveHabit = Result.try({
   catch: (error) => new DatabaseError({ cause: error }),
 })
 
+/**
+ * 習慣を作成するServer Action
+ *
+ * @param _prevState - 前の状態（useActionState用）
+ * @param formData - フォームデータ
+ * @returns FormState
+ */
 export async function createHabit(_prevState: FormState, formData: FormData): Promise<FormState> {
   const userIdResult = await authenticateUser()
 

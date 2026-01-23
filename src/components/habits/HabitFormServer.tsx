@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { createHabit } from '@/app/actions/habits'
+import { createHabit } from '@/app/actions/habits/create'
 import { HabitInputSchema, type HabitInputSchemaType } from '@/schemas/habit'
 
 export function HabitFormServer() {
