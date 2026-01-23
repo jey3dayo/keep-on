@@ -4,7 +4,7 @@ import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
-import { type FormState, handleHabitError } from '@/lib/errors/handlers'
+import { type FormState, handleError } from '@/lib/errors/handlers'
 import { getCurrentUserId } from '@/lib/user'
 import { type HabitInput, validateHabitInput } from '@/validators/habit'
 
@@ -53,5 +53,5 @@ export async function createHabit(_prevState: FormState, formData: FormData): Pr
     return { success: true, error: null }
   }
 
-  return handleHabitError(result.error)
+  return handleError(result.error, 'Failed to create habit')
 }

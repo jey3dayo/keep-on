@@ -10,20 +10,21 @@ export interface FormState {
 }
 
 /**
- * HabitErrorをFormStateに変換する
+ * エラーをFormStateに変換する汎用ハンドラー
  *
  * @param error - 変換するエラー
+ * @param context - エラーコンテキスト（ログ用、省略可）
  * @returns FormState
  */
-export function handleHabitError(error: HabitError): FormState {
+export function handleError(error: HabitError, context?: string): FormState {
   switch (error.name) {
     case 'UnauthorizedError':
       return { error: 'Unauthorized', success: false }
     case 'ValidationError':
       return { error: error.reason, success: false }
     case 'DatabaseError':
-      console.error('Failed to create habit:', error.cause)
-      return { error: 'Failed to create habit', success: false }
+      console.error(context ? `${context}:` : 'Database error:', error.cause)
+      return { error: 'Database operation failed', success: false }
     default: {
       const _exhaustive: never = error
       console.error('Unexpected error:', _exhaustive)
@@ -31,3 +32,8 @@ export function handleHabitError(error: HabitError): FormState {
     }
   }
 }
+
+/**
+ * @deprecated Use handleError instead
+ */
+export const handleHabitError = handleError
