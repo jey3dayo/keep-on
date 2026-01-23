@@ -67,11 +67,11 @@ git commit -m "chore: update environment variables"
 ### 2. 手動で編集
 
 ```bash
-# 1. 平文の .env を作成
-cp .env.example .env
-vim .env  # 値を設定
+# 1. 既存の .env を復号化
+dotenvx decrypt  # 一時的に平文化
+vim .env  # 値を編集
 
-# 2. 暗号化
+# 2. 再暗号化
 pnpm env:encrypt
 
 # 3. コミット

@@ -85,7 +85,6 @@ dotenvx による暗号化管理:
 
 - `.env` - 暗号化済み（コミット対象）
 - `.env.keys` - 秘密鍵（**絶対にコミットしない**）
-- `.env.example` - テンプレート
 
 認証情報の取得先:
 
@@ -99,10 +98,13 @@ dotenvx による暗号化管理:
 ## 次のステップ
 
 1. Clerk と Supabase プロジェクトを作成
-2. `.env` に実際の認証情報を設定
-3. `pnpm env:encrypt` で環境変数を暗号化（推奨）
-4. `pnpm db:generate` で Prisma Client を生成
-5. 開発サーバー起動
-   - 暗号化した場合: `pnpm env:run -- pnpm dev`
-   - 暗号化していない場合: `pnpm dev`
-6. `/sign-in` でサインイン確認
+2. 環境変数を復号化して編集
+   ```bash
+   # .envを復号化して一時的に平文で編集
+   pnpm dotenvx decrypt
+   # 編集後に再暗号化
+   pnpm env:encrypt
+   ```
+3. `pnpm db:generate` で Prisma Client を生成
+4. 開発サーバー起動: `pnpm env:run -- pnpm dev`
+5. `/sign-in` でサインイン確認

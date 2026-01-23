@@ -75,17 +75,6 @@ jobs:
       - name: Setup Node environment
         uses: ./.github/actions/setup-node-env
 
-      - name: Setup environment variables
-        run: |
-          if [ -n "$DOTENV_PRIVATE_KEY" ]; then
-            echo "Using encrypted .env with dotenvx"
-          else
-            echo "DOTENV_PRIVATE_KEY not set, using .env.example"
-            cp .env.example .env
-          fi
-        env:
-          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
-
       - name: Run tests
         run: pnpm env:run pnpm test:run
         env:
@@ -104,17 +93,6 @@ jobs:
 
       - name: Setup Node environment
         uses: ./.github/actions/setup-node-env
-
-      - name: Setup environment variables
-        run: |
-          if [ -n "$DOTENV_PRIVATE_KEY" ]; then
-            echo "Using encrypted .env with dotenvx"
-          else
-            echo "DOTENV_PRIVATE_KEY not set, using .env.example"
-            cp .env.example .env
-          fi
-        env:
-          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
 
       - name: Run build
         run: pnpm env:run pnpm build:cf
