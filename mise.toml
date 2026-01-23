@@ -63,3 +63,15 @@ depends = ["lint:types", "lint:biome"]
 [tasks.ci]
 description = "CI相当のチェック（lint のみ）"
 depends = ["lint"]
+
+# ========================================
+# デプロイ関連
+# ========================================
+
+[tasks.deploy]
+description = "Cloudflare Workers にデプロイ"
+run = "pnpm env:run -- pnpm wrangler deploy"
+
+[tasks."deploy:preview"]
+description = "ローカルでCloudflare環境をプレビュー"
+run = "pnpm preview"
