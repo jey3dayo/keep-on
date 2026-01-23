@@ -1,3 +1,6 @@
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
 /**
  * 文字列が空かどうかをチェックする
  */
@@ -17,4 +20,12 @@ export function toUpperCase(str: string): string {
  */
 export function sum(numbers: number[]): number {
   return numbers.reduce((acc, num) => acc + num, 0)
+}
+
+/**
+ * Tailwind CSS のクラス名を結合してマージする
+ * class-variance-authority と tailwind-merge を使用
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }

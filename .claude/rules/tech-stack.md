@@ -7,7 +7,7 @@ paths: "**/*.{ts,tsx}"
 ## 採用技術
 
 | カテゴリ | 技術 | バージョン/備考 |
-|---------|------|----------------|
+| --- | --- | --- |
 | フロントエンド | Next.js 15 | App Router, Turbopack |
 | エッジデプロイ | OpenNext + Cloudflare Workers | @opennextjs/cloudflare |
 | 認証 | Clerk | @clerk/nextjs (Edge対応) |

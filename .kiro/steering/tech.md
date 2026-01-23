@@ -67,7 +67,7 @@ generator client {
 ### Cloudflare Workers の制限
 
 | 制約 | 対応 |
-|-----|------|
+| --- | --- |
 | バンドルサイズ 25MB gzipped | 必要なライブラリのみインポート、Tree-shaking の活用 |
 | Node.js API 使用不可 | Web 標準 API の使用、Edge Runtime 互換ライブラリの選定 |
 | 長時間実行不可 | ステートレスな設計、バックグラウンド処理は別サービス化 |

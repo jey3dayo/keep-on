@@ -18,7 +18,7 @@ KeepOn は、Next.js 15 + Cloudflare Workers + Prisma + Supabase + Clerk で構�
 ## 利用 MCP サーバー
 
 | MCP | 用途 |
-|-----|------|
+| --- | --- |
 | context7 | 最新ライブラリドキュメント取得 |
 | serena | セマンティックコード解析・編集 |
 | greptile | PR/コードレビュー支援 |
@@ -29,7 +29,7 @@ KeepOn は、Next.js 15 + Cloudflare Workers + Prisma + Supabase + Clerk で構�
 ## 利用 Skills
 
 | Skill | 用途 |
-|-------|------|
+| --- | --- |
 | kiro:spec-* | Spec-Driven Development |
 | gh-address-comments | GitHub PR コメント対応 |
 | ui-ux-pro-max | UI/UXデザイン支援 |

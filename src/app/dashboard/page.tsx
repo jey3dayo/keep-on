@@ -2,6 +2,7 @@ import { UserButton } from '@clerk/nextjs'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { HabitListServer } from '@/components/habits/HabitListServer'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { syncUser } from '@/lib/user'
 import { DashboardClient } from './DashboardClient'
 
@@ -21,10 +22,13 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <nav className="border-slate-200 border-b bg-white/50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+      <nav className="border-slate-200 border-b bg-white/50 p-4 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/50">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <h1 className="font-bold text-2xl text-slate-900 dark:text-white">KeepOn</h1>
-          <UserButton />
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <UserButton />
+          </div>
         </div>
       </nav>
 

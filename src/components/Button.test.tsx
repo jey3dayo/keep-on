@@ -12,19 +12,19 @@ describe('Button', () => {
   it('デフォルトでprimaryバリアントが適用される', () => {
     render(<Button>クリック</Button>)
     const button = screen.getByRole('button')
-    expect(button.className).toContain('bg-blue-600')
+    expect(button.className).toContain('bg-primary')
   })
 
   it('secondaryバリアントが適用される', () => {
     render(<Button variant="secondary">クリック</Button>)
     const button = screen.getByRole('button')
-    expect(button.className).toContain('bg-gray-200')
+    expect(button.className).toContain('bg-secondary')
   })
 
-  it('dangerバリアントが適用される', () => {
-    render(<Button variant="danger">クリック</Button>)
+  it('destructiveバリアントが適用される', () => {
+    render(<Button variant="destructive">クリック</Button>)
     const button = screen.getByRole('button')
-    expect(button.className).toContain('bg-red-600')
+    expect(button.className).toContain('bg-destructive')
   })
 
   it('カスタムクラス名が適用される', () => {
