@@ -3,8 +3,7 @@
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
-import { DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
-import { type FormState, handleError } from '@/lib/errors/handlers'
+import { type HabitError, DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
 import { getCurrentUserId } from '@/lib/user'
 import { type HabitInput, validateHabitInput } from '@/validators/habit'
 
@@ -35,11 +34,10 @@ const saveHabit = Result.try({
 /**
  * 習慣を作成するServer Action
  *
- * @param _prevState - 前の状態（useActionState用）
  * @param formData - フォームデータ
- * @returns FormState
+ * @returns Result<void, HabitError>
  */
-export async function createHabit(_prevState: FormState, formData: FormData): Promise<FormState> {
+export async function createHabit(formData: FormData): Promise<Result.ResultAsync<void, HabitError>> {
   const userIdResult = await authenticateUser()
 
   const result = await Result.pipe(
@@ -50,8 +48,7 @@ export async function createHabit(_prevState: FormState, formData: FormData): Pr
 
   if (Result.isSuccess(result)) {
     revalidatePath('/dashboard')
-    return { success: true, error: null }
   }
 
-  return handleError(result.error, 'Failed to create habit')
+  return result
 }

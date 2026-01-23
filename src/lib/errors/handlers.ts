@@ -1,39 +1,29 @@
 import type { HabitError } from './habit'
 
 /**
- * FormStateの型定義
- * Server ActionからClient Componentに返される状態
- */
-export interface FormState {
-  error: string | null
-  success: boolean
-}
-
-/**
- * エラーをFormStateに変換する汎用ハンドラー
+ * エラーをユーザー向けメッセージに変換する汎用ヘルパー
  *
  * @param error - 変換するエラー
  * @param context - エラーコンテキスト（ログ用、省略可）
- * @returns FormState
+ * @returns ユーザー向けエラーメッセージ
  */
-export function handleError(error: HabitError, context?: string): FormState {
+export function formatErrorMessage(error: HabitError, context?: string): string {
   switch (error.name) {
     case 'UnauthorizedError':
-      return { error: 'Unauthorized', success: false }
+      return 'Unauthorized'
     case 'ValidationError':
-      return { error: error.reason, success: false }
+      return error.reason
     case 'DatabaseError':
-      console.error(context ? `${context}:` : 'Database error:', error.cause)
-      return { error: 'Database operation failed', success: false }
+      if (context) {
+        console.error(`${context}:`, error.cause)
+      } else {
+        console.error('Database error:', error.cause)
+      }
+      return 'Database operation failed'
     default: {
       const _exhaustive: never = error
       console.error('Unexpected error:', _exhaustive)
-      return { error: 'An unexpected error occurred', success: false }
+      return 'An unexpected error occurred'
     }
   }
 }
-
-/**
- * @deprecated Use handleError instead
- */
-export const handleHabitError = handleError

@@ -1,5 +1,6 @@
 'use client'
 
+import { Result } from '@praha/byethrow'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -29,13 +30,31 @@ export function HabitFormServer() {
       formData.append('emoji', data.emoji)
     }
 
-    const result = await createHabit({ error: null, success: false }, formData)
+    const result = await createHabit(formData)
 
-    if (result.success) {
+    if (Result.isSuccess(result)) {
       setSuccess(true)
       form.reset()
     } else {
-      setServerError(result.error)
+      // 型安全なエラーハンドリング
+      const error = result.error
+      switch (error.name) {
+        case 'UnauthorizedError':
+          setServerError('Unauthorized')
+          break
+        case 'ValidationError':
+          setServerError(error.reason)
+          break
+        case 'DatabaseError':
+          console.error('Database error:', error.cause)
+          setServerError('Database operation failed')
+          break
+        default: {
+          const _exhaustive: never = error
+          console.error('Unexpected error:', _exhaustive)
+          setServerError('An unexpected error occurred')
+        }
+      }
     }
   }
 
