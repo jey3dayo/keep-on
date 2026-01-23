@@ -70,7 +70,7 @@ depends = ["lint"]
 
 [tasks.deploy]
 description = "Cloudflare Workers にデプロイ"
-run = "pnpm env:run -- pnpm wrangler deploy"
+run = "pnpm wrangler deploy"
 
 [tasks."deploy:preview"]
 description = "ローカルでCloudflare環境をプレビュー"
