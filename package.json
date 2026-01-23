@@ -29,6 +29,8 @@
   "dependencies": {
     "@clerk/nextjs": "^6.36.9",
     "@opennextjs/cloudflare": "^1.15.1",
+    "@praha/byethrow": "^0.9.0",
+    "@praha/error-factory": "^1.2.1",
     "@prisma/adapter-pg": "^6.19.2",
     "@prisma/client": "^6.19.2",
     "next": "^15.5.9",
