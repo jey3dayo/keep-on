@@ -11,8 +11,10 @@ keep-on/
 │   │   ├── actions/      # Server Actions
 │   │   ├── api/          # API Routes
 │   │   └── dashboard/    # ダッシュボード機能
-│   ├── lib/              # ユーティリティ・共通ロジック
 │   ├── components/       # 共有 UI コンポーネント
+│   ├── lib/              # ユーティリティ・共通ロジック
+│   ├── schemas/          # Zod スキーマ
+│   ├── validators/       # バリデーション（Result 型）
 │   └── generated/        # 自動生成ファイル
 ├── prisma/               # データベーススキーマ
 ├── public/               # 静的アセット・PWA ファイル
@@ -23,13 +25,14 @@ keep-on/
 
 ### `src/app/` - App Router
 
-Next.js 15 App Router の規約に従ったページ・レイアウト構成。
+Next.js 16 App Router の規約に従ったページ・レイアウト構成。
 
 **パターン:**
 
 - **Server Component がデフォルト**: 特に指定しない限り Server Component
 - **Client Component は明示**: `"use client"` ディレクティブで宣言
 - **ルーティング**: ファイルシステムベースのルーティング
+- **テーマ変数の集中管理**: `globals.css` に CSS 変数トークン（Radix Colors ベース）を定義
 
 **例:**
 
@@ -38,7 +41,8 @@ src/app/
 ├── layout.tsx          # Root Layout (Server Component)
 ├── page.tsx            # Home Page (Server Component)
 ├── actions/
-│   └── habits.ts       # 習慣関連のServer Actions
+│   └── habits/
+│       └── create.ts   # 習慣作成の Server Action
 ├── dashboard/
 │   ├── page.tsx        # ダッシュボードページ
 │   └── DashboardClient.tsx  # Client Component
@@ -50,7 +54,7 @@ src/app/
 
 ### `src/app/actions/` - Server Actions
 
-Next.js 15 App Router の Server Actions を配置。
+Next.js 16 App Router の Server Actions を配置。
 
 **パターン:**
 
@@ -62,7 +66,7 @@ Next.js 15 App Router の Server Actions を配置。
 **例:**
 
 ```tsx
-// src/app/actions/habits.ts
+// src/app/actions/habits/create.ts
 'use server'
 
 import { Result } from '@praha/byethrow'
@@ -71,8 +75,13 @@ import { revalidatePath } from 'next/cache'
 export async function createHabit(formData: FormData) {
   const result = await Result.pipe(
     await authenticateUser(),
-    Result.andThen((userId) => validateInput(userId, formData)),
-    Result.andThen((input) => saveHabit(input))
+    Result.andThen((userId) => validateHabitInput(userId, formData)),
+    Result.andThen(async (input) =>
+      await Result.try({
+        try: async () => createHabitQuery(input),
+        catch: (error) => new DatabaseError({ cause: error }),
+      })()
+    )
   )
 
   if (Result.isSuccess(result)) {
@@ -92,20 +101,20 @@ export async function createHabit(formData: FormData) {
 
 - `db.ts`: Prisma Client インスタンスの一元管理（シングルトンパターン）
 - `user.ts`: 認証ユーザーとPrisma Userの同期ロジック
-- テストファイル: `*.test.ts`（対象ファイルと同じディレクトリ）
+- `queries/`: ドメインごとのDBアクセス層（habit/user など）
+- `errors/`: ドメインエラー定義とシリアライズ変換
+- テストファイル: `*.test.ts` / `__tests__/`（対象ファイルと同じディレクトリ or サブフォルダ）
 
 **例:**
 
 ```tsx
 // src/lib/db.ts
-import { PrismaClient } from "@/generated/prisma";
-import { Pool } from "@neondatabase/serverless";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaPg } from '@prisma/adapter-pg'
+import { PrismaClient } from '@/generated/prisma/client'
 
-const connectionString = process.env.DATABASE_URL!;
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-export const prisma = new PrismaClient({ adapter });
+const connectionString = process.env.DATABASE_URL!
+const adapter = new PrismaPg({ connectionString })
+export const prisma = new PrismaClient({ adapter })
 ```
 
 ### `src/components/` - 共有 UI コンポーネント
@@ -122,6 +131,31 @@ export const prisma = new PrismaClient({ adapter });
 
 - トップレベル: 汎用コンポーネント（Button, Input など）
 - サブディレクトリ: 機能別グルーピング（例: `habits/`）
+
+### `src/schemas/` - Zod スキーマ
+
+入力バリデーションのための Zod スキーマを集約。
+
+**例:**
+
+```ts
+// src/schemas/habit.ts
+import { z } from 'zod'
+
+export const HabitInputSchema = z.object({
+  name: z.string().trim().min(1),
+  emoji: z.string().nullable(),
+})
+```
+
+### `src/validators/` - バリデーション関数
+
+Zod スキーマを使ったバリデーションを Result 型で返す層。
+
+**パターン:**
+
+- `validate*` 関数で `Result<ResultType, ValidationError>` を返す
+- テストは `__tests__/` 配下に配置
 
 ### `src/generated/` - 自動生成ファイル
 
@@ -156,8 +190,16 @@ User (Clerk 認証ユーザー)
 **重要なファイル:**
 
 - `manifest.json`: PWA 定義
-- `favicon.ico`, `icon-*.png`: アプリアイコン
+- `favicon.ico`, `icon-*.png`: アプリアイコン（必要に応じて追加）
 - その他の静的アセット（画像、フォントなど）
+
+### `scripts/` - 運用・インフラ補助スクリプト
+
+Cloudflare Secrets などの運用初期化・補助スクリプトを配置。
+
+### `.github/workflows/` - CI/CD
+
+lint/test/build/デプロイのワークフローを定義（docs-only の変更は軽量ゲート）。
 
 ### `.claude/` - Claude Code 設定
 
