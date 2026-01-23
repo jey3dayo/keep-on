@@ -2,6 +2,7 @@ import { UserButton } from '@clerk/nextjs'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { syncUser } from '@/lib/user'
+import { DashboardClient } from './DashboardClient'
 
 export default async function DashboardPage() {
   const { userId } = await auth()
@@ -32,9 +33,7 @@ export default async function DashboardPage() {
           <p className="text-slate-300">ようこそ、{user.email}さん</p>
         </div>
 
-        <div className="rounded-lg bg-slate-800/50 p-6">
-          <p className="text-center text-slate-400">習慣を作成して、トラッキングを始めましょう</p>
-        </div>
+        <DashboardClient />
       </main>
     </div>
   )
