@@ -12,7 +12,10 @@
     "enabled": true
   },
   "vars": {
-    "NEXTJS_ENV": "production"
+    "NEXTJS_ENV": "production",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_ZGVsaWNhdGUtY29sbGllLTAuY2xlcmsuYWNjb3VudHMuZGV2JA",
+    "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
+    "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up"
   },
   "kv_namespaces": [
     {
