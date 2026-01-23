@@ -8,12 +8,16 @@ paths: "src/**/*.{ts,tsx}"
 
 プロジェクトの標準的なディレクトリ構成:
 
-- `src/app/` - App Router ページ・レイアウト
-- `src/lib/` - ユーティリティ・DB接続
+- `src/app/` - App Router ページ・レイアウト・Server Actions
+- `src/lib/` - ユーティリティ・DB接続・データアクセス
 - `src/components/` - 共有コンポーネント
+- `src/schemas/` - Zodスキーマ定義
+- `src/validators/` - バリデーションロジック
 - `src/generated/prisma/` - Prisma Client（自動生成）
 - `prisma/` - スキーマ・マイグレーション
 - `public/` - 静的アセット・PWAファイル
+
+詳細なディレクトリ構造と責務定義は `.claude/rules/directory-structure.md` を参照してください。
 
 ## 開発ルール
 

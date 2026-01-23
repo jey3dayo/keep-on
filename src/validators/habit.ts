@@ -36,7 +36,7 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
 
   return Result.succeed({
     userId,
-    name: parseResult.data.name.trim(),
+    name: parseResult.data.name,
     emoji: parseResult.data.emoji || null,
   })
 }

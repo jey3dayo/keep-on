@@ -1,5 +1,5 @@
 import { currentUser } from '@clerk/nextjs/server'
-import { prisma } from './db'
+import { upsertUser } from './queries/user'
 
 /**
  * Clerk認証されたユーザーをPrismaのUserテーブルに同期
@@ -18,19 +18,10 @@ export async function syncUser() {
   }
 
   // ユーザーを取得または作成
-  const user = await prisma.user.upsert({
-    where: { clerkId: clerkUser.id },
-    update: {
-      email,
-      updatedAt: new Date(),
-    },
-    create: {
-      clerkId: clerkUser.id,
-      email,
-    },
+  return await upsertUser({
+    clerkId: clerkUser.id,
+    email,
   })
-
-  return user
 }
 
 /**

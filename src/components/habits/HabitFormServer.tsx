@@ -36,7 +36,7 @@ export function HabitFormServer() {
       setSuccess(true)
       form.reset()
     } else {
-      // 型安全なエラーハンドリング
+      // シリアライズされたエラーの型安全なハンドリング
       const error = result.error
       switch (error.name) {
         case 'UnauthorizedError':
@@ -46,8 +46,7 @@ export function HabitFormServer() {
           setServerError(error.reason)
           break
         case 'DatabaseError':
-          console.error('Database error:', error.cause)
-          setServerError('Database operation failed')
+          setServerError(error.message)
           break
         default: {
           const _exhaustive: never = error

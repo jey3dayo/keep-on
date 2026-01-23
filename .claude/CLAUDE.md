@@ -99,12 +99,14 @@ dotenvx による暗号化管理:
 
 1. Clerk と Supabase プロジェクトを作成
 2. 環境変数を復号化して編集
+
    ```bash
    # .envを復号化して一時的に平文で編集
    pnpm dotenvx decrypt
    # 編集後に再暗号化
    pnpm env:encrypt
    ```
+
 3. `pnpm db:generate` で Prisma Client を生成
 4. 開発サーバー起動: `pnpm env:run -- pnpm dev`
 5. `/sign-in` でサインイン確認

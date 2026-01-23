@@ -75,4 +75,18 @@ describe('validateHabitInput', () => {
       expect(result.value.name).toBe('朝の運動')
     }
   })
+
+  it('空白のみのnameはValidationErrorを返す', () => {
+    const formData = new FormData()
+    formData.append('name', '   ')
+
+    const result = validateHabitInput(userId, formData)
+
+    expect(Result.isFailure(result)).toBe(true)
+    if (Result.isFailure(result)) {
+      expect(result.error).toBeInstanceOf(ValidationError)
+      expect(result.error.field).toBe('name')
+      expect(result.error.reason).toBe('Name is required')
+    }
+  })
 })
