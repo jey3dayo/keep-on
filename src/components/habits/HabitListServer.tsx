@@ -1,3 +1,4 @@
+import type { Habit } from '@/generated/prisma/client'
 import { getHabitsByUserId } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
 
@@ -20,7 +21,7 @@ export async function HabitListServer() {
 
   return (
     <div className="space-y-3">
-      {habits.map((habit) => (
+      {habits.map((habit: Habit) => (
         <div
           className="flex items-center gap-3 rounded-lg border border-slate-300 bg-white p-4 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
           key={habit.id}
