@@ -84,6 +84,7 @@ generator client {
 - **mise**: タスクランナー・ツールバージョン管理
 - **Ultracite (Biome)**: 統合フォーマッター・Linter（Prettier + ESLint を置き換え）
 - **markdownlint**: Markdown ドキュメント品質チェック
+- **Vitest**: 単体テストランナー + カバレッジレポート
 
 ### Ultracite (Biome) 設定
 
@@ -121,9 +122,66 @@ ci      # CI チェック（lint + build）
 - iOS 対応のメタタグ設定
 - Service Worker による将来的なオフライン対応（未実装）
 
+## エラーハンドリング
+
+- **@praha/byethrow**: Result型による関数型エラーハンドリング
+- **@praha/error-factory**: カスタムエラークラスのファクトリー
+
+**パターン:**
+
+- `Result.pipe` による処理の連鎖（Railway Oriented Programming）
+- `ErrorFactory` でのカスタムエラー定義（型安全なフィールド付き）
+- Exhaustive check によるコンパイル時エラーハンドリング保証
+
+**例:**
+
+```tsx
+// src/app/actions/habits.ts
+export class ValidationError extends ErrorFactory({
+  name: 'ValidationError',
+  message: 'Validation failed',
+  fields: ErrorFactory.fields<{ field: string; reason: string }>(),
+}) {}
+
+const result = await Result.pipe(
+  userIdResult,
+  Result.andThen((userId) => validateHabitInput(userId, formData)),
+  Result.andThen((input) => saveHabit(input))
+)
+
+if (Result.isSuccess(result)) {
+  // 成功処理
+}
+```
+
+## テスト
+
+- **Vitest**: 高速な単体テストランナー
+- **React Testing Library**: コンポーネントテスト
+- **カバレッジレポート**: `@vitest/coverage-v8`
+
+**パターン:**
+
+- テストファイル: `*.test.ts` / `*.test.tsx`（対象ファイルと同じディレクトリ）
+- ユニットテストファースト
+
+**例:**
+
+```typescript
+// src/lib/utils.test.ts
+import { describe, it, expect } from 'vitest'
+import { myFunction } from './utils'
+
+describe('myFunction', () => {
+  it('正しく動作する', () => {
+    expect(myFunction()).toBe('expected')
+  })
+})
+```
+
 ## セキュリティ原則
 
 - **認証検証**: すべての保護されたエンドポイントで `auth()` による JWT 検証
 - **環境変数暗号化**: dotenvx による機密情報の暗号化管理
-- **入力検証**: Zod などを使用したスキーマバリデーション（推奨）
+- **入力検証**: Result型 + ErrorFactory による型安全なバリデーション
 - **XSS 対策**: React のデフォルト挙動 + DOMPurify（必要時）
