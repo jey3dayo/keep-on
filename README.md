@@ -12,6 +12,7 @@
 KeepOn は、習慣形成をサポートするモダンな Web アプリケーションです。
 
 **主な特徴:**
+
 - 🚀 **Edge Computing**: Cloudflare Workers で高速・低レイテンシ
 - 🔒 **セキュア**: dotenvx 暗号化 + Clerk 認証
 - 🤖 **完全自動化**: Infrastructure as Code + GitHub Actions CI/CD
@@ -39,6 +40,7 @@ KeepOn は、習慣形成をサポートするモダンな Web アプリケー�
 ### v0.2.0 (2026-01-24) - メジャーアップグレード & IaC完全自動化
 
 **主要な変更:**
+
 - ⬆️ **Next.js 15 → 16**: Turbopack デフォルト化、Async Request APIs 対応
 - ⬆️ **Prisma 6 → 7**: no-engine モード最適化、prisma.config.ts 導入
 - ⬆️ **Wrangler 3 → 4**: Cloudflare Workers 最新ツール対応
@@ -47,6 +49,7 @@ KeepOn は、習慣形成をサポートするモダンな Web アプリケー�
 - 🔒 **セキュリティ強化**: dotenvx 暗号化管理、Secrets分離
 
 **その他の更新:**
+
 - date-fns 4.1.0 追加
 - lucide-react 0.563.0 更新
 - @types/node 25 対応

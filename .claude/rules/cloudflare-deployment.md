@@ -22,6 +22,7 @@
 ```
 
 **特徴:**
+
 - Git にコミット可能
 - ブラウザに露出しても問題ない値
 - `NEXT_PUBLIC_*` など
@@ -36,6 +37,7 @@ echo '<value>' | pnpm wrangler secret put CLERK_SECRET_KEY
 ```
 
 **特徴:**
+
 - Cloudflare にのみ保存
 - Git には含まれない
 - API キー、DB 接続文字列など
@@ -162,6 +164,7 @@ git push origin main
 ```
 
 **必要な環境変数:**
+
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
