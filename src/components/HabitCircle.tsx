@@ -1,8 +1,8 @@
 'use client'
 
-import { Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { Icon } from './Icon'
 
 export interface HabitCircleProps {
   /** 習慣名 */
@@ -121,7 +121,7 @@ export function HabitCircle({ habitName, emoji, completed, onClick, size = 'md',
               height: sizeConfig.check * 1.5,
             }}
           >
-            <Check size={sizeConfig.check} strokeWidth={3} />
+            <Icon name="check" size={sizeConfig.check} strokeWidth={3} />
           </div>
         ) : (
           <span className={cn('select-none', sizeConfig.emoji)}>{emoji || '✓'}</span>
