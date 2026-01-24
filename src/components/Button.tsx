@@ -1,42 +1,53 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import type { ButtonHTMLAttributes } from 'react'
+import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { Button as BaseButton } from './ui/button'
 
-const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-md font-medium text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50',
-  {
-    variants: {
-      variant: {
-        primary: 'bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 hover:shadow-xl',
-        secondary: 'bg-secondary text-secondary-foreground shadow-md hover:bg-secondary/80',
-        destructive: 'bg-destructive text-destructive-foreground shadow-lg hover:bg-destructive/90',
-        outline:
-          'border-2 border-primary bg-background text-primary shadow-sm hover:bg-primary hover:text-primary-foreground',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
-      },
-      size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 px-3',
-        lg: 'h-11 px-8',
-        icon: 'h-10 w-10',
-      },
+const buttonVariants = cva('focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95', {
+  variants: {
+    variant: {
+      default: '',
+      primary: '',
+      destructive: '',
+      outline: '',
+      secondary: '',
+      ghost: '',
+      link: '',
     },
-    defaultVariants: {
-      variant: 'primary',
-      size: 'default',
+    size: {
+      default: 'h-10',
+      sm: '',
+      lg: 'h-11',
+      icon: 'h-10 w-10',
     },
+  },
+  defaultVariants: {
+    variant: 'default',
+    size: 'default',
+  },
+})
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild, type = 'button', ...props }, ref) => {
+    const baseVariant = variant === 'primary' ? 'default' : variant
+
+    return (
+      <BaseButton
+        asChild={asChild}
+        className={cn(buttonVariants({ variant, size }), className)}
+        ref={ref}
+        size={size}
+        type={type}
+        variant={baseVariant}
+        {...props}
+      />
+    )
   }
 )
+Button.displayName = 'Button'
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
-  children: React.ReactNode
-}
-
-export function Button({ variant, size, className, children, type = 'button', ...props }: ButtonProps) {
-  return (
-    <button className={cn(buttonVariants({ variant, size, className }))} type={type} {...props}>
-      {children}
-    </button>
-  )
-}
+export { Button, buttonVariants, type ButtonProps }

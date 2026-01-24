@@ -21,9 +21,9 @@
     --lime-contrast: #fff;
 
     /* shadcn/ui 互換マッピング */
-    --background: var(--lime-1);
+    --background: var(--lime-2);
     --foreground: var(--lime-12);
-    --card: var(--lime-1);
+    --card: #ffffff;
     --card-foreground: var(--lime-12);
     --popover: var(--lime-1);
     --popover-foreground: var(--lime-12);
@@ -32,20 +32,20 @@
     --secondary: var(--lime-3);
     --secondary-foreground: var(--lime-11);
     --muted: var(--lime-3);
-    --muted-foreground: var(--lime-11);
+    --muted-foreground: hsl(0 0% 45.1%);
     --accent: var(--lime-4);
     --accent-foreground: var(--lime-11);
     --destructive: #e5484d;
     --destructive-foreground: #fff;
     --success: var(--lime-9);
     --success-foreground: var(--lime-contrast);
-    --border: var(--lime-6);
-    --input: var(--lime-6);
+    --border: hsl(0 0% 89.8%);
+    --input: hsl(0 0% 89.8%);
     --ring: var(--lime-8);
     --radius: 0.625rem;
   }
 
-  /* Radix Colors ライムパレット - Dark (OLED最適化) */
+  /* Radix Colors ライムパレット - Dark */
   .dark {
     --lime-1: #0e130b;
     --lime-2: #151a12;
@@ -61,26 +61,26 @@
     --lime-12: #c8f0ad;
     --lime-contrast: #fff;
 
-    --background: #000; /* 真っ黒（OLED最適化）*/
-    --foreground: var(--lime-12);
-    --card: var(--lime-2);
-    --card-foreground: var(--lime-12);
-    --popover: var(--lime-2);
-    --popover-foreground: var(--lime-12);
+    --background: hsl(240 10% 3.9%);
+    --foreground: hsl(0 0% 98%);
+    --card: hsl(240 5.9% 10%);
+    --card-foreground: hsl(0 0% 98%);
+    --popover: hsl(240 10% 3.9%);
+    --popover-foreground: hsl(0 0% 98%);
     --primary: var(--lime-9);
     --primary-foreground: var(--lime-contrast);
-    --secondary: var(--lime-3);
-    --secondary-foreground: var(--lime-11);
-    --muted: var(--lime-3);
-    --muted-foreground: var(--lime-11);
-    --accent: var(--lime-4);
-    --accent-foreground: var(--lime-11);
-    --destructive: #e5484d;
-    --destructive-foreground: #fff;
+    --secondary: hsl(240 3.7% 15.9%);
+    --secondary-foreground: hsl(0 0% 98%);
+    --muted: hsl(240 3.7% 15.9%);
+    --muted-foreground: hsl(240 5% 64.9%);
+    --accent: hsl(240 3.7% 15.9%);
+    --accent-foreground: hsl(0 0% 98%);
+    --destructive: hsl(0 62.8% 30.6%);
+    --destructive-foreground: hsl(0 0% 98%);
     --success: var(--lime-11);
     --success-foreground: var(--lime-contrast);
-    --border: var(--lime-6);
-    --input: var(--lime-6);
+    --border: hsl(240 3.7% 15.9%);
+    --input: hsl(240 3.7% 15.9%);
     --ring: var(--lime-8);
   }
 

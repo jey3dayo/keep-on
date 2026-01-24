@@ -1,8 +1,7 @@
-import { UserButton } from '@clerk/nextjs'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import { Appbar } from '@/components/Appbar'
 import { HabitListServer } from '@/components/habits/HabitListServer'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { syncUser } from '@/lib/user'
 import { DashboardClient } from './DashboardClient'
 
@@ -21,28 +20,20 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <nav className="border-slate-200 border-b bg-white/50 p-4 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/50">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <h1 className="font-bold text-2xl text-slate-900 dark:text-white">KeepOn</h1>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <UserButton />
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-background">
+      <Appbar showUserButton />
 
-      <main className="mx-auto max-w-6xl p-6">
-        <div className="mb-8">
-          <h2 className="mb-2 font-bold text-3xl text-slate-900 dark:text-white">ダッシュボード</h2>
-          <p className="text-slate-600 dark:text-slate-300">ようこそ、{user.email}さん</p>
+      <main className="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-8 space-y-2">
+          <h1 className="font-bold text-3xl text-foreground">ダッシュボード</h1>
+          <p className="text-muted-foreground">ようこそ、{user.email}さん</p>
         </div>
 
-        <div className="space-y-8">
+        <div className="grid gap-8">
           <DashboardClient />
 
-          <section>
-            <h3 className="mb-4 font-bold text-slate-900 text-xl dark:text-white">あなたの習慣</h3>
+          <section className="space-y-4">
+            <h2 className="font-bold text-foreground text-xl">あなたの習慣</h2>
             <HabitListServer />
           </section>
         </div>
