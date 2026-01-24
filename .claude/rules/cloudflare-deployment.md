@@ -104,7 +104,7 @@ mise run deploy
 
 Cloudflare Dashboard で確認：
 
-**Workers & Pages → keep-on → Settings → Variables**
+#### Workers & Pages → keep-on → Settings → Variables
 
 - Environment Variables: 公開変数
 - Secrets: シークレット（値は非表示）
@@ -140,7 +140,7 @@ pnpm wrangler secret list
 GitHub リポジトリの Settings → Secrets and variables → Actions で設定：
 
 | Secret名 | 説明 | 取得方法 |
-|---------|------|---------|
+| --- | --- | --- |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API トークン | [API Tokens](https://dash.cloudflare.com/profile/api-tokens) |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウントID | Dashboard 右サイドバー |
 | `DOTENV_PRIVATE_KEY` | dotenvx 秘密鍵 | `.env.keys` ファイル |

@@ -30,8 +30,10 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
 
-    // テーマトグルボタンを取得（aria-labelで検索）
-    const toggleButton = canvas.getByRole('button', { name: THEME_TOGGLE_REGEX })
+    // テーマトグルボタンを取得（描画完了を待つ）
+    const toggleButton = await canvas.findByRole('button', {
+      name: THEME_TOGGLE_REGEX,
+    })
 
     // ボタンが存在することを確認
     await expect(toggleButton).toBeInTheDocument()
