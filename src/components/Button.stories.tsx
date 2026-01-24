@@ -1,5 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { expect, fn, userEvent, within } from 'storybook/test'
 import { Button } from './Button'
+
+// Test regex patterns
+const PRIMARY_BUTTON_REGEX = /primary button/i
+const DISABLED_BUTTON_REGEX = /disabled button/i
 
 const meta = {
   title: 'Components/Button',
@@ -30,6 +35,17 @@ export const Primary: Story = {
   args: {
     children: 'Primary Button',
     variant: 'primary',
+    onClick: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement)
+    const button = canvas.getByRole('button', { name: PRIMARY_BUTTON_REGEX })
+
+    // ボタンをクリック
+    await userEvent.click(button)
+
+    // onClickが呼ばれたことを確認
+    await expect(args.onClick).toHaveBeenCalledTimes(1)
   },
 }
 
@@ -100,6 +116,20 @@ export const Disabled: Story = {
   args: {
     children: 'Disabled Button',
     disabled: true,
+    onClick: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement)
+    const button = canvas.getByRole('button', { name: DISABLED_BUTTON_REGEX })
+
+    // ボタンがdisabled状態であることを確認
+    await expect(button).toBeDisabled()
+
+    // クリックを試みる
+    await userEvent.click(button)
+
+    // disabled状態ではonClickが呼ばれないことを確認
+    await expect(args.onClick).not.toHaveBeenCalled()
   },
 }
 

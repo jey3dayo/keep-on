@@ -1,5 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { expect, userEvent, within } from 'storybook/test'
 import { Input } from './Input'
+
+// Test regex patterns
+const ENTER_TEXT_REGEX = /enter text/i
+const BORDER_DESTRUCTIVE_REGEX = /border-destructive/
 
 const meta = {
   title: 'Components/Input',
@@ -28,6 +33,16 @@ export const Default: Story = {
   args: {
     placeholder: 'Enter text...',
   },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = canvas.getByPlaceholderText(ENTER_TEXT_REGEX)
+
+    // テキスト入力
+    await userEvent.type(input, 'Hello World')
+
+    // 入力値を確認
+    await expect(input).toHaveValue('Hello World')
+  },
 }
 
 export const WithValue: Story = {
@@ -42,6 +57,16 @@ export const ErrorState: Story = {
     error: true,
     placeholder: 'Enter text...',
     value: 'Invalid input',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = canvas.getByPlaceholderText(ENTER_TEXT_REGEX)
+
+    // エラー状態のクラスを確認
+    await expect(input).toHaveClass(BORDER_DESTRUCTIVE_REGEX)
+
+    // 既存の値を確認
+    await expect(input).toHaveValue('Invalid input')
   },
 }
 

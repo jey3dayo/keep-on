@@ -1,7 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { expect, userEvent, within } from 'storybook/test'
 import type { ComponentType } from 'react'
 import { ThemeProvider } from './ThemeProvider'
 import { ThemeToggle } from './ThemeToggle'
+
+// Test regex pattern
+const THEME_TOGGLE_REGEX = /モードに切り替え/i
 
 const meta = {
   title: 'Components/ThemeToggle',
@@ -22,7 +26,23 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Default: Story = {}
+export const Default: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+
+    // テーマトグルボタンを取得（aria-labelで検索）
+    const toggleButton = canvas.getByRole('button', { name: THEME_TOGGLE_REGEX })
+
+    // ボタンが存在することを確認
+    await expect(toggleButton).toBeInTheDocument()
+
+    // クリックしてテーマを切り替え
+    await userEvent.click(toggleButton)
+
+    // 切り替え後もボタンが存在することを確認
+    await expect(toggleButton).toBeInTheDocument()
+  },
+}
 
 export const WithDescription: Story = {
   render: () => (
