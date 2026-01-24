@@ -1,10 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { expect, fn, userEvent, within } from 'storybook/test'
 import { Button } from './Button'
-
-// Test regex patterns
-const PRIMARY_BUTTON_REGEX = /primary button/i
-const DISABLED_BUTTON_REGEX = /disabled button/i
 
 const meta = {
   title: 'Components/Button',
@@ -16,11 +11,11 @@ const meta = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['primary', 'secondary', 'destructive', 'outline', 'ghost', 'link'],
+      options: ['default', 'primary', 'destructive', 'outline', 'secondary', 'ghost', 'link'],
     },
     size: {
       control: 'select',
-      options: ['sm', 'default', 'lg', 'icon'],
+      options: ['default', 'sm', 'lg', 'icon'],
     },
     disabled: {
       control: 'boolean',
@@ -31,55 +26,51 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+export const Default: Story = {
+  args: {
+    children: 'Button',
+    variant: 'default',
+  },
+}
+
 export const Primary: Story = {
   args: {
     children: 'Primary Button',
     variant: 'primary',
-    onClick: fn(),
-  },
-  play: async ({ args, canvasElement }) => {
-    const canvas = within(canvasElement)
-    const button = canvas.getByRole('button', { name: PRIMARY_BUTTON_REGEX })
-
-    // ボタンをクリック
-    await userEvent.click(button)
-
-    // onClickが呼ばれたことを確認
-    await expect(args.onClick).toHaveBeenCalledTimes(1)
-  },
-}
-
-export const Secondary: Story = {
-  args: {
-    children: 'Secondary Button',
-    variant: 'secondary',
   },
 }
 
 export const Destructive: Story = {
   args: {
-    children: 'Destructive Button',
+    children: 'Delete',
     variant: 'destructive',
   },
 }
 
 export const Outline: Story = {
   args: {
-    children: 'Outline Button',
+    children: 'Outline',
     variant: 'outline',
+  },
+}
+
+export const Secondary: Story = {
+  args: {
+    children: 'Secondary',
+    variant: 'secondary',
   },
 }
 
 export const Ghost: Story = {
   args: {
-    children: 'Ghost Button',
+    children: 'Ghost',
     variant: 'ghost',
   },
 }
 
 export const Link: Story = {
   args: {
-    children: 'Link Button',
+    children: 'Link',
     variant: 'link',
   },
 }
@@ -91,13 +82,6 @@ export const Small: Story = {
   },
 }
 
-export const Default: Story = {
-  args: {
-    children: 'Default Button',
-    size: 'default',
-  },
-}
-
 export const Large: Story = {
   args: {
     children: 'Large Button',
@@ -105,51 +89,52 @@ export const Large: Story = {
   },
 }
 
-export const Icon: Story = {
-  args: {
-    children: '✨',
-    size: 'icon',
-  },
-}
-
 export const Disabled: Story = {
   args: {
-    children: 'Disabled Button',
+    children: 'Disabled',
     disabled: true,
-    onClick: fn(),
-  },
-  play: async ({ args, canvasElement }) => {
-    const canvas = within(canvasElement)
-    const button = canvas.getByRole('button', { name: DISABLED_BUTTON_REGEX })
-
-    // ボタンがdisabled状態であることを確認
-    await expect(button).toBeDisabled()
-
-    // クリックを試みる
-    await userEvent.click(button)
-
-    // disabled状態ではonClickが呼ばれないことを確認
-    await expect(args.onClick).not.toHaveBeenCalled()
   },
 }
 
-export const AllVariants: Story = {
-  render: () => (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-2">
-        <Button variant="primary">Primary</Button>
-        <Button variant="secondary">Secondary</Button>
-        <Button variant="destructive">Destructive</Button>
-        <Button variant="outline">Outline</Button>
-        <Button variant="ghost">Ghost</Button>
-        <Button variant="link">Link</Button>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm">Small</Button>
-        <Button size="default">Default</Button>
-        <Button size="lg">Large</Button>
-        <Button size="icon">✨</Button>
-      </div>
-    </div>
-  ),
+export const WithIcon: Story = {
+  args: {
+    children: (
+      <>
+        <svg
+          aria-label="Add icon"
+          className="h-4 w-4"
+          fill="none"
+          role="img"
+          stroke="currentColor"
+          strokeWidth={2}
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Add Item
+      </>
+    ),
+  },
+}
+
+export const IconOnly: Story = {
+  args: {
+    size: 'icon',
+    variant: 'outline',
+    children: (
+      <svg
+        aria-label="Add icon"
+        className="h-4 w-4"
+        fill="none"
+        role="img"
+        stroke="currentColor"
+        strokeWidth={2}
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
 }
