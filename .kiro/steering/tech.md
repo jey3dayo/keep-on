@@ -39,6 +39,7 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 - **Clerk**: Edge Runtime 対応の認証プロバイダー
 - JWT 検証を Edge で実施し、低レイテンシーを実現
 - `auth()` はサーバー側、`useAuth()` はクライアント側で使い分け
+- Next.js Middleware で公開ルートを判定し、保護ルートは `auth().protect()` でガード
 
 ### データベース・ORM
 
@@ -102,6 +103,7 @@ generator client {
 - **Ultracite (Biome)**: 統合フォーマッター・Linter（Prettier + ESLint を置き換え）
 - **markdownlint**: Markdown ドキュメント品質チェック
 - **Vitest**: 単体テストランナー + カバレッジレポート
+- **Storybook**: UI コンポーネントの開発・ドキュメント化（Next.js + Vite builder）
 
 ### Ultracite (Biome) 設定
 

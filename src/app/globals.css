@@ -1,134 +1,180 @@
+@import "tailwindcss";
 @config "../../tailwind.config.ts";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-@layer base {
-  /* Radix Colors ライムパレット - Light */
-  :root {
-    --lime-1: #fbfefa;
-    --lime-2: #f6fbf3;
-    --lime-3: #eaf7e3;
-    --lime-4: #ddf1d1;
-    --lime-5: #cde9bc;
-    --lime-6: #b9dea1;
-    --lime-7: #9fce7d;
-    --lime-8: #79b843;
-    --lime-9: #5ea500;
-    --lime-10: #549800;
-    --lime-11: #417d00;
-    --lime-12: #263c15;
-    --lime-contrast: #fff;
+@theme inline {
+  /* カラートークン - Tailwind ユーティリティクラスにマッピング */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
-    /* shadcn/ui 互換マッピング */
-    --background: var(--lime-2);
-    --foreground: var(--lime-12);
-    --card: #ffffff;
-    --card-foreground: var(--lime-12);
-    --popover: var(--lime-1);
-    --popover-foreground: var(--lime-12);
-    --primary: var(--lime-9);
-    --primary-foreground: var(--lime-contrast);
-    --secondary: var(--lime-3);
-    --secondary-foreground: var(--lime-11);
-    --muted: var(--lime-3);
-    --muted-foreground: hsl(0 0% 45.1%);
-    --accent: var(--lime-4);
-    --accent-foreground: var(--lime-11);
-    --destructive: #e5484d;
-    --destructive-foreground: #fff;
-    --success: var(--lime-9);
-    --success-foreground: var(--lime-contrast);
-    --border: hsl(0 0% 89.8%);
-    --input: hsl(0 0% 89.8%);
-    --ring: var(--lime-8);
-    --radius: 0.625rem;
-  }
+  /* radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
 
-  /* Radix Colors ライムパレット - Dark */
-  .dark {
-    --lime-1: #0e130b;
-    --lime-2: #151a12;
-    --lime-3: #1e2a16;
-    --lime-4: #253914;
-    --lime-5: #2e4719;
-    --lime-6: #37561f;
-    --lime-7: #426623;
-    --lime-8: #4c7827;
-    --lime-9: #5ea500;
-    --lime-10: #529800;
-    --lime-11: #88cf4c;
-    --lime-12: #c8f0ad;
-    --lime-contrast: #fff;
+:root {
+  --radius: 0.625rem;
 
-    --background: hsl(240 10% 3.9%);
-    --foreground: hsl(0 0% 98%);
-    --card: hsl(240 5.9% 10%);
-    --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(240 10% 3.9%);
-    --popover-foreground: hsl(0 0% 98%);
-    --primary: var(--lime-9);
-    --primary-foreground: var(--lime-contrast);
-    --secondary: hsl(240 3.7% 15.9%);
-    --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(240 3.7% 15.9%);
-    --muted-foreground: hsl(240 5% 64.9%);
-    --accent: hsl(240 3.7% 15.9%);
-    --accent-foreground: hsl(0 0% 98%);
-    --destructive: hsl(0 62.8% 30.6%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --success: var(--lime-11);
-    --success-foreground: var(--lime-contrast);
-    --border: hsl(240 3.7% 15.9%);
-    --input: hsl(240 3.7% 15.9%);
-    --ring: var(--lime-8);
-  }
+  /* Sidebar 変数 */
+  --sidebar-background: var(--lime-1);
+  --sidebar-foreground: var(--lime-12);
+  --sidebar-primary: var(--lime-9);
+  --sidebar-primary-foreground: var(--lime-contrast);
+  --sidebar-accent: var(--lime-4);
+  --sidebar-accent-foreground: var(--lime-11);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 
-  /* テーマバリエーション（data-theme属性で切替） */
-  /* デフォルトはライム（--primaryで定義済み） */
-  [data-theme="orange"] {
-    --primary: #f76707;
-    --ring: #f76707;
-    --accent: #fff4e6;
-  }
-  [data-theme="red"] {
-    --primary: #e5484d;
-    --ring: #e5484d;
-    --accent: #ffe5e5;
-  }
-  [data-theme="pink"] {
-    --primary: #e93d82;
-    --ring: #e93d82;
-    --accent: #ffe5f1;
-  }
-  [data-theme="purple"] {
-    --primary: #8e4ec6;
-    --ring: #8e4ec6;
-    --accent: #f3e5ff;
-  }
-  [data-theme="blue"] {
-    --primary: #0090ff;
-    --ring: #0090ff;
-    --accent: #e0f2ff;
-  }
-  [data-theme="cyan"] {
-    --primary: #00a2c7;
-    --ring: #00a2c7;
-    --accent: #e0f8ff;
-  }
-  [data-theme="yellow"] {
-    --primary: #ffb224;
-    --ring: #ffb224;
-    --accent: #fff8e0;
-  }
+  /* Radix Colors Lime - Light (OKLCH) */
+  --lime-1: oklch(0.993 0.012 143);
+  --lime-2: oklch(0.98 0.022 138);
+  --lime-3: oklch(0.955 0.05 136);
+  --lime-4: oklch(0.927 0.078 133);
+  --lime-5: oklch(0.892 0.102 131);
+  --lime-6: oklch(0.848 0.126 130);
+  --lime-7: oklch(0.79 0.15 129);
+  --lime-8: oklch(0.704 0.175 128);
+  --lime-9: oklch(0.64 0.19 128);
+  --lime-10: oklch(0.595 0.175 128);
+  --lime-11: oklch(0.5 0.15 128);
+  --lime-12: oklch(0.295 0.07 130);
+  --lime-contrast: oklch(1 0 0);
+
+  /* shadcn/ui 互換マッピング */
+  --background: var(--lime-2);
+  --foreground: var(--lime-12);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--lime-12);
+  --popover: var(--lime-1);
+  --popover-foreground: var(--lime-12);
+  --primary: var(--lime-9);
+  --primary-foreground: var(--lime-contrast);
+  --secondary: var(--lime-3);
+  --secondary-foreground: var(--lime-11);
+  --muted: var(--lime-3);
+  --muted-foreground: oklch(0.533 0 0);
+  --accent: var(--lime-4);
+  --accent-foreground: var(--lime-11);
+  --destructive: oklch(0.61 0.225 25);
+  --destructive-foreground: oklch(1 0 0);
+  --success: var(--lime-9);
+  --success-foreground: var(--lime-contrast);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: var(--lime-8);
+}
+
+.dark {
+  /* Sidebar 変数 */
+  --sidebar-background: var(--lime-2);
+  --sidebar-foreground: var(--lime-12);
+  --sidebar-primary: var(--lime-9);
+  --sidebar-primary-foreground: var(--lime-contrast);
+  --sidebar-accent: var(--lime-4);
+  --sidebar-accent-foreground: var(--lime-11);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+
+  /* Radix Colors Lime - Dark (OKLCH) */
+  --lime-1: oklch(0.14 0.025 130);
+  --lime-2: oklch(0.17 0.03 130);
+  --lime-3: oklch(0.23 0.05 130);
+  --lime-4: oklch(0.285 0.08 125);
+  --lime-5: oklch(0.34 0.1 125);
+  --lime-6: oklch(0.395 0.115 125);
+  --lime-7: oklch(0.45 0.13 126);
+  --lime-8: oklch(0.51 0.15 127);
+  --lime-9: oklch(0.64 0.19 128);
+  --lime-10: oklch(0.595 0.175 128);
+  --lime-11: oklch(0.78 0.18 130);
+  --lime-12: oklch(0.92 0.11 132);
+  --lime-contrast: oklch(1 0 0);
+
+  --background: oklch(0.145 0.01 265);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0.01 265);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0.01 265);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: var(--lime-9);
+  --primary-foreground: var(--lime-contrast);
+  --secondary: oklch(0.269 0.007 265);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0.007 265);
+  --muted-foreground: oklch(0.708 0.01 265);
+  --accent: oklch(0.269 0.007 265);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.42 0.17 25);
+  --destructive-foreground: oklch(0.985 0 0);
+  --success: var(--lime-11);
+  --success-foreground: var(--lime-contrast);
+  --border: oklch(0.269 0.007 265);
+  --input: oklch(0.269 0.007 265);
+  --ring: var(--lime-8);
+}
+
+/* テーマバリエーション（data-theme属性で切替）- OKLCH版 */
+[data-theme="orange"] {
+  --primary: oklch(0.68 0.21 48);
+  --ring: oklch(0.68 0.21 48);
+  --accent: oklch(0.97 0.04 70);
+}
+[data-theme="red"] {
+  --primary: oklch(0.61 0.225 25);
+  --ring: oklch(0.61 0.225 25);
+  --accent: oklch(0.96 0.03 20);
+}
+[data-theme="pink"] {
+  --primary: oklch(0.64 0.25 355);
+  --ring: oklch(0.64 0.25 355);
+  --accent: oklch(0.96 0.04 350);
+}
+[data-theme="purple"] {
+  --primary: oklch(0.53 0.23 305);
+  --ring: oklch(0.53 0.23 305);
+  --accent: oklch(0.95 0.05 300);
+}
+[data-theme="blue"] {
+  --primary: oklch(0.62 0.2 250);
+  --ring: oklch(0.62 0.2 250);
+  --accent: oklch(0.96 0.03 245);
+}
+[data-theme="cyan"] {
+  --primary: oklch(0.62 0.13 215);
+  --ring: oklch(0.62 0.13 215);
+  --accent: oklch(0.965 0.025 210);
+}
+[data-theme="yellow"] {
+  --primary: oklch(0.81 0.175 80);
+  --ring: oklch(0.81 0.175 80);
+  --accent: oklch(0.975 0.04 90);
 }
 
 @layer base {
   * {
-    border-color: var(--border);
+    @apply border-border;
   }
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    @apply bg-background text-foreground;
   }
 }
