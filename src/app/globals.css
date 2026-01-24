@@ -42,7 +42,7 @@
     --border: var(--lime-6);
     --input: var(--lime-6);
     --ring: var(--lime-8);
-    --radius: 1rem;
+    --radius: 0.625rem;
   }
 
   /* Radix Colors ライムパレット - Dark (OLED最適化) */
