@@ -22,6 +22,10 @@
       },
       "suspicious": {
         "noUnknownAtRules": "off"
+      },
+      "performance": {
+        "noNamespaceImport": "off",
+        "noBarrelFile": "off"
       }
     }
   },
