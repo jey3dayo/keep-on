@@ -3,9 +3,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Result } from '@praha/byethrow'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { createHabit } from '@/app/actions/habits/create'
+import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { formatSerializableError } from '@/lib/errors/serializable'
 import { HabitInputSchema, type HabitInputSchemaType } from '@/schemas/habit'
 
@@ -45,52 +47,53 @@ export function HabitFormServer() {
 
   return (
     <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-      <div>
-        <label className="mb-2 block font-medium text-foreground text-sm" htmlFor="habit-name">
-          習慣名
-        </label>
-        <Input
-          {...form.register('name')}
-          disablePasswordManagers={true}
-          error={!!form.formState.errors.name}
-          id="habit-name"
-          maxLength={100}
-          placeholder="例: 朝の運動"
-          type="text"
-        />
-        {form.formState.errors.name && (
-          <p className="mt-1 text-destructive text-sm">{form.formState.errors.name.message}</p>
+      <Controller
+        control={form.control}
+        name="name"
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={field.name}>習慣名</FieldLabel>
+            <Input
+              {...field}
+              aria-invalid={fieldState.invalid}
+              error={fieldState.invalid}
+              id={field.name}
+              maxLength={100}
+              placeholder="例: 朝の運動"
+              type="text"
+            />
+            {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
+          </Field>
         )}
-      </div>
+      />
 
-      <div>
-        <label className="mb-2 block font-medium text-foreground text-sm" htmlFor="habit-emoji">
-          絵文字（任意）
-        </label>
-        <Input
-          {...form.register('emoji')}
-          disablePasswordManagers={true}
-          error={!!form.formState.errors.emoji}
-          id="habit-emoji"
-          maxLength={2}
-          placeholder="🏃"
-          type="text"
-        />
-        {form.formState.errors.emoji && (
-          <p className="mt-1 text-destructive text-sm">{form.formState.errors.emoji.message}</p>
+      <Controller
+        control={form.control}
+        name="emoji"
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={field.name}>絵文字（任意）</FieldLabel>
+            <Input
+              {...field}
+              aria-invalid={fieldState.invalid}
+              error={fieldState.invalid}
+              id={field.name}
+              maxLength={2}
+              placeholder="🏃"
+              type="text"
+              value={field.value ?? ''}
+            />
+            {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
+          </Field>
         )}
-      </div>
+      />
 
       {serverError && <p className="text-destructive text-sm">{serverError}</p>}
       {success && <p className="text-sm text-success">習慣を作成しました！</p>}
 
-      <button
-        className="w-full rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-        disabled={form.formState.isSubmitting}
-        type="submit"
-      >
+      <Button className="w-full" disabled={form.formState.isSubmitting} size="lg" type="submit">
         {form.formState.isSubmitting ? '作成中...' : '習慣を作成'}
-      </button>
+      </Button>
     </form>
   )
 }
