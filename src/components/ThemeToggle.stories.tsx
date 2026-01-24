@@ -28,7 +28,7 @@ export const WithDescription: Story = {
   render: () => (
     <div className="flex flex-col items-center gap-4">
       <ThemeToggle />
-      <p className="text-sm text-muted-foreground">Click to toggle theme</p>
+      <p className="text-muted-foreground text-sm">Click to toggle theme</p>
     </div>
   ),
 }
@@ -36,7 +36,7 @@ export const WithDescription: Story = {
 export const InHeader: Story = {
   render: () => (
     <header className="flex items-center justify-between rounded-lg border bg-card p-4">
-      <h1 className="text-xl font-bold">KeepOn</h1>
+      <h1 className="font-bold text-xl">KeepOn</h1>
       <ThemeToggle />
     </header>
   ),

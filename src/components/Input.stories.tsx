@@ -37,7 +37,7 @@ export const WithValue: Story = {
   },
 }
 
-export const Error: Story = {
+export const ErrorState: Story = {
   args: {
     error: true,
     placeholder: 'Enter text...',
@@ -73,7 +73,7 @@ export const AllStates: Story = {
       <Input placeholder="Default input" />
       <Input error placeholder="Error input" />
       <Input disabled placeholder="Disabled input" />
-      <Input type="password" disablePasswordManagers={false} placeholder="Password input" />
+      <Input disablePasswordManagers={false} placeholder="Password input" type="password" />
     </div>
   ),
 }

@@ -80,9 +80,9 @@ export const WithoutEmoji: Story = {
 export const AllSizes: Story = {
   render: () => (
     <div className="flex items-center gap-6">
-      <HabitCircle habitName="Small habit" emoji="🌱" completed={false} size="sm" />
-      <HabitCircle habitName="Medium habit" emoji="🌿" completed={false} size="md" />
-      <HabitCircle habitName="Large habit" emoji="🌳" completed={false} size="lg" />
+      <HabitCircle completed={false} emoji="🌱" habitName="Small habit" size="sm" />
+      <HabitCircle completed={false} emoji="🌿" habitName="Medium habit" size="md" />
+      <HabitCircle completed={false} emoji="🌳" habitName="Large habit" size="lg" />
     </div>
   ),
 }
@@ -92,18 +92,18 @@ export const AllStates: Story = {
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-6">
         <div className="flex flex-col items-center gap-2">
-          <HabitCircle habitName="Running" emoji="🏃" completed={false} size="md" />
-          <span className="text-sm text-muted-foreground">Incomplete</span>
+          <HabitCircle completed={false} emoji="🏃" habitName="Running" size="md" />
+          <span className="text-muted-foreground text-sm">Incomplete</span>
         </div>
         <div className="flex flex-col items-center gap-2">
-          <HabitCircle habitName="Running" emoji="🏃" completed={true} size="md" />
-          <span className="text-sm text-muted-foreground">Completed</span>
+          <HabitCircle completed={true} emoji="🏃" habitName="Running" size="md" />
+          <span className="text-muted-foreground text-sm">Completed</span>
         </div>
       </div>
       <div className="flex items-center gap-6">
-        <HabitCircle habitName="Small" emoji="📚" completed={false} size="sm" />
-        <HabitCircle habitName="Medium" emoji="🎯" completed={false} size="md" />
-        <HabitCircle habitName="Large" emoji="💪" completed={false} size="lg" />
+        <HabitCircle completed={false} emoji="📚" habitName="Small" size="sm" />
+        <HabitCircle completed={false} emoji="🎯" habitName="Medium" size="md" />
+        <HabitCircle completed={false} emoji="💪" habitName="Large" size="lg" />
       </div>
     </div>
   ),
@@ -118,12 +118,6 @@ export const Interactive: Story = {
   render: (args: typeof meta.args) => {
     const [completed, setCompleted] = useState(args.completed)
 
-    return (
-      <HabitCircle
-        {...args}
-        completed={completed}
-        onClick={() => setCompleted(!completed)}
-      />
-    )
+    return <HabitCircle {...args} completed={completed} onClick={() => setCompleted(!completed)} />
   },
 }
