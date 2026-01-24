@@ -35,7 +35,10 @@
     "**/*.test.tsx",
     "**/*.spec.ts",
     "**/*.spec.tsx",
+    "**/*.stories.ts",
+    "**/*.stories.tsx",
     "vitest.config.ts",
-    "vitest.setup.ts"
+    "vitest.setup.ts",
+    ".storybook"
   ]
 }
