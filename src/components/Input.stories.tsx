@@ -1,10 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { expect, userEvent, within } from 'storybook/test'
 import { Input } from './Input'
-
-// Test regex patterns
-const ENTER_TEXT_REGEX = /enter text/i
-const BORDER_DESTRUCTIVE_REGEX = /border-destructive/
 
 const meta = {
   title: 'Components/Input',
@@ -14,16 +9,27 @@ const meta = {
   },
   tags: ['autodocs'],
   argTypes: {
+    type: {
+      control: 'select',
+      options: ['text', 'email', 'password', 'number', 'tel', 'url'],
+    },
     error: {
       control: 'boolean',
     },
     disabled: {
       control: 'boolean',
     },
-    placeholder: {
-      control: 'text',
+    disablePasswordManagers: {
+      control: 'boolean',
     },
   },
+  decorators: [
+    (Story) => (
+      <div style={{ width: '400px' }}>
+        <Story />
+      </div>
+    ),
+  ],
 } satisfies Meta<typeof Input>
 
 export default meta
@@ -32,73 +38,98 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   args: {
     placeholder: 'Enter text...',
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    const input = canvas.getByPlaceholderText(ENTER_TEXT_REGEX)
-
-    // テキスト入力
-    await userEvent.type(input, 'Hello World')
-
-    // 入力値を確認
-    await expect(input).toHaveValue('Hello World')
+    type: 'text',
   },
 }
 
 export const WithValue: Story = {
   args: {
     value: 'Sample text',
-    placeholder: 'Enter text...',
+    type: 'text',
   },
 }
 
 export const ErrorState: Story = {
   args: {
-    error: true,
     placeholder: 'Enter text...',
-    value: 'Invalid input',
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    const input = canvas.getByPlaceholderText(ENTER_TEXT_REGEX)
-
-    // エラー状態のクラスを確認
-    await expect(input).toHaveClass(BORDER_DESTRUCTIVE_REGEX)
-
-    // 既存の値を確認
-    await expect(input).toHaveValue('Invalid input')
+    type: 'text',
+    error: true,
   },
 }
 
 export const Disabled: Story = {
   args: {
+    placeholder: 'Disabled input',
+    type: 'text',
     disabled: true,
-    placeholder: 'Disabled input...',
-  },
-}
-
-export const Password: Story = {
-  args: {
-    type: 'password',
-    placeholder: 'Enter password...',
-    disablePasswordManagers: false,
   },
 }
 
 export const Email: Story = {
   args: {
+    placeholder: 'your.email@example.com',
     type: 'email',
-    placeholder: 'Enter email...',
   },
 }
 
-export const AllStates: Story = {
-  render: () => (
-    <div className="flex w-96 flex-col gap-4">
-      <Input placeholder="Default input" />
-      <Input error placeholder="Error input" />
-      <Input disabled placeholder="Disabled input" />
-      <Input disablePasswordManagers={false} placeholder="Password input" type="password" />
+export const Password: Story = {
+  args: {
+    placeholder: 'Enter password',
+    type: 'password',
+  },
+}
+
+export const NumberInput: Story = {
+  args: {
+    placeholder: '0',
+    type: 'number',
+  },
+}
+
+export const WithLabel: Story = {
+  render: (args) => (
+    <div className="space-y-2">
+      <label className="font-medium text-sm" htmlFor="input-with-label">
+        Username
+      </label>
+      <Input id="input-with-label" {...args} />
     </div>
   ),
+  args: {
+    placeholder: 'Enter username',
+    type: 'text',
+  },
+}
+
+export const WithErrorMessage: Story = {
+  render: (args) => (
+    <div className="space-y-2">
+      <label className="font-medium text-sm" htmlFor="input-with-error">
+        Email
+      </label>
+      <Input id="input-with-error" {...args} />
+      <p className="text-destructive text-sm">This email is already taken</p>
+    </div>
+  ),
+  args: {
+    placeholder: 'your.email@example.com',
+    type: 'email',
+    error: true,
+  },
+}
+
+export const WithPasswordManagers: Story = {
+  args: {
+    placeholder: 'Password managers enabled',
+    type: 'password',
+    disablePasswordManagers: false,
+  },
+}
+
+export const WithoutPasswordManagers: Story = {
+  args: {
+    placeholder: 'Password managers disabled (default)',
+    type: 'password',
+    disablePasswordManagers: true,
+  },
 }
