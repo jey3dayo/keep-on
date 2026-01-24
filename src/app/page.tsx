@@ -16,10 +16,10 @@ export default async function Home() {
         <h1 className="font-bold text-6xl text-white">KeepOn</h1>
         <p className="text-slate-300 text-xl">習慣トラッキングアプリ</p>
         <div className="flex justify-center gap-4">
-          <Link className="rounded-lg bg-blue-600 px-6 py-3 text-white transition hover:bg-blue-700" href="/sign-in">
+          <Link className="rounded-md bg-blue-600 px-6 py-3 text-white transition hover:bg-blue-700" href="/sign-in">
             サインイン
           </Link>
-          <Link className="rounded-lg bg-slate-700 px-6 py-3 text-white transition hover:bg-slate-600" href="/sign-up">
+          <Link className="rounded-md bg-slate-700 px-6 py-3 text-white transition hover:bg-slate-600" href="/sign-up">
             新規登録
           </Link>
         </div>

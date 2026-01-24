@@ -23,7 +23,7 @@ export async function HabitListServer() {
     <div className="space-y-3">
       {habits.map((habit: Habit) => (
         <div
-          className="flex items-center gap-3 rounded-lg border border-slate-300 bg-white p-4 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
+          className="flex items-center gap-3 rounded-md border border-slate-300 bg-white p-4 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
           key={habit.id}
         >
           {habit.emoji && <span className="text-2xl">{habit.emoji}</span>}

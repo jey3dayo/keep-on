@@ -85,7 +85,7 @@ export function HabitFormServer() {
       {success && <p className="text-sm text-success">習慣を作成しました！</p>}
 
       <button
-        className="w-full rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={form.formState.isSubmitting}
         type="submit"
       >
