@@ -115,7 +115,7 @@ export const Interactive: Story = {
     emoji: '🎯',
     completed: false,
   },
-  render: (args) => {
+  render: (args: typeof meta.args) => {
     const [completed, setCompleted] = useState(args.completed)
 
     return (
