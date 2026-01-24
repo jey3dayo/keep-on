@@ -2,9 +2,9 @@ import { HabitFormServer } from '@/components/habits/HabitFormServer'
 
 export function DashboardClient() {
   return (
-    <section>
-      <h3 className="mb-4 font-bold text-slate-900 text-xl dark:text-white">新しい習慣を作成</h3>
-      <div className="rounded-md border border-slate-300 bg-white p-6 dark:border-slate-700 dark:bg-slate-800/50">
+    <section className="space-y-4">
+      <h2 className="font-bold text-foreground text-xl">新しい習慣を作成</h2>
+      <div className="rounded-lg border bg-card p-6 shadow-sm">
         <HabitFormServer />
       </div>
     </section>
