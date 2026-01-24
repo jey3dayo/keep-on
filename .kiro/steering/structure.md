@@ -10,8 +10,8 @@ keep-on/
 │   ├── app/              # Next.js App Router
 │   │   ├── actions/      # Server Actions
 │   │   ├── api/          # API Routes
-│   │   └── dashboard/    # ダッシュボード機能
 │   ├── components/       # 共有 UI コンポーネント
+│   ├── hooks/            # 共有カスタム Hooks
 │   ├── lib/              # ユーティリティ・共通ロジック
 │   ├── schemas/          # Zod スキーマ
 │   ├── validators/       # バリデーション（Result 型）
@@ -43,9 +43,10 @@ src/app/
 ├── actions/
 │   └── habits/
 │       └── create.ts   # 習慣作成の Server Action
-├── dashboard/
-│   ├── page.tsx        # ダッシュボードページ
-│   └── DashboardClient.tsx  # Client Component
+├── (dashboard)/        # Route Group
+│   └── dashboard/
+│       ├── page.tsx        # ダッシュボードページ
+│       └── DashboardClient.tsx  # Client Component
 ├── sign-in/[[...sign-in]]/
 │   └── page.tsx        # Clerk サインインページ
 └── sign-up/[[...sign-up]]/
@@ -131,6 +132,21 @@ export const prisma = new PrismaClient({ adapter })
 
 - トップレベル: 汎用コンポーネント（Button, Input など）
 - サブディレクトリ: 機能別グルーピング（例: `habits/`）
+- `ui/`: shadcn/ui 由来のプリミティブ（Radix ラッパー）
+
+**Storybook:**
+
+- `*.stories.tsx` をコンポーネントと同階層に配置
+- UI の振る舞い・状態バリエーションをドキュメント化
+
+### `src/hooks/` - 共有カスタム Hooks
+
+UI/レスポンシブなどの汎用 Hook を集約。
+
+**パターン:**
+
+- `useXxx` 命名（例: `use-mobile.ts`）
+- ブラウザ API 依存の Hook は Client Component から使用
 
 ### `src/schemas/` - Zod スキーマ
 
@@ -239,6 +255,7 @@ import { prisma } from "../../lib/db";
 ### ファイル名
 
 - **コンポーネント**: PascalCase（例: `HabitCard.tsx`）
+- **UI プリミティブ（src/components/ui）**: lower-case（例: `button.tsx`, `input.tsx`）
 - **ユーティリティ**: kebab-case または camelCase（例: `db.ts`, `date-utils.ts`）
 - **ページ**: Next.js 規約に従う（`page.tsx`, `layout.tsx`）
 
