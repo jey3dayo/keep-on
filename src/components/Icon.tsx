@@ -1,11 +1,16 @@
-import { Check, type LucideProps, Moon, Plus, Sun, Trash2 } from 'lucide-react'
+import { Check, Home, Info, type LucideProps, Mail, Menu, Moon, Plus, Power, Sun, Trash2 } from 'lucide-react'
 
-export type IconName = 'check' | 'moon' | 'plus' | 'sun' | 'trash'
+export type IconName = 'check' | 'home' | 'info' | 'mail' | 'menu' | 'moon' | 'plus' | 'power' | 'sun' | 'trash'
 
 const icons: Record<IconName, React.ComponentType<LucideProps>> = {
   check: Check,
+  home: Home,
+  info: Info,
+  mail: Mail,
+  menu: Menu,
   moon: Moon,
   plus: Plus,
+  power: Power,
   sun: Sun,
   trash: Trash2,
 }

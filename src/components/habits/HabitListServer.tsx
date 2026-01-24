@@ -6,30 +6,26 @@ export async function HabitListServer() {
   const userId = await getCurrentUserId()
 
   if (!userId) {
-    return <p className="text-center text-slate-600 dark:text-slate-400">ログインしてください。</p>
+    return <p className="text-center text-muted-foreground">ログインしてください。</p>
   }
 
   const habits = await getHabitsByUserId(userId)
 
   if (habits.length === 0) {
-    return (
-      <p className="text-center text-slate-600 dark:text-slate-400">
-        まだ習慣がありません。最初の習慣を作成しましょう！
-      </p>
-    )
+    return <p className="text-center text-muted-foreground">まだ習慣がありません。最初の習慣を作成しましょう！</p>
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid gap-3">
       {habits.map((habit: Habit) => (
         <div
-          className="flex items-center gap-3 rounded-md border border-slate-300 bg-white p-4 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
+          className="flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-accent"
           key={habit.id}
         >
           {habit.emoji && <span className="text-2xl">{habit.emoji}</span>}
-          <div className="flex-1">
-            <h3 className="font-medium text-slate-900 dark:text-white">{habit.name}</h3>
-            <p className="text-slate-600 text-sm dark:text-slate-400">
+          <div className="flex-1 space-y-1">
+            <h3 className="font-medium text-card-foreground">{habit.name}</h3>
+            <p className="text-muted-foreground text-sm">
               作成日: {new Date(habit.createdAt).toLocaleDateString('ja-JP')}
             </p>
           </div>
