@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { Icon, type IconName } from '@/components/Icon'
+import { Icon, normalizeIconName } from '@/components/Icon'
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { getHabitsByUserId } from '@/lib/queries/habit'
 import { HabitTableActions } from './HabitTableActions'
@@ -37,7 +37,7 @@ export async function HabitTable({ userId }: HabitTableProps) {
         {habits.map((habit) => (
           <TableRow key={habit.id}>
             <TableCell>
-              <Icon className="text-foreground" name={(habit.icon as IconName) || 'circle-check'} size={20} />
+              <Icon className="text-foreground" name={normalizeIconName(habit.icon)} size={20} />
             </TableCell>
             <TableCell className="font-medium">{habit.name}</TableCell>
             <TableCell className="hidden md:table-cell">{format(habit.createdAt, 'yyyy/MM/dd')}</TableCell>

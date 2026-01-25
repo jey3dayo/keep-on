@@ -30,7 +30,33 @@ class DatabaseError extends Error {
   }
 }
 
-export async function toggleCheckinAction(habitId: string, date: Date = new Date()) {
+type SerializableCheckinError =
+  | { name: 'AuthenticationError'; message: string }
+  | { name: 'AuthorizationError'; message: string }
+  | { name: 'DatabaseError'; message: string }
+
+const serializeCheckinError = (error: unknown): SerializableCheckinError => {
+  if (error instanceof AuthenticationError) {
+    return { name: 'AuthenticationError', message: error.message }
+  }
+
+  if (error instanceof AuthorizationError) {
+    return { name: 'AuthorizationError', message: error.message }
+  }
+
+  const databaseError =
+    error instanceof DatabaseError ? error : new DatabaseError('チェックインの切り替えに失敗しました', error)
+
+  console.error('Database error:', databaseError.cause)
+  return { name: 'DatabaseError', message: databaseError.message }
+}
+
+type ToggleCheckinResult = { success: true; action: 'created' | 'deleted' }
+
+export async function toggleCheckinAction(
+  habitId: string,
+  date: Date = new Date()
+): Result.ResultAsync<ToggleCheckinResult, SerializableCheckinError> {
   return await Result.try({
     try: async () => {
       // 認証チェック
@@ -60,11 +86,6 @@ export async function toggleCheckinAction(habitId: string, date: Date = new Date
       revalidatePath('/dashboard')
       return { success: true, action: 'created' as const }
     },
-    catch: (error) => {
-      if (error instanceof AuthenticationError || error instanceof AuthorizationError) {
-        return error
-      }
-      return new DatabaseError('チェックインの切り替えに失敗しました', error)
-    },
+    catch: (error) => serializeCheckinError(error),
   })()
 }
