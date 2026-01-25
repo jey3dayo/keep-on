@@ -1,9 +1,8 @@
 import type { InferSelectModel } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { habits } from '@/db/schema'
 import { getHabitById, getHabitsByUserId } from '../habit'
 
-type Habit = InferSelectModel<typeof habits>
+type Habit = InferSelectModel<typeof import('@/db/schema').habits>
 
 // Drizzle ORMのモック
 vi.mock('@/lib/db', () => ({

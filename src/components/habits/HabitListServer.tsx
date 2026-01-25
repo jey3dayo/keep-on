@@ -1,9 +1,8 @@
 import type { InferSelectModel } from 'drizzle-orm'
-import type { habits } from '@/db/schema'
 import { getHabitsByUserId } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
 
-type Habit = InferSelectModel<typeof habits>
+type Habit = InferSelectModel<typeof import('@/db/schema').habits>
 
 export async function HabitListServer() {
   const userId = await getCurrentUserId()

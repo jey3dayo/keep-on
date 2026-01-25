@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
-import { pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { date, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
 
 export const users = pgTable('User', {
   id: text('id')
@@ -33,7 +33,7 @@ export const checkins = pgTable(
     habitId: text('habitId')
       .notNull()
       .references(() => habits.id, { onDelete: 'cascade' }),
-    date: timestamp('date', { mode: 'date' }).notNull(),
+    date: date('date', { mode: 'date' }).notNull(),
     createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
   },
   (table) => [unique().on(table.habitId, table.date)]
