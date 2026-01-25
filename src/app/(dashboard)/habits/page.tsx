@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { HabitTable } from '@/components/habits/HabitTable'
 import { getCurrentUserId } from '@/lib/user'
 
