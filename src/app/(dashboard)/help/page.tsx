@@ -1,3 +1,10 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'ヘルプ - KeepOn',
+  description: '使い方やよくある質問を確認',
+}
+
 export default function HelpPage() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4">
