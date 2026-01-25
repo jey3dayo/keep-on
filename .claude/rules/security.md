@@ -116,26 +116,26 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 
 ユーザー入力は必ず検証してください。特にデータベースクエリに使用する前には必須です。
 
-**Zod などを使った検証例:**
+**Valibot などを使った検証例:**
 
 ```tsx
-import { z } from "zod";
+import * as v from "valibot";
 
-const UserSchema = z.object({
-  email: z.string().email(),
-  name: z.string().min(1).max(100),
+const UserSchema = v.object({
+  email: v.pipe(v.string(), v.email()),
+  name: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
 });
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const result = UserSchema.safeParse(body);
+  const result = v.safeParse(UserSchema, body);
 
   if (!result.success) {
-    return NextResponse.json({ error: result.error }, { status: 400 });
+    return NextResponse.json({ error: result.issues }, { status: 400 });
   }
 
   // 検証済みデータを使用
-  const { email, name } = result.data;
+  const { email, name } = result.output;
 }
 ```
 
