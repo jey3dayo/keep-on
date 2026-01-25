@@ -22,7 +22,7 @@ const meta = {
       control: 'select',
       options: ['sm', 'md', 'lg'],
     },
-    emoji: {
+    icon: {
       control: 'text',
     },
   },
@@ -34,7 +34,7 @@ type Story = StoryObj<typeof meta>
 export const Incomplete: Story = {
   args: {
     habitName: 'Morning Exercise',
-    emoji: '🏃',
+    icon: 'footprints',
     completed: false,
   },
 }
@@ -42,7 +42,7 @@ export const Incomplete: Story = {
 export const Completed: Story = {
   args: {
     habitName: 'Morning Exercise',
-    emoji: '🏃',
+    icon: 'footprints',
     completed: true,
   },
 }
@@ -50,7 +50,7 @@ export const Completed: Story = {
 export const Small: Story = {
   args: {
     habitName: 'Read a book',
-    emoji: '📚',
+    icon: 'book-open',
     completed: false,
     size: 'sm',
   },
@@ -59,7 +59,7 @@ export const Small: Story = {
 export const Medium: Story = {
   args: {
     habitName: 'Meditation',
-    emoji: '🧘',
+    icon: 'brain',
     completed: false,
     size: 'md',
   },
@@ -68,16 +68,16 @@ export const Medium: Story = {
 export const Large: Story = {
   args: {
     habitName: 'Workout',
-    emoji: '💪',
+    icon: 'dumbbell',
     completed: false,
     size: 'lg',
   },
 }
 
-export const WithoutEmoji: Story = {
+export const WithoutIcon: Story = {
   args: {
     habitName: 'Daily Goal',
-    emoji: null,
+    icon: null,
     completed: false,
   },
 }
@@ -85,9 +85,10 @@ export const WithoutEmoji: Story = {
 export const AllSizes: Story = {
   render: () => (
     <div className="flex items-center gap-6">
-      <HabitCircle completed={false} emoji="🌱" habitName="Small habit" size="sm" />
-      <HabitCircle completed={false} emoji="🌿" habitName="Medium habit" size="md" />
-      <HabitCircle completed={false} emoji="🌳" habitName="Large habit" size="lg" />
+      <HabitCircle completed={false} habitName="Small habit" icon="footprints" size="sm" />
+      <HabitCircle completed={false} habitName="Small habit" icon="footprints" size="sm" />
+      <HabitCircle completed={false} habitName="Medium habit" icon="book-open" size="md" />
+      <HabitCircle completed={false} habitName="Large habit" icon="dumbbell" size="lg" />
     </div>
   ),
 }
@@ -97,18 +98,18 @@ export const AllStates: Story = {
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-6">
         <div className="flex flex-col items-center gap-2">
-          <HabitCircle completed={false} emoji="🏃" habitName="Running" size="md" />
+          <HabitCircle completed={false} habitName="Running" icon="footprints" size="md" />
           <span className="text-muted-foreground text-sm">Incomplete</span>
         </div>
         <div className="flex flex-col items-center gap-2">
-          <HabitCircle completed={true} emoji="🏃" habitName="Running" size="md" />
+          <HabitCircle completed={true} habitName="Running" icon="footprints" size="md" />
           <span className="text-muted-foreground text-sm">Completed</span>
         </div>
       </div>
       <div className="flex items-center gap-6">
-        <HabitCircle completed={false} emoji="📚" habitName="Small" size="sm" />
-        <HabitCircle completed={false} emoji="🎯" habitName="Medium" size="md" />
-        <HabitCircle completed={false} emoji="💪" habitName="Large" size="lg" />
+        <HabitCircle completed={false} habitName="Small" icon="book-open" size="sm" />
+        <HabitCircle completed={false} habitName="Medium" icon="target" size="md" />
+        <HabitCircle completed={false} habitName="Large" icon="dumbbell" size="lg" />
       </div>
     </div>
   ),
@@ -117,7 +118,7 @@ export const AllStates: Story = {
 export const Interactive: Story = {
   args: {
     habitName: 'Click me!',
-    emoji: '🎯',
+    icon: 'target',
     completed: false,
   },
   render: (args) => {

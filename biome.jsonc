@@ -29,6 +29,9 @@
       "performance": {
         "noNamespaceImport": "off",
         "noBarrelFile": "off"
+      },
+      "a11y": {
+        "useSemanticElements": "off"
       }
     }
   },
