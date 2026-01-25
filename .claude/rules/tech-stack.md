@@ -6,27 +6,27 @@ paths: "**/*.{ts,tsx}"
 
 ## 採用技術
 
-| カテゴリ | 技術 | バージョン/備考 |
-| --- | --- | --- |
-| フロントエンド | Next.js 15 | App Router, Turbopack |
-| エッジデプロイ | OpenNext + Cloudflare Workers | @opennextjs/cloudflare |
-| 認証 | Clerk | @clerk/nextjs (Edge対応) |
-| ORM | Prisma | v6.16.0+ (no-engine mode) |
-| DB | Supabase | PostgreSQL (Transaction Mode) |
-| 環境変数 | dotenvx | 暗号化管理 |
-| スタイリング | Tailwind CSS | v4.x |
-| PWA | manifest.json + Service Worker | iOS対応 |
+| カテゴリ       | 技術                           | バージョン/備考               |
+| -------------- | ------------------------------ | ----------------------------- |
+| フロントエンド | Next.js 15                     | App Router, Turbopack         |
+| エッジデプロイ | OpenNext + Cloudflare Workers  | @opennextjs/cloudflare        |
+| 認証           | Clerk                          | @clerk/nextjs (Edge対応)      |
+| ORM            | Drizzle ORM                    | postgres-js adapter           |
+| DB             | Supabase                       | PostgreSQL (Transaction Mode) |
+| 環境変数       | dotenvx                        | 暗号化管理                    |
+| スタイリング   | Tailwind CSS                   | v4.x                          |
+| PWA            | manifest.json + Service Worker | iOS対応                       |
 
-## Prisma no-engine モード
+## Drizzle ORM 構成
 
-**必須設定:**
+**構成:**
 
-- `engineType = "client"` を設定（schema.prisma）
-- Driver Adapter（@prisma/adapter-pg）が必須
+- スキーマ定義: `src/db/schema.ts`
+- DB接続: `postgres-js` (Edge Runtime互換)
 - Supabase は Transaction Mode (port 6543) + `?pgbouncer=true` を使用
 
-**理由:**
-Cloudflare Workers では通常の Prisma Engine が動作しないため、no-engine モードが必須です。
+**特徴:**
+Cloudflare Workers で完全動作する軽量ORM。Prisma v7のWASM問題を回避。
 
 ## Cloudflare Workers 制約
 
@@ -40,4 +40,4 @@ Cloudflare Workers では通常の Prisma Engine が動作しないため、no-e
 
 - Edge Runtime 互換のコードのみ使用
 - `fs`, `path`, `crypto` などの Node.js API は避ける
-- Prisma は no-engine モード + Driver Adapter を使用
+- Drizzle ORM + postgres-js を使用

@@ -19,14 +19,15 @@ src/
 ├── components/       # React Components
 │   ├── Button.tsx    # 汎用UIコンポーネント（ルート直下）
 │   └── [feature]/    # 機能別グループ（habits/, auth/など）
+├── db/
+│   └── schema.ts     # Drizzle ORM スキーマ定義
 ├── lib/
-│   ├── db.ts         # Prisma Client インスタンス（唯一）
-│   ├── queries/      # Prisma操作（生の返り値のみ）
+│   ├── db.ts         # Drizzle DB インスタンス（唯一）
+│   ├── queries/      # Drizzle操作（生の返り値のみ）
 │   ├── errors/       # エラー型定義
 │   └── utils.ts      # ユーティリティ関数
 ├── schemas/          # Zodスキーマ定義（純粋なスキーマのみ）
-├── validators/       # バリデーション（Result型を返す）
-└── generated/        # 自動生成ファイル（編集禁止）
+└── validators/       # バリデーション（Result型を返す）
 ```
 
 ## 各ディレクトリの責務
@@ -56,19 +57,21 @@ export type HabitInputSchemaType = z.infer<typeof HabitInputSchema>;
 
 ### `src/lib/queries/`
 
-**責務:** Prismaデータアクセス
+**責務:** Drizzle ORMデータアクセス
 
-- **生のPrisma操作のみ**を行う
+- **生のDrizzle操作のみ**を行う
 - Result.try などのエラーハンドリングは含めない
 - 外部ライブラリ（Clerk等）への依存を排除
 - 引数は抽出済みデータのみを受け取る（テスト容易性の確保）
 
-**返り値の型:** 生のPrisma返り値のみ（Promise<T>）
+**返り値の型:** 生のDrizzle返り値のみ（Promise<T>）
 
 **例:**
 
 ```typescript
-import { prisma } from "@/lib/db";
+import { eq } from "drizzle-orm";
+import { getDb } from "@/lib/db";
+import { users } from "@/db/schema";
 
 interface UpsertUserInput {
   clerkId: string;
@@ -76,15 +79,28 @@ interface UpsertUserInput {
 }
 
 export async function upsertUser(input: UpsertUserInput) {
-  return await prisma.user.upsert({
-    where: { clerkId: input.clerkId },
-    update: { email: input.email, updatedAt: new Date() },
-    create: { clerkId: input.clerkId, email: input.email },
-  });
+  const db = await getDb();
+  const [user] = await db
+    .insert(users)
+    .values({
+      clerkId: input.clerkId,
+      email: input.email,
+    })
+    .onConflictDoUpdate({
+      target: users.clerkId,
+      set: {
+        email: input.email,
+        updatedAt: new Date(),
+      },
+    })
+    .returning();
+  return user;
 }
 
 export async function createHabit(input: HabitInput) {
-  return await prisma.habit.create({ data: input });
+  const db = await getDb();
+  const [habit] = await db.insert(habits).values(input).returning();
+  return habit;
 }
 ```
 
@@ -192,7 +208,7 @@ export async function createHabitAction(formData: FormData) {
 
 ### 3. エラーハンドリング
 
-- **queries** はエラーをthrowするかPrismaの生の返り値を返す
+- **queries** はエラーをthrowするかDrizzleの生の返り値を返す
 - **actions** で Result.try を使ってエラーをキャッチし、適切なエラー型に変換
 
 ### 4. 依存の方向
@@ -237,11 +253,10 @@ src/components/
 
 ## 自動生成ファイル
 
-`src/generated/` 配下のファイルは自動生成されるため、**直接編集しない**：
+`drizzle/` 配下のファイルは自動生成されるため、**直接編集しない**：
 
 ```text
-src/generated/
-└── prisma/          # Prisma Client（自動生成）
+drizzle/             # Drizzle マイグレーション（自動生成）
 ```
 
 生成コマンド: `pnpm db:generate`

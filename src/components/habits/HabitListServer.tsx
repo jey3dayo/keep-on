@@ -1,6 +1,9 @@
-import type { Habit } from '@/generated/prisma/client'
+import type { InferSelectModel } from 'drizzle-orm'
+import type { habits } from '@/db/schema'
 import { getHabitsByUserId } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
+
+type Habit = InferSelectModel<typeof habits>
 
 export async function HabitListServer() {
   const userId = await getCurrentUserId()

@@ -13,8 +13,8 @@ paths: "src/**/*.{ts,tsx}"
 - `src/components/` - 共有コンポーネント
 - `src/schemas/` - Zodスキーマ定義
 - `src/validators/` - バリデーションロジック
-- `src/generated/prisma/` - Prisma Client（自動生成）
-- `prisma/` - スキーマ・マイグレーション
+- `src/db/` - Drizzle ORM スキーマ定義
+- `drizzle/` - マイグレーションファイル（自動生成）
 - `public/` - 静的アセット・PWAファイル
 
 詳細なディレクトリ構造と責務定義は `.claude/rules/directory-structure.md` を参照してください。
@@ -74,25 +74,27 @@ export default function Component() {
 }
 ```
 
-### 3. Prisma Client は `src/lib/db.ts` 経由でアクセス
+### 3. Drizzle DB インスタンスは `src/lib/db.ts` 経由でアクセス
 
-Prisma Client は必ず `src/lib/db.ts` でエクスポートされたインスタンスを使用してください。
-直接 `new PrismaClient()` をインスタンス化しないでください。
+Drizzle DB インスタンスは必ず `src/lib/db.ts` の `getDb()` 関数を使用してください。
 
 **正しい使い方:**
 
 ```tsx
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
-const users = await prisma.user.findMany();
+const db = await getDb();
+const userList = await db.select().from(users).where(eq(users.id, userId));
 ```
 
 **誤った使い方:**
 
 ```tsx
 // ❌ 直接インスタンス化しない
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import { drizzle } from "drizzle-orm/postgres-js";
+const db = drizzle(...);
 ```
 
 ### 4. 環境変数の機密情報は dotenvx で暗号化

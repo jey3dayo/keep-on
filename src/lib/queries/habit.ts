@@ -1,4 +1,6 @@
-import { prisma } from '@/lib/db'
+import { desc, eq } from 'drizzle-orm'
+import { habits } from '@/db/schema'
+import { getDb } from '@/lib/db'
 import type { HabitInput } from '@/validators/habit'
 
 /**
@@ -8,10 +10,8 @@ import type { HabitInput } from '@/validators/habit'
  * @returns 習慣の配列（作成日降順）
  */
 export async function getHabitsByUserId(userId: string) {
-  return await prisma.habit.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-  })
+  const db = await getDb()
+  return await db.select().from(habits).where(eq(habits.userId, userId)).orderBy(desc(habits.createdAt))
 }
 
 /**
@@ -21,9 +21,9 @@ export async function getHabitsByUserId(userId: string) {
  * @returns 習慣または null
  */
 export async function getHabitById(id: string) {
-  return await prisma.habit.findUnique({
-    where: { id },
-  })
+  const db = await getDb()
+  const [habit] = await db.select().from(habits).where(eq(habits.id, id))
+  return habit ?? null
 }
 
 /**
@@ -33,7 +33,7 @@ export async function getHabitById(id: string) {
  * @returns 作成された習慣
  */
 export async function createHabit(input: HabitInput) {
-  return await prisma.habit.create({
-    data: input,
-  })
+  const db = await getDb()
+  const [habit] = await db.insert(habits).values(input).returning()
+  return habit
 }

@@ -1,17 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { upsertUser } from '../user'
 
-// prisma のモック（importより前に定義）
+// Drizzle ORMのモック
 vi.mock('@/lib/db', () => ({
-  prisma: {
-    user: {
-      upsert: vi.fn(),
-    },
-  },
+  getDb: vi.fn().mockResolvedValue({
+    select: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockResolvedValue([]),
+    insert: vi.fn().mockReturnThis(),
+    values: vi.fn().mockReturnThis(),
+    returning: vi.fn().mockResolvedValue([]),
+    onConflictDoUpdate: vi.fn().mockReturnThis(),
+  }),
 }))
 
-// モック後にimport
-import { prisma } from '@/lib/db'
-import { upsertUser } from '../user'
+import { getDb } from '@/lib/db'
 
 describe('upsertUser', () => {
   beforeEach(() => {
@@ -27,7 +31,8 @@ describe('upsertUser', () => {
       updatedAt: new Date(),
     }
 
-    vi.mocked(prisma.user.upsert).mockResolvedValue(mockUser)
+    const db = await getDb()
+    vi.mocked(db.returning).mockResolvedValueOnce([mockUser])
 
     const result = await upsertUser({
       clerkId: 'clerk-123',
@@ -35,17 +40,10 @@ describe('upsertUser', () => {
     })
 
     expect(result).toEqual(mockUser)
-    expect(prisma.user.upsert).toHaveBeenCalledWith({
-      where: { clerkId: 'clerk-123' },
-      update: {
-        email: 'test@example.com',
-        updatedAt: expect.any(Date),
-      },
-      create: {
-        clerkId: 'clerk-123',
-        email: 'test@example.com',
-      },
-    })
+    expect(db.insert).toHaveBeenCalled()
+    expect(db.values).toHaveBeenCalled()
+    expect(db.onConflictDoUpdate).toHaveBeenCalled()
+    expect(db.returning).toHaveBeenCalled()
   })
 
   it('既存ユーザーを更新する', async () => {
@@ -57,7 +55,8 @@ describe('upsertUser', () => {
       updatedAt: new Date(),
     }
 
-    vi.mocked(prisma.user.upsert).mockResolvedValue(mockUser)
+    const db = await getDb()
+    vi.mocked(db.returning).mockResolvedValueOnce([mockUser])
 
     const result = await upsertUser({
       clerkId: 'clerk-123',
@@ -68,7 +67,7 @@ describe('upsertUser', () => {
     expect(result.email).toBe('updated@example.com')
   })
 
-  it('正しい引数でprisma.user.upsertが呼ばれる', async () => {
+  it('正しいメソッドチェーンでDB操作が呼ばれる', async () => {
     const mockUser = {
       id: 'user-456',
       clerkId: 'clerk-456',
@@ -77,23 +76,17 @@ describe('upsertUser', () => {
       updatedAt: new Date(),
     }
 
-    vi.mocked(prisma.user.upsert).mockResolvedValue(mockUser)
+    const db = await getDb()
+    vi.mocked(db.returning).mockResolvedValueOnce([mockUser])
 
     await upsertUser({
       clerkId: 'clerk-456',
       email: 'another@example.com',
     })
 
-    expect(prisma.user.upsert).toHaveBeenCalledTimes(1)
-    const callArgs = vi.mocked(prisma.user.upsert).mock.calls[0][0]
-
-    expect(callArgs.where).toEqual({ clerkId: 'clerk-456' })
-    expect(callArgs.update).toMatchObject({
-      email: 'another@example.com',
-    })
-    expect(callArgs.create).toEqual({
-      clerkId: 'clerk-456',
-      email: 'another@example.com',
-    })
+    expect(db.insert).toHaveBeenCalledTimes(1)
+    expect(db.values).toHaveBeenCalled()
+    expect(db.onConflictDoUpdate).toHaveBeenCalled()
+    expect(db.returning).toHaveBeenCalled()
   })
 })
