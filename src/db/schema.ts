@@ -8,7 +8,10 @@ export const users = pgTable('User', {
   clerkId: text('clerkId').notNull().unique(),
   email: text('email').notNull().unique(),
   createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt', { mode: 'date' })
+    .$onUpdate(() => new Date())
+    .defaultNow()
+    .notNull(),
 })
 
 export const habits = pgTable('Habit', {
@@ -21,7 +24,10 @@ export const habits = pgTable('Habit', {
   name: text('name').notNull(),
   emoji: text('emoji'),
   createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt', { mode: 'date' })
+    .$onUpdate(() => new Date())
+    .defaultNow()
+    .notNull(),
 })
 
 export const checkins = pgTable(
