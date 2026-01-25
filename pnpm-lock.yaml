@@ -91,7 +91,7 @@ importers:
         version: 4.3.6
     devDependencies:
       '@biomejs/biome':
-        specifier: ^2.3.12
+        specifier: 2.3.12
         version: 2.3.12
       '@dotenvx/dotenvx':
         specifier: ^1.52.0
@@ -163,7 +163,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       ultracite:
-        specifier: ^7.0.12
+        specifier: 7.0.12
         version: 7.0.12(effect@3.18.4)(typescript@5.9.3)(valibot@1.2.0(typescript@5.9.3))
       vitest:
         specifier: ^4.0.18
