@@ -51,12 +51,10 @@ const serializeCheckinError = (error: unknown): SerializableCheckinError => {
   return { name: 'DatabaseError', message: databaseError.message }
 }
 
-type ToggleCheckinResult = { success: true; action: 'created' | 'deleted' }
-
 export async function toggleCheckinAction(
   habitId: string,
   date: Date = new Date()
-): Result.ResultAsync<ToggleCheckinResult, SerializableCheckinError> {
+): Result.ResultAsync<void, SerializableCheckinError> {
   return await Result.try({
     try: async () => {
       // 認証チェック
@@ -79,12 +77,12 @@ export async function toggleCheckinAction(
       if (existingCheckin) {
         await deleteCheckinByHabitAndDate(habitId, date)
         revalidatePath('/dashboard')
-        return { success: true, action: 'deleted' as const }
+        return
       }
 
       await createCheckin({ habitId, date })
       revalidatePath('/dashboard')
-      return { success: true, action: 'created' as const }
+      return
     },
     catch: (error) => serializeCheckinError(error),
   })()
