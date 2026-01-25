@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 
+import { ThemeSettings } from '@/components/settings/ThemeSettings'
+
 export const metadata: Metadata = {
   title: '設定 - KeepOn',
   description: 'アプリの設定とプロフィール管理',
@@ -7,11 +9,12 @@ export const metadata: Metadata = {
 
 export default function SettingsPage() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4">
-      <div className="space-y-2 text-center">
+    <div className="flex flex-1 flex-col gap-6 p-6">
+      <div className="space-y-2">
         <h1 className="font-bold text-3xl text-foreground">設定</h1>
-        <p className="text-muted-foreground">このページは準備中です</p>
+        <p className="text-muted-foreground">アプリの表示をカスタマイズできます。</p>
       </div>
+      <ThemeSettings />
     </div>
   )
 }
