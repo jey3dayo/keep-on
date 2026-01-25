@@ -188,3 +188,27 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* STREAK風スタイル */
+.streak-bg {
+  @apply min-h-screen bg-primary transition-colors duration-300;
+}
+
+.task-circle-border {
+  @apply border-4 border-black/20 dark:border-white/20;
+}
+
+.color-swatch {
+  @apply w-8 h-8 rounded-full transition-transform active:scale-90;
+}
+
+.color-swatch-selected {
+  @apply ring-2 ring-white ring-offset-2 ring-offset-primary;
+}
+
+/* reduced-motion 対応 */
+@media (prefers-reduced-motion: reduce) {
+  .streak-bg {
+    transition: none;
+  }
+}
