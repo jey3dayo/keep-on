@@ -8,9 +8,10 @@ interface StreakToolbarProps {
   currentTheme: ThemeName
   onThemeChange: (theme: ThemeName) => void
   onSettingsClick: () => void
+  ready: boolean
 }
 
-export function StreakToolbar({ currentTheme, onThemeChange, onSettingsClick }: StreakToolbarProps) {
+export function StreakToolbar({ currentTheme, onThemeChange, onSettingsClick, ready }: StreakToolbarProps) {
   return (
     <div className="fixed right-0 bottom-0 left-0 border-white/20 border-t bg-black/10 p-4 backdrop-blur-sm">
       <div className="mx-auto flex max-w-md items-center justify-between">
@@ -22,7 +23,11 @@ export function StreakToolbar({ currentTheme, onThemeChange, onSettingsClick }: 
         >
           <Icon className="h-6 w-6 text-white" name="settings" />
         </button>
-        <ColorPalette currentTheme={currentTheme} onThemeChange={onThemeChange} />
+        {ready ? (
+          <ColorPalette currentTheme={currentTheme} onThemeChange={onThemeChange} />
+        ) : (
+          <div className="h-4 w-32" />
+        )}
         <div className="w-10" />
       </div>
     </div>

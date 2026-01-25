@@ -40,7 +40,7 @@ interface StreakDashboardProps {
 }
 
 export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleCheckin }: StreakDashboardProps) {
-  const { theme, setTheme } = useColorTheme()
+  const { theme, setTheme, ready } = useColorTheme()
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
 
   const completedHabitIds = new Set(todayCheckins.map((c) => c.habitId))
@@ -66,7 +66,12 @@ export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleChe
         onAddClick={() => setIsAddSheetOpen(true)}
         onToggleHabit={handleToggleHabit}
       />
-      <StreakToolbar currentTheme={theme} onSettingsClick={handleSettingsClick} onThemeChange={setTheme} />
+      <StreakToolbar
+        currentTheme={theme}
+        onSettingsClick={handleSettingsClick}
+        onThemeChange={setTheme}
+        ready={ready}
+      />
       <AddTaskSheet onOpenChange={setIsAddSheetOpen} onSubmit={handleAddHabit} open={isAddSheetOpen} />
     </div>
   )
