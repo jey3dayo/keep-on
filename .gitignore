@@ -44,8 +44,8 @@ next-env.d.ts
 # opennext
 .open-next
 
-# prisma
-/src/generated/prisma
+# drizzle
+drizzle/
 
 # wrangler
 .wrangler

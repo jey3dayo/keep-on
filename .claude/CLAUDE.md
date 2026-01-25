@@ -2,13 +2,13 @@
 
 ## プロジェクト概要
 
-KeepOn は、Next.js 15 + Cloudflare Workers + Prisma + Supabase + Clerk で構築された PWA アプリケーションです。
+KeepOn は、Next.js 15 + Cloudflare Workers + Drizzle ORM + Supabase + Clerk で構築された PWA アプリケーションです。
 
 **主要技術:**
 
 - Next.js 15 (App Router, Turbopack)
 - OpenNext + Cloudflare Workers (Edge デプロイ)
-- Prisma (no-engine mode) + Supabase
+- Drizzle ORM + Supabase (PostgreSQL)
 - Clerk (認証)
 - Tailwind CSS v4.x
 - Ultracite (Biome) - フォーマット/Lint
@@ -17,24 +17,24 @@ KeepOn は、Next.js 15 + Cloudflare Workers + Prisma + Supabase + Clerk で構�
 
 ## 利用 MCP サーバー
 
-| MCP | 用途 |
-| --- | --- |
-| context7 | 最新ライブラリドキュメント取得 |
-| serena | セマンティックコード解析・編集 |
-| greptile | PR/コードレビュー支援 |
+| MCP       | 用途                                        |
+| --------- | ------------------------------------------- |
+| context7  | 最新ライブラリドキュメント取得              |
+| serena    | セマンティックコード解析・編集              |
+| greptile  | PR/コードレビュー支援                       |
 | ultracite | Ultracite AI 統合（コード品質・最適化支援） |
 
 > **Note**: ライブラリの仕様や API で困った場合は、context7 を使用して最新ドキュメントを取得してください。
 
 ## 利用 Skills
 
-| Skill | 用途 |
-| --- | --- |
-| kiro:spec-* | Spec-Driven Development |
-| gh-address-comments | GitHub PR コメント対応 |
-| ui-ux-pro-max | UI/UXデザイン支援 |
+| Skill                 | 用途                                                   |
+| --------------------- | ------------------------------------------------------ |
+| kiro:spec-\*          | Spec-Driven Development                                |
+| gh-address-comments   | GitHub PR コメント対応                                 |
+| ui-ux-pro-max         | UI/UXデザイン支援                                      |
 | web-design-guidelines | Web UIガイドライン準拠チェック（アクセシビリティ、UX） |
-| react-best-practices | React/Next.jsパフォーマンス最適化ガイドライン |
+| react-best-practices  | React/Next.jsパフォーマンス最適化ガイドライン          |
 
 ## コマンド
 
@@ -43,10 +43,10 @@ KeepOn は、Next.js 15 + Cloudflare Workers + Prisma + Supabase + Clerk で構�
 pnpm dev              # 開発サーバー起動
 
 # データベース
-pnpm db:generate      # Prisma Client 生成
+pnpm db:generate      # Drizzle migration 生成
 pnpm db:push          # スキーマ同期（dev用）
-pnpm db:migrate       # マイグレーション作成
-pnpm db:migrate:deploy # マイグレーション適用（本番）
+pnpm db:migrate       # マイグレーション実行
+pnpm db:studio        # Drizzle Studio 起動
 
 # Cloudflare
 pnpm build:cf         # OpenNext ビルド
@@ -107,6 +107,6 @@ dotenvx による暗号化管理:
    pnpm env:encrypt
    ```
 
-3. `pnpm db:generate` で Prisma Client を生成
+3. `pnpm db:push` でスキーマを同期
 4. 開発サーバー起動: `pnpm env:run -- pnpm dev`
 5. `/sign-in` でサインイン確認

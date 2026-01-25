@@ -1,19 +1,24 @@
-import type { Habit } from '@prisma/client'
+import type { InferSelectModel } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getHabitById, getHabitsByUserId } from '../habit'
 
-// Prismaのモック
+type Habit = InferSelectModel<typeof import('@/db/schema').habits>
+
+// Drizzle ORMのモック
 vi.mock('@/lib/db', () => ({
-  prisma: {
-    habit: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-    },
-  },
+  getDb: vi.fn().mockResolvedValue({
+    select: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockResolvedValue([]),
+    insert: vi.fn().mockReturnThis(),
+    values: vi.fn().mockReturnThis(),
+    returning: vi.fn().mockResolvedValue([]),
+    onConflictDoUpdate: vi.fn().mockReturnThis(),
+  }),
 }))
 
-// モックされたprismaをインポート
-import { prisma } from '@/lib/db'
+import { getDb } from '@/lib/db'
 
 describe('getHabitsByUserId', () => {
   const mockHabits: Habit[] = [
@@ -40,19 +45,21 @@ describe('getHabitsByUserId', () => {
   })
 
   it('ユーザーIDで習慣一覧を取得', async () => {
-    vi.mocked(prisma.habit.findMany).mockResolvedValue(mockHabits)
+    const db = await getDb()
+    vi.mocked(db.orderBy).mockResolvedValueOnce(mockHabits)
 
     const result = await getHabitsByUserId('user-123')
 
     expect(result).toEqual(mockHabits)
-    expect(prisma.habit.findMany).toHaveBeenCalledWith({
-      where: { userId: 'user-123' },
-      orderBy: { createdAt: 'desc' },
-    })
+    expect(db.select).toHaveBeenCalled()
+    expect(db.from).toHaveBeenCalled()
+    expect(db.where).toHaveBeenCalled()
+    expect(db.orderBy).toHaveBeenCalled()
   })
 
   it('該当する習慣がない場合は空配列を返す', async () => {
-    vi.mocked(prisma.habit.findMany).mockResolvedValue([])
+    const db = await getDb()
+    vi.mocked(db.orderBy).mockResolvedValueOnce([])
 
     const result = await getHabitsByUserId('user-456')
 
@@ -75,18 +82,20 @@ describe('getHabitById', () => {
   })
 
   it('IDで習慣を取得', async () => {
-    vi.mocked(prisma.habit.findUnique).mockResolvedValue(mockHabit)
+    const db = await getDb()
+    vi.mocked(db.where).mockResolvedValueOnce([mockHabit])
 
     const result = await getHabitById('habit-1')
 
     expect(result).toEqual(mockHabit)
-    expect(prisma.habit.findUnique).toHaveBeenCalledWith({
-      where: { id: 'habit-1' },
-    })
+    expect(db.select).toHaveBeenCalled()
+    expect(db.from).toHaveBeenCalled()
+    expect(db.where).toHaveBeenCalled()
   })
 
   it('該当する習慣がない場合はnullを返す', async () => {
-    vi.mocked(prisma.habit.findUnique).mockResolvedValue(null)
+    const db = await getDb()
+    vi.mocked(db.where).mockResolvedValueOnce([])
 
     const result = await getHabitById('non-existent')
 

@@ -1,15 +1,12 @@
 import { Result } from '@praha/byethrow'
+import type { InferInsertModel } from 'drizzle-orm'
 import { ValidationError } from '@/lib/errors/habit'
 import { HabitInputSchema } from '@/schemas/habit'
 
 /**
  * 習慣入力データの型定義
  */
-export interface HabitInput {
-  userId: string
-  name: string
-  emoji: string | null
-}
+export type HabitInput = Omit<InferInsertModel<typeof import('@/db/schema').habits>, 'id' | 'createdAt' | 'updatedAt'>
 
 /**
  * FormDataから習慣入力をバリデーション

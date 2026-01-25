@@ -1,4 +1,5 @@
-import { prisma } from '@/lib/db'
+import { users } from '@/db/schema'
+import { getDb } from '@/lib/db'
 
 /**
  * ユーザーのupsert入力データ
@@ -15,15 +16,20 @@ export interface UpsertUserInput {
  * @returns upsertされたユーザー
  */
 export async function upsertUser(input: UpsertUserInput) {
-  return await prisma.user.upsert({
-    where: { clerkId: input.clerkId },
-    update: {
-      email: input.email,
-      updatedAt: new Date(),
-    },
-    create: {
+  const db = await getDb()
+  const [user] = await db
+    .insert(users)
+    .values({
       clerkId: input.clerkId,
       email: input.email,
-    },
-  })
+    })
+    .onConflictDoUpdate({
+      target: users.clerkId,
+      set: {
+        email: input.email,
+        updatedAt: new Date(),
+      },
+    })
+    .returning()
+  return user
 }

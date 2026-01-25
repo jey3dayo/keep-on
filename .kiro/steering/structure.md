@@ -9,16 +9,23 @@ keep-on/
 ├── src/
 │   ├── app/              # Next.js App Router
 │   │   ├── actions/      # Server Actions
-│   │   ├── api/          # API Routes
+│   │   ├── (dashboard)/  # 認証後のダッシュボード群
+│   │   └── api/          # API Routes（必要時）
 │   ├── components/       # 共有 UI コンポーネント
+│   │   ├── ui/           # shadcn/ui プリミティブ
+│   │   ├── habits/       # 機能別 UI
+│   │   └── dashboard/    # ダッシュボード UI
+│   ├── db/               # Drizzle スキーマ
 │   ├── hooks/            # 共有カスタム Hooks
 │   ├── lib/              # ユーティリティ・共通ロジック
 │   ├── schemas/          # Zod スキーマ
 │   ├── validators/       # バリデーション（Result 型）
+│   ├── types/            # 共有型定義
 │   └── generated/        # 自動生成ファイル
-├── prisma/               # データベーススキーマ
 ├── public/               # 静的アセット・PWA ファイル
-└── .claude/              # Claude Code プロジェクト設定
+├── drizzle.config.ts     # Drizzle 設定
+├── open-next.config.ts   # OpenNext 設定
+└── wrangler.jsonc        # Cloudflare Workers 設定
 ```
 
 ## 各ディレクトリの役割
@@ -44,9 +51,18 @@ src/app/
 │   └── habits/
 │       └── create.ts   # 習慣作成の Server Action
 ├── (dashboard)/        # Route Group
-│   └── dashboard/
-│       ├── page.tsx        # ダッシュボードページ
-│       └── DashboardClient.tsx  # Client Component
+│   ├── layout.tsx       # ダッシュボード共通レイアウト
+│   ├── dashboard/
+│   │   ├── page.tsx        # ダッシュボードページ
+│   │   └── DashboardClient.tsx  # Client Component
+│   ├── analytics/
+│   │   └── page.tsx
+│   ├── habits/
+│   │   └── page.tsx
+│   ├── settings/
+│   │   └── page.tsx
+│   └── help/
+│       └── page.tsx
 ├── sign-in/[[...sign-in]]/
 │   └── page.tsx        # Clerk サインインページ
 └── sign-up/[[...sign-up]]/
@@ -100,9 +116,9 @@ export async function createHabit(formData: FormData) {
 
 **重要なパターン:**
 
-- `db.ts`: Prisma Client インスタンスの一元管理（シングルトンパターン）
-- `user.ts`: 認証ユーザーとPrisma Userの同期ロジック
-- `queries/`: ドメインごとのDBアクセス層（habit/user など）
+- `db.ts`: Drizzle 接続の一元管理（`getDb()`）
+- `user.ts`: Clerk ユーザーを `users` テーブルへ同期（upsert）
+- `queries/`: ドメインごとのDBアクセス層（habit/user など、Drizzle クエリ）
 - `errors/`: ドメインエラー定義とシリアライズ変換
 - テストファイル: `*.test.ts` / `__tests__/`（対象ファイルと同じディレクトリ or サブフォルダ）
 
@@ -110,12 +126,30 @@ export async function createHabit(formData: FormData) {
 
 ```tsx
 // src/lib/db.ts
-import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '@/generated/prisma/client'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+import { cache } from 'react'
+import * as schema from '@/db/schema'
 
 const connectionString = process.env.DATABASE_URL!
-const adapter = new PrismaPg({ connectionString })
-export const prisma = new PrismaClient({ adapter })
+export const getDb = cache(async () => drizzle(postgres(connectionString), { schema }))
+```
+
+### `src/db/` - Drizzle スキーマ
+
+Drizzle のテーブル定義を集約。
+
+**パターン:**
+
+- `schema.ts` にテーブル/リレーション定義
+- `drizzle.config.ts` でスキーマとマイグレーション出力を管理
+
+**データモデル構造:**
+
+```text
+User (Clerk 認証ユーザー)
+└── Habit (習慣)
+    └── Checkin (チェックイン記録)
 ```
 
 ### `src/components/` - 共有 UI コンポーネント
@@ -175,29 +209,12 @@ Zod スキーマを使ったバリデーションを Result 型で返す層。
 
 ### `src/generated/` - 自動生成ファイル
 
-Prisma Client などの自動生成ファイル。
+各種コード生成ツールの出力先。
 
 **注意:**
 
 - `.gitignore` に含める（リポジトリにコミットしない）
-- `pnpm db:generate` で生成
-
-### `prisma/` - データベーススキーマ
-
-Prisma スキーマとマイグレーションファイル。
-
-**ファイル:**
-
-- `schema.prisma`: データモデル定義
-- `migrations/`: マイグレーション履歴
-
-**データモデル構造:**
-
-```text
-User (Clerk 認証ユーザー)
-└── Habit (習慣)
-    └── Checkin (チェックイン記録)
-```
+- 生成コマンドは利用ツールに準拠（例: `pnpm db:generate`）
 
 ### `public/` - 静的アセット・PWA
 
@@ -217,19 +234,6 @@ Cloudflare Secrets などの運用初期化・補助スクリプトを配置。
 
 lint/test/build/デプロイのワークフローを定義（docs-only の変更は軽量ゲート）。
 
-### `.claude/` - Claude Code 設定
-
-プロジェクト固有の Claude Code 設定ファイル。
-
-**ファイル:**
-
-- `CLAUDE.md`: プロジェクト概要・コマンド一覧
-- `rules/*.md`: 開発規約・技術スタック・セキュリティガイドライン
-
-**注意:**
-
-- `.kiro/` は steering ファイル（本ファイル）で言及しない
-
 ## インポートパターン
 
 ### エイリアス設定
@@ -239,15 +243,15 @@ lint/test/build/デプロイのワークフローを定義（docs-only の変更
 **良い例:**
 
 ```tsx
-import { prisma } from "@/lib/db";
-import HabitCard from "@/components/HabitCard";
+import { getDb } from '@/lib/db'
+import { habits } from '@/db/schema'
 ```
 
 **悪い例:**
 
 ```tsx
 // ❌ 相対パスは避ける
-import { prisma } from "../../lib/db";
+import { getDb } from '../../lib/db'
 ```
 
 ## 命名規約
@@ -289,11 +293,11 @@ import { prisma } from "../../lib/db";
 
 ### デプロイフロー
 
-1. `mise run ci`: CI チェック（lint + build）
+1. `mise run ci`: CI チェック（lint）
 2. `pnpm build:cf`: OpenNext ビルド
 3. `pnpm deploy`: Cloudflare Workers デプロイ
 
 ### データベースマイグレーション
 
-1. `pnpm db:migrate`: マイグレーション作成
-2. `pnpm db:migrate:deploy`: 本番適用
+1. `pnpm db:generate`: マイグレーション生成
+2. `pnpm db:migrate`: マイグレーション適用

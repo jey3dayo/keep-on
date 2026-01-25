@@ -61,8 +61,8 @@ description = "クイックチェック（型 + Biome）"
 depends = ["lint:types", "lint:biome"]
 
 [tasks.ci]
-description = "CI相当のチェック（lint のみ）"
-depends = ["lint"]
+description = "CI相当のチェック（format + 型チェック + Markdown + YAML）"
+depends = ["format", "lint:types", "lint:md", "lint:yaml"]
 
 # ========================================
 # デプロイ関連
