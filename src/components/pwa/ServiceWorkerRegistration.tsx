@@ -16,6 +16,11 @@ export function ServiceWorkerRegistration() {
       .then((reg) => {
         setRegistration(reg)
 
+        // ページロード時に既にwaiting状態のSWがある場合の対応
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          setUpdateAvailable(true)
+        }
+
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing
           if (!newWorker) {
@@ -37,7 +42,11 @@ export function ServiceWorkerRegistration() {
   const handleUpdate = () => {
     if (registration?.waiting) {
       registration.waiting.postMessage({ type: 'SKIP_WAITING' })
-      window.location.reload()
+
+      // 新しいService Workerが制御権を取得するまで待機
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload()
+      })
     }
   }
 
