@@ -13,6 +13,7 @@ paths: "**/*.{ts,tsx}"
 | 認証           | Clerk                          | @clerk/nextjs (Edge対応)      |
 | ORM            | Drizzle ORM                    | postgres-js adapter           |
 | DB             | Supabase                       | PostgreSQL (Transaction Mode) |
+| バリデーション | Valibot                        | 軽量 (~5KB)、Tree-shakable    |
 | 環境変数       | dotenvx                        | 暗号化管理                    |
 | スタイリング   | Tailwind CSS                   | v4.x                          |
 | PWA            | manifest.json + Service Worker | iOS対応                       |

@@ -1,6 +1,6 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
+import { valibotResolver } from '@hookform/resolvers/valibot'
 import { Result } from '@praha/byethrow'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
@@ -16,7 +16,7 @@ export function HabitFormServer() {
   const [success, setSuccess] = useState(false)
 
   const form = useForm<HabitInputSchemaType>({
-    resolver: zodResolver(HabitInputSchema),
+    resolver: valibotResolver(HabitInputSchema),
     defaultValues: {
       name: '',
       emoji: null,
