@@ -1,13 +1,7 @@
 'use client'
 
 import { ColorPalette } from '@/components/streak/ColorPalette'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useColorTheme } from '@/hooks/use-color-theme'
 
 export function ThemeSettings() {
