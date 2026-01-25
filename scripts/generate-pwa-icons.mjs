@@ -30,8 +30,8 @@ async function generateIcons() {
 
       if (maskable) {
         // maskable: 80%サイズで中央配置、背景色追加
-        const resizedSize = Math.floor(size * 0.8)
-        const padding = Math.floor((size - resizedSize) / 2)
+        const resizedSize = Math.round(size * 0.8)
+        const padding = Math.round((size - resizedSize) / 2)
 
         await image
           .resize(resizedSize, resizedSize, { fit: 'contain' })
