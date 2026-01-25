@@ -34,15 +34,12 @@ export async function getHabitById(id: string) {
  */
 export async function createHabit(input: HabitInput) {
   const db = await getDb()
-  const now = new Date()
   const [habit] = await db
     .insert(habits)
     .values({
       userId: input.userId,
       name: input.name,
       emoji: input.emoji,
-      createdAt: now,
-      updatedAt: now,
     })
     .returning()
   return habit
