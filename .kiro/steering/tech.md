@@ -52,6 +52,8 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 - `src/db/schema.ts` にスキーマ定義を集約
 - `src/lib/db.ts` で接続ロジックを一元化し、`drizzle-orm/postgres-js` + `postgres` を使用
 - Cloudflare Workers では Hyperdrive (`HYPERDRIVE.connectionString`) があれば優先し、なければ `DATABASE_URL` を使用
+- Workers 向けの接続最適化（`prepare: false` / `fetch_types: false` / `max: 1` など）を付与
+- 接続生成は `globalThis` 上の Promise を再利用して多重初期化を回避
 
 ### デプロイ
 
@@ -70,6 +72,8 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 - **dotenvx**: 環境変数の暗号化管理
 - `.env` を暗号化してリポジトリにコミット可能
 - `.env.keys` はローカルのみ（**絶対にコミットしない**）
+- **Valibot による実行時バリデーション**: `src/env.ts` でスキーマ定義
+- **Cloudflare Workers 対応**: `SKIP_ENV_VALIDATION` でバリデーションをスキップ可能
 
 ## 技術的な制約と対応
 
@@ -121,10 +125,11 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 
 ```toml
 # mise.toml で定義されたタスク
-format  # Ultracite + Taplo + Markdownlint
-lint    # 型チェック + Biome + Markdown + YAML
-check   # ローカル確認（format + lint）
-ci      # CI 相当のチェック（lint）
+format       # Ultracite + Taplo + Markdownlint(--fix)
+lint         # 型チェック + Biome + Markdown + YAML
+check        # ローカル確認（format + lint）
+check:quick  # クイックチェック（型 + Biome）
+ci           # CI 相当のチェック（format + 型 + Markdown + YAML）
 ```
 
 - lint は `lint:types` / `lint:biome` / `lint:md` / `lint:yaml` に分割し、必要に応じて個別実行
@@ -134,7 +139,7 @@ ci      # CI 相当のチェック（lint）
 
 - `public/manifest.json` による PWA 定義
 - iOS 対応のメタタグ設定
-- Service Worker による将来的なオフライン対応（未実装）
+- `public/sw.js` によるキャッシュ戦略とオフラインページへのフォールバック
 
 ## エラーハンドリング
 

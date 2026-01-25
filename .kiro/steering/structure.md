@@ -16,12 +16,11 @@ keep-on/
 │   │   ├── habits/       # 機能別 UI
 │   │   └── dashboard/    # ダッシュボード UI
 │   ├── db/               # Drizzle スキーマ
+│   ├── env.ts            # 環境変数バリデーション
 │   ├── hooks/            # 共有カスタム Hooks
 │   ├── lib/              # ユーティリティ・共通ロジック
 │   ├── schemas/          # Valibot スキーマ
 │   ├── validators/       # バリデーション（Result 型）
-│   ├── types/            # 共有型定義
-│   └── generated/        # 自動生成ファイル
 ├── public/               # 静的アセット・PWA ファイル
 ├── drizzle.config.ts     # Drizzle 設定
 ├── open-next.config.ts   # OpenNext 設定
@@ -49,7 +48,8 @@ src/app/
 ├── page.tsx            # Home Page (Server Component)
 ├── actions/
 │   └── habits/
-│       └── create.ts   # 習慣作成の Server Action
+│       ├── create.ts   # 習慣作成の Server Action
+│       └── checkin.ts  # チェックイン切替の Server Action
 ├── (dashboard)/        # Route Group
 │   ├── layout.tsx       # ダッシュボード共通レイアウト
 │   ├── dashboard/
@@ -63,6 +63,8 @@ src/app/
 │   │   └── page.tsx
 │   └── help/
 │       └── page.tsx
+├── offline/
+│   └── page.tsx        # オフライン時フォールバック
 ├── sign-in/[[...sign-in]]/
 │   └── page.tsx        # Clerk サインインページ
 └── sign-up/[[...sign-up]]/
@@ -168,7 +170,7 @@ User (Clerk 認証ユーザー)
 **構造:**
 
 - トップレベル: 汎用コンポーネント（Button, Input など）
-- サブディレクトリ: 機能別グルーピング（例: `habits/`）
+- サブディレクトリ: 機能別グルーピング（例: `habits/`, `dashboard/`, `pwa/`, `streak/`）
 - `ui/`: shadcn/ui 由来のプリミティブ（Radix ラッパー）
 
 **Storybook:**
