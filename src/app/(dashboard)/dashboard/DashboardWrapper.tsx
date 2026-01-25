@@ -2,11 +2,13 @@
 
 import { Result } from '@praha/byethrow'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { toggleCheckinAction } from '@/app/actions/habits/checkin'
 import { createHabit } from '@/app/actions/habits/create'
 import type { IconName } from '@/components/Icon'
 import { DesktopDashboard } from '@/components/streak/DesktopDashboard'
 import { StreakDashboard } from '@/components/streak/StreakDashboard'
+import { formatSerializableError } from '@/lib/errors/serializable'
 
 interface Habit {
   id: string
@@ -52,6 +54,9 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
       router.refresh()
     } else {
       console.error('習慣の作成に失敗しました:', result.error)
+      toast.error('習慣の作成に失敗しました', {
+        description: formatSerializableError(result.error),
+      })
     }
   }
 
@@ -62,6 +67,9 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
       router.refresh()
     } else {
       console.error('チェックインの切り替えに失敗しました:', result.error)
+      toast.error('チェックインの切り替えに失敗しました', {
+        description: result.error.message,
+      })
     }
   }
 
