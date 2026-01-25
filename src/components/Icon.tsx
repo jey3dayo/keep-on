@@ -110,6 +110,23 @@ export type IconProps = LucideProps & {
   name: IconName
 }
 
+/**
+ * 有効なIconNameかチェックする型ガード
+ */
+export function isValidIconName(name: unknown): name is IconName {
+  return typeof name === 'string' && name in icons
+}
+
+/**
+ * 無効なアイコン名をデフォルト値にフォールバックする
+ */
+export function normalizeIconName(name: unknown): IconName {
+  if (isValidIconName(name)) {
+    return name
+  }
+  return 'circle-check' // デフォルトアイコン
+}
+
 export function Icon({ name, ...props }: IconProps): React.JSX.Element {
   const Component = icons[name]
   return <Component {...props} />

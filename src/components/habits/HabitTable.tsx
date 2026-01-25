@@ -1,4 +1,5 @@
 import { format } from 'date-fns'
+import { Icon, type IconName } from '@/components/Icon'
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { getHabitsByUserId } from '@/lib/queries/habit'
 import { HabitTableActions } from './HabitTableActions'
@@ -26,7 +27,7 @@ export async function HabitTable({ userId }: HabitTableProps) {
       <TableCaption>あなたの習慣一覧（{habits.length}件）</TableCaption>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[60px]">絵文字</TableHead>
+          <TableHead className="w-[60px]">アイコン</TableHead>
           <TableHead>名前</TableHead>
           <TableHead className="hidden w-[120px] md:table-cell">作成日</TableHead>
           <TableHead className="w-[100px] text-right">操作</TableHead>
@@ -35,7 +36,9 @@ export async function HabitTable({ userId }: HabitTableProps) {
       <TableBody>
         {habits.map((habit) => (
           <TableRow key={habit.id}>
-            <TableCell className="text-2xl">{habit.emoji}</TableCell>
+            <TableCell>
+              <Icon className="text-foreground" name={(habit.icon as IconName) || 'circle-check'} size={20} />
+            </TableCell>
             <TableCell className="font-medium">{habit.name}</TableCell>
             <TableCell className="hidden md:table-cell">{format(habit.createdAt, 'yyyy/MM/dd')}</TableCell>
             <TableCell>

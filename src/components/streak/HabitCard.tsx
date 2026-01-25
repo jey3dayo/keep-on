@@ -1,6 +1,6 @@
 'use client'
 
-import { Icon, type IconName } from '@/components/Icon'
+import { Icon, normalizeIconName } from '@/components/Icon'
 import { cn } from '@/lib/utils'
 
 interface Habit {
@@ -32,7 +32,7 @@ export function HabitCard({ habit, completed, onToggle }: HabitCardProps) {
     >
       <div className="flex flex-col items-center gap-4">
         <div className="relative flex h-20 w-20 items-center justify-center rounded-full border-4 border-black/20">
-          <Icon className="h-10 w-10" name={(habit.icon as IconName) || 'circle-check'} />
+          <Icon className="h-10 w-10" name={normalizeIconName(habit.icon)} />
           {completed && (
             <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
               <Icon className="h-10 w-10" name="check" />

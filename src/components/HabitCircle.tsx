@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { Icon } from './Icon'
+import { Icon, type IconName } from './Icon'
 
 export interface HabitCircleProps {
   /** 習慣名 */
   habitName: string
-  /** 絵文字アイコン */
-  emoji?: string | null
+  /** アイコン */
+  icon?: IconName | null
   /** 完了状態 */
   completed: boolean
   /** クリックハンドラー */
@@ -24,28 +24,29 @@ const sizeMap = {
     container: 'w-16 h-16',
     svg: 60,
     circle: 28,
-    emoji: 'text-2xl',
+    icon: 24,
     check: 16,
   },
   md: {
     container: 'w-24 h-24',
     svg: 90,
     circle: 42,
-    emoji: 'text-4xl',
+    icon: 36,
     check: 24,
   },
   lg: {
     container: 'w-32 h-32',
     svg: 120,
     circle: 56,
-    emoji: 'text-5xl',
+    icon: 48,
     check: 32,
   },
 }
 
-export function HabitCircle({ habitName, emoji, completed, onClick, size = 'md', className }: HabitCircleProps) {
+export function HabitCircle({ habitName, icon, completed, onClick, size = 'md', className }: HabitCircleProps) {
   const [isAnimating, setIsAnimating] = useState(false)
   const sizeConfig = sizeMap[size]
+  const iconName = icon ?? 'circle-check'
 
   const centerX = sizeConfig.svg / 2
   const centerY = sizeConfig.svg / 2
@@ -124,7 +125,7 @@ export function HabitCircle({ habitName, emoji, completed, onClick, size = 'md',
             <Icon name="check" size={sizeConfig.check} strokeWidth={3} />
           </div>
         ) : (
-          <span className={cn('select-none', sizeConfig.emoji)}>{emoji || '✓'}</span>
+          <Icon className="text-foreground" name={iconName} size={sizeConfig.icon} />
         )}
       </div>
     </button>

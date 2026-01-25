@@ -1,7 +1,6 @@
 'use client'
 
-import type { IconName } from '@/components/Icon'
-import { Icon } from '@/components/Icon'
+import { Icon, normalizeIconName } from '@/components/Icon'
 import { TaskCircle } from './TaskCircle'
 
 interface Habit {
@@ -26,7 +25,7 @@ export function TaskGrid({ habits, completedHabitIds, onToggleHabit, onAddClick 
             completed={completedHabitIds.has(habit.id)}
             habitId={habit.id}
             habitName={habit.name}
-            icon={(habit.icon as IconName) || 'circle-check'}
+            icon={normalizeIconName(habit.icon)}
             key={habit.id}
             onToggle={onToggleHabit}
           />

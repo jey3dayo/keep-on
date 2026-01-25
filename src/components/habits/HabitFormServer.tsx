@@ -16,7 +16,7 @@ export function HabitFormServer() {
     resolver: valibotResolver(HabitInputSchema),
     defaultValues: {
       name: '',
-      emoji: null,
+      icon: null,
     },
   })
 
@@ -24,8 +24,8 @@ export function HabitFormServer() {
     // FormDataを作成してServer Actionを呼び出し
     const formData = new FormData()
     formData.append('name', data.name)
-    if (data.emoji?.trim()) {
-      formData.append('emoji', data.emoji)
+    if (data.icon?.trim()) {
+      formData.append('icon', data.icon)
     }
 
     const result = await createHabit(formData)
@@ -66,17 +66,17 @@ export function HabitFormServer() {
 
       <Controller
         control={form.control}
-        name="emoji"
+        name="icon"
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>絵文字（任意）</FieldLabel>
+            <FieldLabel htmlFor={field.name}>アイコン（任意）</FieldLabel>
             <Input
               {...field}
               aria-invalid={fieldState.invalid}
               error={fieldState.invalid}
               id={field.name}
-              maxLength={2}
-              placeholder="🏃"
+              maxLength={50}
+              placeholder="circle-check"
               type="text"
               value={field.value ?? ''}
             />
