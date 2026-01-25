@@ -18,6 +18,8 @@
     "build:cf": "dotenvx run -- npx @opennextjs/cloudflare build",
     "deploy": "wrangler deploy",
     "preview": "dotenvx run -- npx @opennextjs/cloudflare dev",
+    "logs": "dotenvx run -- wrangler tail",
+    "logs:prod": "dotenvx run -- wrangler tail --env production",
     "db:generate": "drizzle-kit generate",
     "db:push": "dotenvx run -- drizzle-kit push",
     "db:migrate": "dotenvx run -- drizzle-kit migrate",
