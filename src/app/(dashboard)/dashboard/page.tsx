@@ -1,6 +1,12 @@
 import { HabitListServer } from '@/components/habits/HabitListServer'
 import { syncUser } from '@/lib/user'
+import type { Metadata } from 'next'
 import { DashboardClient } from './DashboardClient'
+
+export const metadata: Metadata = {
+  title: 'ダッシュボード - KeepOn',
+  description: '習慣の進捗状況とアクティビティを確認',
+}
 
 export default async function DashboardPage() {
   // Clerk認証されたユーザーをPrismaに同期

@@ -1,6 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+
+export const metadata: Metadata = {
+  title: 'KeepOn - 習慣トラッキングアプリ',
+  description: 'シンプルで使いやすい習慣トラッキングアプリ。毎日の習慣を記録して、目標達成をサポートします。',
+}
 
 export default async function Home() {
   const { userId } = await auth()

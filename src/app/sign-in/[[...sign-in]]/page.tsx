@@ -1,4 +1,10 @@
 import { SignIn } from '@clerk/nextjs'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'サインイン - KeepOn',
+  description: 'KeepOnにサインインして習慣トラッキングを始めましょう',
+}
 
 export default function SignInPage() {
   return (

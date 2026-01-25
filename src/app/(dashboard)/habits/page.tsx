@@ -1,6 +1,12 @@
 import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
 import { HabitTable } from '@/components/habits/HabitTable'
 import { getCurrentUserId } from '@/lib/user'
+
+export const metadata: Metadata = {
+  title: '習慣管理 - KeepOn',
+  description: '習慣の作成、編集、削除を行う',
+}
 
 export default async function HabitsPage() {
   const userId = await getCurrentUserId()
