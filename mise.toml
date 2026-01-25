@@ -25,7 +25,7 @@ description = "Ultracite(Biome)でソース全体を整形 + Taplo + Markdownlin
 run = [
   "pnpm run format",
   "taplo fmt mise.toml",
-  "pnpm markdownlint-cli2 '**/*.md' '#node_modules' --fix",
+  "pnpm markdownlint-cli2 '**/*.md' '#**/node_modules/**' '#**/.worktrees/**' --fix",
 ]
 
 [tasks."lint:types"]
@@ -38,7 +38,7 @@ run = "pnpm run lint"
 
 [tasks."lint:md"]
 description = "Markdownのチェック"
-run = "pnpm markdownlint-cli2 '**/*.md' '#node_modules'"
+run = "pnpm markdownlint-cli2 '**/*.md' '#**/node_modules/**' '#**/.worktrees/**'"
 
 [tasks."lint:yaml"]
 description = "YAMLのチェック"

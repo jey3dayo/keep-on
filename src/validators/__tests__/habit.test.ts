@@ -9,7 +9,7 @@ describe('validateHabitInput', () => {
   it('正常な入力をSuccessとして返す', () => {
     const formData = new FormData()
     formData.append('name', '朝の運動')
-    formData.append('emoji', '🏃')
+    formData.append('icon', 'footprints')
 
     const result = validateHabitInput(userId, formData)
 
@@ -18,7 +18,7 @@ describe('validateHabitInput', () => {
       expect(result.value).toEqual({
         userId: 'user-123',
         name: '朝の運動',
-        emoji: '🏃',
+        icon: 'footprints',
       })
     }
   })
@@ -52,7 +52,7 @@ describe('validateHabitInput', () => {
     }
   })
 
-  it('emojiが省略された場合はnullとして扱う', () => {
+  it('iconが省略された場合はnullとして扱う', () => {
     const formData = new FormData()
     formData.append('name', '朝の運動')
 
@@ -60,7 +60,7 @@ describe('validateHabitInput', () => {
 
     expect(Result.isSuccess(result)).toBe(true)
     if (Result.isSuccess(result)) {
-      expect(result.value.emoji).toBeNull()
+      expect(result.value.icon).toBeNull()
     }
   })
 

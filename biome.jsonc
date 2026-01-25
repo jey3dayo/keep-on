@@ -3,41 +3,41 @@
   "extends": [
     "ultracite/biome/core",
     "ultracite/biome/react",
-    "ultracite/biome/next",
+    "ultracite/biome/next"
   ],
   "files": {
-    "includes": ["**/*", "!!**/src/components/ui"],
+    "includes": ["**/*", "!!**/src/components/ui"]
   },
   "formatter": {
-    "lineWidth": 120,
+    "lineWidth": 120
   },
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
       "semicolons": "asNeeded",
-      "trailingCommas": "es5",
-    },
+      "trailingCommas": "es5"
+    }
   },
   "linter": {
     "rules": {
       "style": {
-        "useFilenamingConvention": "off",
+        "useFilenamingConvention": "off"
       },
       "suspicious": {
-        "noUnknownAtRules": "off",
+        "noUnknownAtRules": "off"
       },
       "performance": {
         "noNamespaceImport": "off",
-        "noBarrelFile": "off",
+        "noBarrelFile": "off"
       },
       "a11y": {
-        "useSemanticElements": "off",
-      },
-    },
+        "useSemanticElements": "off"
+      }
+    }
   },
   "vcs": {
     "enabled": true,
     "clientKind": "git",
-    "useIgnoreFile": true,
-  },
+    "useIgnoreFile": true
+  }
 }

@@ -85,10 +85,10 @@ export const WithoutIcon: Story = {
 export const AllSizes: Story = {
   render: () => (
     <div className="flex items-center gap-6">
-      <HabitCircle completed={false} icon="footprints" habitName="Small habit" size="sm" />
-      <HabitCircle completed={false} icon="footprints" habitName="Small habit" size="sm" />
-      <HabitCircle completed={false} icon="book-open" habitName="Medium habit" size="md" />
-      <HabitCircle completed={false} icon="dumbbell" habitName="Large habit" size="lg" />
+      <HabitCircle completed={false} habitName="Small habit" icon="footprints" size="sm" />
+      <HabitCircle completed={false} habitName="Small habit" icon="footprints" size="sm" />
+      <HabitCircle completed={false} habitName="Medium habit" icon="book-open" size="md" />
+      <HabitCircle completed={false} habitName="Large habit" icon="dumbbell" size="lg" />
     </div>
   ),
 }
@@ -98,18 +98,18 @@ export const AllStates: Story = {
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-6">
         <div className="flex flex-col items-center gap-2">
-          <HabitCircle completed={false} icon="footprints" habitName="Running" size="md" />
+          <HabitCircle completed={false} habitName="Running" icon="footprints" size="md" />
           <span className="text-muted-foreground text-sm">Incomplete</span>
         </div>
         <div className="flex flex-col items-center gap-2">
-          <HabitCircle completed={true} icon="footprints" habitName="Running" size="md" />
+          <HabitCircle completed={true} habitName="Running" icon="footprints" size="md" />
           <span className="text-muted-foreground text-sm">Completed</span>
         </div>
       </div>
       <div className="flex items-center gap-6">
-        <HabitCircle completed={false} icon="book-open" habitName="Small" size="sm" />
-        <HabitCircle completed={false} icon="target" habitName="Medium" size="md" />
-        <HabitCircle completed={false} icon="dumbbell" habitName="Large" size="lg" />
+        <HabitCircle completed={false} habitName="Small" icon="book-open" size="sm" />
+        <HabitCircle completed={false} habitName="Medium" icon="target" size="md" />
+        <HabitCircle completed={false} habitName="Large" icon="dumbbell" size="lg" />
       </div>
     </div>
   ),
