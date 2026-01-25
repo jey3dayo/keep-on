@@ -57,7 +57,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.11",
+    "@biomejs/biome": "2.3.12",
     "@dotenvx/dotenvx": "^1.52.0",
     "@storybook/addon-a11y": "^10.2.0",
     "@storybook/addon-themes": "^10.2.0",
