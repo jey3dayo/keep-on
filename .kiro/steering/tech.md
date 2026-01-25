@@ -43,24 +43,15 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 
 ### データベース・ORM
 
-- **Supabase (PostgreSQL)**: マネージドな PostgreSQL サービス
-- **Prisma v7.x**: Driver Adapter による Edge 互換構成
-
-**重要な設定:**
-
-```prisma
-generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
-}
-```
+- **PostgreSQL**: 接続先は `DATABASE_URL` で指定（環境差分は接続文字列で吸収）
+- **Drizzle ORM**: 型安全なクエリとスキーマ管理
+- **drizzle-kit**: マイグレーション/スキーマ生成（`drizzle.config.ts`）
 
 **接続パターン:**
 
-- Transaction Mode (Port 6543) + `?pgbouncer=true`
-- `@prisma/adapter-pg` による Driver Adapter 使用（`DATABASE_URL`）
-- Prisma Client インスタンスは `src/lib/db.ts` で一元管理
-- `prisma/prisma.config.ts` で schema/migrations と `DIRECT_URL` を管理
+- `src/db/schema.ts` にスキーマ定義を集約
+- `src/lib/db.ts` で接続ロジックを一元化し、`drizzle-orm/postgres-js` + `postgres` を使用
+- Cloudflare Workers では Hyperdrive (`HYPERDRIVE.connectionString`) があれば優先し、なければ `DATABASE_URL` を使用
 
 ### デプロイ
 
@@ -90,11 +81,11 @@ generator client {
 | Node.js API 使用不可 | Web 標準 API の使用、Edge Runtime 互換ライブラリの選定 |
 | 長時間実行不可 | ステートレスな設計、バックグラウンド処理は別サービス化 |
 
-### Prisma Driver Adapter
+### データベース接続と Edge 対応
 
-- Prisma 7 の Driver Adapter を利用し、Edge 互換の接続を実現
-- `@prisma/adapter-pg` + 接続文字列で Postgres に接続
-- Supabase 利用時は Transaction Mode（Port 6543）+ `?pgbouncer=true` を推奨
+- Edge 環境でも動く `postgres` ドライバを採用
+- React `cache()` で接続初期化をメモ化し、Server Component から安全に利用
+- 接続文字列は `DATABASE_URL` / Hyperdrive を切り替え
 
 ## 開発ツール
 
@@ -102,6 +93,7 @@ generator client {
 - **mise**: タスクランナー・ツールバージョン管理
 - **Ultracite (Biome)**: 統合フォーマッター・Linter（Prettier + ESLint を置き換え）
 - **markdownlint**: Markdown ドキュメント品質チェック
+- **drizzle-kit**: マイグレーション/スキーマ生成ツール
 - **Vitest**: 単体テストランナー + カバレッジレポート
 - **Storybook**: UI コンポーネントの開発・ドキュメント化（Next.js + Vite builder）
 
@@ -123,7 +115,7 @@ generator client {
 **除外パターン:**
 
 - `node_modules/`, `.next/`, `.open-next/`, `out/`, `build/`, `dist/`
-- `src/generated/` (Prisma Client 自動生成ファイル)
+- `src/generated/`（自動生成ファイル）
 
 ### mise タスク
 
