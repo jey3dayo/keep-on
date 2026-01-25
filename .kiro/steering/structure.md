@@ -106,10 +106,10 @@ export async function createHabit(formData: FormData) {
 
   if (Result.isSuccess(result)) {
     revalidatePath("/dashboard");
-    return { success: true };
+    return Result.succeed(undefined);
   }
 
-  return { error: result.error.message };
+  return Result.fail(result.error);
 }
 ```
 
