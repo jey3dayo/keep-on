@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dotenvx": "dotenvx",
     "dev": "dotenvx run -- next dev --turbopack",
     "build": "dotenvx run -- next build",
     "start": "dotenvx run -- next start",
@@ -11,15 +10,14 @@
     "test:ui": "dotenvx run -- vitest --ui",
     "test:run": "dotenvx run -- vitest run",
     "test:coverage": "dotenvx run -- vitest run --coverage",
-    "format": "ultracite fix",
     "lint": "ultracite check",
-    "lint:fix": "ultracite fix",
+    "format": "ultracite fix",
     "doctor": "ultracite doctor",
     "cf:build": "dotenvx run -- open-next-cloudflare build",
     "cf:deploy": "dotenvx run -- wrangler deploy",
-    "deploy": "run-s cf:build cf:deploy",
     "cf:preview": "dotenvx run -- open-next-cloudflare dev",
     "cf:logs": "dotenvx run -- wrangler tail --format pretty",
+    "deploy": "run-s cf:build cf:deploy",
     "db:generate": "drizzle-kit generate",
     "db:push": "dotenvx run -- drizzle-kit push",
     "db:migrate": "dotenvx run -- drizzle-kit migrate",
@@ -27,7 +25,7 @@
     "env:encrypt": "dotenvx encrypt",
     "env:run": "dotenvx run --",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "storybook:build": "storybook build"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.10",
