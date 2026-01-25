@@ -49,7 +49,15 @@ async function getConnectionString(): Promise<string> {
 async function createDb() {
   const rawConnectionString = await getConnectionString()
   const { connectionString, usePgbouncer } = normalizeConnectionString(rawConnectionString)
-  const client = usePgbouncer ? postgres(connectionString, { prepare: false, max: 1 }) : postgres(connectionString)
+
+  // Cloudflare Workers最適化設定
+  const client = postgres(connectionString, {
+    prepare: false, // PgBouncer互換モード
+    max: 1, // Workers環境では1接続のみ
+    idle_timeout: 20, // アイドルタイムアウト（秒）
+    connect_timeout: 10, // 接続タイムアウト（秒）
+  })
+
   return drizzle(client, { schema })
 }
 
@@ -59,12 +67,12 @@ const globalForDb = globalThis as typeof globalThis & {
   __dbPromise?: DbPromise
 }
 
-export function getDb() {
+export async function getDb() {
   if (!globalForDb.__dbPromise) {
     globalForDb.__dbPromise = createDb()
   }
 
-  return globalForDb.__dbPromise
+  return await globalForDb.__dbPromise
 }
 
 export type DbClient = Awaited<ReturnType<typeof getDb>>
