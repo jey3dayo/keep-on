@@ -11,7 +11,7 @@ paths: "src/**/*.{ts,tsx}"
 - `src/app/` - App Router ページ・レイアウト・Server Actions
 - `src/lib/` - ユーティリティ・DB接続・データアクセス
 - `src/components/` - 共有コンポーネント
-- `src/schemas/` - Zodスキーマ定義
+- `src/schemas/` - Valibotスキーマ定義
 - `src/validators/` - バリデーションロジック
 - `src/db/` - Drizzle ORM スキーマ定義
 - `drizzle/` - マイグレーションファイル（自動生成）

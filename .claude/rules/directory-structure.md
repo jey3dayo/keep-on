@@ -26,7 +26,7 @@ src/
 │   ├── queries/      # Drizzle操作（生の返り値のみ）
 │   ├── errors/       # エラー型定義
 │   └── utils.ts      # ユーティリティ関数
-├── schemas/          # Zodスキーマ定義（純粋なスキーマのみ）
+├── schemas/          # Valibotスキーマ定義（純粋なスキーマのみ）
 └── validators/       # バリデーション（Result型を返す）
 ```
 
@@ -34,25 +34,35 @@ src/
 
 ### `src/schemas/`
 
-**責務:** Zodスキーマ定義
+**責務:** Valibotスキーマ定義
 
-- 純粋なZodスキーマの定義のみを行う
+- 純粋なValibotスキーマの定義のみを行う
 - ビジネスロジックやデータアクセスを含めない
-- 型推論（`z.infer<typeof Schema>`）用の型をエクスポート
+- 型推論（`v.InferOutput<typeof Schema>`）用の型をエクスポート
 
-**返り値の型:** `z.ZodType` + 推論型
+**返り値の型:** `v.BaseSchema` + 推論型
 
 **例:**
 
 ```typescript
-import { z } from "zod";
+import * as v from "valibot";
 
-export const HabitInputSchema = z.object({
-  name: z.string().trim().min(1).max(100),
-  emoji: z.string().nullable().optional(),
-});
+export const HabitInputSchema = v.pipe(
+  v.object({
+    name: v.pipe(
+      v.string(),
+      v.trim(),
+      v.minLength(1, "Name is required"),
+      v.maxLength(100, "Name is too long (max 100 characters)"),
+    ),
+    emoji: v.pipe(
+      v.nullable(v.string()),
+      v.transform((val) => (val?.trim() ? val.trim() : null)),
+    ),
+  }),
+);
 
-export type HabitInputSchemaType = z.infer<typeof HabitInputSchema>;
+export type HabitInputSchemaType = v.InferOutput<typeof HabitInputSchema>;
 ```
 
 ### `src/lib/queries/`
@@ -109,7 +119,7 @@ export async function createHabit(input: HabitInput) {
 **責務:** バリデーションロジック
 
 - FormDataやリクエストボディのバリデーション
-- `src/schemas/` のZodスキーマを使用
+- `src/schemas/` のValibotスキーマを使用
 - バリデーション結果を `Result<T, E>` 型で返す
 
 **返り値の型:** `Result<T, E>` (byethrow)

@@ -31,8 +31,8 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 
 ### フォーム・入力バリデーション
 
-- **React Hook Form + Zod**: フォーム状態管理とスキーマ駆動バリデーション
-- Zod スキーマは `src/schemas/` に集約し、`@hookform/resolvers/zod` で統合
+- **React Hook Form + Valibot**: フォーム状態管理とスキーマ駆動バリデーション
+- Valibot スキーマは `src/schemas/` に集約し、`@hookform/resolvers/valibot` で統合
 
 ### 認証
 
@@ -75,11 +75,11 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 
 ### Cloudflare Workers の制限
 
-| 制約 | 対応 |
-| --- | --- |
-| バンドルサイズ 25MB gzipped | 必要なライブラリのみインポート、Tree-shaking の活用 |
-| Node.js API 使用不可 | Web 標準 API の使用、Edge Runtime 互換ライブラリの選定 |
-| 長時間実行不可 | ステートレスな設計、バックグラウンド処理は別サービス化 |
+| 制約                        | 対応                                                   |
+| --------------------------- | ------------------------------------------------------ |
+| バンドルサイズ 25MB gzipped | 必要なライブラリのみインポート、Tree-shaking の活用    |
+| Node.js API 使用不可        | Web 標準 API の使用、Edge Runtime 互換ライブラリの選定 |
+| 長時間実行不可              | ステートレスな設計、バックグラウンド処理は別サービス化 |
 
 ### データベース接続と Edge 対応
 
@@ -152,21 +152,22 @@ ci      # CI 相当のチェック（lint）
 ```tsx
 // src/app/actions/habits/create.ts
 export class ValidationError extends ErrorFactory({
-  name: 'ValidationError',
-  message: 'Validation failed',
+  name: "ValidationError",
+  message: "Validation failed",
   fields: ErrorFactory.fields<{ field: string; reason: string }>(),
 }) {}
 
 const result = await Result.pipe(
   userIdResult,
   Result.andThen((userId) => validateHabitInput(userId, formData)),
-  Result.andThen(async (input) =>
-    await Result.try({
-      try: async () => createHabitQuery(input),
-      catch: (error) => new DatabaseError({ cause: error }),
-    })()
-  )
-)
+  Result.andThen(
+    async (input) =>
+      await Result.try({
+        try: async () => createHabitQuery(input),
+        catch: (error) => new DatabaseError({ cause: error }),
+      })(),
+  ),
+);
 
 if (Result.isSuccess(result)) {
   // 成功処理
@@ -188,14 +189,14 @@ if (Result.isSuccess(result)) {
 
 ```typescript
 // src/lib/utils.test.ts
-import { describe, it, expect } from 'vitest'
-import { myFunction } from './utils'
+import { describe, it, expect } from "vitest";
+import { myFunction } from "./utils";
 
-describe('myFunction', () => {
-  it('正しく動作する', () => {
-    expect(myFunction()).toBe('expected')
-  })
-})
+describe("myFunction", () => {
+  it("正しく動作する", () => {
+    expect(myFunction()).toBe("expected");
+  });
+});
 ```
 
 ## セキュリティ原則

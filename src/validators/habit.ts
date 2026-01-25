@@ -1,5 +1,6 @@
 import { Result } from '@praha/byethrow'
 import type { InferInsertModel } from 'drizzle-orm'
+import * as v from 'valibot'
 import { ValidationError } from '@/lib/errors/habit'
 import { HabitInputSchema } from '@/schemas/habit'
 
@@ -19,13 +20,13 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
   const name = formData.get('name')
   const emoji = formData.get('emoji')
 
-  const parseResult = HabitInputSchema.safeParse({ name, emoji })
+  const parseResult = v.safeParse(HabitInputSchema, { name, emoji })
 
   if (!parseResult.success) {
-    const firstIssue = parseResult.error.issues[0]
+    const firstIssue = parseResult.issues[0]
     return Result.fail(
       new ValidationError({
-        field: firstIssue?.path.join('.') || 'unknown',
+        field: firstIssue?.path?.map((p) => p.key).join('.') || 'unknown',
         reason: firstIssue?.message || 'Validation failed',
       })
     )
@@ -33,7 +34,7 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
 
   return Result.succeed({
     userId,
-    name: parseResult.data.name,
-    emoji: parseResult.data.emoji,
+    name: parseResult.output.name,
+    emoji: parseResult.output.emoji,
   })
 }

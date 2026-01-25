@@ -18,7 +18,7 @@ keep-on/
 │   ├── db/               # Drizzle スキーマ
 │   ├── hooks/            # 共有カスタム Hooks
 │   ├── lib/              # ユーティリティ・共通ロジック
-│   ├── schemas/          # Zod スキーマ
+│   ├── schemas/          # Valibot スキーマ
 │   ├── validators/       # バリデーション（Result 型）
 │   ├── types/            # 共有型定義
 │   └── generated/        # 自動生成ファイル
@@ -84,29 +84,30 @@ Next.js 16 App Router の Server Actions を配置。
 
 ```tsx
 // src/app/actions/habits/create.ts
-'use server'
+"use server";
 
-import { Result } from '@praha/byethrow'
-import { revalidatePath } from 'next/cache'
+import { Result } from "@praha/byethrow";
+import { revalidatePath } from "next/cache";
 
 export async function createHabit(formData: FormData) {
   const result = await Result.pipe(
     await authenticateUser(),
     Result.andThen((userId) => validateHabitInput(userId, formData)),
-    Result.andThen(async (input) =>
-      await Result.try({
-        try: async () => createHabitQuery(input),
-        catch: (error) => new DatabaseError({ cause: error }),
-      })()
-    )
-  )
+    Result.andThen(
+      async (input) =>
+        await Result.try({
+          try: async () => createHabitQuery(input),
+          catch: (error) => new DatabaseError({ cause: error }),
+        })(),
+    ),
+  );
 
   if (Result.isSuccess(result)) {
-    revalidatePath('/dashboard')
-    return { success: true }
+    revalidatePath("/dashboard");
+    return { success: true };
   }
 
-  return { error: result.error.message }
+  return { error: result.error.message };
 }
 ```
 
@@ -126,13 +127,15 @@ export async function createHabit(formData: FormData) {
 
 ```tsx
 // src/lib/db.ts
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import { cache } from 'react'
-import * as schema from '@/db/schema'
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { cache } from "react";
+import * as schema from "@/db/schema";
 
-const connectionString = process.env.DATABASE_URL!
-export const getDb = cache(async () => drizzle(postgres(connectionString), { schema }))
+const connectionString = process.env.DATABASE_URL!;
+export const getDb = cache(async () =>
+  drizzle(postgres(connectionString), { schema }),
+);
 ```
 
 ### `src/db/` - Drizzle スキーマ
@@ -182,25 +185,25 @@ UI/レスポンシブなどの汎用 Hook を集約。
 - `useXxx` 命名（例: `use-mobile.ts`）
 - ブラウザ API 依存の Hook は Client Component から使用
 
-### `src/schemas/` - Zod スキーマ
+### `src/schemas/` - Valibot スキーマ
 
-入力バリデーションのための Zod スキーマを集約。
+入力バリデーションのための Valibot スキーマを集約。
 
 **例:**
 
 ```ts
 // src/schemas/habit.ts
-import { z } from 'zod'
+import * as v from "valibot";
 
-export const HabitInputSchema = z.object({
-  name: z.string().trim().min(1),
-  emoji: z.string().nullable(),
-})
+export const HabitInputSchema = v.object({
+  name: v.pipe(v.string(), v.trim(), v.minLength(1)),
+  emoji: v.nullable(v.string()),
+});
 ```
 
 ### `src/validators/` - バリデーション関数
 
-Zod スキーマを使ったバリデーションを Result 型で返す層。
+Valibot スキーマを使ったバリデーションを Result 型で返す層。
 
 **パターン:**
 
@@ -243,15 +246,15 @@ lint/test/build/デプロイのワークフローを定義（docs-only の変更
 **良い例:**
 
 ```tsx
-import { getDb } from '@/lib/db'
-import { habits } from '@/db/schema'
+import { getDb } from "@/lib/db";
+import { habits } from "@/db/schema";
 ```
 
 **悪い例:**
 
 ```tsx
 // ❌ 相対パスは避ける
-import { getDb } from '../../lib/db'
+import { getDb } from "../../lib/db";
 ```
 
 ## 命名規約
