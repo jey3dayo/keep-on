@@ -6,6 +6,7 @@
     "dotenvx": "dotenvx",
     "dev": "dotenvx run -- next dev --turbopack",
     "build": "dotenvx run -- next build",
+    "build:cf": "pnpm cf:build",
     "start": "dotenvx run -- next start",
     "test": "dotenvx run -- vitest",
     "test:ui": "dotenvx run -- vitest --ui",
