@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { A2HSPrompt } from '@/components/pwa/A2HSPrompt'
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -34,7 +35,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html lang="ja" suppressHydrationWarning>
         <body>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            {children}
+            <Toaster position="bottom-right" richColors />
+          </ThemeProvider>
           <ServiceWorkerRegistration />
           <A2HSPrompt />
         </body>

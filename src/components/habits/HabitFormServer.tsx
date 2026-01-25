@@ -2,8 +2,8 @@
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import { Result } from '@praha/byethrow'
-import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
@@ -12,9 +12,6 @@ import { formatSerializableError } from '@/lib/errors/serializable'
 import { HabitInputSchema, type HabitInputSchemaType } from '@/schemas/habit'
 
 export function HabitFormServer() {
-  const [serverError, setServerError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-
   const form = useForm<HabitInputSchemaType>({
     resolver: valibotResolver(HabitInputSchema),
     defaultValues: {
@@ -24,9 +21,6 @@ export function HabitFormServer() {
   })
 
   async function onSubmit(data: HabitInputSchemaType) {
-    setServerError(null)
-    setSuccess(false)
-
     // FormDataを作成してServer Actionを呼び出し
     const formData = new FormData()
     formData.append('name', data.name)
@@ -37,11 +31,14 @@ export function HabitFormServer() {
     const result = await createHabit(formData)
 
     if (Result.isSuccess(result)) {
-      setSuccess(true)
+      toast.success('習慣を作成しました', {
+        description: `「${data.name}」が追加されました`,
+      })
       form.reset()
     } else {
-      // シリアライズされたエラーをユーザー向けメッセージに変換
-      setServerError(formatSerializableError(result.error))
+      toast.error('習慣の作成に失敗しました', {
+        description: formatSerializableError(result.error),
+      })
     }
   }
 
@@ -87,9 +84,6 @@ export function HabitFormServer() {
           </Field>
         )}
       />
-
-      {serverError && <p className="text-destructive text-sm">{serverError}</p>}
-      {success && <p className="text-sm text-success">習慣を作成しました！</p>}
 
       <Button className="w-full" disabled={form.formState.isSubmitting} size="lg" type="submit">
         {form.formState.isSubmitting ? '作成中...' : '習慣を作成'}
