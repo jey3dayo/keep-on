@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Icon } from '@/components/Icon'
 import {
   Drawer,
@@ -26,14 +27,14 @@ export function StreakToolbar({ currentTheme, onThemeChange, ready }: StreakTool
   return (
     <div className="fixed right-0 bottom-0 left-0 border-white/20 border-t bg-black/10 p-3 backdrop-blur-sm">
       <div className="mx-auto grid max-w-md grid-cols-2 gap-2">
-        <a
+        <Link
           aria-current="page"
           className={cn(tabBaseClass, 'bg-white/20 text-white')}
           href="/dashboard"
         >
           <Icon className="h-4 w-4" name="home" />
           ホーム
-        </a>
+        </Link>
         <Drawer>
           <DrawerTrigger asChild>
             <button className={cn(tabBaseClass, 'hover:bg-white/10')} type="button">
