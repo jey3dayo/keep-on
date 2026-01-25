@@ -48,11 +48,12 @@ async function getConnectionString(): Promise<string> {
 
 async function createDb() {
   const rawConnectionString = await getConnectionString()
-  const { connectionString, usePgbouncer } = normalizeConnectionString(rawConnectionString)
+  const { connectionString } = normalizeConnectionString(rawConnectionString)
 
   // Cloudflare Workers最適化設定
   const client = postgres(connectionString, {
     prepare: false, // PgBouncer互換モード
+    fetch_types: false, // 型フェッチを無効化（Workers環境では不要）
     max: 1, // Workers環境では1接続のみ
     idle_timeout: 20, // アイドルタイムアウト（秒）
     connect_timeout: 10, // 接続タイムアウト（秒）
