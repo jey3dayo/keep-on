@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@/db/schema'
+import { env } from '@/env'
 import { PgbouncerParamSchema } from '@/schemas/db'
 
 interface ConnectionInfo {
@@ -40,10 +41,7 @@ async function getConnectionString(): Promise<string> {
   }
 
   // ローカル開発環境ではDATABASE_URLを使用
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is not defined')
-  }
-  return process.env.DATABASE_URL
+  return env.DATABASE_URL
 }
 
 async function createDb() {
