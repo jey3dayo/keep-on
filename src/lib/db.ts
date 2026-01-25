@@ -2,26 +2,17 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@/db/schema'
 import { env } from '@/env'
-import { PgbouncerParamSchema } from '@/schemas/db'
 
-interface ConnectionInfo {
-  connectionString: string
-  usePgbouncer: boolean
-}
-
-function normalizeConnectionString(raw: string): ConnectionInfo {
+function normalizeConnectionString(raw: string): string {
   try {
     const url = new URL(raw)
-    const pgbouncerParam = url.searchParams.get('pgbouncer')
-    const usePgbouncer = PgbouncerParamSchema.parse(pgbouncerParam)
-
-    if (pgbouncerParam !== null) {
+    // pgbouncerパラメータをクエリ文字列から削除
+    if (url.searchParams.has('pgbouncer')) {
       url.searchParams.delete('pgbouncer')
     }
-
-    return { connectionString: url.toString(), usePgbouncer }
+    return url.toString()
   } catch {
-    return { connectionString: raw, usePgbouncer: false }
+    return raw
   }
 }
 
@@ -46,7 +37,7 @@ async function getConnectionString(): Promise<string> {
 
 async function createDb() {
   const rawConnectionString = await getConnectionString()
-  const { connectionString } = normalizeConnectionString(rawConnectionString)
+  const connectionString = normalizeConnectionString(rawConnectionString)
 
   // Cloudflare Workers最適化設定
   const client = postgres(connectionString, {
@@ -73,5 +64,3 @@ export async function getDb() {
 
   return await globalForDb.__dbPromise
 }
-
-export type DbClient = Awaited<ReturnType<typeof getDb>>
