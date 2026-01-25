@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma Client
+      - name: Generate Drizzle migrations
         run: pnpm db:generate
 
       - name: Build for Cloudflare
