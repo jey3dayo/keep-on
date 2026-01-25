@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
-import { HabitListServer } from '@/components/habits/HabitListServer'
+import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
+import { getHabitsByUserId } from '@/lib/queries/habit'
 import { syncUser } from '@/lib/user'
-import { DashboardClient } from './DashboardClient'
+import { DashboardWrapper } from './DashboardWrapper'
 
 export const metadata: Metadata = {
   title: 'ダッシュボード - KeepOn',
@@ -9,28 +10,14 @@ export const metadata: Metadata = {
 }
 
 export default async function DashboardPage() {
-  // Clerk認証されたユーザーをPrismaに同期
   const user = await syncUser()
 
   if (!user) {
     throw new Error('Failed to sync user')
   }
 
-  return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="space-y-2">
-        <h1 className="font-bold text-3xl text-foreground">ダッシュボード</h1>
-        <p className="text-muted-foreground">ようこそ、{user.email}さん</p>
-      </div>
+  const habits = await getHabitsByUserId(user.id)
+  const todayCheckins = await getCheckinsByUserAndDate(user.id, new Date())
 
-      <div className="grid gap-8">
-        <DashboardClient />
-
-        <section className="space-y-4">
-          <h2 className="font-bold text-foreground text-xl">あなたの習慣</h2>
-          <HabitListServer />
-        </section>
-      </div>
-    </div>
-  )
+  return <DashboardWrapper habits={habits} todayCheckins={todayCheckins} user={user} />
 }
