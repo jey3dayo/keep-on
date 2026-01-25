@@ -17,17 +17,20 @@ export interface UpsertUserInput {
  */
 export async function upsertUser(input: UpsertUserInput) {
   const db = await getDb()
+  const now = new Date()
   const [user] = await db
     .insert(users)
     .values({
       clerkId: input.clerkId,
       email: input.email,
+      createdAt: now,
+      updatedAt: now,
     })
     .onConflictDoUpdate({
       target: users.clerkId,
       set: {
         email: input.email,
-        updatedAt: new Date(),
+        updatedAt: now,
       },
     })
     .returning()
