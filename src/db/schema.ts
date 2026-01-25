@@ -22,7 +22,7 @@ export const habits = pgTable('Habit', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
-  emoji: text('emoji'),
+  icon: text('icon').default('circle-check'),
   createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updatedAt', { mode: 'date' })
     .$onUpdate(() => new Date())

@@ -11,7 +11,7 @@ export const HabitInputSchema = v.pipe(
       v.minLength(1, 'Name is required'),
       v.maxLength(100, 'Name is too long (max 100 characters)')
     ),
-    emoji: v.pipe(
+    icon: v.pipe(
       v.nullable(v.string()),
       v.transform((val) => (val?.trim() ? val.trim() : null))
     ),

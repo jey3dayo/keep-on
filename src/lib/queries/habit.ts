@@ -39,7 +39,7 @@ export async function createHabit(input: HabitInput) {
     .values({
       userId: input.userId,
       name: input.name,
-      emoji: input.emoji,
+      icon: input.icon,
     })
     .returning()
   return habit
