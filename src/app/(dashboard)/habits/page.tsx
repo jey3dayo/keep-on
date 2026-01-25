@@ -1,10 +1,21 @@
-export default function HabitsPage() {
+import { redirect } from 'next/navigation'
+import { HabitTable } from '@/components/habits/HabitTable'
+import { getCurrentUserId } from '@/lib/user'
+
+export default async function HabitsPage() {
+  const userId = await getCurrentUserId()
+
+  if (!userId) {
+    redirect('/sign-in')
+  }
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4">
-      <div className="space-y-2 text-center">
+    <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="space-y-2">
         <h1 className="font-bold text-3xl text-foreground">習慣管理</h1>
-        <p className="text-muted-foreground">このページは準備中です</p>
+        <p className="text-muted-foreground">あなたの習慣を管理しましょう</p>
       </div>
+      <HabitTable userId={userId} />
     </div>
   )
 }
