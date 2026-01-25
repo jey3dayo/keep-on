@@ -119,7 +119,7 @@ export async function createHabit(input: HabitInput) {
 **責務:** バリデーションロジック
 
 - FormDataやリクエストボディのバリデーション
-- `src/schemas/` のZodスキーマを使用
+- `src/schemas/` のValibotスキーマを使用
 - バリデーション結果を `Result<T, E>` 型で返す
 
 **返り値の型:** `Result<T, E>` (byethrow)
