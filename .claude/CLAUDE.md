@@ -73,6 +73,21 @@ mise run ci           # CI相当のチェック
 - `.claude/rules/security.md` - セキュリティガイドライン
 - `.claude/rules/dotenvx.md` - dotenvx 暗号化管理ガイド
 
+### コンポーネント使用規約
+
+**shadcn/ui コンポーネント (`src/components/ui/`) は直接編集しない:**
+
+- `src/components/ui/` 配下は shadcn/ui が自動生成するコンポーネント
+- これらのファイルは直接編集せず、ラッパーコンポーネントを作成する
+- 例: `src/components/Input.tsx` は `src/components/ui/input.tsx` のラッパー
+- カスタマイズが必要な場合は `src/components/` 直下に新規作成
+
+**Input コンポーネントの使用:**
+
+- `src/components/ui/input` ではなく `@/components/Input` を使用
+- `@/components/Input` はパスワードマネージャーのサジェスト無効化機能を含む
+- フォームや入力フィールドでは必ずこちらを使用すること
+
 ## フォーマット/Lint
 
 - **ツール**: Ultracite (Biome)

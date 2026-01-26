@@ -1,0 +1,27 @@
+# Auto-generated files
+pnpm-lock.yaml linguist-generated=true
+src/components/ui/** linguist-generated=true
+.next/** linguist-generated=true
+.open-next/** linguist-generated=true
+public/icon-*.png linguist-generated=true
+public/apple-touch-icon.png linguist-generated=true
+
+# Line endings normalization
+* text=auto eol=lf
+*.sh text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+
+# Exclude from exports
+.env.keys export-ignore
+.claude/** export-ignore

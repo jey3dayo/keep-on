@@ -53,11 +53,6 @@ export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleChe
     await onToggleCheckin(habitId)
   }
 
-  const handleSettingsClick = () => {
-    // 将来的に設定画面を実装
-    console.log('Settings clicked')
-  }
-
   return (
     <div className="streak-bg flex h-screen flex-col">
       <TaskGrid
@@ -66,12 +61,7 @@ export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleChe
         onAddClick={() => setIsAddSheetOpen(true)}
         onToggleHabit={handleToggleHabit}
       />
-      <StreakToolbar
-        currentTheme={theme}
-        onSettingsClick={handleSettingsClick}
-        onThemeChange={setTheme}
-        ready={ready}
-      />
+      <StreakToolbar currentTheme={theme} onThemeChange={setTheme} ready={ready} />
       <AddTaskSheet onOpenChange={setIsAddSheetOpen} onSubmit={handleAddHabit} open={isAddSheetOpen} />
     </div>
   )

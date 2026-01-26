@@ -1,6 +1,6 @@
+import { SidebarTrigger } from '@/components/Sidebar'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Separator } from '@/components/ui/separator'
-import { SidebarTrigger } from '@/components/ui/sidebar'
 
 export function SiteHeader({ title = 'Dashboard' }: { title?: string }) {
   return (

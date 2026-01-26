@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import type { IconName } from '@/components/Icon'
+import { Input } from '@/components/Input'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { IconPicker } from './IconPicker'
