@@ -24,6 +24,7 @@ vi.mock('@/lib/queries/user', () => ({
 }))
 
 import { getDb } from '@/lib/db'
+import { getUserWeekStart } from '@/lib/queries/user'
 
 const { calculateStreak, getCheckinCountForPeriod, getHabitById, getHabitsByUserId, getHabitsWithProgress } =
   habitQueries
@@ -189,7 +190,7 @@ describe('getHabitsWithProgress', () => {
 
   it('進捗とストリークを計算して返す', async () => {
     vi.useFakeTimers()
-    vi.setSystemTime(baseDate)
+    vi.setSystemTime(new Date(2024, 0, 20, 12, 0, 0))
 
     const db = await getDb()
     vi.mocked(db.orderBy)
@@ -216,6 +217,38 @@ describe('getHabitsWithProgress', () => {
     expect(weekly?.currentProgress).toBe(3)
     expect(weekly?.streak).toBe(1)
     expect(weekly?.completionRate).toBe(100)
+  })
+
+  it('日曜開始週でも当週のみを進捗に含める', async () => {
+    const sundayBaseDate = new Date(2024, 0, 7, 12, 0, 0)
+    const sundayHabits: Habit[] = [
+      {
+        id: 'habit-weekly-sun',
+        userId: 'user-123',
+        name: '週次の習慣',
+        icon: 'calendar-check',
+        color: 'green',
+        period: 'weekly',
+        frequency: 1,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
+      },
+    ]
+
+    const db = await getDb()
+    vi.mocked(getUserWeekStart).mockResolvedValueOnce('sunday')
+    vi.mocked(db.orderBy)
+      .mockResolvedValueOnce(sundayHabits)
+      .mockResolvedValueOnce([
+        { id: 'checkin-prev', habitId: 'habit-weekly-sun', date: new Date(2024, 0, 2), createdAt: sundayBaseDate },
+        { id: 'checkin-sun', habitId: 'habit-weekly-sun', date: new Date(2024, 0, 7), createdAt: sundayBaseDate },
+        { id: 'checkin-mon', habitId: 'habit-weekly-sun', date: new Date(2024, 0, 8), createdAt: sundayBaseDate },
+      ])
+
+    const result = await getHabitsWithProgress('user-123', 'clerk-123', sundayBaseDate)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]?.currentProgress).toBe(2)
   })
 })
 

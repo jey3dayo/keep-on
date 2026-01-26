@@ -1,5 +1,16 @@
+import {
+  endOfDay,
+  endOfMonth,
+  endOfWeek,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  subDays,
+  subMonths,
+  subWeeks,
+} from 'date-fns'
 import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
-import { COMPLETION_THRESHOLD, WEEK_END_DAY, type WeekStart } from '@/constants/habit'
+import { COMPLETION_THRESHOLD, type WeekStart } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
 import { getUserWeekStart } from '@/lib/queries/user'
@@ -70,24 +81,16 @@ export async function createHabit(input: HabitInput) {
  * @returns 期間の開始日時
  */
 function getPeriodStart(date: Date, period: 'daily' | 'weekly' | 'monthly', weekStartDay: 0 | 1 = 1): Date {
-  const start = new Date(date)
-  start.setHours(0, 0, 0, 0)
-
   switch (period) {
     case 'daily':
-      return start
+      return startOfDay(date)
     case 'weekly': {
-      // 週の開始日に基づいて計算
-      const day = start.getDay()
-      const diff = day === WEEK_END_DAY ? -6 : weekStartDay - day
-      start.setDate(start.getDate() + diff)
-      return start
+      return startOfWeek(date, { weekStartsOn: weekStartDay })
     }
     case 'monthly':
-      start.setDate(1)
-      return start
+      return startOfMonth(date)
     default:
-      return start
+      return startOfDay(date)
   }
 }
 
@@ -100,28 +103,17 @@ function getPeriodStart(date: Date, period: 'daily' | 'weekly' | 'monthly', week
  * @returns 期間の終了日時
  */
 function getPeriodEnd(date: Date, period: 'daily' | 'weekly' | 'monthly', weekStartDay: 0 | 1 = 1): Date {
-  const end = new Date(date)
-  end.setHours(23, 59, 59, 999)
-
   switch (period) {
     case 'daily':
-      return end
+      return endOfDay(date)
     case 'weekly': {
-      // 週の終了日は週の開始日から6日後
-      const weekEndDay = weekStartDay === 1 ? 0 : 6
-      const day = end.getDay()
-      const diff = day === weekEndDay ? 0 : (weekEndDay - day + 7) % 7
-      end.setDate(end.getDate() + diff)
-      return end
+      return endOfWeek(date, { weekStartsOn: weekStartDay })
     }
     case 'monthly': {
-      // 月末日を取得
-      const lastDay = new Date(end.getFullYear(), end.getMonth() + 1, 0)
-      end.setDate(lastDay.getDate())
-      return end
+      return endOfMonth(date)
     }
     default:
-      return end
+      return endOfDay(date)
   }
 }
 
@@ -181,8 +173,7 @@ export async function calculateStreak(
   }
 
   let streak = 0
-  let currentDate = new Date()
-  currentDate.setHours(0, 0, 0, 0)
+  let currentDate = startOfDay(new Date())
 
   // 期間ごとにチェックインをグループ化
   const checkinsByPeriod = new Map<string, number>()
@@ -236,23 +227,17 @@ function formatLocalDate(date: Date): string {
  * 前の期間の開始日を取得
  */
 function getPreviousPeriod(date: Date, period: 'daily' | 'weekly' | 'monthly'): Date {
-  const prev = new Date(date)
-
   switch (period) {
     case 'daily':
-      prev.setDate(prev.getDate() - 1)
-      return prev
+      return subDays(date, 1)
     case 'weekly':
-      prev.setDate(prev.getDate() - 7)
-      return prev
+      return subWeeks(date, 1)
     case 'monthly': {
-      // 月のスキップを防ぐため、日付を1日に設定してから前月に移動
-      prev.setDate(1)
-      prev.setMonth(prev.getMonth() - 1)
-      return prev
+      // 月のスキップを防ぐため、前月の1日に合わせる
+      return subMonths(startOfMonth(date), 1)
     }
     default:
-      return prev
+      return date
   }
 }
 
@@ -288,8 +273,10 @@ export async function getHabitsWithProgress(
       : await db
           .select()
           .from(checkins)
-          .where(sql`${checkins.habitId} = ANY(ARRAY[${sql.raw(habitIds.map((id) => `'${id}'`).join(','))}])`)
+          .where(sql`${checkins.habitId} = ANY(${sql.placeholder('habitIds')})`)
           .orderBy(desc(checkins.date))
+          .prepare('getCheckinsForHabits')
+          .execute({ habitIds })
 
   // 習慣ごとにチェックインをグループ化
   const checkinsByHabit = new Map<string, typeof allCheckins>()
@@ -312,7 +299,7 @@ export async function getHabitsWithProgress(
     }).length
 
     // ストリークを計算
-    const streak = calculateStreakFromCheckins(habit, habitCheckins, weekStartDay)
+    const streak = calculateStreakFromCheckins(habit, habitCheckins, weekStartDay, date)
 
     const completionRate = Math.min(
       COMPLETION_THRESHOLD,
@@ -341,15 +328,15 @@ export async function getHabitsWithProgress(
 function calculateStreakFromCheckins(
   habit: { id: string; frequency: number; period: 'daily' | 'weekly' | 'monthly' },
   checkins: Array<{ date: Date | string }>,
-  weekStartDay: 0 | 1 = 1
+  weekStartDay: 0 | 1 = 1,
+  baseDate: Date = new Date()
 ): number {
   if (checkins.length === 0) {
     return 0
   }
 
   let streak = 0
-  let currentDate = new Date()
-  currentDate.setHours(0, 0, 0, 0)
+  let currentDate = startOfDay(baseDate)
 
   // 期間ごとにチェックインをグループ化
   const checkinsByPeriod = new Map<string, number>()
