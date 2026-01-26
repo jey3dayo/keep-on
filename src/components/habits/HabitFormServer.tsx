@@ -2,14 +2,15 @@
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import { Result } from '@praha/byethrow'
+import { Check, ChevronLeft, Clock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
-import { Button } from '@/components/Button'
-import { Input } from '@/components/Input'
-import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { formatSerializableError } from '@/lib/errors/serializable'
+import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/lib/habit-data'
+import { cn } from '@/lib/utils'
 import { HabitInputSchema, type HabitInputSchemaType } from '@/schemas/habit'
 
 interface HabitFormServerProps {
@@ -18,23 +19,46 @@ interface HabitFormServerProps {
 
 export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps = {}) {
   const router = useRouter()
+  const [isSaving, setIsSaving] = useState(false)
   const form = useForm<HabitInputSchemaType>({
     resolver: valibotResolver(HabitInputSchema),
     defaultValues: {
       name: '',
-      icon: null,
+      icon: 'water',
+      color: 'orange',
+      period: 'daily',
+      frequency: 1,
     },
   })
 
+  const watchedIcon = form.watch('icon')
+  const watchedColor = form.watch('color')
+  const watchedPeriod = form.watch('period')
+  const watchedFrequency = form.watch('frequency')
+  const watchedName = form.watch('name')
+
+  const selectedColorValue = getColorById(watchedColor || 'orange').color
+  const SelectedIconComponent = getIconById(watchedIcon || 'water').icon
+  const currentPeriod = getPeriodById(watchedPeriod || 'daily')
+
   async function onSubmit(data: HabitInputSchemaType) {
+    setIsSaving(true)
+
     // FormDataを作成してServer Actionを呼び出し
     const formData = new FormData()
     formData.append('name', data.name)
     if (data.icon?.trim()) {
       formData.append('icon', data.icon)
     }
+    if (data.color?.trim()) {
+      formData.append('color', data.color)
+    }
+    formData.append('period', data.period)
+    formData.append('frequency', String(data.frequency))
 
     const result = await createHabit(formData)
+
+    setIsSaving(false)
 
     if (Result.isSuccess(result)) {
       toast.success('習慣を作成しました', {
@@ -44,6 +68,8 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
 
       if (onSuccess === 'close') {
         router.back()
+      } else {
+        router.push('/dashboard')
       }
     } else {
       toast.error('習慣の作成に失敗しました', {
@@ -53,51 +79,291 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
   }
 
   return (
-    <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-      <Controller
-        control={form.control}
-        name="name"
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>習慣名</FieldLabel>
-            <Input
-              {...field}
-              aria-invalid={fieldState.invalid}
-              error={fieldState.invalid}
-              id={field.name}
-              maxLength={100}
-              placeholder="例: 朝の運動"
-              type="text"
-            />
-            {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
-          </Field>
-        )}
-      />
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-10 flex items-center justify-between border-border border-b bg-background/80 px-4 py-3 backdrop-blur-xl">
+        <button
+          className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+          onClick={() => router.back()}
+          type="button"
+        >
+          <ChevronLeft className="h-5 w-5" />
+          <span className="text-sm">戻る</span>
+        </button>
+        <h1 className="font-semibold text-foreground text-lg">新しい習慣</h1>
+        <button
+          className={cn(
+            'font-medium text-sm transition-colors',
+            watchedName?.trim() && !isSaving
+              ? 'text-foreground hover:opacity-80'
+              : 'cursor-not-allowed text-muted-foreground'
+          )}
+          disabled={!watchedName?.trim() || isSaving}
+          onClick={form.handleSubmit(onSubmit)}
+          style={{ color: watchedName?.trim() && !isSaving ? selectedColorValue : undefined }}
+          type="button"
+        >
+          {isSaving ? <Check className="h-5 w-5" /> : '保存'}
+        </button>
+      </header>
 
-      <Controller
-        control={form.control}
-        name="icon"
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>アイコン（任意）</FieldLabel>
-            <Input
-              {...field}
-              aria-invalid={fieldState.invalid}
-              error={fieldState.invalid}
-              id={field.name}
-              maxLength={50}
-              placeholder="circle-check"
-              type="text"
-              value={field.value ?? ''}
-            />
-            {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
-          </Field>
-        )}
-      />
+      <form className="space-y-8 px-4 py-6" onSubmit={form.handleSubmit(onSubmit)}>
+        {/* Icon Preview */}
+        <div className="flex flex-col items-center gap-4">
+          <div
+            className="flex h-24 w-24 items-center justify-center rounded-full transition-all duration-300"
+            style={{ backgroundColor: selectedColorValue }}
+          >
+            <SelectedIconComponent className="h-12 w-12 text-background" />
+          </div>
+          <p className="text-muted-foreground text-xs">アイコンと色を選択</p>
+        </div>
 
-      <Button className="w-full" disabled={form.formState.isSubmitting} size="lg" type="submit">
-        {form.formState.isSubmitting ? '作成中...' : '習慣を作成'}
-      </Button>
-    </form>
+        {/* Habit Name Input */}
+        <Controller
+          control={form.control}
+          name="name"
+          render={({ field, fieldState }) => (
+            <div className="space-y-2">
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">習慣の名前</div>
+              <input
+                {...field}
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-foreground transition-all placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring/50"
+                placeholder="例: 毎日水を8杯飲む"
+                style={{ '--tw-ring-color': selectedColorValue } as React.CSSProperties}
+                type="text"
+              />
+              {fieldState.error && <p className="text-destructive text-sm">{fieldState.error.message}</p>}
+            </div>
+          )}
+        />
+
+        {/* Icon Selection */}
+        <Controller
+          control={form.control}
+          name="icon"
+          render={({ field }) => (
+            <div className="space-y-3">
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">アイコン</div>
+              <div className="grid grid-cols-6 gap-3">
+                {habitIcons.map((item) => {
+                  const IconComponent = item.icon
+                  const isSelected = field.value === item.id
+                  return (
+                    <button
+                      className={cn(
+                        'flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-200',
+                        isSelected ? 'ring-2 ring-offset-2 ring-offset-background' : 'bg-card hover:bg-card/80'
+                      )}
+                      key={item.id}
+                      onClick={() => field.onChange(item.id)}
+                      style={
+                        {
+                          backgroundColor: isSelected ? selectedColorValue : undefined,
+                          '--tw-ring-color': selectedColorValue,
+                        } as React.CSSProperties
+                      }
+                      type="button"
+                    >
+                      <IconComponent
+                        className={cn(
+                          'h-6 w-6 transition-colors',
+                          isSelected ? 'text-background' : 'text-muted-foreground'
+                        )}
+                      />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        />
+
+        {/* Task Period Selection */}
+        <Controller
+          control={form.control}
+          name="period"
+          render={({ field }) => (
+            <div className="space-y-3">
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">タスクの種類</div>
+              <div className="grid grid-cols-3 gap-2">
+                {taskPeriods.map((period) => {
+                  const isSelected = field.value === period.id
+                  return (
+                    <button
+                      className={cn(
+                        'relative flex flex-col items-center gap-1 rounded-xl border px-3 py-4 transition-all duration-200',
+                        isSelected ? 'border-transparent' : 'border-border bg-card hover:bg-card/80'
+                      )}
+                      key={period.id}
+                      onClick={() => field.onChange(period.id)}
+                      style={{
+                        backgroundColor: isSelected ? `${selectedColorValue}20` : undefined,
+                        borderColor: isSelected ? selectedColorValue : undefined,
+                      }}
+                      type="button"
+                    >
+                      <span
+                        className={cn(
+                          'font-semibold text-base transition-colors',
+                          isSelected ? 'text-foreground' : 'text-muted-foreground'
+                        )}
+                        style={{ color: isSelected ? selectedColorValue : undefined }}
+                      >
+                        {period.label}
+                      </span>
+                      <span className="text-muted-foreground text-xs">{period.sublabel}</span>
+                      {isSelected && (
+                        <div
+                          className="absolute top-2 right-2 h-2 w-2 rounded-full"
+                          style={{ backgroundColor: selectedColorValue }}
+                        />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        />
+
+        {/* Color Selection */}
+        <Controller
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <div className="space-y-3">
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">カラー</div>
+              <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
+                {habitColors.map((color) => {
+                  const isSelected = field.value === color.id
+                  return (
+                    <button
+                      className={cn(
+                        'h-10 w-10 flex-shrink-0 rounded-full transition-all duration-200',
+                        isSelected && 'ring-2 ring-offset-2 ring-offset-background'
+                      )}
+                      key={color.id}
+                      onClick={() => field.onChange(color.id)}
+                      style={
+                        {
+                          backgroundColor: color.color,
+                          '--tw-ring-color': color.color,
+                        } as React.CSSProperties
+                      }
+                      type="button"
+                    >
+                      {isSelected && <Check className="mx-auto h-5 w-5 text-background" />}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        />
+
+        {/* Frequency */}
+        <Controller
+          control={form.control}
+          name="frequency"
+          render={({ field }) => (
+            <div className="space-y-3">
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">目標回数</div>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center justify-between">
+                  <button
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80"
+                    onClick={() => field.onChange(Math.max(1, field.value - 1))}
+                    type="button"
+                  >
+                    <span className="font-medium text-xl">−</span>
+                  </button>
+                  <div className="flex flex-col items-center">
+                    <span className="font-bold text-4xl" style={{ color: selectedColorValue }}>
+                      {field.value}
+                    </span>
+                    <span className="text-muted-foreground text-sm">{currentPeriod.frequencyLabel}</span>
+                  </div>
+                  <button
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80"
+                    onClick={() => field.onChange(field.value + 1)}
+                    type="button"
+                  >
+                    <span className="font-medium text-xl">+</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        />
+
+        {/* Reminder Section (Future Feature) */}
+        <div className="space-y-3">
+          <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">リマインダー</div>
+          <button
+            className="flex w-full cursor-not-allowed items-center justify-between rounded-xl border border-border bg-card p-4 opacity-50 transition-colors hover:bg-card/80"
+            disabled
+            type="button"
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-full"
+                style={{ backgroundColor: `${selectedColorValue}20` }}
+              >
+                <Clock className="h-5 w-5" style={{ color: selectedColorValue }} />
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-foreground">通知を設定</p>
+                <p className="text-muted-foreground text-sm">{currentPeriod.sublabel}同じ時間にリマインド</p>
+              </div>
+            </div>
+            <ChevronLeft className="h-5 w-5 rotate-180 text-muted-foreground" />
+          </button>
+        </div>
+
+        {/* Preview Card */}
+        <div className="space-y-3">
+          <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">プレビュー</div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex h-14 w-14 items-center justify-center rounded-full"
+                style={{ backgroundColor: selectedColorValue }}
+              >
+                <SelectedIconComponent className="h-7 w-7 text-background" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground text-lg">{watchedName || '習慣の名前'}</h3>
+                <p className="text-muted-foreground text-sm">
+                  {watchedFrequency}
+                  {currentPeriod.frequencyLabel}
+                </p>
+              </div>
+              <div className="flex flex-col items-end">
+                <div className="font-bold text-2xl" style={{ color: selectedColorValue }}>
+                  0
+                </div>
+                <span className="text-muted-foreground text-xs">日連続</span>
+              </div>
+            </div>
+            <div className="mt-4 border-border border-t pt-4">
+              <div className="mb-2 flex justify-between text-muted-foreground text-xs">
+                <span>今日の進捗</span>
+                <span>0 / {watchedFrequency}</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: '0%',
+                    backgroundColor: selectedColorValue,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
   )
 }

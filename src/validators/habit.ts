@@ -19,8 +19,12 @@ export type HabitInput = Omit<InferInsertModel<typeof import('@/db/schema').habi
 export function validateHabitInput(userId: string, formData: FormData): Result.Result<HabitInput, ValidationError> {
   const name = formData.get('name')
   const icon = formData.get('icon')
+  const color = formData.get('color')
+  const period = formData.get('period')
+  const frequencyRaw = formData.get('frequency')
+  const frequency = frequencyRaw ? Number(frequencyRaw) : 1
 
-  const parseResult = v.safeParse(HabitInputSchema, { name, icon })
+  const parseResult = v.safeParse(HabitInputSchema, { name, icon, color, period, frequency })
 
   if (!parseResult.success) {
     const firstIssue = parseResult.issues[0]
@@ -36,5 +40,8 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
     userId,
     name: parseResult.output.name,
     icon: parseResult.output.icon,
+    color: parseResult.output.color,
+    period: parseResult.output.period,
+    frequency: parseResult.output.frequency,
   })
 }

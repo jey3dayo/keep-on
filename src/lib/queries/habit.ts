@@ -40,6 +40,9 @@ export async function createHabit(input: HabitInput) {
       userId: input.userId,
       name: input.name,
       icon: input.icon,
+      color: input.color,
+      period: input.period,
+      frequency: input.frequency,
     })
     .returning()
   return habit
