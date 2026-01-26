@@ -20,9 +20,12 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
   const name = formData.get('name')
   const icon = formData.get('icon')
   const color = formData.get('color')
-  const period = formData.get('period')
+  const periodRaw = formData.get('period')
+  const period = typeof periodRaw === 'string' && periodRaw.trim() !== '' ? periodRaw : undefined
   const frequencyRaw = formData.get('frequency')
-  const frequency = frequencyRaw ? Number(frequencyRaw) : 1
+  const parsedFrequency = frequencyRaw ? Number(frequencyRaw) : 1
+  const shouldForceDaily = period === 'daily' || period === undefined
+  const frequency = shouldForceDaily && Number.isFinite(parsedFrequency) ? 1 : parsedFrequency
 
   const parseResult = v.safeParse(HabitInputSchema, { name, icon, color, period, frequency })
 

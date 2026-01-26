@@ -1,4 +1,3 @@
-import type { LucideIcon } from 'lucide-react'
 import {
   Apple,
   Bike,
@@ -12,6 +11,7 @@ import {
   Flame,
   Footprints,
   Heart,
+  type LucideIcon,
   Moon,
   Music,
   Palette,
@@ -19,32 +19,33 @@ import {
   Sparkles,
   Target,
 } from 'lucide-react'
+import type { IconName } from '@/components/Icon'
 
 export interface HabitIcon {
-  id: string
+  id: IconName
   icon: LucideIcon
   label: string
 }
 
 export const habitIcons: HabitIcon[] = [
-  { id: 'water', icon: Droplets, label: '水を飲む' },
-  { id: 'exercise', icon: Dumbbell, label: '運動' },
-  { id: 'read', icon: BookOpen, label: '読書' },
-  { id: 'sleep', icon: Moon, label: '睡眠' },
-  { id: 'health', icon: Heart, label: '健康' },
-  { id: 'nutrition', icon: Apple, label: '栄養' },
-  { id: 'meditate', icon: Brain, label: '瞑想' },
+  { id: 'droplets', icon: Droplets, label: '水を飲む' },
+  { id: 'dumbbell', icon: Dumbbell, label: '運動' },
+  { id: 'book-open', icon: BookOpen, label: '読書' },
+  { id: 'moon', icon: Moon, label: '睡眠' },
+  { id: 'heart', icon: Heart, label: '健康' },
+  { id: 'apple', icon: Apple, label: '栄養' },
+  { id: 'brain', icon: Brain, label: '瞑想' },
   { id: 'music', icon: Music, label: '音楽' },
-  { id: 'photo', icon: Camera, label: '写真' },
-  { id: 'art', icon: Palette, label: 'アート' },
+  { id: 'camera', icon: Camera, label: '写真' },
+  { id: 'palette', icon: Palette, label: 'アート' },
   { id: 'coffee', icon: Coffee, label: 'カフェイン' },
   { id: 'bike', icon: Bike, label: 'サイクリング' },
-  { id: 'walk', icon: Footprints, label: 'ウォーキング' },
-  { id: 'medicine', icon: Pill, label: '薬' },
-  { id: 'time', icon: Clock, label: '時間管理' },
-  { id: 'sparkle', icon: Sparkles, label: 'その他' },
-  { id: 'goal', icon: Target, label: '目標' },
-  { id: 'streak', icon: Flame, label: '連続' },
+  { id: 'footprints', icon: Footprints, label: 'ウォーキング' },
+  { id: 'pill', icon: Pill, label: '薬' },
+  { id: 'clock', icon: Clock, label: '時間管理' },
+  { id: 'sparkles', icon: Sparkles, label: 'その他' },
+  { id: 'target', icon: Target, label: '目標' },
+  { id: 'flame', icon: Flame, label: '連続' },
 ]
 
 export const habitColors = [
@@ -91,7 +92,7 @@ export const sampleHabits: Habit[] = [
   {
     id: '1',
     name: '水を8杯飲む',
-    iconId: 'water',
+    iconId: 'droplets',
     colorId: 'cyan',
     period: 'daily',
     frequency: 8,
@@ -102,7 +103,7 @@ export const sampleHabits: Habit[] = [
   {
     id: '2',
     name: '30分運動する',
-    iconId: 'exercise',
+    iconId: 'dumbbell',
     colorId: 'orange',
     period: 'daily',
     frequency: 1,
@@ -113,7 +114,7 @@ export const sampleHabits: Habit[] = [
   {
     id: '3',
     name: '読書',
-    iconId: 'read',
+    iconId: 'book-open',
     colorId: 'purple',
     period: 'daily',
     frequency: 1,
@@ -124,7 +125,7 @@ export const sampleHabits: Habit[] = [
   {
     id: '4',
     name: '瞑想する',
-    iconId: 'meditate',
+    iconId: 'brain',
     colorId: 'teal',
     period: 'daily',
     frequency: 1,
@@ -135,7 +136,7 @@ export const sampleHabits: Habit[] = [
   {
     id: '5',
     name: '週次レビュー',
-    iconId: 'goal',
+    iconId: 'target',
     colorId: 'blue',
     period: 'weekly',
     frequency: 1,
@@ -146,7 +147,7 @@ export const sampleHabits: Habit[] = [
   {
     id: '6',
     name: '月の振り返り',
-    iconId: 'time',
+    iconId: 'clock',
     colorId: 'pink',
     period: 'monthly',
     frequency: 1,

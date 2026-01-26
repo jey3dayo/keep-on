@@ -5,6 +5,7 @@ import {
   Bike,
   BookOpen,
   Brain,
+  Camera,
   Check,
   CircleCheck,
   Clock,
@@ -22,12 +23,14 @@ import {
   Menu,
   Moon,
   Music,
+  Palette,
   Pencil,
   Pill,
   Plus,
   Power,
   Settings,
   Smile,
+  Sparkles,
   Sun,
   Target,
   Timer,
@@ -42,6 +45,7 @@ export type IconName =
   | 'bike'
   | 'book-open'
   | 'brain'
+  | 'camera'
   | 'check'
   | 'circle-check'
   | 'clock'
@@ -58,12 +62,14 @@ export type IconName =
   | 'menu'
   | 'moon'
   | 'music'
+  | 'palette'
   | 'pencil'
   | 'pill'
   | 'plus'
   | 'power'
   | 'settings'
   | 'smile'
+  | 'sparkles'
   | 'sun'
   | 'target'
   | 'timer'
@@ -77,6 +83,7 @@ const icons: Record<IconName, React.ComponentType<LucideProps>> = {
   bike: Bike,
   'book-open': BookOpen,
   brain: Brain,
+  camera: Camera,
   check: Check,
   'circle-check': CircleCheck,
   clock: Clock,
@@ -93,12 +100,14 @@ const icons: Record<IconName, React.ComponentType<LucideProps>> = {
   menu: Menu,
   moon: Moon,
   music: Music,
+  palette: Palette,
   pencil: Pencil,
   pill: Pill,
   plus: Plus,
   power: Power,
   settings: Settings,
   smile: Smile,
+  sparkles: Sparkles,
   sun: Sun,
   target: Target,
   timer: Timer,
@@ -123,6 +132,30 @@ export function isValidIconName(name: unknown): name is IconName {
 export function normalizeIconName(name: unknown): IconName {
   if (isValidIconName(name)) {
     return name
+  }
+  if (typeof name === 'string') {
+    const legacyIconMap: Record<string, IconName> = {
+      water: 'droplets',
+      exercise: 'dumbbell',
+      read: 'book-open',
+      sleep: 'moon',
+      health: 'heart',
+      nutrition: 'apple',
+      meditate: 'brain',
+      photo: 'camera',
+      art: 'palette',
+      walk: 'footprints',
+      medicine: 'pill',
+      time: 'clock',
+      sparkle: 'sparkles',
+      goal: 'target',
+      streak: 'flame',
+    }
+
+    const mapped = legacyIconMap[name]
+    if (mapped) {
+      return mapped
+    }
   }
   return 'circle-check' // デフォルトアイコン
 }

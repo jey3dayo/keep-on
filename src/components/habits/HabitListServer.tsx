@@ -1,5 +1,5 @@
 import type { InferSelectModel } from 'drizzle-orm'
-import { Icon, type IconName } from '@/components/Icon'
+import { Icon, normalizeIconName } from '@/components/Icon'
 import { getHabitsByUserId } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
 
@@ -25,7 +25,7 @@ export async function HabitListServer() {
           className="flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-accent"
           key={habit.id}
         >
-          <Icon className="text-foreground" name={(habit.icon as IconName) || 'circle-check'} size={24} />
+          <Icon className="text-foreground" name={normalizeIconName(habit.icon)} size={24} />
           <div className="flex-1 space-y-1">
             <h3 className="font-medium text-card-foreground">{habit.name}</h3>
             <p className="text-muted-foreground text-sm">

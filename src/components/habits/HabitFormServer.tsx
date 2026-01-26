@@ -4,7 +4,7 @@ import { valibotResolver } from '@hookform/resolvers/valibot'
 import { Result } from '@praha/byethrow'
 import { Check, ChevronLeft, Clock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
@@ -24,7 +24,7 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
     resolver: valibotResolver(HabitInputSchema),
     defaultValues: {
       name: '',
-      icon: 'water',
+      icon: 'droplets',
       color: 'orange',
       period: 'daily',
       frequency: 1,
@@ -37,9 +37,16 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
   const watchedFrequency = form.watch('frequency')
   const watchedName = form.watch('name')
 
+  const isDaily = watchedPeriod === 'daily'
   const selectedColorValue = getColorById(watchedColor || 'orange').color
-  const SelectedIconComponent = getIconById(watchedIcon || 'water').icon
+  const SelectedIconComponent = getIconById(watchedIcon || 'droplets').icon
   const currentPeriod = getPeriodById(watchedPeriod || 'daily')
+
+  useEffect(() => {
+    if (isDaily && watchedFrequency !== 1) {
+      form.setValue('frequency', 1, { shouldDirty: true, shouldValidate: true })
+    }
+  }, [form, isDaily, watchedFrequency])
 
   async function onSubmit(data: HabitInputSchemaType) {
     setIsSaving(true)
@@ -272,7 +279,8 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-center justify-between">
                   <button
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={isDaily}
                     onClick={() => field.onChange(Math.max(1, field.value - 1))}
                     type="button"
                   >
@@ -285,7 +293,8 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
                     <span className="text-muted-foreground text-sm">{currentPeriod.frequencyLabel}</span>
                   </div>
                   <button
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={isDaily}
                     onClick={() => field.onChange(field.value + 1)}
                     type="button"
                   >
