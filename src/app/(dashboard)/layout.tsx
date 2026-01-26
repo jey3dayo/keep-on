@@ -4,7 +4,13 @@ import { AppSidebar } from '@/components/dashboard/AppSidebar'
 import { SiteHeader } from '@/components/dashboard/SiteHeader'
 import { SidebarInset, SidebarProvider } from '@/components/Sidebar'
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode
+  modal: React.ReactNode
+}) {
   const { userId } = await auth()
   if (!userId) {
     redirect('/sign-in')
@@ -24,6 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <SiteHeader />
         <div className="flex flex-1 flex-col">{children}</div>
       </SidebarInset>
+      {modal}
     </SidebarProvider>
   )
 }

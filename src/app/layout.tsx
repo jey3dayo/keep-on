@@ -1,5 +1,6 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata, Viewport } from 'next'
+import { ColorThemeScript } from '@/components/ColorThemeScript'
 import { A2HSPrompt } from '@/components/pwa/A2HSPrompt'
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration'
 import { ThemeProvider } from '@/components/ThemeProvider'
@@ -34,6 +35,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <ClerkProvider>
       <html lang="ja" suppressHydrationWarning>
+        <head>
+          <ColorThemeScript />
+        </head>
         <body>
           <ThemeProvider>
             {children}
