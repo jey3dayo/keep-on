@@ -133,10 +133,7 @@ describe('calculateStreak', () => {
 
     const db = await getDb()
     vi.mocked(db.where).mockResolvedValueOnce([baseHabit])
-    vi.mocked(db.orderBy).mockResolvedValueOnce([
-      { date: new Date(2024, 0, 16) },
-      { date: new Date(2024, 0, 15) },
-    ])
+    vi.mocked(db.orderBy).mockResolvedValueOnce([{ date: new Date(2024, 0, 16) }, { date: new Date(2024, 0, 15) }])
 
     const result = await calculateStreak('habit-1', 'daily')
 
