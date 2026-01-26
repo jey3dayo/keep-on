@@ -37,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="ja">
         <body className={'font-sans antialiased'}>{children}</body>
       </html>
     </ClerkProvider>
