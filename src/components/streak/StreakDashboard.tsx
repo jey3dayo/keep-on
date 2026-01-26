@@ -44,7 +44,7 @@ export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleChe
   const completedHabitIds = new Set(todayCheckins.map((c) => c.habitId))
 
   // 期間フィルター適用
-  const filteredHabits = periodFilter === 'all' ? habits : habits.filter((h) => h.period === periodFilter)
+  const filteredHabits = filterHabitsByPeriod(habits, periodFilter)
 
   // 統計計算
   const todayCompleted = filteredHabits.filter((h) => h.currentProgress >= h.frequency).length

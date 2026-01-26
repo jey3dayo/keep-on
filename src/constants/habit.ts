@@ -101,3 +101,19 @@ export const FALLBACK_OKLCH_COLOR = 'oklch(0.68 0.21 48)'
  * 完了判定の閾値（目標達成率）
  */
 export const COMPLETION_THRESHOLD = 100
+
+/**
+ * 完了ステータスラベル
+ */
+export const COMPLETION_STATUS_LABEL = {
+  completed: '完了',
+  incomplete: '未完了',
+} as const
+
+/**
+ * 完了アクションラベル
+ */
+export const COMPLETION_ACTION_LABEL = {
+  markComplete: '完了にする',
+  markIncomplete: '未完了にする',
+} as const

@@ -1,6 +1,7 @@
 'use client'
 
 import { Icon, type IconName } from '@/components/Icon'
+import { COMPLETION_STATUS_LABEL } from '@/constants/habit'
 import { cn } from '@/lib/utils'
 
 interface TaskCircleProps {
@@ -49,7 +50,7 @@ export function TaskCircle({
   return (
     <button
       aria-checked={completed}
-      aria-label={`${habitName} - ${completed ? '完了' : '未完了'}`}
+      aria-label={`${habitName} - ${completed ? COMPLETION_STATUS_LABEL.completed : COMPLETION_STATUS_LABEL.incomplete}`}
       className="flex flex-col items-center gap-2 transition-transform active:scale-95"
       onClick={() => onToggle(habitId)}
       role="checkbox"

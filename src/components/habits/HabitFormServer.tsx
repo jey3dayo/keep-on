@@ -30,8 +30,8 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
     resolver: valibotResolver(HabitInputSchema) as Resolver<FormValues>,
     defaultValues: {
       name: '',
-      icon: 'droplets',
-      color: 'orange',
+      icon: DEFAULT_HABIT_ICON,
+      color: DEFAULT_HABIT_COLOR,
       period: 'daily',
       frequency: 1,
     },
@@ -44,8 +44,8 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
   const watchedName = form.watch('name')
 
   const isDaily = watchedPeriod === 'daily'
-  const selectedColorValue = getColorById(watchedColor || 'orange').color
-  const SelectedIconComponent = getIconById(watchedIcon || 'droplets').icon
+  const selectedColorValue = getColorById(watchedColor || DEFAULT_HABIT_COLOR).color
+  const SelectedIconComponent = getIconById(watchedIcon || DEFAULT_HABIT_ICON).icon
   const currentPeriod = getPeriodById(watchedPeriod || 'daily')
 
   useEffect(() => {

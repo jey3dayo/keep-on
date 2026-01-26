@@ -2,7 +2,7 @@
 
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { Progress } from '@/components/ui/progress'
-import { PERIOD_LABEL } from '@/constants/habit'
+import { COMPLETION_STATUS_LABEL, PERIOD_LABEL } from '@/constants/habit'
 import { getColorById } from '@/lib/habit-data'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
@@ -14,13 +14,13 @@ interface HabitCardProps {
 }
 
 export function HabitCard({ habit, completed, onToggle }: HabitCardProps) {
-  const bgColor = getColorById(habit.color ?? 'orange').color
+  const bgColor = getColorById(habit.color ?? DEFAULT_HABIT_COLOR).color
   const isCompleted = habit.currentProgress >= habit.frequency
 
   return (
     <button
       aria-checked={completed}
-      aria-label={`${habit.name} - ${isCompleted ? '完了' : '未完了'} (${habit.currentProgress}/${habit.frequency})`}
+      aria-label={`${habit.name} - ${isCompleted ? COMPLETION_STATUS_LABEL.completed : COMPLETION_STATUS_LABEL.incomplete} (${habit.currentProgress}/${habit.frequency})`}
       className={cn(
         'relative rounded-lg p-6 text-white transition-all',
         'hover:scale-102 hover:shadow-lg',
