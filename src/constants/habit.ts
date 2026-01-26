@@ -55,14 +55,42 @@ export const DEFAULT_HABIT_FREQUENCY = 1
 export const DEFAULT_HABIT_PERIOD: Period = 'daily'
 
 /**
- * 週の開始曜日（月曜日）
+ * 週の開始曜日（デフォルト: 月曜日）
+ *
+ * Note: この値はサーバーサイドのデフォルト値です。
+ * クライアントサイドでは useWeekStart() を使用してユーザー設定を取得してください。
  */
-export const WEEK_START_DAY = 1
+export const DEFAULT_WEEK_START_DAY = 1
 
 /**
  * 週の終了曜日（日曜日）
  */
 export const WEEK_END_DAY = 0
+
+/**
+ * 週開始日の型定義
+ */
+export type WeekStartDay = 0 | 1 // 0 = Sunday, 1 = Monday
+
+/**
+ * 週開始日設定を検証
+ *
+ * @param value - 検証する値
+ * @returns 有効な週開始日 (0 | 1) かどうか
+ */
+export function isValidWeekStartDay(value: unknown): value is WeekStartDay {
+  return value === 0 || value === 1
+}
+
+/**
+ * 週開始日文字列を数値に変換
+ *
+ * @param weekStart - "monday" | "sunday"
+ * @returns WeekStartDay (0 | 1)
+ */
+export function weekStartToDay(weekStart: 'monday' | 'sunday'): WeekStartDay {
+  return weekStart === 'monday' ? 1 : 0
+}
 
 /**
  * OKLCHカラーのフォールバック値

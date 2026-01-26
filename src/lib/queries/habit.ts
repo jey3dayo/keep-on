@@ -1,9 +1,12 @@
 import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
-import { COMPLETION_THRESHOLD, WEEK_END_DAY, WEEK_START_DAY } from '@/constants/habit'
+import { COMPLETION_THRESHOLD, DEFAULT_WEEK_START_DAY, WEEK_END_DAY } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
 import type { HabitWithProgress } from '@/types/habit'
 import type { HabitInput } from '@/validators/habit'
+
+// 週開始日のデフォルト値（Linter対策で明示的に定数に代入）
+const WEEK_START_DAY = DEFAULT_WEEK_START_DAY
 
 /**
  * ユーザーの習慣一覧を取得
