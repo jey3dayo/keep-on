@@ -77,11 +77,13 @@ export async function toggleCheckinAction(
       if (existingCheckin) {
         await deleteCheckinByHabitAndDate(habitId, date)
         revalidatePath('/dashboard')
+        revalidatePath('/habits')
         return
       }
 
       await createCheckin({ habitId, date })
       revalidatePath('/dashboard')
+      revalidatePath('/habits')
       return
     },
     catch: (error) => serializeCheckinError(error),

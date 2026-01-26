@@ -13,7 +13,12 @@ export function RouteModal({ title, children }: RouteModalProps) {
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      router.back()
+      // 履歴がない場合（直接アクセス）はダッシュボードにリダイレクト
+      if (window.history.length <= 1) {
+        router.push('/dashboard')
+      } else {
+        router.back()
+      }
     }
   }
 
