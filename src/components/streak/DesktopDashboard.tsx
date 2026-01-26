@@ -4,17 +4,9 @@ import { useState } from 'react'
 import type { IconName } from '@/components/Icon'
 import { Icon } from '@/components/Icon'
 import { Button } from '@/components/ui/button'
+import type { HabitWithProgress } from '@/types/habit'
 import { AddTaskSheet } from './AddTaskSheet'
 import { HabitCard } from './HabitCard'
-
-interface Habit {
-  id: string
-  name: string
-  icon: string | null
-  userId: string
-  createdAt: Date
-  updatedAt: Date
-}
 
 interface Checkin {
   id: string
@@ -32,7 +24,7 @@ interface User {
 }
 
 interface DesktopDashboardProps {
-  habits: Habit[]
+  habits: HabitWithProgress[]
   todayCheckins: Checkin[]
   user: User
   onAddHabit: (name: string, icon: IconName) => Promise<void>
