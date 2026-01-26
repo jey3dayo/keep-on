@@ -170,7 +170,16 @@ export async function calculateStreak(habitId: string, period: 'daily' | 'weekly
     checkinsByPeriod.set(periodKey, (checkinsByPeriod.get(periodKey) ?? 0) + 1)
   }
 
-  // 現在の期間から過去に向かってストリークをカウント
+  // 現在の期間の達成状況を確認
+  const currentPeriodKey = getPeriodKey(currentDate, period)
+  const currentCount = checkinsByPeriod.get(currentPeriodKey) ?? 0
+
+  // 現在の期間が未達成の場合、前の期間から開始
+  if (currentCount < habit.frequency) {
+    currentDate = getPreviousPeriod(currentDate, period)
+  }
+
+  // 過去に向かってストリークをカウント
   while (true) {
     const periodKey = getPeriodKey(currentDate, period)
     const count = checkinsByPeriod.get(periodKey) ?? 0
@@ -208,9 +217,12 @@ function getPreviousPeriod(date: Date, period: 'daily' | 'weekly' | 'monthly'): 
     case 'weekly':
       prev.setDate(prev.getDate() - 7)
       return prev
-    case 'monthly':
+    case 'monthly': {
+      // 月のスキップを防ぐため、日付を1日に設定してから前月に移動
+      prev.setDate(1)
       prev.setMonth(prev.getMonth() - 1)
       return prev
+    }
     default:
       return prev
   }
@@ -224,25 +236,108 @@ function getPreviousPeriod(date: Date, period: 'daily' | 'weekly' | 'monthly'): 
  * @returns 進捗情報付きの習慣配列
  */
 export async function getHabitsWithProgress(userId: string, date: Date = new Date()): Promise<HabitWithProgress[]> {
+  const db = await getDb()
   const habitList = await getHabitsByUserId(userId)
 
-  const habitsWithProgress = await Promise.all(
-    habitList.map(async (habit) => {
-      const currentProgress = await getCheckinCountForPeriod(habit.id, date, habit.period)
-      const streak = await calculateStreak(habit.id, habit.period)
-      const completionRate = Math.min(
-        COMPLETION_THRESHOLD,
-        Math.round((currentProgress / habit.frequency) * COMPLETION_THRESHOLD)
-      )
+  if (habitList.length === 0) {
+    return []
+  }
 
-      return {
-        ...habit,
-        currentProgress,
-        streak,
-        completionRate,
-      }
-    })
-  )
+  // すべての習慣のチェックインを一括取得（N+1問題の解決）
+  const habitIds = habitList.map((h) => h.id)
+  const allCheckins = await db
+    .select()
+    .from(checkins)
+    .where(sql`${checkins.habitId} = ANY(${habitIds})`)
+    .orderBy(desc(checkins.date))
+
+  // 習慣ごとにチェックインをグループ化
+  const checkinsByHabit = new Map<string, typeof allCheckins>()
+  for (const checkin of allCheckins) {
+    const existing = checkinsByHabit.get(checkin.habitId) ?? []
+    existing.push(checkin)
+    checkinsByHabit.set(checkin.habitId, existing)
+  }
+
+  // 各習慣の進捗とストリークを計算
+  const habitsWithProgress = habitList.map((habit) => {
+    const habitCheckins = checkinsByHabit.get(habit.id) ?? []
+
+    // 現在の期間の進捗を計算
+    const start = getPeriodStart(date, habit.period)
+    const end = getPeriodEnd(date, habit.period)
+    const currentProgress = habitCheckins.filter((c) => {
+      const checkinDate = new Date(c.date)
+      return checkinDate >= start && checkinDate <= end
+    }).length
+
+    // ストリークを計算
+    const streak = calculateStreakFromCheckins(habit, habitCheckins)
+
+    const completionRate = Math.min(
+      COMPLETION_THRESHOLD,
+      Math.round((currentProgress / habit.frequency) * COMPLETION_THRESHOLD)
+    )
+
+    return {
+      ...habit,
+      currentProgress,
+      streak,
+      completionRate,
+    }
+  })
 
   return habitsWithProgress
+}
+
+/**
+ * チェックイン配列からストリークを計算（ヘルパー関数）
+ *
+ * @param habit - 習慣データ
+ * @param checkins - チェックイン配列
+ * @returns ストリーク数
+ */
+function calculateStreakFromCheckins(
+  habit: { id: string; frequency: number; period: 'daily' | 'weekly' | 'monthly' },
+  checkins: Array<{ date: Date | string }>
+): number {
+  if (checkins.length === 0) {
+    return 0
+  }
+
+  let streak = 0
+  let currentDate = new Date()
+  currentDate.setHours(0, 0, 0, 0)
+
+  // 期間ごとにチェックインをグループ化
+  const checkinsByPeriod = new Map<string, number>()
+  for (const checkin of checkins) {
+    const checkinDate = typeof checkin.date === 'string' ? new Date(checkin.date) : checkin.date
+    const periodKey = getPeriodKey(checkinDate, habit.period)
+    checkinsByPeriod.set(periodKey, (checkinsByPeriod.get(periodKey) ?? 0) + 1)
+  }
+
+  // 現在の期間の達成状況を確認
+  const currentPeriodKey = getPeriodKey(currentDate, habit.period)
+  const currentCount = checkinsByPeriod.get(currentPeriodKey) ?? 0
+
+  // 現在の期間が未達成の場合、前の期間から開始
+  if (currentCount < habit.frequency) {
+    currentDate = getPreviousPeriod(currentDate, habit.period)
+  }
+
+  // 過去に向かってストリークをカウント
+  while (true) {
+    const periodKey = getPeriodKey(currentDate, habit.period)
+    const count = checkinsByPeriod.get(periodKey) ?? 0
+
+    if (count >= habit.frequency) {
+      streak++
+      currentDate = getPreviousPeriod(currentDate, habit.period)
+    } else {
+      break
+    }
+  }
+
+  return streak
 }

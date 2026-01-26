@@ -24,6 +24,7 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
   const period = typeof periodRaw === 'string' && periodRaw.trim() !== '' ? periodRaw : undefined
   const frequencyRaw = formData.get('frequency')
   const parsedFrequency = frequencyRaw ? Number(frequencyRaw) : 1
+  // Daily の場合は frequency を 1 に強制（スキーマバリデーションと整合性を保つ）
   const shouldForceDaily = period === 'daily' || period === undefined
   const frequency = shouldForceDaily && Number.isFinite(parsedFrequency) ? 1 : parsedFrequency
 
