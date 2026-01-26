@@ -2,6 +2,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import type React from 'react'
+import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
 const _geist = Geist({ subsets: ['latin'] })
@@ -38,7 +39,10 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="ja">
-        <body className={'font-sans antialiased'}>{children}</body>
+        <body className={'font-sans antialiased'}>
+          {children}
+          <Toaster />
+        </body>
       </html>
     </ClerkProvider>
   )

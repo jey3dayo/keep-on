@@ -1,6 +1,7 @@
 'use client'
 
 import { Icon, normalizeIconName } from '@/components/Icon'
+import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById } from '@/lib/habit-data'
 import type { HabitWithProgress } from '@/types/habit'
 import { TaskCircle } from './TaskCircle'

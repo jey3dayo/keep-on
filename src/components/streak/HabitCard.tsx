@@ -2,7 +2,7 @@
 
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { Progress } from '@/components/ui/progress'
-import { COMPLETION_STATUS_LABEL, PERIOD_LABEL } from '@/constants/habit'
+import { COMPLETION_STATUS_LABEL, DEFAULT_HABIT_COLOR, PERIOD_LABEL } from '@/constants/habit'
 import { getColorById } from '@/lib/habit-data'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
