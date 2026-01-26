@@ -16,8 +16,11 @@ export default async function DashboardPage() {
     throw new Error('Failed to sync user')
   }
 
-  const habits = await getHabitsByUserId(user.id)
-  const todayCheckins = await getCheckinsByUserAndDate(user.id, new Date())
+  // クエリを並列実行してレスポンス時間を短縮
+  const [habits, todayCheckins] = await Promise.all([
+    getHabitsByUserId(user.id),
+    getCheckinsByUserAndDate(user.id, new Date()),
+  ])
 
   return <DashboardWrapper habits={habits} todayCheckins={todayCheckins} user={user} />
 }
