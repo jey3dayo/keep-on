@@ -2,6 +2,7 @@
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import { Result } from '@praha/byethrow'
+import { useRouter } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
@@ -11,7 +12,12 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { formatSerializableError } from '@/lib/errors/serializable'
 import { HabitInputSchema, type HabitInputSchemaType } from '@/schemas/habit'
 
-export function HabitFormServer() {
+interface HabitFormServerProps {
+  onSuccess?: 'close' | 'redirect'
+}
+
+export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps = {}) {
+  const router = useRouter()
   const form = useForm<HabitInputSchemaType>({
     resolver: valibotResolver(HabitInputSchema),
     defaultValues: {
@@ -35,6 +41,10 @@ export function HabitFormServer() {
         description: `「${data.name}」が追加されました`,
       })
       form.reset()
+
+      if (onSuccess === 'close') {
+        router.back()
+      }
     } else {
       toast.error('習慣の作成に失敗しました', {
         description: formatSerializableError(result.error),
