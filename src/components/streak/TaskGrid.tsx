@@ -1,6 +1,7 @@
 'use client'
 
 import { Icon, normalizeIconName } from '@/components/Icon'
+import { getColorById } from '@/lib/habit-data'
 import type { HabitWithProgress } from '@/types/habit'
 import { TaskCircle } from './TaskCircle'
 
@@ -17,7 +18,7 @@ export function TaskGrid({ habits, completedHabitIds, onToggleHabit, onAddClick 
       <div className="mx-auto grid max-w-md grid-cols-2 gap-6">
         {habits.map((habit) => (
           <TaskCircle
-            color={habit.color}
+            color={getColorById(habit.color ?? 'orange').color}
             completed={completedHabitIds.has(habit.id)}
             habitId={habit.id}
             habitName={habit.name}

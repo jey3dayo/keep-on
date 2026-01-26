@@ -19,6 +19,9 @@ describe('validateHabitInput', () => {
         userId: 'user-123',
         name: '朝の運動',
         icon: 'footprints',
+        color: null,
+        period: 'daily',
+        frequency: 1,
       })
     }
   })

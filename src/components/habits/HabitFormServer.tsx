@@ -5,23 +5,29 @@ import { Result } from '@praha/byethrow'
 import { Check, ChevronLeft, Clock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import type { InferOutput } from 'valibot'
 import { createHabit } from '@/app/actions/habits/create'
 import { formatSerializableError } from '@/lib/errors/serializable'
 import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/lib/habit-data'
 import { cn } from '@/lib/utils'
-import { HabitInputSchema, type HabitInputSchemaType } from '@/schemas/habit'
+import { HabitInputSchema } from '@/schemas/habit'
 
 interface HabitFormServerProps {
   onSuccess?: 'close' | 'redirect'
 }
 
+type FormValues = Omit<InferOutput<typeof HabitInputSchema>, 'period'> & {
+  period: 'daily' | 'weekly' | 'monthly'
+}
+
 export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps = {}) {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
-  const form = useForm<HabitInputSchemaType>({
-    resolver: valibotResolver(HabitInputSchema),
+  const form = useForm<FormValues>({
+    resolver: valibotResolver(HabitInputSchema) as Resolver<FormValues>,
     defaultValues: {
       name: '',
       icon: 'droplets',
@@ -48,7 +54,7 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
     }
   }, [form, isDaily, watchedFrequency])
 
-  async function onSubmit(data: HabitInputSchemaType) {
+  async function onSubmit(data: FormValues) {
     setIsSaving(true)
 
     // FormDataを作成してServer Actionを呼び出し

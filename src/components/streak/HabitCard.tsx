@@ -2,7 +2,8 @@
 
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { Progress } from '@/components/ui/progress'
-import { FALLBACK_OKLCH_COLOR, PERIOD_LABEL } from '@/constants/habit'
+import { PERIOD_LABEL } from '@/constants/habit'
+import { getColorById } from '@/lib/habit-data'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
 
@@ -13,7 +14,7 @@ interface HabitCardProps {
 }
 
 export function HabitCard({ habit, completed, onToggle }: HabitCardProps) {
-  const bgColor = habit.color ? `oklch(from ${habit.color} l c h)` : FALLBACK_OKLCH_COLOR
+  const bgColor = getColorById(habit.color ?? 'orange').color
   const isCompleted = habit.currentProgress >= habit.frequency
 
   return (
