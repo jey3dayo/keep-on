@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { COMPLETION_ACTION_LABEL } from '@/constants/habit'
 import { cn } from '@/lib/utils'
 import { Icon, type IconName } from './Icon'
 
@@ -64,7 +65,7 @@ export function HabitCircle({ habitName, icon, completed, onClick, size = 'md', 
 
   return (
     <button
-      aria-label={`${habitName}を${completed ? '未完了' : '完了'}にする`}
+      aria-label={`${habitName}を${completed ? COMPLETION_ACTION_LABEL.markIncomplete : COMPLETION_ACTION_LABEL.markComplete}`}
       className={cn(
         'relative flex items-center justify-center transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-95',
         sizeConfig.container,

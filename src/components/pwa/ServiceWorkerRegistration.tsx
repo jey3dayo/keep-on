@@ -11,6 +11,21 @@ export function ServiceWorkerRegistration() {
       return
     }
 
+    if (process.env.NODE_ENV !== 'production') {
+      // Dev 環境では SW を無効化して HMR/キャッシュの不整合を避ける
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const reg of registrations) {
+          reg.unregister()
+        }
+      })
+      caches.keys().then((keys) => {
+        for (const key of keys) {
+          caches.delete(key)
+        }
+      })
+      return
+    }
+
     navigator.serviceWorker
       .register('/sw.js')
       .then((reg) => {

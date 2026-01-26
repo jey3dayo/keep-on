@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { ThemeSettings } from '@/components/settings/ThemeSettings'
+import { WeekStartSettings } from '@/components/settings/WeekStartSettings'
 
 export const metadata: Metadata = {
   title: '設定 - KeepOn',
@@ -15,6 +16,7 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">アプリの表示をカスタマイズできます。</p>
       </div>
       <ThemeSettings />
+      <WeekStartSettings />
     </div>
   )
 }
