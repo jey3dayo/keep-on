@@ -282,11 +282,14 @@ export async function getHabitsWithProgress(
 
   // すべての習慣のチェックインを一括取得（N+1問題の解決）
   const habitIds = habitList.map((h) => h.id)
-  const allCheckins = await db
-    .select()
-    .from(checkins)
-    .where(sql`${checkins.habitId} = ANY(${habitIds})`)
-    .orderBy(desc(checkins.date))
+  const allCheckins =
+    habitIds.length === 0
+      ? []
+      : await db
+          .select()
+          .from(checkins)
+          .where(sql`${checkins.habitId} = ANY(ARRAY[${sql.raw(habitIds.map((id) => `'${id}'`).join(','))}])`)
+          .orderBy(desc(checkins.date))
 
   // 習慣ごとにチェックインをグループ化
   const checkinsByHabit = new Map<string, typeof allCheckins>()
