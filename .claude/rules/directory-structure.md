@@ -25,7 +25,9 @@ src/
 │   ├── db.ts         # Drizzle DB インスタンス（唯一）
 │   ├── queries/      # Drizzle操作（生の返り値のみ）
 │   ├── errors/       # エラー型定義
-│   ├── habit-data.ts # 習慣関連の静的データ・ヘルパー関数
+│   ├── habit-data.ts # 習慣関連の静的データ（アイコン、カラー、期間定義）
+│   ├── utils/        # ユーティリティ関数
+│   │   └── habits.ts # 習慣関連のヘルパー関数
 │   └── utils.ts      # 汎用ユーティリティ関数
 ├── schemas/          # Valibotスキーマ定義（純粋なスキーマのみ）
 └── validators/       # バリデーション（Result型を返す）
@@ -68,11 +70,10 @@ export type HabitInputSchemaType = v.InferOutput<typeof HabitInputSchema>;
 
 ### `src/lib/habit-data.ts`
 
-**責務:** 習慣関連の静的データとヘルパー関数
+**責務:** 習慣関連の静的データ定義
 
 - アイコン・カラー・期間などの定数データ定義
 - データルックアップ関数（`getIconById`, `getColorById` など）
-- 習慣データの変換・フィルタリング関数
 
 **返り値の型:** 直接値、またはフォールバック値を返す
 
@@ -90,6 +91,25 @@ export function getIconById(id: string): HabitIcon {
   return habitIcons.find((i) => i.id === id) || habitIcons[0];
 }
 
+export function getColorById(id: string): HabitColor {
+  return habitColors.find((c) => c.id === id) || habitColors[0];
+}
+```
+
+### `src/lib/utils/habits.ts`
+
+**責務:** 習慣関連のヘルパー関数
+
+- 習慣データの変換・フィルタリング関数
+- 習慣の状態計算・判定関数
+
+**返り値の型:** 直接値を返す
+
+**例:**
+
+```typescript
+import type { TaskPeriod } from "../habit-data";
+
 // フィルタリング関数
 export function filterHabitsByPeriod<T extends { period: TaskPeriod }>(
   habits: T[],
@@ -98,6 +118,14 @@ export function filterHabitsByPeriod<T extends { period: TaskPeriod }>(
   return periodFilter === "all"
     ? habits
     : habits.filter((h) => h.period === periodFilter);
+}
+
+// 完了判定関数（将来的に追加）
+export function isHabitCompleted(
+  currentProgress: number,
+  frequency: number,
+): boolean {
+  return currentProgress >= frequency;
 }
 ```
 
