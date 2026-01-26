@@ -9,7 +9,7 @@ import {
   subMonths,
   subWeeks,
 } from 'date-fns'
-import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { COMPLETION_THRESHOLD, type WeekStart } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
@@ -270,13 +270,7 @@ export async function getHabitsWithProgress(
   const allCheckins =
     habitIds.length === 0
       ? []
-      : await db
-          .select()
-          .from(checkins)
-          .where(sql`${checkins.habitId} = ANY(${sql.placeholder('habitIds')})`)
-          .orderBy(desc(checkins.date))
-          .prepare('getCheckinsForHabits')
-          .execute({ habitIds })
+      : await db.select().from(checkins).where(inArray(checkins.habitId, habitIds)).orderBy(desc(checkins.date))
 
   // 習慣ごとにチェックインをグループ化
   const checkinsByHabit = new Map<string, typeof allCheckins>()
