@@ -18,7 +18,7 @@ export default async function DashboardPage() {
 
   // クエリを並列実行してレスポンス時間を短縮
   const [habits, todayCheckins] = await Promise.all([
-    getHabitsWithProgress(user.id, new Date()),
+    getHabitsWithProgress(user.id, user.clerkId, new Date()),
     getCheckinsByUserAndDate(user.id, new Date()),
   ])
 

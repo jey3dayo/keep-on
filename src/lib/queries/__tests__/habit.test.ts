@@ -18,6 +18,11 @@ vi.mock('@/lib/db', () => ({
   }),
 }))
 
+// getUserWeekStartのモック
+vi.mock('@/lib/queries/user', () => ({
+  getUserWeekStart: vi.fn().mockResolvedValue('monday'),
+}))
+
 import { getDb } from '@/lib/db'
 
 const { calculateStreak, getCheckinCountForPeriod, getHabitById, getHabitsByUserId, getHabitsWithProgress } =
@@ -176,7 +181,7 @@ describe('getHabitsWithProgress', () => {
     const db = await getDb()
     vi.mocked(db.orderBy).mockResolvedValueOnce([])
 
-    const result = await getHabitsWithProgress('user-123', baseDate)
+    const result = await getHabitsWithProgress('user-123', 'clerk-123', baseDate)
 
     expect(result).toEqual([])
     expect(db.orderBy).toHaveBeenCalledTimes(1)
@@ -197,7 +202,7 @@ describe('getHabitsWithProgress', () => {
         { id: 'checkin-5', habitId: 'habit-weekly', date: new Date(2024, 0, 17), createdAt: baseDate },
       ])
 
-    const result = await getHabitsWithProgress('user-123', baseDate)
+    const result = await getHabitsWithProgress('user-123', 'clerk-123', baseDate)
 
     expect(result).toHaveLength(2)
 

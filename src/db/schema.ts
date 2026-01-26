@@ -15,6 +15,7 @@ export const users = pgTable('User', {
     .$defaultFn(() => createId()),
   clerkId: text('clerkId').notNull().unique(),
   email: text('email').notNull().unique(),
+  weekStart: text('weekStart').default('monday').notNull(),
   createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updatedAt', { mode: 'date' })
     .$onUpdate(() => new Date())
