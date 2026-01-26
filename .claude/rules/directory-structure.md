@@ -18,19 +18,20 @@ src/
 ├── components/       # React Components
 │   ├── ui/           # shadcn/ui コンポーネント（自動生成）
 │   └── [feature]/    # 機能別グループ（dashboard, habits, settings, streak, pwa, modals）
+├── constants/        # 定数定義
+│   ├── habit.ts      # 習慣関連の定数
+│   └── habit-data.ts # 習慣関連の静的データ
 ├── db/
 │   └── schema.ts     # Drizzle ORM スキーマ定義
 ├── lib/
 │   ├── db.ts         # Drizzle DB インスタンス（Hyperdrive対応）
 │   ├── queries/      # Drizzle操作（生の返り値のみ）
 │   ├── errors/       # エラー型定義
-│   ├── habit-data.ts # 習慣関連の静的データ
 │   ├── utils/        # ユーティリティ関数
 │   └── user.ts       # ユーザー関連ヘルパー
 ├── schemas/          # Valibotスキーマ定義（純粋なスキーマのみ）
 ├── validators/       # バリデーション（Result型を返す）
 ├── types/            # 型定義
-├── constants/        # 定数定義
 └── hooks/            # カスタムフック
 ```
 
@@ -69,7 +70,7 @@ export const HabitInputSchema = v.pipe(
 export type HabitInputSchemaType = v.InferOutput<typeof HabitInputSchema>;
 ```
 
-### `src/lib/habit-data.ts`
+### `src/constants/habit-data.ts`
 
 **責務:** 習慣関連の静的データ定義
 

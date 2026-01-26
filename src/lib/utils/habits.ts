@@ -1,4 +1,4 @@
-import type { TaskPeriod } from '../habit-data'
+import type { TaskPeriod } from '@/constants/habit-data'
 
 /**
  * 習慣を期間でフィルタリング

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { TaskPeriod } from '@/lib/habit-data'
+import type { TaskPeriod } from '@/constants/habit-data'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 
 interface Habit {
