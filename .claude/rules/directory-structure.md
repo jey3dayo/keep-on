@@ -13,24 +13,25 @@ paths: "src/**/*.{ts,tsx}"
 ```text
 src/
 ├── app/              # Next.js App Router
-│   ├── actions/      # Server Actions（Result.tryでエラーハンドリング）
-│   ├── api/          # API Routes
+│   ├── actions/      # Server Actions
 │   └── [routes]/     # ページ・レイアウト
 ├── components/       # React Components
-│   ├── Button.tsx    # 汎用UIコンポーネント（ルート直下）
-│   └── [feature]/    # 機能別グループ（habits/, auth/など）
+│   ├── ui/           # shadcn/ui コンポーネント（自動生成）
+│   └── [feature]/    # 機能別グループ（dashboard, habits, settings, streak, pwa, modals）
 ├── db/
 │   └── schema.ts     # Drizzle ORM スキーマ定義
 ├── lib/
-│   ├── db.ts         # Drizzle DB インスタンス（唯一）
+│   ├── db.ts         # Drizzle DB インスタンス（Hyperdrive対応）
 │   ├── queries/      # Drizzle操作（生の返り値のみ）
 │   ├── errors/       # エラー型定義
-│   ├── habit-data.ts # 習慣関連の静的データ（アイコン、カラー、期間定義）
+│   ├── habit-data.ts # 習慣関連の静的データ
 │   ├── utils/        # ユーティリティ関数
-│   │   └── habits.ts # 習慣関連のヘルパー関数
-│   └── utils.ts      # 汎用ユーティリティ関数
+│   └── user.ts       # ユーザー関連ヘルパー
 ├── schemas/          # Valibotスキーマ定義（純粋なスキーマのみ）
-└── validators/       # バリデーション（Result型を返す）
+├── validators/       # バリデーション（Result型を返す）
+├── types/            # 型定義
+├── constants/        # 定数定義
+└── hooks/            # カスタムフック
 ```
 
 ## 各ディレクトリの責務
@@ -358,21 +359,26 @@ src/components/
 
 ```text
 src/components/
-├── habits/
-│   ├── HabitCard.tsx
-│   ├── HabitForm.tsx
-│   └── HabitList.tsx
-└── auth/
-    ├── SignInForm.tsx
-    └── SignUpForm.tsx
+├── dashboard/      # ダッシュボード関連
+├── habits/         # 習慣管理
+├── settings/       # 設定
+├── streak/         # ストリーク/ダッシュボード
+├── pwa/            # PWA関連
+└── modals/         # モーダル
 ```
 
-## 自動生成ファイル
+## 自動生成・キャッシュディレクトリ
 
-`drizzle/` 配下のファイルは自動生成されるため、**直接編集しない**：
+以下は自動生成されるため、**直接編集しない**：
 
 ```text
-drizzle/             # Drizzle マイグレーション（自動生成）
+drizzle/      # Drizzle マイグレーション
+.next/        # Next.js ビルド出力
+.open-next/   # OpenNext ビルド出力
+.wrangler/    # Wrangler キャッシュ
 ```
 
-生成コマンド: `pnpm db:generate`
+## テストファイル配置
+
+- **配置**: テスト対象ファイルと同じディレクトリまたは `__tests__/` サブディレクトリ
+- **命名**: `*.test.ts` / `*.test.tsx`
