@@ -45,7 +45,7 @@ async function createDb() {
     fetch_types: false, // 型フェッチを無効化（Workers環境では不要）
     max: 1, // Workers環境では1接続のみ
     idle_timeout: 20, // アイドルタイムアウト（秒）
-    connect_timeout: 10, // 接続タイムアウト（秒）
+    connect_timeout: 5, // 接続タイムアウト（秒） - Workersの30秒制限内に収めるため短縮
   })
 
   return drizzle(client, { schema })
