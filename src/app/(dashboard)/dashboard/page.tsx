@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
-import { getHabitsByUserId } from '@/lib/queries/habit'
+import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { syncUser } from '@/lib/user'
 import { DashboardWrapper } from './DashboardWrapper'
 
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
 
   // クエリを並列実行してレスポンス時間を短縮
   const [habits, todayCheckins] = await Promise.all([
-    getHabitsByUserId(user.id),
+    getHabitsWithProgress(user.id, new Date()),
     getCheckinsByUserAndDate(user.id, new Date()),
   ])
 

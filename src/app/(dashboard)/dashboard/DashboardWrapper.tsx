@@ -9,15 +9,7 @@ import type { IconName } from '@/components/Icon'
 import { DesktopDashboard } from '@/components/streak/DesktopDashboard'
 import { StreakDashboard } from '@/components/streak/StreakDashboard'
 import { formatSerializableError } from '@/lib/errors/serializable'
-
-interface Habit {
-  id: string
-  name: string
-  icon: string | null
-  userId: string
-  createdAt: Date
-  updatedAt: Date
-}
+import type { HabitWithProgress } from '@/types/habit'
 
 interface Checkin {
   id: string
@@ -35,7 +27,7 @@ interface User {
 }
 
 interface DashboardWrapperProps {
-  habits: Habit[]
+  habits: HabitWithProgress[]
   todayCheckins: Checkin[]
   user: User
 }
