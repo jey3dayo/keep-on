@@ -25,7 +25,8 @@ src/
 │   ├── db.ts         # Drizzle DB インスタンス（唯一）
 │   ├── queries/      # Drizzle操作（生の返り値のみ）
 │   ├── errors/       # エラー型定義
-│   └── utils.ts      # ユーティリティ関数
+│   ├── habit-data.ts # 習慣関連の静的データ・ヘルパー関数
+│   └── utils.ts      # 汎用ユーティリティ関数
 ├── schemas/          # Valibotスキーマ定義（純粋なスキーマのみ）
 └── validators/       # バリデーション（Result型を返す）
 ```
@@ -63,6 +64,41 @@ export const HabitInputSchema = v.pipe(
 );
 
 export type HabitInputSchemaType = v.InferOutput<typeof HabitInputSchema>;
+```
+
+### `src/lib/habit-data.ts`
+
+**責務:** 習慣関連の静的データとヘルパー関数
+
+- アイコン・カラー・期間などの定数データ定義
+- データルックアップ関数（`getIconById`, `getColorById` など）
+- 習慣データの変換・フィルタリング関数
+
+**返り値の型:** 直接値、またはフォールバック値を返す
+
+**例:**
+
+```typescript
+// 静的データ定義
+export const habitIcons: HabitIcon[] = [
+  { id: "droplets", icon: Droplets, label: "水を飲む" },
+  // ...
+];
+
+// ルックアップ関数（フォールバック値を返す）
+export function getIconById(id: string): HabitIcon {
+  return habitIcons.find((i) => i.id === id) || habitIcons[0];
+}
+
+// フィルタリング関数
+export function filterHabitsByPeriod<T extends { period: TaskPeriod }>(
+  habits: T[],
+  periodFilter: "all" | TaskPeriod,
+): T[] {
+  return periodFilter === "all"
+    ? habits
+    : habits.filter((h) => h.period === periodFilter);
+}
 ```
 
 ### `src/lib/queries/`
