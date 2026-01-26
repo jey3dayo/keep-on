@@ -1,5 +1,11 @@
 import { createId } from '@paralleldrive/cuid2'
 import { date, integer, pgEnum, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import {
+  DEFAULT_HABIT_COLOR,
+  DEFAULT_HABIT_FREQUENCY,
+  DEFAULT_HABIT_ICON,
+  DEFAULT_HABIT_PERIOD,
+} from '@/constants/habit'
 
 export const taskPeriodEnum = pgEnum('task_period', ['daily', 'weekly', 'monthly'])
 
@@ -24,10 +30,10 @@ export const habits = pgTable('Habit', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
-  icon: text('icon').default('water'),
-  color: text('color').default('orange'),
-  period: taskPeriodEnum('period').default('daily').notNull(),
-  frequency: integer('frequency').default(1).notNull(),
+  icon: text('icon').default(DEFAULT_HABIT_ICON),
+  color: text('color').default(DEFAULT_HABIT_COLOR),
+  period: taskPeriodEnum('period').default(DEFAULT_HABIT_PERIOD).notNull(),
+  frequency: integer('frequency').default(DEFAULT_HABIT_FREQUENCY).notNull(),
   createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updatedAt', { mode: 'date' })
     .$onUpdate(() => new Date())
