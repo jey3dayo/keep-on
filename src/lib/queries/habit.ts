@@ -54,11 +54,11 @@ export async function createHabit(input: HabitInput) {
 }
 
 /**
- * 期間の開始日を計算
+ * 期間の開始日時を計算
  *
  * @param date - 基準日
- * @param period - 期間（daily, weekly, monthly）
- * @returns 期間の開始日
+ * @param period - 期間タイプ（daily: その日の00:00:00, weekly: 週の月曜日00:00:00, monthly: 月の1日00:00:00）
+ * @returns 期間の開始日時
  */
 function getPeriodStart(date: Date, period: 'daily' | 'weekly' | 'monthly'): Date {
   const start = new Date(date)
@@ -83,11 +83,11 @@ function getPeriodStart(date: Date, period: 'daily' | 'weekly' | 'monthly'): Dat
 }
 
 /**
- * 期間の終了日を計算
+ * 期間の終了日時を計算
  *
  * @param date - 基準日
- * @param period - 期間（daily, weekly, monthly）
- * @returns 期間の終了日
+ * @param period - 期間タイプ（daily: その日の23:59:59, weekly: 週の日曜日23:59:59, monthly: 月末23:59:59）
+ * @returns 期間の終了日時
  */
 function getPeriodEnd(date: Date, period: 'daily' | 'weekly' | 'monthly'): Date {
   const end = new Date(date)
