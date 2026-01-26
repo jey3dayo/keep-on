@@ -68,7 +68,12 @@ export const DEFAULT_WEEK_START_DAY = 1
 export const WEEK_END_DAY = 0
 
 /**
- * 週開始日の型定義
+ * 週開始日の文字列型
+ */
+export type WeekStart = 'monday' | 'sunday'
+
+/**
+ * 週開始日の数値型
  */
 export type WeekStartDay = 0 | 1 // 0 = Sunday, 1 = Monday
 
@@ -88,7 +93,7 @@ export function isValidWeekStartDay(value: unknown): value is WeekStartDay {
  * @param weekStart - "monday" | "sunday"
  * @returns WeekStartDay (0 | 1)
  */
-export function weekStartToDay(weekStart: 'monday' | 'sunday'): WeekStartDay {
+export function weekStartToDay(weekStart: WeekStart): WeekStartDay {
   return weekStart === 'monday' ? 1 : 0
 }
 

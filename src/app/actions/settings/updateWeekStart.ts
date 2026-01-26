@@ -2,9 +2,8 @@
 
 import { auth } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
+import type { WeekStart } from '@/constants/habit'
 import { updateUserWeekStart } from '@/lib/queries/user'
-
-export type WeekStart = 'monday' | 'sunday'
 
 export async function updateWeekStartAction(weekStart: WeekStart) {
   const { userId } = await auth()

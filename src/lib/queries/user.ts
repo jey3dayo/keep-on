@@ -1,8 +1,7 @@
 import { eq } from 'drizzle-orm'
+import type { WeekStart } from '@/constants/habit'
 import { users } from '@/db/schema'
 import { getDb } from '@/lib/db'
-
-export type WeekStart = 'monday' | 'sunday'
 
 /**
  * ユーザーのupsert入力データ

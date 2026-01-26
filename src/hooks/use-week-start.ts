@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-
-export type WeekStart = 'monday' | 'sunday'
+import type { WeekStart } from '@/constants/habit'
 
 interface UseWeekStart {
   weekStart: WeekStart

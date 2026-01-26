@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
-import { COMPLETION_THRESHOLD, WEEK_END_DAY } from '@/constants/habit'
+import { COMPLETION_THRESHOLD, WEEK_END_DAY, type WeekStart } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
 import { getUserWeekStart } from '@/lib/queries/user'
@@ -12,7 +12,7 @@ import type { HabitInput } from '@/validators/habit'
  * @param weekStart - "monday" | "sunday"
  * @returns 曜日番号 (0 = Sunday, 1 = Monday)
  */
-function weekStartToDay(weekStart: 'monday' | 'sunday'): 0 | 1 {
+function weekStartToDay(weekStart: WeekStart): 0 | 1 {
   return weekStart === 'monday' ? 1 : 0
 }
 
