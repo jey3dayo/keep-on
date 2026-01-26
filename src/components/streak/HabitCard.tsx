@@ -1,6 +1,7 @@
 'use client'
 
 import { Icon, normalizeIconName } from '@/components/Icon'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Progress } from '@/components/ui/progress'
 import { COMPLETION_STATUS_LABEL, DEFAULT_HABIT_COLOR, PERIOD_LABEL } from '@/constants/habit'
 import { getColorById } from '@/constants/habit-data'
@@ -11,9 +12,11 @@ interface HabitCardProps {
   habit: HabitWithProgress
   completed: boolean
   onToggle: () => void
+  onEdit?: () => void
+  onDelete?: () => void
 }
 
-export function HabitCard({ habit, completed, onToggle }: HabitCardProps) {
+export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: HabitCardProps) {
   const bgColor = getColorById(habit.color ?? DEFAULT_HABIT_COLOR).color
   const isCompleted = habit.currentProgress >= habit.frequency
 
@@ -32,6 +35,49 @@ export function HabitCard({ habit, completed, onToggle }: HabitCardProps) {
       style={{ backgroundColor: bgColor }}
       type="button"
     >
+      {/* 編集メニューボタン */}
+      {(onEdit || onDelete) && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              aria-label="メニューを開く"
+              className="absolute top-2 right-2 rounded-full p-1.5 text-white/80 hover:bg-black/20 hover:text-white"
+              onClick={(e) => {
+                e.stopPropagation()
+              }}
+              type="button"
+            >
+              <Icon className="h-4 w-4" name="more-horizontal" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {onEdit && (
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit()
+                }}
+              >
+                <Icon className="mr-2 h-4 w-4" name="pencil" />
+                編集
+              </DropdownMenuItem>
+            )}
+            {onDelete && (
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete()
+                }}
+              >
+                <Icon className="mr-2 h-4 w-4" name="trash" />
+                削除
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
       <div className="flex flex-col gap-4">
         {/* アイコンとストリーク */}
         <div className="flex items-center justify-between">
