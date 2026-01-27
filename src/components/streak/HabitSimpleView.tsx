@@ -14,6 +14,9 @@ interface HabitSimpleViewProps {
   onToggleHabit: (habitId: string) => void
   onAddHabit: () => void
   onSettings?: () => void
+  onArchive?: (habitId: string) => void
+  onEdit?: (habitId: string) => void
+  onDelete?: (habitId: string) => void
   backgroundColor?: string
 }
 
@@ -59,6 +62,9 @@ export function HabitSimpleView({
   onToggleHabit,
   onAddHabit,
   onSettings,
+  onArchive,
+  onEdit,
+  onDelete,
   backgroundColor,
 }: HabitSimpleViewProps) {
   const [currentPage, setCurrentPage] = useState(0)
@@ -104,6 +110,10 @@ export function HabitSimpleView({
     setResetConfirm(null)
   }
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+  }
+
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
 
   return (
@@ -119,38 +129,63 @@ export function HabitSimpleView({
 
             return (
               <div className="flex flex-col items-center gap-3" key={habit.id}>
-                <button
-                  className="relative flex h-[140px] w-[140px] items-center justify-center transition-transform hover:scale-105 active:scale-95"
-                  onClick={() => handleProgressClick(habit, isCheckedToday)}
-                  type="button"
-                >
-                  <ProgressRing
-                    backgroundColor={ringBgColor}
-                    progress={progressPercent}
-                    progressColor="rgba(255, 255, 255, 0.95)"
-                    size={140}
-                    strokeWidth={6}
-                  />
-
-                  <div
-                    className={cn(
-                      'flex h-[120px] w-[120px] items-center justify-center rounded-full transition-all duration-300',
-                      isCheckedToday && 'scale-105'
-                    )}
-                    style={{
-                      backgroundColor: bgColor,
-                      boxShadow: isCheckedToday ? '0 0 20px rgba(255, 255, 255, 0.3)' : 'none',
-                    }}
+                <div className="relative">
+                  <button
+                    className="relative flex h-[140px] w-[140px] items-center justify-center transition-transform hover:scale-105 active:scale-95"
+                    onClick={() => handleProgressClick(habit, isCheckedToday)}
+                    onContextMenu={handleContextMenu}
+                    type="button"
                   >
-                    <IconComponent
-                      className={cn(
-                        'h-14 w-14 transition-all duration-300',
-                        isCheckedToday ? 'text-white' : 'text-white/90'
-                      )}
-                      strokeWidth={1.5}
+                    <ProgressRing
+                      backgroundColor={ringBgColor}
+                      progress={progressPercent}
+                      progressColor="rgba(255, 255, 255, 0.95)"
+                      size={140}
+                      strokeWidth={6}
                     />
-                  </div>
-                </button>
+
+                    <div
+                      className={cn(
+                        'flex h-[120px] w-[120px] items-center justify-center rounded-full transition-all duration-300',
+                        isCheckedToday && 'scale-105'
+                      )}
+                      style={{
+                        backgroundColor: bgColor,
+                        boxShadow: isCheckedToday ? '0 0 20px rgba(255, 255, 255, 0.3)' : 'none',
+                      }}
+                    >
+                      <IconComponent
+                        className={cn(
+                          'h-14 w-14 transition-all duration-300',
+                          isCheckedToday ? 'text-white' : 'text-white/90'
+                        )}
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                  </button>
+
+                  {/* アクションメニューボタン */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        className="absolute -top-2 -right-2 h-8 w-8 rounded-full border-2 border-white/80 bg-white/90 p-0 hover:bg-white"
+                        size="icon"
+                        variant="ghost"
+                      >
+                        <MoreVertical className="h-4 w-4 text-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      {onEdit && <DropdownMenuItem onClick={() => onEdit(habit.id)}>編集</DropdownMenuItem>}
+                      {onArchive && <DropdownMenuItem onClick={() => onArchive(habit.id)}>アーカイブ</DropdownMenuItem>}
+                      {onDelete && (
+                        <DropdownMenuItem className="text-destructive" onClick={() => onDelete(habit.id)}>
+                          削除
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
                 <p
                   className={cn(

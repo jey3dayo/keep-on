@@ -7,23 +7,11 @@ import { Icon, normalizeIconName } from '@/components/Icon'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById } from '@/constants/habit-data'
+import { getPeriodLabel } from '@/lib/utils/habits'
 import type { HabitWithProgress } from '@/types/habit'
 import { HabitEditSheet } from './HabitEditSheet'
 import { HabitTableActions } from './HabitTableActions'
 import { HabitUnarchiveButton } from './HabitUnarchiveButton'
-
-function getPeriodLabel(period: 'daily' | 'weekly' | 'monthly'): string {
-  switch (period) {
-    case 'daily':
-      return '毎日'
-    case 'weekly':
-      return '毎週'
-    case 'monthly':
-      return '毎月'
-    default:
-      return period
-  }
-}
 
 interface HabitTableClientProps {
   habits: HabitWithProgress[]

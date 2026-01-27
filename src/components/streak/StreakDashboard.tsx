@@ -39,6 +39,9 @@ interface StreakDashboardProps {
     options?: { color?: string | null; period?: Period; frequency?: number }
   ) => Promise<void>
   onToggleCheckin: (habitId: string) => Promise<void>
+  onArchiveHabit?: (habitId: string) => Promise<void>
+  onEditHabit?: (habitId: string) => void
+  onDeleteHabit?: (habitId: string) => Promise<void>
 }
 
 type PeriodFilter = 'all' | Period
@@ -61,7 +64,16 @@ const persistMainView = (view: MainView) => {
   })
 }
 
-export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleCheckin }: StreakDashboardProps) {
+export function StreakDashboard({
+  habits,
+  todayCheckins,
+  user,
+  onAddHabit,
+  onToggleCheckin,
+  onArchiveHabit,
+  onEditHabit,
+  onDeleteHabit,
+}: StreakDashboardProps) {
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const [returnView, setReturnView] = useState<MainView>('dashboard')
   const [selectedPreset, setSelectedPreset] = useState<HabitPreset | null>(null)
@@ -165,6 +177,9 @@ export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleChe
           completedHabitIds={completedHabitIds}
           habits={habits}
           onAddHabit={openPresetSelector}
+          onArchive={onArchiveHabit}
+          onDelete={onDeleteHabit}
+          onEdit={onEditHabit}
           onSettings={() => handleViewChange('dashboard')}
           onToggleHabit={handleToggleHabit}
         />

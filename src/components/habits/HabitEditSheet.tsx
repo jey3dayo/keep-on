@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { updateHabitAction } from '@/app/actions/habits/update'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { formatSerializableError } from '@/lib/errors/serializable'
+import { safeBuildHabitFormData } from '@/transforms/habitFormData'
 import type { HabitWithProgress } from '@/types/habit'
 import { HabitFormServer } from './HabitFormServer'
 
@@ -17,30 +18,6 @@ interface HabitEditSheetProps {
   onOpenChange: (open: boolean) => void
 }
 
-function habitDataToFormData(data: unknown): FormData {
-  const formData = new FormData()
-
-  if (data && typeof data === 'object') {
-    if ('name' in data && typeof data.name === 'string') {
-      formData.append('name', data.name)
-    }
-    if ('icon' in data && typeof data.icon === 'string') {
-      formData.append('icon', data.icon)
-    }
-    if ('color' in data && typeof data.color === 'string') {
-      formData.append('color', data.color)
-    }
-    if ('period' in data && typeof data.period === 'string') {
-      formData.append('period', data.period)
-    }
-    if ('frequency' in data && typeof data.frequency === 'number') {
-      formData.append('frequency', String(data.frequency))
-    }
-  }
-
-  return formData
-}
-
 export function HabitEditSheet({ habit, open, onOpenChange }: HabitEditSheetProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -48,7 +25,14 @@ export function HabitEditSheet({ habit, open, onOpenChange }: HabitEditSheetProp
   const handleSubmit = async (data: unknown) => {
     setIsSubmitting(true)
 
-    const formData = habitDataToFormData(data)
+    const formData = safeBuildHabitFormData(data)
+    if (!formData) {
+      setIsSubmitting(false)
+      toast.error('更新に失敗しました', {
+        description: '入力内容を確認してください',
+      })
+      return
+    }
     const result = await updateHabitAction(habit.id, formData)
     setIsSubmitting(false)
 
