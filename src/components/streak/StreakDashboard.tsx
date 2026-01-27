@@ -173,7 +173,7 @@ function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
             title="リストビュー"
             type="button"
           >
-            <LayoutGrid className="h-5 w-5" />
+            <LayoutGrid className="h-4 w-4" />
           </button>
           <button
             className={cn(
@@ -184,7 +184,7 @@ function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
             title="シンプルビュー"
             type="button"
           >
-            <Circle className="h-5 w-5" />
+            <Circle className="h-4 w-4" />
           </button>
         </div>
       </div>
