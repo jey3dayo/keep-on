@@ -1,7 +1,9 @@
 'use client'
 
+import { Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Icon } from './Icon'
 
 export function ThemeToggle() {
@@ -20,13 +22,42 @@ export function ThemeToggle() {
   const isDark = resolvedTheme === 'dark'
 
   return (
-    <button
-      aria-label={`${isDark ? 'ライト' : 'ダーク'}モードに切り替え`}
-      className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-all hover:bg-secondary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-95"
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      type="button"
-    >
-      {isDark ? <Icon name="sun" size={20} /> : <Icon name="moon" size={20} />}
-    </button>
+    <div className="group relative">
+      <div className="absolute right-0 bottom-full mb-2 hidden w-64 group-hover:block">
+        <Card className="border-border bg-popover shadow-xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">テーマ切り替え</CardTitle>
+            <CardDescription className="text-xs">見た目のスタイルを選択できます</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-2 text-sm">
+              <div className="flex items-start gap-2">
+                <Sun className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">ライトモード</p>
+                  <p className="text-muted-foreground text-xs">明るい配色</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Moon className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">ダークモード</p>
+                  <p className="text-muted-foreground text-xs">暗い配色</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <button
+        aria-label={`${isDark ? 'ライト' : 'ダーク'}モードに切り替え`}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-all hover:bg-secondary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-95"
+        onClick={() => setTheme(isDark ? 'light' : 'dark')}
+        type="button"
+      >
+        {isDark ? <Icon name="sun" size={20} /> : <Icon name="moon" size={20} />}
+      </button>
+    </div>
   )
 }
