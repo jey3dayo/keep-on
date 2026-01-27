@@ -34,8 +34,10 @@ export async function syncUser() {
   } catch (error) {
     const parsed = parseClerkApiResponseError(error)
     if (parsed) {
+      if (parsed.status === 401 || parsed.status === 403) {
+        return null
+      }
       logError('clerk.currentUser:api-error', parsed)
-      return null
     }
     throw error
   }
