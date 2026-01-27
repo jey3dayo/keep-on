@@ -1,31 +1,9 @@
 'use client'
 
-import {
-  Apple,
-  Bike,
-  BookOpen,
-  Brain,
-  Camera,
-  Clock,
-  Coffee,
-  Droplets,
-  Dumbbell,
-  Flame,
-  Footprints,
-  Heart,
-  type LucideIcon,
-  Moon,
-  Music,
-  Palette,
-  Pill,
-  Sparkles,
-  Target,
-} from 'lucide-react'
 import { useState } from 'react'
-import { Icon, normalizeIconName } from '@/components/Icon'
-import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/Icon'
 import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, type Period } from '@/constants/habit'
-import { habitColors, taskPeriods } from '@/constants/habit-data'
+import { habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
 
@@ -46,28 +24,6 @@ export function HabitEditModal({ habit, onClose, onSave, onDelete }: HabitEditMo
 
   const selectedColorValue = habitColors.find((c) => c.id === selectedColor)?.color ?? habitColors[0].color
   const currentPeriod = taskPeriods.find((p) => p.id === selectedPeriod) ?? taskPeriods[0]
-
-  // アイコンマッピング
-  const iconMap: Record<string, LucideIcon> = {
-    droplets: Droplets,
-    dumbbell: Dumbbell,
-    'book-open': BookOpen,
-    moon: Moon,
-    heart: Heart,
-    apple: Apple,
-    brain: Brain,
-    music: Music,
-    camera: Camera,
-    palette: Palette,
-    coffee: Coffee,
-    bike: Bike,
-    footprints: Footprints,
-    pill: Pill,
-    clock: Clock,
-    sparkles: Sparkles,
-    target: Target,
-    flame: Flame,
-  }
 
   const handleSave = () => {
     if (!habitName.trim()) {
@@ -104,16 +60,18 @@ export function HabitEditModal({ habit, onClose, onSave, onDelete }: HabitEditMo
             <Icon className="h-5 w-5 text-muted-foreground" name="x" />
           </button>
           <h2 className="font-semibold text-foreground text-lg">習慣を編集</h2>
-          <Button
+          <button
             aria-label="保存"
-            className="rounded-full p-2"
+            className={cn(
+              'rounded-full p-2 transition-colors',
+              habitName.trim() ? 'hover:bg-secondary' : 'text-muted-foreground'
+            )}
             disabled={!habitName.trim()}
             onClick={handleSave}
-            size="icon"
-            variant="ghost"
+            type="button"
           >
             <Icon className="h-5 w-5" name="check" />
-          </Button>
+          </button>
         </div>
 
         <div className="space-y-6 p-4">
@@ -123,7 +81,10 @@ export function HabitEditModal({ habit, onClose, onSave, onDelete }: HabitEditMo
               className="flex h-24 w-24 items-center justify-center rounded-full shadow-lg"
               style={{ backgroundColor: selectedColorValue }}
             >
-              <Icon className="h-12 w-12 text-white" name={normalizeIconName(selectedIcon)} />
+              {(() => {
+                const IconComponent = habitIcons.find((icon) => icon.id === selectedIcon)?.icon ?? habitIcons[0].icon
+                return <IconComponent className="h-12 w-12 text-white" strokeWidth={1.5} />
+              })()}
             </div>
           </div>
 
@@ -145,17 +106,18 @@ export function HabitEditModal({ habit, onClose, onSave, onDelete }: HabitEditMo
           <div className="space-y-2">
             <span className="font-medium text-muted-foreground text-sm uppercase tracking-wide">アイコン</span>
             <div className="grid grid-cols-6 gap-2">
-              {Object.entries(iconMap).map(([iconId, IconComponent]) => {
-                const isSelected = selectedIcon === iconId
+              {habitIcons.map((iconItem) => {
+                const IconComponent = iconItem.icon
+                const isSelected = selectedIcon === iconItem.id
                 return (
                   <button
-                    aria-label={`アイコン ${iconId}`}
+                    aria-label={`アイコン ${iconItem.label}`}
                     className={cn(
                       'flex items-center justify-center rounded-xl p-2.5 transition-all',
                       isSelected ? 'scale-110 ring-2 ring-ring' : 'hover:bg-secondary'
                     )}
-                    key={iconId}
-                    onClick={() => setSelectedIcon(iconId)}
+                    key={iconItem.id}
+                    onClick={() => setSelectedIcon(iconItem.id)}
                     style={{
                       backgroundColor: isSelected ? selectedColorValue : undefined,
                     }}

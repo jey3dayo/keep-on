@@ -156,6 +156,189 @@ export const sampleHabits: Habit[] = [
   },
 ]
 
+export type PresetCategory = 'all' | 'health' | 'productivity' | 'lifestyle' | 'learning'
+
+export interface PresetCategoryOption {
+  id: PresetCategory
+  label: string
+  icon: LucideIcon
+}
+
+export const presetCategories: PresetCategoryOption[] = [
+  { id: 'all', label: 'すべて', icon: Sparkles },
+  { id: 'health', label: '健康', icon: Heart },
+  { id: 'productivity', label: '生産性', icon: Target },
+  { id: 'lifestyle', label: '生活', icon: Coffee },
+  { id: 'learning', label: '学習', icon: BookOpen },
+]
+
+export interface HabitPreset {
+  id: string
+  name: string
+  iconId: IconName
+  colorId: string
+  period: Period
+  frequency: number
+  category: PresetCategory
+}
+
+export const habitPresets: HabitPreset[] = [
+  {
+    id: 'p1',
+    name: '水を8杯飲む',
+    iconId: 'droplets',
+    colorId: 'cyan',
+    period: 'daily',
+    frequency: 8,
+    category: 'health',
+  },
+  {
+    id: 'p2',
+    name: '30分運動する',
+    iconId: 'dumbbell',
+    colorId: 'orange',
+    period: 'daily',
+    frequency: 1,
+    category: 'health',
+  },
+  {
+    id: 'p3',
+    name: '5,000歩歩く',
+    iconId: 'footprints',
+    colorId: 'green',
+    period: 'daily',
+    frequency: 1,
+    category: 'health',
+  },
+  {
+    id: 'p4',
+    name: 'ビタミン剤を飲む',
+    iconId: 'pill',
+    colorId: 'yellow',
+    period: 'daily',
+    frequency: 1,
+    category: 'health',
+  },
+  {
+    id: 'p5',
+    name: '7時間以上寝る',
+    iconId: 'moon',
+    colorId: 'purple',
+    period: 'daily',
+    frequency: 1,
+    category: 'health',
+  },
+  { id: 'p6', name: '瞑想する', iconId: 'brain', colorId: 'teal', period: 'daily', frequency: 1, category: 'health' },
+  {
+    id: 'p7',
+    name: 'ポモドーロ',
+    iconId: 'clock',
+    colorId: 'red',
+    period: 'daily',
+    frequency: 4,
+    category: 'productivity',
+  },
+  {
+    id: 'p8',
+    name: 'タスクを整理する',
+    iconId: 'target',
+    colorId: 'blue',
+    period: 'daily',
+    frequency: 1,
+    category: 'productivity',
+  },
+  {
+    id: 'p9',
+    name: '週次レビュー',
+    iconId: 'target',
+    colorId: 'blue',
+    period: 'weekly',
+    frequency: 1,
+    category: 'productivity',
+  },
+  {
+    id: 'p10',
+    name: '月の振り返り',
+    iconId: 'clock',
+    colorId: 'pink',
+    period: 'monthly',
+    frequency: 1,
+    category: 'productivity',
+  },
+  {
+    id: 'p11',
+    name: '部屋を整頓する',
+    iconId: 'sparkles',
+    colorId: 'lime',
+    period: 'daily',
+    frequency: 1,
+    category: 'lifestyle',
+  },
+  {
+    id: 'p12',
+    name: '写真を撮る',
+    iconId: 'camera',
+    colorId: 'pink',
+    period: 'daily',
+    frequency: 1,
+    category: 'lifestyle',
+  },
+  {
+    id: 'p13',
+    name: '日記を書く',
+    iconId: 'palette',
+    colorId: 'purple',
+    period: 'daily',
+    frequency: 1,
+    category: 'lifestyle',
+  },
+  {
+    id: 'p14',
+    name: '料理をする',
+    iconId: 'apple',
+    colorId: 'orange',
+    period: 'daily',
+    frequency: 1,
+    category: 'lifestyle',
+  },
+  {
+    id: 'p15',
+    name: '10分間読む',
+    iconId: 'book-open',
+    colorId: 'purple',
+    period: 'daily',
+    frequency: 1,
+    category: 'learning',
+  },
+  {
+    id: 'p16',
+    name: '言語を習う',
+    iconId: 'brain',
+    colorId: 'blue',
+    period: 'daily',
+    frequency: 1,
+    category: 'learning',
+  },
+  {
+    id: 'p17',
+    name: '楽器を練習する',
+    iconId: 'music',
+    colorId: 'red',
+    period: 'daily',
+    frequency: 1,
+    category: 'learning',
+  },
+  {
+    id: 'p18',
+    name: '新しいスキルを学ぶ',
+    iconId: 'brain',
+    colorId: 'teal',
+    period: 'weekly',
+    frequency: 1,
+    category: 'learning',
+  },
+]
+
 export function getIconById(id: string) {
   return habitIcons.find((i) => i.id === id) || habitIcons[0]
 }

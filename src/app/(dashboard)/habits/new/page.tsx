@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { HabitFormServer } from '@/components/habits/HabitFormServer'
+import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCurrentUserId } from '@/lib/user'
 
 export const metadata: Metadata = {
@@ -9,11 +10,19 @@ export const metadata: Metadata = {
 }
 
 export default async function NewHabitPage() {
-  const userId = await getCurrentUserId()
+  const timeoutMs = 8000
+  const requestMeta = createRequestMeta('/habits/new')
+
+  logInfo('request.habits.new:start', requestMeta)
+
+  const userId = await logSpan('habits.new.syncUser', () => getCurrentUserId(), requestMeta, { timeoutMs })
 
   if (!userId) {
+    logInfo('habits.new.syncUser:missing', requestMeta)
     redirect('/sign-in')
   }
+
+  logInfo('request.habits.new:end', requestMeta)
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">

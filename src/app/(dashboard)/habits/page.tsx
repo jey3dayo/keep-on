@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { Button } from '@/components/Button'
 import { HabitTable } from '@/components/habits/HabitTable'
 import { Icon } from '@/components/Icon'
+import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCurrentUserId } from '@/lib/user'
 
 export const metadata: Metadata = {
@@ -12,11 +13,19 @@ export const metadata: Metadata = {
 }
 
 export default async function HabitsPage() {
-  const userId = await getCurrentUserId()
+  const timeoutMs = 8000
+  const requestMeta = createRequestMeta('/habits')
+
+  logInfo('request.habits:start', requestMeta)
+
+  const userId = await logSpan('habits.syncUser', () => getCurrentUserId(), requestMeta, { timeoutMs })
 
   if (!userId) {
+    logInfo('habits.syncUser:missing', requestMeta)
     redirect('/sign-in')
   }
+
+  logInfo('request.habits:end', requestMeta)
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
@@ -32,7 +41,7 @@ export default async function HabitsPage() {
           </Link>
         </Button>
       </div>
-      <HabitTable userId={userId} />
+      <HabitTable requestMeta={requestMeta} userId={userId} />
     </div>
   )
 }

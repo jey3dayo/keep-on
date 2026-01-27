@@ -6,12 +6,17 @@ import { Input } from '@/components/Input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import type { Period } from '@/constants/habit'
 import { IconPicker } from './IconPicker'
 
 interface AddTaskSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (name: string, icon: IconName) => void
+  onSubmit: (
+    name: string,
+    icon: IconName,
+    options?: { color?: string | null; period?: Period; frequency?: number }
+  ) => void
 }
 
 interface Preset {
