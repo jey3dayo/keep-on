@@ -34,6 +34,7 @@
     "@paralleldrive/cuid2": "^3.3.0",
     "@praha/byethrow": "^0.9.0",
     "@praha/error-factory": "^1.2.1",
+    "@radix-ui/colors": "^3.0.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",

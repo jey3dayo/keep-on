@@ -3,8 +3,8 @@
 import { Circle, LayoutGrid } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { IconName } from '@/components/Icon'
-import type { Period } from '@/constants/habit'
-import type { HabitPreset } from '@/constants/habit-data'
+import { DEFAULT_HABIT_COLOR, type Period } from '@/constants/habit'
+import { getColorById, type HabitPreset } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
@@ -78,6 +78,7 @@ export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleChe
   const todayCompleted = dailyHabits.filter((h) => h.currentProgress >= h.frequency).length
   const totalDaily = dailyHabits.length
   const totalStreak = habits.reduce((sum, h) => sum + h.streak, 0)
+  const mainBackgroundColor = getColorById(habits[0]?.color ?? DEFAULT_HABIT_COLOR).color
 
   useEffect(() => {
     if (didUserChangeView.current) {
@@ -160,6 +161,7 @@ export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleChe
     <>
       {currentView === 'simple' ? (
         <HabitSimpleView
+          backgroundColor={mainBackgroundColor}
           completedHabitIds={completedHabitIds}
           habits={habits}
           onAddHabit={openPresetSelector}
@@ -167,7 +169,7 @@ export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleChe
           onToggleHabit={handleToggleHabit}
         />
       ) : (
-        <div className="streak-bg flex h-screen flex-col">
+        <div className="streak-bg flex h-screen flex-col" style={{ backgroundColor: mainBackgroundColor }}>
           <HabitListView
             completedHabitIds={completedHabitIds}
             filteredHabits={filteredHabits}

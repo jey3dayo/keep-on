@@ -14,6 +14,7 @@ interface HabitSimpleViewProps {
   onToggleHabit: (habitId: string) => void
   onAddHabit: () => void
   onSettings?: () => void
+  backgroundColor?: string
 }
 
 function ProgressRing({
@@ -58,6 +59,7 @@ export function HabitSimpleView({
   onToggleHabit,
   onAddHabit,
   onSettings,
+  backgroundColor,
 }: HabitSimpleViewProps) {
   const [currentPage, setCurrentPage] = useState(0)
   const [resetConfirm, setResetConfirm] = useState<{ habitId: string; habitName: string } | null>(null)
@@ -74,13 +76,15 @@ export function HabitSimpleView({
     [currentPage, habits]
   )
 
-  const bgColor = useMemo(() => {
+  const fallbackBgColor = useMemo(() => {
     const firstHabit = currentHabits[0]
     if (!firstHabit) {
       return getColorById(DEFAULT_HABIT_COLOR).color
     }
     return getColorById(firstHabit.color ?? DEFAULT_HABIT_COLOR).color
   }, [currentHabits])
+
+  const bgColor = backgroundColor ?? fallbackBgColor
 
   const ringBgColor = getRingColorFromBackground(bgColor)
 
