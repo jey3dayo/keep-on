@@ -27,11 +27,14 @@ export function transformHabitInput(formData: FormData) {
 
   // Daily の場合は frequency を 1 に固定
   // それ以外の場合は数値変換した値を使用（undefinedのままの場合あり）
-  const frequency = isDaily
-    ? 1
-    : typeof parsedFrequency === 'number' && Number.isFinite(parsedFrequency)
-      ? parsedFrequency
-      : undefined
+  let frequency: number | undefined
+  if (isDaily) {
+    frequency = 1
+  } else if (typeof parsedFrequency === 'number' && Number.isFinite(parsedFrequency)) {
+    frequency = parsedFrequency
+  } else {
+    frequency = undefined
+  }
 
   return {
     name: getRequiredString('name'),
