@@ -5,7 +5,6 @@ import { useState } from 'react'
 import type { IconName } from '@/components/Icon'
 import type { Period } from '@/constants/habit'
 import type { HabitPreset } from '@/constants/habit-data'
-import { useColorTheme } from '@/hooks/use-color-theme'
 import { cn } from '@/lib/utils'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import type { HabitWithProgress } from '@/types/habit'
@@ -13,7 +12,6 @@ import { HabitForm } from './HabitForm'
 import { HabitListView } from './HabitListView'
 import { HabitPresetSelector } from './HabitPresetSelector'
 import { HabitSimpleView } from './HabitSimpleView'
-import { StreakToolbar } from './StreakToolbar'
 
 interface Checkin {
   id: string
@@ -47,7 +45,6 @@ type View = 'dashboard' | 'simple' | 'preset-selector' | 'add'
 type MainView = 'dashboard' | 'simple'
 
 export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleCheckin }: StreakDashboardProps) {
-  const { theme, setTheme, ready } = useColorTheme()
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const [returnView, setReturnView] = useState<MainView>('dashboard')
   const [selectedPreset, setSelectedPreset] = useState<HabitPreset | null>(null)
@@ -143,7 +140,6 @@ export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleChe
             totalDaily={totalDaily}
             totalStreak={totalStreak}
           />
-          <StreakToolbar currentTheme={theme} onThemeChange={setTheme} ready={ready} />
         </div>
       )}
 

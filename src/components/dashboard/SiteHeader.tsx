@@ -17,7 +17,9 @@ export function SiteHeader({ title = 'Dashboard' }: { title?: string }) {
           <ThemeToggle />
           <UserButton>
             <UserButton.MenuItems>
+              <UserButton.Action label="アカウント管理" />
               <UserButton.Link href="/settings" label="設定" labelIcon={<Settings className="size-4" />} />
+              <UserButton.Action label="サインアウト" />
             </UserButton.MenuItems>
           </UserButton>
         </div>
