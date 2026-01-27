@@ -59,7 +59,11 @@ export function getPageTitle(pathname: string): string {
   }
 
   // パスの先頭部分でマッチング
-  for (const [path, title] of Object.entries(PAGE_TITLES)) {
+  const prefixEntries = Object.entries(PAGE_TITLES)
+    .filter(([path]) => path !== '/')
+    .sort(([a], [b]) => b.length - a.length)
+
+  for (const [path, title] of prefixEntries) {
     if (pathname.startsWith(path)) {
       return title
     }

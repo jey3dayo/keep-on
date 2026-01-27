@@ -38,7 +38,6 @@ interface DesktopDashboardProps {
 
 type PeriodFilter = 'all' | Period
 type View = 'dashboard' | 'add'
-type MainView = 'dashboard'
 
 export function DesktopDashboard({ habits, todayCheckins, onAddHabit, onToggleCheckin }: DesktopDashboardProps) {
   const [currentView, setCurrentView] = useState<View>('dashboard')

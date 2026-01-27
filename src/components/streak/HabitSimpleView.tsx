@@ -4,10 +4,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
+import { getRingColorFromBackground } from '@/lib/utils/color'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
-
-const OKLCH_LIGHTNESS_REGEX = /oklch\(([0-9.]+)/
 
 interface HabitSimpleViewProps {
   habits: HabitWithProgress[]
@@ -83,10 +82,7 @@ export function HabitSimpleView({
     return getColorById(firstHabit.color ?? DEFAULT_HABIT_COLOR).color
   }, [currentHabits])
 
-  const getDarkerColor = (color: string) =>
-    color.replace(OKLCH_LIGHTNESS_REGEX, (_, l) => `oklch(${Math.max(0, Number.parseFloat(l) - 0.25)})`)
-
-  const ringBgColor = getDarkerColor(bgColor)
+  const ringBgColor = getRingColorFromBackground(bgColor)
 
   const handleProgressClick = (habit: HabitWithProgress, isCheckedToday: boolean) => {
     if (isCheckedToday) {

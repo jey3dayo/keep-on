@@ -45,5 +45,18 @@ export function setClientCookie(key: string, value: string, options: CookieOptio
     parts.push(`samesite=${options.sameSite}`)
   }
 
+  if ('cookieStore' in window) {
+    const cookieStore = window.cookieStore
+    cookieStore.set({
+      name: key,
+      value,
+      path,
+      sameSite: options.sameSite,
+      maxAge: options.maxAge,
+    })
+    return
+  }
+
+  // biome-ignore lint/suspicious/noDocumentCookie: Fallback for browsers without Cookie Store API.
   document.cookie = parts.join('; ')
 }
