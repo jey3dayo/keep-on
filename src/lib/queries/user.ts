@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import type { WeekStart } from '@/constants/habit'
+import { DEFAULT_WEEK_START, type WeekStart } from '@/constants/habit'
 import { users } from '@/db/schema'
 import { getDb } from '@/lib/db'
 
@@ -45,7 +45,7 @@ export async function upsertUser(input: UpsertUserInput) {
 export async function getUserWeekStart(clerkId: string): Promise<WeekStart> {
   const db = await getDb()
   const [user] = await db.select({ weekStart: users.weekStart }).from(users).where(eq(users.clerkId, clerkId))
-  return (user?.weekStart as WeekStart) ?? 'monday'
+  return (user?.weekStart as WeekStart) ?? DEFAULT_WEEK_START
 }
 
 /**

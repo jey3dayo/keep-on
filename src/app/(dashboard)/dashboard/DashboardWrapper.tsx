@@ -9,12 +9,8 @@ import { createHabit } from '@/app/actions/habits/create'
 import type { IconName } from '@/components/Icon'
 import { DesktopDashboard } from '@/components/streak/DesktopDashboard'
 import { StreakDashboard } from '@/components/streak/StreakDashboard'
-import {
-  COMPLETION_THRESHOLD,
-  DEFAULT_HABIT_COLOR,
-  DEFAULT_HABIT_FREQUENCY,
-  DEFAULT_HABIT_PERIOD,
-} from '@/constants/habit'
+import { COMPLETION_THRESHOLD } from '@/constants/habit'
+import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_FREQUENCY, DEFAULT_HABIT_PERIOD } from '@/constants/habit-data'
 import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
 

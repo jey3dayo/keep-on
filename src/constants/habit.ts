@@ -35,34 +35,6 @@ export const PERIOD_DISPLAY_NAME: Record<Period, string> = {
 } as const
 
 /**
- * デフォルトの習慣カラー
- */
-export const DEFAULT_HABIT_COLOR = 'orange'
-
-/**
- * デフォルトの習慣アイコン
- */
-export const DEFAULT_HABIT_ICON = 'droplets'
-
-/**
- * デフォルトの目標回数
- */
-export const DEFAULT_HABIT_FREQUENCY = 1
-
-/**
- * デフォルトの期間
- */
-export const DEFAULT_HABIT_PERIOD: Period = 'daily'
-
-/**
- * 週の開始曜日（デフォルト: 月曜日）
- *
- * Note: この値はサーバーサイドのデフォルト値です。
- * クライアントサイドでは useWeekStart() を使用してユーザー設定を取得してください。
- */
-export const DEFAULT_WEEK_START_DAY = 1
-
-/**
  * 週の終了曜日（日曜日）
  */
 export const WEEK_END_DAY = 0
@@ -73,9 +45,22 @@ export const WEEK_END_DAY = 0
 export type WeekStart = 'monday' | 'sunday'
 
 /**
+ * デフォルトの週開始日（文字列）
+ */
+export const DEFAULT_WEEK_START: WeekStart = 'monday'
+
+/**
  * 週開始日の数値型
  */
 export type WeekStartDay = 0 | 1 // 0 = Sunday, 1 = Monday
+
+/**
+ * 週の開始曜日（デフォルト: 月曜日）
+ *
+ * Note: この値はサーバーサイドのデフォルト値です。
+ * クライアントサイドでは useWeekStart() を使用してユーザー設定を取得してください。
+ */
+export const DEFAULT_WEEK_START_DAY = 1
 
 /**
  * 週開始日設定を検証

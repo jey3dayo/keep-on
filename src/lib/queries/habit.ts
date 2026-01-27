@@ -10,22 +10,12 @@ import {
   subWeeks,
 } from 'date-fns'
 import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
-import { COMPLETION_THRESHOLD, type WeekStart } from '@/constants/habit'
+import { COMPLETION_THRESHOLD, weekStartToDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
 import { getUserWeekStart } from '@/lib/queries/user'
 import type { HabitWithProgress } from '@/types/habit'
 import type { HabitInput } from '@/validators/habit'
-
-/**
- * 週開始日文字列を数値に変換
- *
- * @param weekStart - "monday" | "sunday"
- * @returns 曜日番号 (0 = Sunday, 1 = Monday)
- */
-function weekStartToDay(weekStart: WeekStart): 0 | 1 {
-  return weekStart === 'monday' ? 1 : 0
-}
 
 /**
  * ユーザーの習慣一覧を取得

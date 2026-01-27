@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { COMPLETION_ACTION_LABEL } from '@/constants/habit'
+import { DEFAULT_HABIT_ICON } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import { Icon, type IconName } from './Icon'
 
@@ -47,7 +48,7 @@ const sizeMap = {
 export function HabitCircle({ habitName, icon, completed, onClick, size = 'md', className }: HabitCircleProps) {
   const [isAnimating, setIsAnimating] = useState(false)
   const sizeConfig = sizeMap[size]
-  const iconName = icon ?? 'circle-check'
+  const iconName = icon ?? DEFAULT_HABIT_ICON
 
   const centerX = sizeConfig.svg / 2
   const centerY = sizeConfig.svg / 2

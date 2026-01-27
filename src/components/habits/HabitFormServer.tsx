@@ -10,8 +10,16 @@ import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import type { InferOutput } from 'valibot'
 import { createHabit } from '@/app/actions/habits/create'
-import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON } from '@/constants/habit'
-import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
+import {
+  DEFAULT_HABIT_COLOR,
+  DEFAULT_HABIT_ICON,
+  getColorById,
+  getIconById,
+  getPeriodById,
+  habitColors,
+  habitIcons,
+  taskPeriods,
+} from '@/constants/habit-data'
 import { formatSerializableError } from '@/lib/errors/serializable'
 import { cn } from '@/lib/utils'
 import { HabitInputSchema } from '@/schemas/habit'

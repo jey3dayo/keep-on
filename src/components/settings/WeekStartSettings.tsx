@@ -5,6 +5,7 @@ import { updateWeekStartAction } from '@/app/actions/settings/updateWeekStart'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import type { WeekStart } from '@/constants/habit'
 import { useWeekStart } from '@/hooks/use-week-start'
 import { appToast } from '@/lib/utils/toast'
 
@@ -14,10 +15,11 @@ export function WeekStartSettings() {
 
   const handleWeekStartChange = async (value: string) => {
     if (value === 'monday' || value === 'sunday') {
+      const weekStartValue = value as WeekStart
       setIsUpdating(true)
       try {
-        await updateWeekStartAction(value)
-        setWeekStart(value)
+        await updateWeekStartAction(weekStartValue)
+        setWeekStart(weekStartValue)
         appToast.success('週の開始日を更新しました')
       } catch (error) {
         appToast.error('更新に失敗しました', error)

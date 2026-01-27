@@ -3,8 +3,8 @@
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Progress } from '@/components/ui/progress'
-import { COMPLETION_STATUS_LABEL, DEFAULT_HABIT_COLOR, PERIOD_LABEL } from '@/constants/habit'
-import { getColorById } from '@/constants/habit-data'
+import { COMPLETION_STATUS_LABEL, PERIOD_LABEL } from '@/constants/habit'
+import { DEFAULT_HABIT_COLOR, getColorById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
 

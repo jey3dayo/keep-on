@@ -76,6 +76,14 @@ export const taskPeriods: TaskPeriodOption[] = [
   { id: 'monthly', label: '月次', sublabel: '毎月', frequencyLabel: '回 / 月' },
 ]
 
+export const DEFAULT_HABIT_ICON = habitIcons[0].id
+
+const limeColor = habitColors.find((c) => c.id === 'lime')
+export const DEFAULT_HABIT_COLOR = limeColor?.id ?? habitColors[0].id
+
+export const DEFAULT_HABIT_FREQUENCY = 1
+export const DEFAULT_HABIT_PERIOD: TaskPeriod = 'daily'
+
 export interface Habit {
   id: string
   name: string

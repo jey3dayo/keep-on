@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { WeekStart } from '@/constants/habit'
+import { DEFAULT_WEEK_START, type WeekStart } from '@/constants/habit'
 
 interface UseWeekStart {
   weekStart: WeekStart
@@ -10,7 +10,6 @@ interface UseWeekStart {
 }
 
 const STORAGE_KEY = 'week-start'
-const DEFAULT_WEEK_START: WeekStart = 'monday'
 
 export function useWeekStart(): UseWeekStart {
   const [weekStart, setWeekStartState] = useState<WeekStart | null>(null)

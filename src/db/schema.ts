@@ -1,11 +1,12 @@
 import { createId } from '@paralleldrive/cuid2'
 import { date, integer, pgEnum, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { DEFAULT_WEEK_START } from '@/constants/habit'
 import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
   DEFAULT_HABIT_ICON,
   DEFAULT_HABIT_PERIOD,
-} from '@/constants/habit'
+} from '@/constants/habit-data'
 
 export const taskPeriodEnum = pgEnum('task_period', ['daily', 'weekly', 'monthly'])
 
@@ -15,7 +16,7 @@ export const users = pgTable('User', {
     .$defaultFn(() => createId()),
   clerkId: text('clerkId').notNull().unique(),
   email: text('email').notNull().unique(),
-  weekStart: text('weekStart').default('monday').notNull(),
+  weekStart: text('weekStart').default(DEFAULT_WEEK_START).notNull(),
   createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updatedAt', { mode: 'date' })
     .$onUpdate(() => new Date())
