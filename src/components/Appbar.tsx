@@ -1,9 +1,9 @@
 'use client'
 
-import { UserButton } from '@clerk/nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
+import { ClerkUserButton } from '@/components/ClerkUserButton'
 import { Icon } from './Icon'
 import { ThemeToggle } from './ThemeToggle'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet'
@@ -52,7 +52,7 @@ export function Appbar({ showUserButton = false }: AppbarProps) {
         {/* Right Side Actions */}
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          {showUserButton && <UserButton />}
+          {showUserButton && <ClerkUserButton />}
 
           {/* Mobile Menu */}
           <Sheet onOpenChange={setIsOpen} open={isOpen}>

@@ -1,10 +1,10 @@
 'use client'
 
-import { UserButton } from '@clerk/nextjs'
 import { BarChart3, HelpCircle, LayoutDashboard, ListChecks, Settings } from 'lucide-react'
 import Image from 'next/image'
 import type * as React from 'react'
 
+import { ClerkUserButton } from '@/components/ClerkUserButton'
 import { NavMain } from '@/components/dashboard/NavMain'
 import { NavSecondary } from '@/components/dashboard/NavSecondary'
 import {
@@ -70,7 +70,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center gap-2 p-2">
-          <UserButton
+          <ClerkUserButton
             appearance={{
               elements: {
                 avatarBox: 'size-8',

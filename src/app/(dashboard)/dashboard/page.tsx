@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
@@ -20,7 +21,7 @@ export default async function DashboardPage() {
 
   if (!user) {
     logInfo('dashboard.syncUser:missing', requestMeta)
-    throw new Error('Failed to sync user')
+    redirect('/sign-in')
   }
 
   // 同時リクエストの詰まりを避けるため順次実行
