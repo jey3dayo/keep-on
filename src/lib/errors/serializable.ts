@@ -9,6 +9,7 @@ export type SerializableHabitError =
   | { name: 'AuthorizationError'; message: string }
   | { name: 'ValidationError'; field: string; reason: string }
   | { name: 'DatabaseError'; message: string }
+  | { name: 'NotFoundError'; message: string }
 
 /**
  * HabitErrorをシリアライズ可能な形式に変換
@@ -37,6 +38,11 @@ export function serializeHabitError(error: HabitError): SerializableHabitError {
         name: 'DatabaseError',
         message: error.message,
       }
+    case 'NotFoundError':
+      return {
+        name: 'NotFoundError',
+        message: error.message,
+      }
     default: {
       const _exhaustive: never = error
       console.error('Unexpected error:', _exhaustive)
@@ -63,6 +69,8 @@ export function formatSerializableError(error: SerializableHabitError): string {
     case 'ValidationError':
       return error.reason
     case 'DatabaseError':
+      return error.message
+    case 'NotFoundError':
       return error.message
     default: {
       const _exhaustive: never = error
