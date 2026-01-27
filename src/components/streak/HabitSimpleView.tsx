@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
-import { getRingColorFromBackground } from '@/lib/utils/color'
 import { cn } from '@/lib/utils'
+import { getRingColorFromBackground } from '@/lib/utils/color'
 import type { HabitWithProgress } from '@/types/habit'
 
 interface HabitSimpleViewProps {
