@@ -1,7 +1,8 @@
 'use client'
 
 import { UserButton } from '@clerk/nextjs'
-import { BarChart3, HelpCircle, LayoutDashboard, ListChecks, Power, Settings } from 'lucide-react'
+import { BarChart3, HelpCircle, LayoutDashboard, ListChecks, Settings } from 'lucide-react'
+import Image from 'next/image'
 import type * as React from 'react'
 
 import { NavMain } from '@/components/dashboard/NavMain'
@@ -56,7 +57,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
               <a href="/dashboard">
-                <Power className="!size-5" />
+                <Image alt="" className="h-5 w-auto" height={20} src="/logo.svg" width={30} />
                 <span className="font-semibold text-base">KeepOn</span>
               </a>
             </SidebarMenuButton>

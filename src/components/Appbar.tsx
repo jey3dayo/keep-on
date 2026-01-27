@@ -1,6 +1,7 @@
 'use client'
 
 import { UserButton } from '@clerk/nextjs'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Icon } from './Icon'
@@ -30,7 +31,7 @@ export function Appbar({ showUserButton = false }: AppbarProps) {
         {/* Logo + App Name */}
         <div className="flex items-center gap-6 lg:gap-10">
           <Link className="flex items-center gap-2" href="/">
-            <Icon className="text-primary" name="power" size={24} />
+            <Image alt="" className="h-6 w-auto" height={24} priority src="/logo.svg" width={36} />
             <span className="font-bold text-lg">KeepOn</span>
           </Link>
 
