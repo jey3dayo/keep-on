@@ -5,9 +5,8 @@ import { useEffect, useState } from 'react'
 import { ColorPalette } from '@/components/streak/ColorPalette'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { DEFAULT_THEME_MODE } from '@/constants/theme'
 import { useColorTheme } from '@/hooks/use-color-theme'
-
-const DEFAULT_THEME_MODE = 'system'
 
 export function ThemeSettings() {
   const { theme: mode, setTheme: setMode } = useTheme()

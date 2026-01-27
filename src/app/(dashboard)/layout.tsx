@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { AppSidebar } from '@/components/dashboard/AppSidebar'
 import { SiteHeader } from '@/components/dashboard/SiteHeader'
 import { SidebarInset, SidebarProvider } from '@/components/Sidebar'
+import { SIGN_IN_PATH } from '@/constants/auth'
 
 export default async function DashboardLayout({
   children,
@@ -13,7 +14,7 @@ export default async function DashboardLayout({
 }) {
   const { userId } = await auth()
   if (!userId) {
-    redirect('/sign-in')
+    redirect(SIGN_IN_PATH)
   }
 
   return (

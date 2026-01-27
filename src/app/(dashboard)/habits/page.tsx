@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { Button } from '@/components/Button'
 import { HabitTable } from '@/components/habits/HabitTable'
 import { Icon } from '@/components/Icon'
+import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCurrentUserId } from '@/lib/user'
 
@@ -22,7 +23,7 @@ export default async function HabitsPage() {
 
   if (!userId) {
     logInfo('habits.syncUser:missing', requestMeta)
-    redirect('/sign-in')
+    redirect(SIGN_IN_PATH)
   }
 
   logInfo('request.habits:end', requestMeta)

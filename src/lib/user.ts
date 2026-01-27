@@ -1,20 +1,8 @@
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { currentUser } from '@clerk/nextjs/server'
-import * as v from 'valibot'
+import { parseClerkApiResponseErrorPayload } from '@/schemas/user'
 import { logError } from './logging'
 import { upsertUser } from './queries/user'
-
-const ClerkApiErrorEntrySchema = v.object({
-  code: v.optional(v.string()),
-  message: v.optional(v.string()),
-})
-
-const ClerkApiResponseErrorSchema = v.object({
-  name: v.optional(v.string()),
-  status: v.optional(v.number()),
-  clerkTraceId: v.optional(v.nullable(v.string())),
-  errors: v.optional(v.array(v.optional(ClerkApiErrorEntrySchema))),
-})
 
 function parseClerkApiResponseError(error: unknown) {
   if (isClerkAPIResponseError(error)) {
@@ -25,18 +13,7 @@ function parseClerkApiResponseError(error: unknown) {
     }
   }
 
-  const parsed = v.safeParse(ClerkApiResponseErrorSchema, error)
-  if (!parsed.success || parsed.output.name !== 'ClerkAPIResponseError') {
-    return null
-  }
-
-  const { status, clerkTraceId, errors } = parsed.output
-
-  return {
-    status,
-    clerkTraceId: clerkTraceId ?? undefined,
-    errors: errors?.map((entry) => ({ code: entry?.code, message: entry?.message })),
-  }
+  return parseClerkApiResponseErrorPayload(error)
 }
 
 /**

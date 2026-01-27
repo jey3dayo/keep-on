@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { syncUser } from '@/lib/user'
 import { DashboardWrapper } from './DashboardWrapper'
-
-const SIGN_IN_PATH = '/sign-in'
 
 export const metadata: Metadata = {
   title: 'ダッシュボード - KeepOn',
