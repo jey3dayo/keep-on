@@ -1,6 +1,5 @@
 'use client'
 
-import { Star } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
@@ -254,13 +253,6 @@ export function HabitSimpleView({
         ) : (
           <div className="h-2" />
         )}
-
-        <button
-          className="flex h-10 w-10 items-center justify-center text-white/70 transition-colors hover:text-white"
-          type="button"
-        >
-          <Star className="h-6 w-6" />
-        </button>
       </nav>
     </div>
   )
