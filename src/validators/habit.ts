@@ -2,6 +2,7 @@ import { Result } from '@praha/byethrow'
 import type { InferInsertModel } from 'drizzle-orm'
 import { ValidationError } from '@/lib/errors/habit'
 import { safeParseHabitInput } from '@/schemas/habit'
+import { transformHabitInput, transformHabitUpdate } from '@/transforms/habitFormData'
 
 /**
  * 習慣入力データの型定義
@@ -66,93 +67,4 @@ export function validateHabitUpdate(formData: FormData): Result.Result<HabitUpda
   }
 
   return Result.succeed(parseResult.output)
-}
-
-/**
- * Transform層: FormDataから習慣入力データへの変換
- * UI都合・入力形式都合のみを扱う
- */
-function transformHabitInput(formData: FormData) {
-  const getString = (key: string): string | undefined => {
-    const v = formData.get(key)
-    return typeof v === 'string' ? v : undefined
-  }
-
-  const getRequiredString = (key: string): string => {
-    const v = getString(key)?.trim()
-    return v || ''
-  }
-
-  const periodRaw = getString('period')
-  const frequencyRaw = getString('frequency')
-  const parsedFrequency = frequencyRaw ? Number(frequencyRaw) : undefined
-  const isDaily = periodRaw === 'daily' || periodRaw === undefined
-  const frequency =
-    isDaily && typeof parsedFrequency === 'number' && Number.isFinite(parsedFrequency) ? 1 : parsedFrequency
-
-  return {
-    name: getRequiredString('name'),
-    icon: getString('icon'),
-    color: getString('color'),
-    period: periodRaw,
-    frequency,
-  }
-}
-
-/**
- * Transform層: FormDataから習慣更新データへの変換（部分更新対応）
- * UI都合・入力形式都合のみを扱う
- */
-function transformHabitUpdate(formData: FormData) {
-  const getString = (key: string): string | undefined => {
-    const v = formData.get(key)
-    return typeof v === 'string' ? v : undefined
-  }
-
-  const getOptionalString = (key: string): string | undefined => {
-    const v = getString(key)?.trim()
-    return v ? v : undefined
-  }
-
-  const getOptionalNumber = (key: string): number | undefined => {
-    const v = getOptionalString(key)
-    if (v === undefined) {
-      return undefined
-    }
-    const n = Number(v)
-    return Number.isFinite(n) ? n : undefined
-  }
-
-  const period = getOptionalString('period')
-  const frequency = getOptionalNumber('frequency')
-
-  // Daily の場合は frequency を 1 に
-  const isDaily = period === 'daily'
-  const adjustedFrequency = isDaily ? 1 : frequency
-
-  // 部分更新のため、値があるフィールドのみを含める
-  const input: Record<string, unknown> = {}
-  const name = getOptionalString('name')
-  if (name !== undefined) {
-    input.name = name
-  }
-
-  const icon = getString('icon')
-  if (icon !== undefined) {
-    input.icon = icon
-  }
-
-  const color = getString('color')
-  if (color !== undefined) {
-    input.color = color
-  }
-
-  if (period !== undefined) {
-    input.period = period
-  }
-  if (adjustedFrequency !== undefined) {
-    input.frequency = adjustedFrequency
-  }
-
-  return input
 }

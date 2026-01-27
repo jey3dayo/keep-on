@@ -13,6 +13,16 @@ describe('validateHabitInput', () => {
 
     const result = validateHabitInput(userId, formData)
 
+    // Debug: 失敗時のエラー内容を確認
+    if (Result.isFailure(result)) {
+      console.error('Validation failed:', {
+        errorName: result.error.name,
+        errorMessage: result.error.message,
+        errorField: result.error.field,
+        errorReason: result.error.reason,
+      })
+    }
+
     expect(Result.isSuccess(result)).toBe(true)
     if (Result.isSuccess(result)) {
       expect(result.value).toEqual({

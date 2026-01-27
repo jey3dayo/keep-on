@@ -18,12 +18,12 @@ export const HabitInputSchema = v.pipe(
       v.maxLength(100, 'Name is too long (max 100 characters)')
     ),
     icon: v.pipe(
-      v.nullable(v.string()),
-      v.transform((val) => (val?.trim() ? val.trim() : null))
+      v.nullable(v.optional(v.string())),
+      v.transform((val): string | null => (val?.trim() ? val.trim() : null))
     ),
     color: v.pipe(
-      v.nullable(v.string()),
-      v.transform((val) => (val?.trim() ? val.trim() : null))
+      v.nullable(v.optional(v.string())),
+      v.transform((val): string | null => (val?.trim() ? val.trim() : null))
     ),
     period: v.optional(PeriodSchema, DEFAULT_HABIT_PERIOD),
     frequency: v.pipe(
