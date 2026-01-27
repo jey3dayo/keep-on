@@ -2,8 +2,8 @@
 
 import { Calendar } from 'lucide-react'
 import { type CSSProperties, type ReactNode, useMemo } from 'react'
+import { AddHabitButton } from '@/components/Button'
 import { Icon, normalizeIconName } from '@/components/Icon'
-import { Button } from '@/components/ui/button'
 import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
@@ -81,9 +81,7 @@ export function HabitListView({
               <Calendar className="h-8 w-8 text-muted-foreground" />
             </div>
             <p className="mb-4 text-muted-foreground">まだ習慣がありません</p>
-            <Button onClick={onAddHabit} variant="default">
-              習慣を追加
-            </Button>
+            <AddHabitButton onClick={onAddHabit}>習慣を追加</AddHabitButton>
           </div>
         ) : (
           filteredHabits.map((habit) => (
@@ -99,10 +97,7 @@ export function HabitListView({
 
       {filteredHabits.length > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2">
-          <Button onClick={onAddHabit} size="lg">
-            <Icon className="h-5 w-5" name="plus" />
-            習慣を追加
-          </Button>
+          <AddHabitButton onClick={onAddHabit}>習慣を追加</AddHabitButton>
         </div>
       )}
 

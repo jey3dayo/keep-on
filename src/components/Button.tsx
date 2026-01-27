@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { Icon } from './Icon'
 import { Button as BaseButton } from './ui/button'
 
 const buttonVariants = cva('focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95', {
@@ -49,5 +50,25 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   }
 )
 Button.displayName = 'Button'
+
+interface AddHabitButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  icon?: boolean
+}
+
+export function AddHabitButton({ children, icon = true, className, ...props }: AddHabitButtonProps) {
+  return (
+    <button
+      className={cn(
+        'flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-medium text-accent-foreground shadow-lg transition-all hover:scale-105 hover:bg-accent/80 active:scale-95',
+        className
+      )}
+      type="button"
+      {...props}
+    >
+      {icon && <Icon className="h-5 w-5" name="plus" />}
+      {children}
+    </button>
+  )
+}
 
 export { Button, buttonVariants, type ButtonProps }
