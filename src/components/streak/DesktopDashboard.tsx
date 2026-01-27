@@ -31,6 +31,9 @@ interface DesktopDashboardProps {
   user: User
   onAddHabit: (name: string, icon: IconName) => Promise<void>
   onToggleCheckin: (habitId: string) => Promise<void>
+  // TODO: 編集・削除機能の実装 (https://github.com/jey3dayo/keep-on/issues/46)
+  // onUpdateHabit?: (habitId: string, updates: Partial<HabitWithProgress>) => Promise<void>
+  // onDeleteHabit?: (habitId: string) => Promise<void>
 }
 
 type PeriodFilter = 'all' | 'daily' | 'weekly' | 'monthly'
@@ -87,6 +90,9 @@ export function DesktopDashboard({ habits, todayCheckins, onAddHabit, onToggleCh
             habit={habit}
             key={habit.id}
             onToggle={() => handleToggleHabit(habit.id)}
+            // TODO: 編集・削除機能の実装 (https://github.com/jey3dayo/keep-on/issues/46)
+            // onEdit={() => handleEditHabit(habit.id)}
+            // onDelete={() => handleDeleteHabit(habit.id)}
           />
         ))}
       </div>
