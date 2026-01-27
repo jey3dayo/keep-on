@@ -260,7 +260,14 @@ export function HabitSimpleView({
       </main>
 
       {/* アクションDrawer */}
-      <Drawer onOpenChange={handleActionDrawerOpen} open={actionDrawerOpen}>
+      <Drawer
+        onOpenChange={(open) => {
+          if (!open) {
+            handleActionDrawerClose()
+          }
+        }}
+        open={actionDrawerOpen}
+      >
         <DrawerContent className="h-[70vh]">
           <DrawerHeader className="text-left">
             <DrawerTitle>習慣の操作</DrawerTitle>
