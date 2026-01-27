@@ -1,15 +1,23 @@
 'use client'
 
 import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
 import { ColorPalette } from '@/components/streak/ColorPalette'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { DEFAULT_THEME_MODE } from '@/constants/theme'
 import { useColorTheme } from '@/hooks/use-color-theme'
 
 export function ThemeSettings() {
   const { theme: mode, setTheme: setMode } = useTheme()
   const { theme: colorTheme, setTheme: setColorTheme, ready } = useColorTheme()
-  const currentMode = mode ?? 'system'
+  const [mounted, setMounted] = useState<boolean>(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const currentMode = mounted ? (mode ?? DEFAULT_THEME_MODE) : DEFAULT_THEME_MODE
 
   return (
     <Card>

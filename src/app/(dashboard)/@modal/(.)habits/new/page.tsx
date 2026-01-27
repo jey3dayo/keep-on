@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { HabitFormServer } from '@/components/habits/HabitFormServer'
 import { RouteModal } from '@/components/modals/RouteModal'
+import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCurrentUserId } from '@/lib/user'
 
@@ -14,7 +15,7 @@ export default async function NewHabitModalPage() {
 
   if (!userId) {
     logInfo('habits.new.modal.syncUser:missing', requestMeta)
-    redirect('/sign-in')
+    redirect(SIGN_IN_PATH)
   }
 
   logInfo('request.habits.new.modal:end', requestMeta)

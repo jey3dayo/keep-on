@@ -42,3 +42,7 @@ export const HabitInputSchema = v.pipe(
 )
 
 export type HabitInputSchemaType = v.InferOutput<typeof HabitInputSchema>
+
+export function safeParseHabitInput(input: unknown) {
+  return v.safeParse(HabitInputSchema, input)
+}

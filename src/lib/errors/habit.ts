@@ -6,7 +6,18 @@ import { ErrorFactory } from '@praha/error-factory'
  */
 export class UnauthorizedError extends ErrorFactory({
   name: 'UnauthorizedError',
-  message: 'User is not authenticated',
+  message: ({ detail }) => detail ?? 'User is not authenticated',
+  fields: ErrorFactory.fields<{ detail?: string }>(),
+}) {}
+
+/**
+ * 認可エラー
+ * リソースへのアクセス権がない場合に発生
+ */
+export class AuthorizationError extends ErrorFactory({
+  name: 'AuthorizationError',
+  message: ({ detail }) => detail ?? 'User is not authorized',
+  fields: ErrorFactory.fields<{ detail?: string }>(),
 }) {}
 
 /**
@@ -25,10 +36,11 @@ export class ValidationError extends ErrorFactory({
  */
 export class DatabaseError extends ErrorFactory({
   name: 'DatabaseError',
-  message: 'Database operation failed',
+  message: ({ detail }) => detail ?? 'Database operation failed',
+  fields: ErrorFactory.fields<{ detail?: string }>(),
 }) {}
 
 /**
  * 習慣管理関連のエラー型の統合
  */
-export type HabitError = UnauthorizedError | ValidationError | DatabaseError
+export type HabitError = UnauthorizedError | AuthorizationError | ValidationError | DatabaseError

@@ -6,6 +6,7 @@ import type { HabitError } from './habit'
  */
 export type SerializableHabitError =
   | { name: 'UnauthorizedError' }
+  | { name: 'AuthorizationError'; message: string }
   | { name: 'ValidationError'; field: string; reason: string }
   | { name: 'DatabaseError'; message: string }
 
@@ -19,6 +20,11 @@ export function serializeHabitError(error: HabitError): SerializableHabitError {
   switch (error.name) {
     case 'UnauthorizedError':
       return { name: 'UnauthorizedError' }
+    case 'AuthorizationError':
+      return {
+        name: 'AuthorizationError',
+        message: error.message,
+      }
     case 'ValidationError':
       return {
         name: 'ValidationError',
@@ -29,7 +35,7 @@ export function serializeHabitError(error: HabitError): SerializableHabitError {
       console.error('Database error:', error.cause)
       return {
         name: 'DatabaseError',
-        message: 'Database operation failed',
+        message: error.message,
       }
     default: {
       const _exhaustive: never = error
@@ -52,6 +58,8 @@ export function formatSerializableError(error: SerializableHabitError): string {
   switch (error.name) {
     case 'UnauthorizedError':
       return 'Unauthorized'
+    case 'AuthorizationError':
+      return error.message
     case 'ValidationError':
       return error.reason
     case 'DatabaseError':

@@ -1,12 +1,48 @@
+import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { currentUser } from '@clerk/nextjs/server'
+import { StatusCodes } from 'http-status-codes'
+import { parseClerkApiResponseErrorPayload } from '@/schemas/user'
+import { logError } from './logging'
 import { upsertUser } from './queries/user'
+
+function parseClerkApiResponseError(error: unknown) {
+  if (isClerkAPIResponseError(error)) {
+    const errors = Array.isArray(error.errors)
+      ? error.errors
+          .filter((entry): entry is NonNullable<typeof entry> => entry != null)
+          .map((entry) => ({ code: entry.code, message: entry.message }))
+      : undefined
+
+    return {
+      status: error.status,
+      clerkTraceId: error.clerkTraceId ?? undefined,
+      errors,
+    }
+  }
+
+  return parseClerkApiResponseErrorPayload(error)
+}
 
 /**
  * Clerk認証されたユーザーをPrismaのUserテーブルに同期
  * 存在しない場合は新規作成、存在する場合は更新
  */
 export async function syncUser() {
-  const clerkUser = await currentUser()
+  let clerkUser: Awaited<ReturnType<typeof currentUser>> = null
+
+  try {
+    clerkUser = await currentUser()
+  } catch (error) {
+    const parsed = parseClerkApiResponseError(error)
+    if (parsed) {
+      if (parsed.status === StatusCodes.UNAUTHORIZED || parsed.status === StatusCodes.FORBIDDEN) {
+        return null
+      }
+      logError('clerk.currentUser:api-error', parsed)
+      return null
+    }
+    throw error
+  }
 
   if (!clerkUser) {
     return null

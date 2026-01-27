@@ -8,7 +8,6 @@ import { useEffect, useState } from 'react'
 import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import type { InferOutput } from 'valibot'
 import { createHabit } from '@/app/actions/habits/create'
 import {
   DEFAULT_HABIT_COLOR,
@@ -20,13 +19,13 @@ import {
 import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
 import { formatSerializableError } from '@/lib/errors/serializable'
 import { cn } from '@/lib/utils'
-import { HabitInputSchema } from '@/schemas/habit'
+import { HabitInputSchema, type HabitInputSchemaType } from '@/schemas/habit'
 
 interface HabitFormServerProps {
   onSuccess?: 'close' | 'redirect'
 }
 
-type FormValues = Omit<InferOutput<typeof HabitInputSchema>, 'period'> & {
+type FormValues = Omit<HabitInputSchemaType, 'period'> & {
   period: Period
 }
 

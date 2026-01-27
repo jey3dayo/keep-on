@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { HabitFormServer } from '@/components/habits/HabitFormServer'
+import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCurrentUserId } from '@/lib/user'
 
@@ -19,7 +20,7 @@ export default async function NewHabitPage() {
 
   if (!userId) {
     logInfo('habits.new.syncUser:missing', requestMeta)
-    redirect('/sign-in')
+    redirect(SIGN_IN_PATH)
   }
 
   logInfo('request.habits.new:end', requestMeta)

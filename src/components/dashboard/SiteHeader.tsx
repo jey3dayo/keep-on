@@ -1,6 +1,6 @@
 'use client'
 
-import { UserButton } from '@clerk/nextjs'
+import { ClerkUserButton } from '@/components/ClerkUserButton'
 import { SidebarTrigger } from '@/components/Sidebar'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Separator } from '@/components/ui/separator'
@@ -14,7 +14,7 @@ export function SiteHeader({ title = 'Dashboard' }: { title?: string }) {
         <h1 className="font-medium text-base">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
-          <UserButton />
+          <ClerkUserButton />
         </div>
       </div>
     </header>

@@ -1,8 +1,7 @@
 import { Result } from '@praha/byethrow'
 import type { InferInsertModel } from 'drizzle-orm'
-import * as v from 'valibot'
 import { ValidationError } from '@/lib/errors/habit'
-import { HabitInputSchema } from '@/schemas/habit'
+import { safeParseHabitInput } from '@/schemas/habit'
 
 /**
  * 習慣入力データの型定義
@@ -28,7 +27,7 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
   const shouldForceDaily = period === 'daily' || period === undefined
   const frequency = shouldForceDaily && Number.isFinite(parsedFrequency) ? 1 : parsedFrequency
 
-  const parseResult = v.safeParse(HabitInputSchema, { name, icon, color, period, frequency })
+  const parseResult = safeParseHabitInput({ name, icon, color, period, frequency })
 
   if (!parseResult.success) {
     const firstIssue = parseResult.issues[0]

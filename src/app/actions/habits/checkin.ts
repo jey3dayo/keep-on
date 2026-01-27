@@ -2,42 +2,19 @@
 
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
+import { AuthorizationError, DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
 import { createCheckin, deleteCheckinByHabitAndDate, findCheckinByHabitAndDate } from '@/lib/queries/checkin'
 import { getHabitById } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
 
-class AuthenticationError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'AuthenticationError'
-  }
-}
-
-class AuthorizationError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'AuthorizationError'
-  }
-}
-
-class DatabaseError extends Error {
-  cause?: unknown
-
-  constructor(message: string, cause?: unknown) {
-    super(message)
-    this.name = 'DatabaseError'
-    this.cause = cause
-  }
-}
-
 type SerializableCheckinError =
-  | { name: 'AuthenticationError'; message: string }
+  | { name: 'UnauthorizedError'; message: string }
   | { name: 'AuthorizationError'; message: string }
   | { name: 'DatabaseError'; message: string }
 
 const serializeCheckinError = (error: unknown): SerializableCheckinError => {
-  if (error instanceof AuthenticationError) {
-    return { name: 'AuthenticationError', message: error.message }
+  if (error instanceof UnauthorizedError) {
+    return { name: 'UnauthorizedError', message: error.message }
   }
 
   if (error instanceof AuthorizationError) {
@@ -45,7 +22,9 @@ const serializeCheckinError = (error: unknown): SerializableCheckinError => {
   }
 
   const databaseError =
-    error instanceof DatabaseError ? error : new DatabaseError('チェックインの切り替えに失敗しました', error)
+    error instanceof DatabaseError
+      ? error
+      : new DatabaseError({ detail: 'チェックインの切り替えに失敗しました', cause: error })
 
   console.error('Database error:', databaseError.cause)
   return { name: 'DatabaseError', message: databaseError.message }
@@ -60,16 +39,16 @@ export async function toggleCheckinAction(
       // 認証チェック
       const userId = await getCurrentUserId()
       if (!userId) {
-        throw new AuthenticationError('認証されていません')
+        throw new UnauthorizedError({ detail: '認証されていません' })
       }
 
       // habit所有権チェック
       const habit = await getHabitById(habitId)
       if (!habit) {
-        throw new AuthorizationError('習慣が見つかりません')
+        throw new AuthorizationError({ detail: '習慣が見つかりません' })
       }
       if (habit.userId !== userId) {
-        throw new AuthorizationError('この習慣にアクセスする権限がありません')
+        throw new AuthorizationError({ detail: 'この習慣にアクセスする権限がありません' })
       }
 
       const existingCheckin = await findCheckinByHabitAndDate(habitId, date)

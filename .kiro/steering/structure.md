@@ -15,11 +15,14 @@ keep-on/
 │   │   ├── ui/           # shadcn/ui プリミティブ
 │   │   ├── habits/       # 機能別 UI
 │   │   └── dashboard/    # ダッシュボード UI
+│   ├── constants/        # ドメイン定数・プリセット
 │   ├── db/               # Drizzle スキーマ
 │   ├── env.ts            # 環境変数バリデーション
 │   ├── hooks/            # 共有カスタム Hooks
 │   ├── lib/              # ユーティリティ・共通ロジック
+│   ├── middleware.ts     # 認証ミドルウェア
 │   ├── schemas/          # Valibot スキーマ
+│   ├── types/            # 共有 TypeScript 型
 │   ├── validators/       # バリデーション（Result 型）
 ├── public/               # 静的アセット・PWA ファイル
 ├── drizzle.config.ts     # Drizzle 設定
@@ -38,6 +41,7 @@ Next.js 16 App Router の規約に従ったページ・レイアウト構成。
 - **Server Component がデフォルト**: 特に指定しない限り Server Component
 - **Client Component は明示**: `"use client"` ディレクティブで宣言
 - **ルーティング**: ファイルシステムベースのルーティング
+- **モーダル遷移**: Parallel Routes + Route Interception（`@modal` / `(.)`）を活用
 - **テーマ変数の集中管理**: `globals.css` に CSS 変数トークン（Radix Colors ベース）を定義
 
 **例:**
@@ -59,6 +63,10 @@ src/app/
 │   │   └── page.tsx
 │   ├── habits/
 │   │   └── page.tsx
+│   ├── @modal/
+│   │   └── (.)habits/
+│   │       └── new/
+│   │           └── page.tsx
 │   ├── settings/
 │   │   └── page.tsx
 │   └── help/
@@ -120,9 +128,11 @@ export async function createHabit(formData: FormData) {
 **重要なパターン:**
 
 - `db.ts`: Drizzle 接続の一元管理（`getDb()`）
+- `logging.ts`: LOG_LEVEL ベースの軽量ログ/計測ユーティリティ
 - `user.ts`: Clerk ユーザーを `users` テーブルへ同期（upsert）
 - `queries/`: ドメインごとのDBアクセス層（habit/user など、Drizzle クエリ）
 - `errors/`: ドメインエラー定義とシリアライズ変換
+- `utils/`: 小さなドメイン/日付ユーティリティを集約
 - テストファイル: `*.test.ts` / `__tests__/`（対象ファイルと同じディレクトリ or サブフォルダ）
 
 **例:**
@@ -131,13 +141,21 @@ export async function createHabit(formData: FormData) {
 // src/lib/db.ts
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { cache } from "react";
 import * as schema from "@/db/schema";
 
-const connectionString = process.env.DATABASE_URL!;
-export const getDb = cache(async () =>
-  drizzle(postgres(connectionString), { schema }),
-);
+function createDb() {
+  return drizzle(postgres(process.env.DATABASE_URL!), { schema });
+}
+
+type DbPromise = ReturnType<typeof createDb>;
+const globalForDb = globalThis as typeof globalThis & { __dbPromise?: DbPromise };
+
+export async function getDb() {
+  if (!globalForDb.__dbPromise) {
+    globalForDb.__dbPromise = createDb();
+  }
+  return await globalForDb.__dbPromise;
+}
 ```
 
 ### `src/db/` - Drizzle スキーマ
@@ -187,6 +205,23 @@ UI/レスポンシブなどの汎用 Hook を集約。
 - `useXxx` 命名（例: `use-mobile.ts`）
 - ブラウザ API 依存の Hook は Client Component から使用
 
+### `src/constants/` - ドメイン定数・プリセット
+
+UI 表示やドメイン判定で使う定数・プリセット値を集約。
+
+**パターン:**
+
+- 期間・ラベル・デフォルト値などの定数を分離（例: `habit.ts`）
+- UI のプリセット/候補値は `*-data.ts` にまとめる
+
+### `src/types/` - 共有 TypeScript 型
+
+ドメインモデルや表示用の型を集約し、UI/DB 層の境界で再利用。
+
+**パターン:**
+
+- `type` / `interface` のみを置き、実装ロジックは置かない
+
 ### `src/schemas/` - Valibot スキーマ
 
 入力バリデーションのための Valibot スキーマを集約。
@@ -199,7 +234,8 @@ import * as v from "valibot";
 
 export const HabitInputSchema = v.object({
   name: v.pipe(v.string(), v.trim(), v.minLength(1)),
-  emoji: v.nullable(v.string()),
+  icon: v.nullable(v.string()),
+  color: v.nullable(v.string()),
 });
 ```
 
