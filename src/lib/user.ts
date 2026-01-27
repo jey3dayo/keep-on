@@ -1,5 +1,6 @@
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { currentUser } from '@clerk/nextjs/server'
+import { StatusCodes } from 'http-status-codes'
 import { parseClerkApiResponseErrorPayload } from '@/schemas/user'
 import { logError } from './logging'
 import { upsertUser } from './queries/user'
@@ -34,10 +35,11 @@ export async function syncUser() {
   } catch (error) {
     const parsed = parseClerkApiResponseError(error)
     if (parsed) {
-      if (parsed.status === 401 || parsed.status === 403) {
+      if (parsed.status === StatusCodes.UNAUTHORIZED || parsed.status === StatusCodes.FORBIDDEN) {
         return null
       }
       logError('clerk.currentUser:api-error', parsed)
+      return null
     }
     throw error
   }
