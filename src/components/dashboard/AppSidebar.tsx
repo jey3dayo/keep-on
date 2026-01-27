@@ -1,11 +1,10 @@
 'use client'
 
 import { UserButton } from '@clerk/nextjs'
-import { BarChart3, HelpCircle, LayoutDashboard, ListChecks, Power, Settings } from 'lucide-react'
+import { BarChart3, LayoutDashboard, ListChecks, Power, Settings } from 'lucide-react'
 import type * as React from 'react'
 
 import { NavMain } from '@/components/dashboard/NavMain'
-import { NavSecondary } from '@/components/dashboard/NavSecondary'
 import {
   Sidebar,
   SidebarContent,
@@ -34,18 +33,6 @@ const data = {
       icon: BarChart3,
     },
   ],
-  navSecondary: [
-    {
-      title: 'Settings',
-      url: '/settings',
-      icon: Settings,
-    },
-    {
-      title: 'Help',
-      url: '/help',
-      icon: HelpCircle,
-    },
-  ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -65,7 +52,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavSecondary className="mt-auto" items={data.navSecondary} />
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center gap-2 p-2">
@@ -75,7 +61,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 avatarBox: 'size-8',
               },
             }}
-          />
+          >
+            <UserButton.MenuItems>
+              <UserButton.Link href="/settings" label="設定" labelIcon={<Settings className="size-4" />} />
+            </UserButton.MenuItems>
+          </UserButton>
         </div>
       </SidebarFooter>
     </Sidebar>
