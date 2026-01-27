@@ -273,19 +273,19 @@ export function HabitSimpleView({
             <DrawerTitle>習慣の操作</DrawerTitle>
             <DrawerDescription>{selectedHabit?.name}</DrawerDescription>
           </DrawerHeader>
-          <div className="space-y-2 p-4">
+          <div className="flex gap-2 p-4">
             {onEdit && (
-              <Button className="w-full justify-start" onClick={handleEdit} variant="outline">
+              <Button className="flex-1" onClick={handleEdit} variant="outline">
                 編集
               </Button>
             )}
             {onArchive && (
-              <Button className="w-full justify-start" onClick={handleArchive} variant="outline">
+              <Button className="flex-1" onClick={handleArchive} variant="outline">
                 アーカイブ
               </Button>
             )}
             {onDelete && (
-              <Button className="w-full justify-start text-destructive" onClick={handleDelete} variant="outline">
+              <Button className="flex-1 text-destructive" onClick={handleDelete} variant="outline">
                 削除
               </Button>
             )}
