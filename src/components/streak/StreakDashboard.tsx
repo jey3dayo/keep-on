@@ -164,7 +164,7 @@ function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
         <div className="flex items-center gap-1 rounded-full border border-border bg-card/90 p-1 shadow-lg backdrop-blur-md">
           <button
             className={cn(
-              'rounded-full px-3 py-3 transition-all',
+              'rounded-full p-2 transition-all',
               currentView === 'dashboard'
                 ? 'bg-foreground text-background'
                 : 'text-muted-foreground hover:text-foreground'
@@ -177,7 +177,7 @@ function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
           </button>
           <button
             className={cn(
-              'rounded-full px-3 py-3 transition-all',
+              'rounded-full p-2 transition-all',
               currentView === 'simple' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
             )}
             onClick={() => onViewChange('simple')}

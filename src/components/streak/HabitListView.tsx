@@ -96,7 +96,7 @@ export function HabitListView({
       </div>
 
       {filteredHabits.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2">
           <AddHabitButton onClick={onAddHabit}>習慣を追加</AddHabitButton>
         </div>
       )}
@@ -179,7 +179,10 @@ function HabitListCard({
             </h3>
             <span
               className="flex-shrink-0 rounded-full px-2 py-0.5 text-xs"
-              style={{ backgroundColor: `${colorData.color}20`, color: colorData.color }}
+              style={{
+                backgroundColor: `${colorData.color}20`,
+                color: colorData.color,
+              }}
             >
               {periodData.label}
             </span>
@@ -189,7 +192,10 @@ function HabitListCard({
             <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
               <div
                 className="h-full rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent}%`, backgroundColor: colorData.color }}
+                style={{
+                  width: `${progressPercent}%`,
+                  backgroundColor: colorData.color,
+                }}
               />
             </div>
             <span className="whitespace-nowrap text-muted-foreground text-sm">
