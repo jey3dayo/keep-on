@@ -159,32 +159,34 @@ function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
   }
 
   return (
-    <div className="fixed top-[calc(var(--header-height)+0.5rem)] right-4 z-50">
-      <div className="flex items-center gap-1 rounded-full border border-border bg-card/90 p-1 shadow-lg backdrop-blur-md">
-        <button
-          className={cn(
-            'rounded-full p-2 transition-all',
-            currentView === 'dashboard'
-              ? 'bg-foreground text-background'
-              : 'text-muted-foreground hover:text-foreground'
-          )}
-          onClick={() => onViewChange('dashboard')}
-          title="リストビュー"
-          type="button"
-        >
-          <LayoutGrid className="h-4 w-4" />
-        </button>
-        <button
-          className={cn(
-            'rounded-full p-2 transition-all',
-            currentView === 'simple' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
-          )}
-          onClick={() => onViewChange('simple')}
-          title="シンプルビュー"
-          type="button"
-        >
-          <Circle className="h-4 w-4" />
-        </button>
+    <div className="fixed right-4 bottom-6 z-50">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 rounded-full border border-border bg-card/90 p-1 shadow-lg backdrop-blur-md">
+          <button
+            className={cn(
+              'rounded-full p-2 transition-all',
+              currentView === 'dashboard'
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+            onClick={() => onViewChange('dashboard')}
+            title="リストビュー"
+            type="button"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+          <button
+            className={cn(
+              'rounded-full p-2 transition-all',
+              currentView === 'simple' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
+            )}
+            onClick={() => onViewChange('simple')}
+            title="シンプルビュー"
+            type="button"
+          >
+            <Circle className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   )
