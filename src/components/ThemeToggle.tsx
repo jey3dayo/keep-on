@@ -3,14 +3,13 @@
 import { Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Icon } from './Icon'
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
-  // ハイドレーションエラーを防ぐため、マウント後にのみレンダリング
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -50,14 +49,15 @@ export function ThemeToggle() {
         </Card>
       </div>
 
-      <button
+      <Button
         aria-label={`${isDark ? 'ライト' : 'ダーク'}モードに切り替え`}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-all hover:bg-secondary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-95"
+        className="h-10 w-10 rounded-full p-0"
         onClick={() => setTheme(isDark ? 'light' : 'dark')}
-        type="button"
+        size="icon"
+        variant="secondary"
       >
-        {isDark ? <Icon name="sun" size={20} /> : <Icon name="moon" size={20} />}
-      </button>
+        {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      </Button>
     </div>
   )
 }
