@@ -22,5 +22,11 @@
       "binding": "NEXT_INC_CACHE_KV",
       "id": "feaaf2df1aab41b68e7a19cb48779738"
     }
+  ],
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "06274ec0a69849e68ea9c4997c4c9bc3"
+    }
   ]
 }

@@ -13,21 +13,26 @@ paths: "src/**/*.{ts,tsx}"
 ```text
 src/
 ├── app/              # Next.js App Router
-│   ├── actions/      # Server Actions（Result.tryでエラーハンドリング）
-│   ├── api/          # API Routes
+│   ├── actions/      # Server Actions
 │   └── [routes]/     # ページ・レイアウト
 ├── components/       # React Components
-│   ├── Button.tsx    # 汎用UIコンポーネント（ルート直下）
-│   └── [feature]/    # 機能別グループ（habits/, auth/など）
+│   ├── ui/           # shadcn/ui コンポーネント（自動生成）
+│   └── [feature]/    # 機能別グループ（dashboard, habits, settings, streak, pwa, modals）
+├── constants/        # 定数定義
+│   ├── habit.ts      # 習慣関連の定数
+│   └── habit-data.ts # 習慣関連の静的データ
 ├── db/
 │   └── schema.ts     # Drizzle ORM スキーマ定義
 ├── lib/
-│   ├── db.ts         # Drizzle DB インスタンス（唯一）
+│   ├── db.ts         # Drizzle DB インスタンス（Hyperdrive対応）
 │   ├── queries/      # Drizzle操作（生の返り値のみ）
 │   ├── errors/       # エラー型定義
-│   └── utils.ts      # ユーティリティ関数
+│   ├── utils/        # ユーティリティ関数
+│   └── user.ts       # ユーザー関連ヘルパー
 ├── schemas/          # Valibotスキーマ定義（純粋なスキーマのみ）
-└── validators/       # バリデーション（Result型を返す）
+├── validators/       # バリデーション（Result型を返す）
+├── types/            # 型定義
+└── hooks/            # カスタムフック
 ```
 
 ## 各ディレクトリの責務
@@ -65,6 +70,67 @@ export const HabitInputSchema = v.pipe(
 export type HabitInputSchemaType = v.InferOutput<typeof HabitInputSchema>;
 ```
 
+### `src/constants/habit-data.ts`
+
+**責務:** 習慣関連の静的データ定義
+
+- アイコン・カラー・期間などの定数データ定義
+- データルックアップ関数（`getIconById`, `getColorById` など）
+
+**返り値の型:** 直接値、またはフォールバック値を返す
+
+**例:**
+
+```typescript
+// 静的データ定義
+export const habitIcons: HabitIcon[] = [
+  { id: "droplets", icon: Droplets, label: "水を飲む" },
+  // ...
+];
+
+// ルックアップ関数（フォールバック値を返す）
+export function getIconById(id: string): HabitIcon {
+  return habitIcons.find((i) => i.id === id) || habitIcons[0];
+}
+
+export function getColorById(id: string): HabitColor {
+  return habitColors.find((c) => c.id === id) || habitColors[0];
+}
+```
+
+### `src/lib/utils/habits.ts`
+
+**責務:** 習慣関連のヘルパー関数
+
+- 習慣データの変換・フィルタリング関数
+- 習慣の状態計算・判定関数
+
+**返り値の型:** 直接値を返す
+
+**例:**
+
+```typescript
+import type { TaskPeriod } from "../habit-data";
+
+// フィルタリング関数
+export function filterHabitsByPeriod<T extends { period: TaskPeriod }>(
+  habits: T[],
+  periodFilter: "all" | TaskPeriod,
+): T[] {
+  return periodFilter === "all"
+    ? habits
+    : habits.filter((h) => h.period === periodFilter);
+}
+
+// 完了判定関数（将来的に追加）
+export function isHabitCompleted(
+  currentProgress: number,
+  frequency: number,
+): boolean {
+  return currentProgress >= frequency;
+}
+```
+
 ### `src/lib/queries/`
 
 **責務:** Drizzle ORMデータアクセス
@@ -74,7 +140,20 @@ export type HabitInputSchemaType = v.InferOutput<typeof HabitInputSchema>;
 - 外部ライブラリ（Clerk等）への依存を排除
 - 引数は抽出済みデータのみを受け取る（テスト容易性の確保）
 
-**返り値の型:** 生のDrizzle返り値のみ（Promise<T>）
+**返り値の型:** 生のDrizzle返り値のみ（`Promise<T>`）
+
+**重要な制約:**
+
+- ❌ **Result型を返してはいけない**: `Promise<Result.Result<T, E>>` 形式は禁止
+- ✅ **生のPromiseのみ**: `Promise<T>` 形式で返す
+- ✅ **エラーはthrowする**: データベースエラーは `throw` で伝播させる
+- ✅ **null/undefinedでの失敗表現**: 取得失敗は `null` または `undefined` を返す
+
+**理由:**
+
+- `Result` 型は上位層（`validators`, `actions`）で扱うべきエラーハンドリングパターン
+- `queries` 層は純粋なデータアクセスに専念し、エラー解釈は行わない
+- データベース例外は自然にthrowし、上位層で適切なエラー型に変換する
 
 **例:**
 
@@ -122,7 +201,13 @@ export async function createHabit(input: HabitInput) {
 - `src/schemas/` のValibotスキーマを使用
 - バリデーション結果を `Result<T, E>` 型で返す
 
-**返り値の型:** `Result<T, E>` (byethrow)
+**返り値の型:** `Result.Result<T, E>` (byethrow)
+
+**重要な制約:**
+
+- ✅ **同期的なResult型**: `Result.Result<T, E>` 形式で返す（Promiseでラップしない）
+- ✅ **バリデーションエラーを明示**: エラーの場合は `Result.fail(new ValidationError(...))` で返す
+- ✅ **成功時は型付きデータ**: `Result.succeed(validatedData)` で型安全な値を返す
 
 **例:**
 
@@ -165,6 +250,23 @@ export function validateHabitInput(
 - `revalidatePath` などのNext.js機能を使用
 
 **返り値の型:** `Promise<Result.ResultAsync<T, E>>`
+
+**重要な制約:**
+
+- ✅ **非同期Result型**: `Promise<Result.ResultAsync<T, E>>` 形式で返す
+- ✅ **queries層のエラーをキャッチ**: `Result.try` を使って `queries` からのエラーを適切な型に変換
+- ✅ **エラーチェーン**: `Result.pipe` や `Result.andThen` でエラーを伝播させる
+- ✅ **成功時の副作用実行**: `Result.isSuccess` でチェックしてから `revalidatePath` などを実行
+
+**データフロー:**
+
+```text
+queries (Promise<T>) → Result.try → Promise<Result<T, E>>
+                          ↓
+validators (Result<T, E>) → Result.andThen → Promise<Result<T, E>>
+                          ↓
+actions (Promise<Result<T, E>>) → クライアントへ返却
+```
 
 **例:**
 
@@ -219,7 +321,13 @@ export async function createHabitAction(formData: FormData) {
 ### 3. エラーハンドリング
 
 - **queries** はエラーをthrowするかDrizzleの生の返り値を返す
-- **actions** で Result.try を使ってエラーをキャッチし、適切なエラー型に変換
+  - ❌ `Promise<Result<T, E>>` を返してはいけない
+  - ✅ `Promise<T>` を返し、エラーは `throw` で伝播
+- **validators** は同期的な `Result<T, E>` を返す
+  - ✅ バリデーションエラーは `Result.fail` で明示
+- **actions** で `Result.try` を使ってエラーをキャッチし、適切なエラー型に変換
+  - ✅ `Promise<Result.ResultAsync<T, E>>` 形式で返す
+  - ✅ queries からのエラーは `Result.try` でキャッチ
 
 ### 4. 依存の方向
 
@@ -252,21 +360,26 @@ src/components/
 
 ```text
 src/components/
-├── habits/
-│   ├── HabitCard.tsx
-│   ├── HabitForm.tsx
-│   └── HabitList.tsx
-└── auth/
-    ├── SignInForm.tsx
-    └── SignUpForm.tsx
+├── dashboard/      # ダッシュボード関連
+├── habits/         # 習慣管理
+├── settings/       # 設定
+├── streak/         # ストリーク/ダッシュボード
+├── pwa/            # PWA関連
+└── modals/         # モーダル
 ```
 
-## 自動生成ファイル
+## 自動生成・キャッシュディレクトリ
 
-`drizzle/` 配下のファイルは自動生成されるため、**直接編集しない**：
+以下は自動生成されるため、**直接編集しない**：
 
 ```text
-drizzle/             # Drizzle マイグレーション（自動生成）
+drizzle/      # Drizzle マイグレーション
+.next/        # Next.js ビルド出力
+.open-next/   # OpenNext ビルド出力
+.wrangler/    # Wrangler キャッシュ
 ```
 
-生成コマンド: `pnpm db:generate`
+## テストファイル配置
+
+- **配置**: テスト対象ファイルと同じディレクトリまたは `__tests__/` サブディレクトリ
+- **命名**: `*.test.ts` / `*.test.tsx`

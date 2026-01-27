@@ -1,5 +1,6 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata, Viewport } from 'next'
+import type React from 'react'
 import { ColorThemeScript } from '@/components/ColorThemeScript'
 import { A2HSPrompt } from '@/components/pwa/A2HSPrompt'
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration'
@@ -31,7 +32,11 @@ export const viewport: Viewport = {
   maximumScale: 1,
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   return (
     <ClerkProvider>
       <html lang="ja" suppressHydrationWarning>
