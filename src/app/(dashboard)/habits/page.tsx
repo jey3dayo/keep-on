@@ -1,3 +1,4 @@
+import { currentUser } from '@clerk/nextjs/server'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -18,6 +19,13 @@ export default async function HabitsPage() {
   const requestMeta = createRequestMeta('/habits')
 
   logInfo('request.habits:start', requestMeta)
+
+  const clerkUser = await logSpan('habits.clerkUser', () => currentUser(), requestMeta, { timeoutMs })
+
+  if (!clerkUser) {
+    logInfo('habits.clerkUser:missing', requestMeta)
+    redirect(SIGN_IN_PATH)
+  }
 
   const userId = await logSpan('habits.syncUser', () => getCurrentUserId(), requestMeta, { timeoutMs })
 
@@ -42,7 +50,7 @@ export default async function HabitsPage() {
           </Link>
         </Button>
       </div>
-      <HabitTable requestMeta={requestMeta} userId={userId} />
+      <HabitTable clerkId={clerkUser.id} requestMeta={requestMeta} userId={userId} />
     </div>
   )
 }

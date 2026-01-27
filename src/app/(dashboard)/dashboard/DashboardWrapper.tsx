@@ -73,6 +73,8 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
       color: nextColor,
       period: nextPeriod,
       frequency: normalizedFrequency,
+      archived: false,
+      archivedAt: null,
       createdAt: now,
       updatedAt: now,
       currentProgress: 0,
