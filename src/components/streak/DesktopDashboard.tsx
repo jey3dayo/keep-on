@@ -12,7 +12,7 @@ import { HabitListView } from './HabitListView'
 interface Checkin {
   id: string
   habitId: string
-  date: Date
+  date: string
   createdAt: Date
 }
 

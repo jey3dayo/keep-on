@@ -54,7 +54,7 @@ export const checkins = pgTable(
     habitId: text('habitId')
       .notNull()
       .references(() => habits.id, { onDelete: 'cascade' }),
-    date: date('date', { mode: 'date' }).notNull(),
+    date: date('date', { mode: 'string' }).notNull(),
     createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
   },
   (table) => [unique().on(table.habitId, table.date)]

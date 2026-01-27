@@ -4,7 +4,9 @@ import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
+import { getServerCookie } from '@/lib/server/cookies'
 import { syncUser } from '@/lib/user'
+import { formatDateKey, getDateKeyInTimeZone } from '@/lib/utils/date'
 import { DashboardWrapper } from './DashboardWrapper'
 
 export const metadata: Metadata = {
@@ -21,6 +23,9 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const timeoutMs = 8000
   const requestMeta = createRequestMeta('/dashboard')
+  const timeZoneRaw = await getServerCookie('ko_tz')
+  const timeZone = timeZoneRaw ? decodeURIComponent(timeZoneRaw) : undefined
+  const dateKey = timeZone ? getDateKeyInTimeZone(new Date(), timeZone) : formatDateKey(new Date())
 
   logInfo('request.dashboard:start', requestMeta)
 
@@ -34,13 +39,13 @@ export default async function DashboardPage() {
   // 同時リクエストの詰まりを避けるため順次実行
   const habits = await logSpan(
     'dashboard.habits',
-    () => getHabitsWithProgress(user.id, user.clerkId, new Date()),
+    () => getHabitsWithProgress(user.id, user.clerkId, dateKey),
     requestMeta,
     { timeoutMs }
   )
   const todayCheckins = await logSpan(
     'dashboard.checkins',
-    () => getCheckinsByUserAndDate(user.id, new Date()),
+    () => getCheckinsByUserAndDate(user.id, dateKey),
     requestMeta,
     { timeoutMs }
   )

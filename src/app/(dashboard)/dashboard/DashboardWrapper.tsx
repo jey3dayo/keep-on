@@ -16,13 +16,14 @@ import {
   DEFAULT_HABIT_PERIOD,
   type Period,
 } from '@/constants/habit'
+import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
 import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
 
 interface Checkin {
   id: string
   habitId: string
-  date: Date
+  date: string
   createdAt: Date
 }
 
@@ -45,6 +46,21 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [optimisticCheckins, setOptimisticCheckins] = useState(todayCheckins)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (!timeZone) {
+      return
+    }
+
+    const existingTimeZone = getClientCookie('ko_tz') ?? ''
+    if (existingTimeZone === timeZone) {
+      return
+    }
+
+    setClientCookie('ko_tz', timeZone, { maxAge: 31536000, path: '/', sameSite: 'lax' })
+    router.refresh()
+  }, [router])
 
   useEffect(() => {
     setOptimisticHabits(habits)
@@ -109,6 +125,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
 
     const isCompleted = optimisticCheckins.some((checkin) => checkin.habitId === habitId)
     const now = new Date()
+    const dateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     const removedCheckin = isCompleted
       ? (optimisticCheckins.find((checkin) => checkin.habitId === habitId) ?? null)
       : null
@@ -117,7 +134,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
       : {
           id: `optimistic-${createId()}`,
           habitId,
-          date: now,
+          date: dateKey,
           createdAt: now,
         }
 
@@ -164,7 +181,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
     setPendingCheckins((current) => new Set(current).add(habitId))
 
     try {
-      const result = await toggleCheckinAction(habitId)
+      const result = await toggleCheckinAction(habitId, dateKey)
 
       if (Result.isSuccess(result)) {
         router.refresh()
