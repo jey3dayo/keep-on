@@ -41,6 +41,16 @@ export class DatabaseError extends ErrorFactory({
 }) {}
 
 /**
+ * NotFoundError
+ * リソースが見つからない場合に発生
+ */
+export class NotFoundError extends ErrorFactory({
+  name: 'NotFoundError',
+  message: ({ detail }) => detail ?? 'Resource not found',
+  fields: ErrorFactory.fields<{ detail?: string }>(),
+}) {}
+
+/**
  * 習慣管理関連のエラー型の統合
  */
-export type HabitError = UnauthorizedError | AuthorizationError | ValidationError | DatabaseError
+export type HabitError = UnauthorizedError | AuthorizationError | ValidationError | DatabaseError | NotFoundError

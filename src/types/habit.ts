@@ -11,6 +11,8 @@ export interface Habit {
   period: Period
   frequency: number
   userId: string
+  archived: boolean
+  archivedAt: Date | null
   createdAt: Date
   updatedAt: Date
 }

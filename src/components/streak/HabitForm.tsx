@@ -1,8 +1,9 @@
 'use client'
 
 import { Check, ChevronLeft, Clock } from 'lucide-react'
-import { type CSSProperties, useEffect, useMemo, useState } from 'react'
+import { type CSSProperties, useMemo, useState } from 'react'
 import type { IconName } from '@/components/Icon'
+import { Button } from '@/components/ui/button'
 import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
@@ -10,15 +11,8 @@ import {
   DEFAULT_HABIT_PERIOD,
   type Period,
 } from '@/constants/habit'
-import {
-  getColorById,
-  getIconById,
-  getPeriodById,
-  type HabitPreset,
-  habitColors,
-  habitIcons,
-  taskPeriods,
-} from '@/constants/habit-data'
+import type { HabitPreset } from '@/constants/habit-data'
+import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 
 interface HabitFormProps {
@@ -35,12 +29,6 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
   const [frequency, setFrequency] = useState(preset?.frequency ?? DEFAULT_HABIT_FREQUENCY)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    if (selectedPeriod === 'daily') {
-      setFrequency(1)
-    }
-  }, [selectedPeriod])
-
   const selectedColorValue = useMemo(() => getColorById(selectedColor).color, [selectedColor])
   const SelectedIconComponent = useMemo(() => getIconById(selectedIcon).icon, [selectedIcon])
   const currentPeriod = useMemo(() => getPeriodById(selectedPeriod), [selectedPeriod])
@@ -55,12 +43,10 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
       icon: selectedIcon,
       color: selectedColor,
       period: selectedPeriod,
-      frequency: selectedPeriod === 'daily' ? 1 : frequency,
+      frequency,
     })
     setIsSubmitting(false)
   }
-
-  const canAdjustFrequency = selectedPeriod !== 'daily'
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,9 +60,8 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
           <span className="text-sm">戻る</span>
         </button>
         <h1 className="font-semibold text-foreground text-lg">新しい習慣</h1>
-        <button
+        <Button
           className={cn(
-            'font-medium text-sm transition-colors',
             habitName.trim() && !isSubmitting
               ? 'text-foreground hover:opacity-80'
               : 'cursor-not-allowed text-muted-foreground'
@@ -85,9 +70,10 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
           onClick={handleSave}
           style={{ color: habitName.trim() && !isSubmitting ? selectedColorValue : undefined }}
           type="button"
+          variant="ghost"
         >
           {isSubmitting ? <Check className="h-5 w-5" /> : '保存'}
-        </button>
+        </Button>
       </header>
 
       <div className="space-y-8 px-4 py-6">
@@ -223,34 +209,28 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
           <p className="font-medium text-muted-foreground text-sm uppercase tracking-wide">目標回数</p>
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between">
-              <button
-                className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80',
-                  !canAdjustFrequency && 'cursor-not-allowed opacity-50'
-                )}
-                disabled={!canAdjustFrequency}
+              <Button
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0"
                 onClick={() => setFrequency((current) => Math.max(1, current - 1))}
                 type="button"
+                variant="secondary"
               >
                 <span className="font-medium text-xl">−</span>
-              </button>
+              </Button>
               <div className="flex flex-col items-center">
                 <span className="font-bold text-4xl" style={{ color: selectedColorValue }}>
-                  {selectedPeriod === 'daily' ? 1 : frequency}
+                  {frequency}
                 </span>
                 <span className="text-muted-foreground text-sm">{currentPeriod.frequencyLabel}</span>
               </div>
-              <button
-                className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80',
-                  !canAdjustFrequency && 'cursor-not-allowed opacity-50'
-                )}
-                disabled={!canAdjustFrequency}
+              <Button
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0"
                 onClick={() => setFrequency((current) => Math.min(99, current + 1))}
                 type="button"
+                variant="secondary"
               >
                 <span className="font-medium text-xl">+</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -290,7 +270,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
               <div className="flex-1">
                 <h3 className="font-semibold text-foreground text-lg">{habitName || '習慣の名前'}</h3>
                 <p className="text-muted-foreground text-sm">
-                  {selectedPeriod === 'daily' ? 1 : frequency}
+                  {frequency}
                   {currentPeriod.frequencyLabel}
                 </p>
               </div>
@@ -304,7 +284,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
             <div className="mt-4 border-border border-t pt-4">
               <div className="mb-2 flex justify-between text-muted-foreground text-xs">
                 <span>今日の進捗</span>
-                <span>0 / {selectedPeriod === 'daily' ? 1 : frequency}</span>
+                <span>0 / {frequency}</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-secondary">
                 <div className="h-full rounded-full" style={{ width: '0%', backgroundColor: selectedColorValue }} />

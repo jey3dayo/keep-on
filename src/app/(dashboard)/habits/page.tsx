@@ -1,3 +1,4 @@
+import { currentUser } from '@clerk/nextjs/server'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -9,8 +10,14 @@ import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCurrentUserId } from '@/lib/user'
 
 export const metadata: Metadata = {
-  title: '習慣管理 - KeepOn',
-  description: '習慣の作成、編集、削除を行う',
+  title: '習慣 - KeepOn',
+  description:
+    'あなたの習慣を一元管理。新しい習慣の作成、既存の習慣の編集・削除、カテゴリ別の整理、絵文字やカラーのカスタマイズができます。',
+  openGraph: {
+    title: '習慣管理 - KeepOn',
+    description: '習慣の作成、編集、管理を簡単に',
+    type: 'website',
+  },
 }
 
 export default async function HabitsPage() {
@@ -18,6 +25,13 @@ export default async function HabitsPage() {
   const requestMeta = createRequestMeta('/habits')
 
   logInfo('request.habits:start', requestMeta)
+
+  const clerkUser = await logSpan('habits.clerkUser', () => currentUser(), requestMeta, { timeoutMs })
+
+  if (!clerkUser) {
+    logInfo('habits.clerkUser:missing', requestMeta)
+    redirect(SIGN_IN_PATH)
+  }
 
   const userId = await logSpan('habits.syncUser', () => getCurrentUserId(), requestMeta, { timeoutMs })
 
@@ -32,7 +46,7 @@ export default async function HabitsPage() {
     <div className="flex flex-1 flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <h1 className="font-bold text-3xl text-foreground">習慣管理</h1>
+          <h1 className="font-bold text-3xl text-foreground">習慣</h1>
           <p className="text-muted-foreground">あなたの習慣を管理しましょう</p>
         </div>
         <Button asChild size="lg" variant="default">
@@ -42,7 +56,7 @@ export default async function HabitsPage() {
           </Link>
         </Button>
       </div>
-      <HabitTable requestMeta={requestMeta} userId={userId} />
+      <HabitTable clerkId={clerkUser.id} requestMeta={requestMeta} userId={userId} />
     </div>
   )
 }

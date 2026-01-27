@@ -32,7 +32,7 @@ const serializeCheckinError = (error: unknown): SerializableCheckinError => {
 
 export async function toggleCheckinAction(
   habitId: string,
-  date: Date = new Date()
+  dateKey?: string
 ): Result.ResultAsync<void, SerializableCheckinError> {
   return await Result.try({
     try: async () => {
@@ -51,16 +51,17 @@ export async function toggleCheckinAction(
         throw new AuthorizationError({ detail: 'この習慣にアクセスする権限がありません' })
       }
 
-      const existingCheckin = await findCheckinByHabitAndDate(habitId, date)
+      const targetDate = dateKey ?? new Date()
+      const existingCheckin = await findCheckinByHabitAndDate(habitId, targetDate)
 
       if (existingCheckin) {
-        await deleteCheckinByHabitAndDate(habitId, date)
+        await deleteCheckinByHabitAndDate(habitId, targetDate)
         revalidatePath('/dashboard')
         revalidatePath('/habits')
         return
       }
 
-      await createCheckin({ habitId, date })
+      await createCheckin({ habitId, date: targetDate })
       revalidatePath('/dashboard')
       revalidatePath('/habits')
       return

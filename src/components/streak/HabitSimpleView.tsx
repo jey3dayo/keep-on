@@ -1,13 +1,18 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
+import { getRingColorFromBackground } from '@/lib/utils/color'
 import type { HabitWithProgress } from '@/types/habit'
 
-const OKLCH_LIGHTNESS_REGEX = /oklch\(([0-9.]+)/
+// Drawerコンポーネントを動的にインポート
+const HabitActionDrawer = dynamic(() => import('./HabitActionDrawer').then((mod) => mod.HabitActionDrawer), {
+  ssr: false,
+})
 
 interface HabitSimpleViewProps {
   habits: HabitWithProgress[]
@@ -15,6 +20,7 @@ interface HabitSimpleViewProps {
   onToggleHabit: (habitId: string) => void
   onAddHabit: () => void
   onSettings?: () => void
+  backgroundColor?: string
 }
 
 function ProgressRing({
@@ -59,9 +65,16 @@ export function HabitSimpleView({
   onToggleHabit,
   onAddHabit,
   onSettings,
+  backgroundColor,
 }: HabitSimpleViewProps) {
   const [currentPage, setCurrentPage] = useState(0)
   const [resetConfirm, setResetConfirm] = useState<{ habitId: string; habitName: string } | null>(null)
+  const [drawerState, setDrawerState] = useState<{ open: boolean; habit: HabitWithProgress | null }>({
+    open: false,
+    habit: null,
+  })
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const longPressTriggeredRef = useRef(false)
 
   const habitsPerPage = 6
   const totalPages = Math.max(1, Math.ceil(habits.length / habitsPerPage))
@@ -75,7 +88,7 @@ export function HabitSimpleView({
     [currentPage, habits]
   )
 
-  const bgColor = useMemo(() => {
+  const fallbackBgColor = useMemo(() => {
     const firstHabit = currentHabits[0]
     if (!firstHabit) {
       return getColorById(DEFAULT_HABIT_COLOR).color
@@ -83,12 +96,21 @@ export function HabitSimpleView({
     return getColorById(firstHabit.color ?? DEFAULT_HABIT_COLOR).color
   }, [currentHabits])
 
-  const getDarkerColor = (color: string) =>
-    color.replace(OKLCH_LIGHTNESS_REGEX, (_, l) => `oklch(${Math.max(0, Number.parseFloat(l) - 0.25)})`)
+  const bgColor = backgroundColor ?? fallbackBgColor
 
-  const ringBgColor = getDarkerColor(bgColor)
+  const ringBgColor = getRingColorFromBackground(bgColor)
 
-  const handleProgressClick = (habit: HabitWithProgress, isCheckedToday: boolean) => {
+  const handleProgressClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    habit: HabitWithProgress,
+    isCheckedToday: boolean
+  ) => {
+    if (longPressTriggeredRef.current) {
+      event.preventDefault()
+      event.stopPropagation()
+      longPressTriggeredRef.current = false
+      return
+    }
     if (isCheckedToday) {
       setResetConfirm({ habitId: habit.id, habitName: habit.name })
       return
@@ -102,6 +124,38 @@ export function HabitSimpleView({
     }
     onToggleHabit(resetConfirm.habitId)
     setResetConfirm(null)
+  }
+
+  const openDrawer = (habit: HabitWithProgress) => {
+    setDrawerState({ open: true, habit })
+  }
+
+  const closeDrawer = () => {
+    setDrawerState({ open: false, habit: null })
+  }
+
+  const handleLongPressStart = (habit: HabitWithProgress) => {
+    longPressTriggeredRef.current = false
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true
+      openDrawer(habit)
+    }, 500)
+  }
+
+  const handleLongPressEnd = (resetTriggered: boolean) => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+    if (resetTriggered) {
+      longPressTriggeredRef.current = false
+    }
+  }
+
+  const handleContextMenu = (e: React.MouseEvent, habit: HabitWithProgress) => {
+    e.preventDefault()
+    longPressTriggeredRef.current = true
+    openDrawer(habit)
   }
 
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
@@ -121,7 +175,12 @@ export function HabitSimpleView({
               <div className="flex flex-col items-center gap-3" key={habit.id}>
                 <button
                   className="relative flex h-[140px] w-[140px] items-center justify-center transition-transform hover:scale-105 active:scale-95"
-                  onClick={() => handleProgressClick(habit, isCheckedToday)}
+                  onClick={(event) => handleProgressClick(event, habit, isCheckedToday)}
+                  onContextMenu={(e) => handleContextMenu(e, habit)}
+                  onPointerCancel={() => handleLongPressEnd(true)}
+                  onPointerDown={() => handleLongPressStart(habit)}
+                  onPointerLeave={() => handleLongPressEnd(true)}
+                  onPointerUp={() => handleLongPressEnd(false)}
                   type="button"
                 >
                   <ProgressRing
@@ -191,7 +250,18 @@ export function HabitSimpleView({
         </div>
       </main>
 
-      {resetConfirm && (
+      {/* アクションDrawer */}
+      <HabitActionDrawer
+        habit={drawerState.habit}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeDrawer()
+          }
+        }}
+        open={drawerState.open}
+      />
+
+      {resetConfirm ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <button
             aria-label="閉じる"
@@ -225,7 +295,7 @@ export function HabitSimpleView({
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between px-6 py-4">
         <button

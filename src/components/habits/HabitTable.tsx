@@ -1,25 +1,47 @@
-import { format } from 'date-fns'
-import { Icon, normalizeIconName } from '@/components/Icon'
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
-import { getHabitsByUserId } from '@/lib/queries/habit'
-import { HabitTableActions } from './HabitTableActions'
+import { getArchivedHabits, getHabitsWithProgress } from '@/lib/queries/habit'
+import type { HabitWithProgress } from '@/types/habit'
+import { HabitTableClient } from './HabitTableClient'
 
 interface HabitTableProps {
   userId: string
+  clerkId: string
   requestMeta?: { route: string; requestId: string }
 }
 
-export async function HabitTable({ userId, requestMeta }: HabitTableProps) {
+export async function HabitTable({ userId, clerkId, requestMeta }: HabitTableProps) {
   const timeoutMs = 8000
   const meta = requestMeta ?? createRequestMeta('/habits')
 
   logInfo('habits.table:start', meta)
 
-  const habits = await logSpan('habits.table.query', () => getHabitsByUserId(userId), meta, { timeoutMs })
-  logInfo('habits.table:end', { ...meta, habits: habits.length })
+  // アクティブな習慣（進捗付き）
+  const activeHabits = await logSpan('habits.table.query', () => getHabitsWithProgress(userId, clerkId), meta, {
+    timeoutMs,
+  })
 
-  if (habits.length === 0) {
+  // アーカイブ済み習慣
+  const archivedHabits = await logSpan('habits.table.archived', () => getArchivedHabits(userId), meta, { timeoutMs })
+
+  // アーカイブ済み習慣に進捗情報を付与（ダミー値）
+  const archivedHabitsWithProgress: HabitWithProgress[] = archivedHabits.map((habit) => ({
+    ...habit,
+    currentProgress: 0,
+    streak: 0,
+    completionRate: 0,
+  }))
+
+  // 両方をマージ
+  const allHabits = [...activeHabits, ...archivedHabitsWithProgress]
+
+  logInfo('habits.table:end', {
+    ...meta,
+    active: activeHabits.length,
+    archived: archivedHabits.length,
+    total: allHabits.length,
+  })
+
+  if (activeHabits.length === 0 && archivedHabits.length === 0) {
     return (
       <div className="flex items-center justify-center rounded-lg border border-dashed p-8">
         <div className="space-y-2 text-center">
@@ -30,31 +52,5 @@ export async function HabitTable({ userId, requestMeta }: HabitTableProps) {
     )
   }
 
-  return (
-    <Table>
-      <TableCaption>あなたの習慣一覧（{habits.length}件）</TableCaption>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[60px]">アイコン</TableHead>
-          <TableHead>名前</TableHead>
-          <TableHead className="hidden w-[120px] md:table-cell">作成日</TableHead>
-          <TableHead className="w-[100px] text-right">操作</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {habits.map((habit) => (
-          <TableRow key={habit.id}>
-            <TableCell>
-              <Icon className="text-foreground" name={normalizeIconName(habit.icon)} size={20} />
-            </TableCell>
-            <TableCell className="font-medium">{habit.name}</TableCell>
-            <TableCell className="hidden md:table-cell">{format(habit.createdAt, 'yyyy/MM/dd')}</TableCell>
-            <TableCell>
-              <HabitTableActions habitId={habit.id} />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  )
+  return <HabitTableClient habits={allHabits} />
 }

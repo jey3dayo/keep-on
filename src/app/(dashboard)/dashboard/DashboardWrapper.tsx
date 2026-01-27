@@ -3,7 +3,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import { Result } from '@praha/byethrow'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toggleCheckinAction } from '@/app/actions/habits/checkin'
 import { createHabit } from '@/app/actions/habits/create'
 import type { IconName } from '@/components/Icon'
@@ -16,13 +16,15 @@ import {
   DEFAULT_HABIT_PERIOD,
   type Period,
 } from '@/constants/habit'
+import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
+import { formatDateKey } from '@/lib/utils/date'
 import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
 
 interface Checkin {
   id: string
   habitId: string
-  date: Date
+  date: string
   createdAt: Date
 }
 
@@ -38,13 +40,47 @@ interface DashboardWrapperProps {
   habits: HabitWithProgress[]
   todayCheckins: Checkin[]
   user: User
+  initialView?: 'dashboard' | 'simple'
+  hasTimeZoneCookie?: boolean
 }
 
-export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapperProps) {
+export function DashboardWrapper({
+  habits,
+  todayCheckins,
+  user,
+  initialView,
+  hasTimeZoneCookie = true,
+}: DashboardWrapperProps) {
   const router = useRouter()
+  const [isTimeZoneReady, setIsTimeZoneReady] = useState(hasTimeZoneCookie)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [optimisticCheckins, setOptimisticCheckins] = useState(todayCheckins)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
+  const hasRefreshedForTimeZone = useRef(false)
+
+  useEffect(() => {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (!timeZone) {
+      setIsTimeZoneReady(true)
+      return
+    }
+
+    const existingTimeZone = getClientCookie('ko_tz') ?? ''
+    if (existingTimeZone === timeZone) {
+      setIsTimeZoneReady(true)
+      return
+    }
+
+    if (hasRefreshedForTimeZone.current) {
+      setIsTimeZoneReady(true)
+      return
+    }
+
+    hasRefreshedForTimeZone.current = true
+    setIsTimeZoneReady(false)
+    setClientCookie('ko_tz', timeZone, { maxAge: 31_536_000, path: '/', sameSite: 'lax' })
+    router.refresh()
+  }, [router])
 
   useEffect(() => {
     setOptimisticHabits(habits)
@@ -62,7 +98,6 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
     const nextPeriod = options?.period ?? DEFAULT_HABIT_PERIOD
     const nextColor = options?.color ?? DEFAULT_HABIT_COLOR
     const nextFrequency = options?.frequency ?? DEFAULT_HABIT_FREQUENCY
-    const normalizedFrequency = nextPeriod === 'daily' ? 1 : nextFrequency
     const optimisticId = `optimistic-${createId()}`
     const now = new Date()
     const optimisticHabit: HabitWithProgress = {
@@ -72,7 +107,9 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
       icon,
       color: nextColor,
       period: nextPeriod,
-      frequency: normalizedFrequency,
+      frequency: nextFrequency,
+      archived: false,
+      archivedAt: null,
       createdAt: now,
       updatedAt: now,
       currentProgress: 0,
@@ -87,7 +124,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
     formData.append('icon', icon)
     formData.append('color', nextColor)
     formData.append('period', nextPeriod)
-    formData.append('frequency', String(normalizedFrequency))
+    formData.append('frequency', String(nextFrequency))
 
     const result = await createHabit(formData)
 
@@ -107,6 +144,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
 
     const isCompleted = optimisticCheckins.some((checkin) => checkin.habitId === habitId)
     const now = new Date()
+    const dateKey = formatDateKey(now)
     const removedCheckin = isCompleted
       ? (optimisticCheckins.find((checkin) => checkin.habitId === habitId) ?? null)
       : null
@@ -115,7 +153,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
       : {
           id: `optimistic-${createId()}`,
           habitId,
-          date: now,
+          date: dateKey,
           createdAt: now,
         }
 
@@ -162,7 +200,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
     setPendingCheckins((current) => new Set(current).add(habitId))
 
     try {
-      const result = await toggleCheckinAction(habitId)
+      const result = await toggleCheckinAction(habitId, dateKey)
 
       if (Result.isSuccess(result)) {
         router.refresh()
@@ -185,26 +223,34 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
     }
   }
 
+  const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
+  const activeHabitIds = new Set(activeHabits.map((habit) => habit.id))
+  const activeCheckins = optimisticCheckins.filter((checkin) => activeHabitIds.has(checkin.habitId))
+
+  if (!isTimeZoneReady) {
+    return <div className="flex h-screen items-center justify-center text-muted-foreground text-sm">読み込み中...</div>
+  }
+
   return (
     <>
       {/* スマホ版: STREAK風フルスクリーンUI */}
       <div className="md:hidden">
         <StreakDashboard
-          habits={optimisticHabits}
+          habits={activeHabits}
+          initialView={initialView}
           onAddHabit={handleAddHabit}
           onToggleCheckin={handleToggleCheckin}
-          todayCheckins={optimisticCheckins}
-          user={user}
+          todayCheckins={activeCheckins}
         />
       </div>
 
       {/* PC版: shadcn/ui Cardレイアウト */}
       <div className="hidden md:block">
         <DesktopDashboard
-          habits={optimisticHabits}
+          habits={activeHabits}
           onAddHabit={handleAddHabit}
           onToggleCheckin={handleToggleCheckin}
-          todayCheckins={optimisticCheckins}
+          todayCheckins={activeCheckins}
           user={user}
         />
       </div>

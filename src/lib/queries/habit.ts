@@ -14,6 +14,7 @@ import { COMPLETION_THRESHOLD, type Period, type WeekStartDay, weekStartToDay } 
 import { checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
 import { getUserWeekStart } from '@/lib/queries/user'
+import { formatDateKey, normalizeCheckinDate, parseDateKey } from '@/lib/utils/date'
 import type { HabitWithProgress } from '@/types/habit'
 import type { HabitInput } from '@/validators/habit'
 
@@ -25,7 +26,11 @@ import type { HabitInput } from '@/validators/habit'
  */
 export async function getHabitsByUserId(userId: string) {
   const db = await getDb()
-  return await db.select().from(habits).where(eq(habits.userId, userId)).orderBy(desc(habits.createdAt))
+  return await db
+    .select()
+    .from(habits)
+    .where(and(eq(habits.userId, userId), eq(habits.archived, false)))
+    .orderBy(desc(habits.createdAt))
 }
 
 /**
@@ -60,6 +65,95 @@ export async function createHabit(input: HabitInput) {
     })
     .returning()
   return habit
+}
+
+/**
+ * 習慣を更新
+ * 所有権確認込みで更新し、存在しない場合はnullを返す
+ *
+ * @param id - 習慣ID
+ * @param userId - ユーザーID
+ * @param input - 更新データ
+ * @returns 更新された習慣または null
+ */
+export async function updateHabit(id: string, userId: string, input: Partial<HabitInput>) {
+  const db = await getDb()
+  const [habit] = await db
+    .update(habits)
+    .set(input)
+    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+    .returning()
+  return habit ?? null
+}
+
+/**
+ * 習慣をアーカイブ（論理削除）
+ *
+ * @param id - 習慣ID
+ * @param userId - ユーザーID
+ * @returns アーカイブ成功フラグ
+ */
+export async function archiveHabit(id: string, userId: string) {
+  const db = await getDb()
+  const result = await db
+    .update(habits)
+    .set({
+      archived: true,
+      archivedAt: new Date(),
+    })
+    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+    .returning()
+  return result.length > 0
+}
+
+/**
+ * 習慣を完全削除
+ *
+ * @param id - 習慣ID
+ * @param userId - ユーザーID
+ * @returns 削除成功フラグ
+ */
+export async function deleteHabit(id: string, userId: string) {
+  const db = await getDb()
+  const result = await db
+    .delete(habits)
+    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+    .returning()
+  return result.length > 0
+}
+
+/**
+ * アーカイブ済み習慣を取得
+ *
+ * @param userId - ユーザーID
+ * @returns アーカイブ済み習慣の配列
+ */
+export async function getArchivedHabits(userId: string) {
+  const db = await getDb()
+  return await db
+    .select()
+    .from(habits)
+    .where(and(eq(habits.userId, userId), eq(habits.archived, true)))
+}
+
+/**
+ * 習慣をアンアーカイブ（復元）
+ *
+ * @param id - 習慣ID
+ * @param userId - ユーザーID
+ * @returns 復元成功フラグ
+ */
+export async function unarchiveHabit(id: string, userId: string) {
+  const db = await getDb()
+  const result = await db
+    .update(habits)
+    .set({
+      archived: false,
+      archivedAt: null,
+    })
+    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+    .returning()
+  return result.length > 0
 }
 
 /**
@@ -118,18 +212,21 @@ function getPeriodEnd(date: Date, period: Period, weekStartDay: WeekStartDay = 1
  */
 export async function getCheckinCountForPeriod(
   habitId: string,
-  date: Date,
+  date: Date | string,
   period: Period,
   weekStartDay: WeekStartDay = 1
 ): Promise<number> {
   const db = await getDb()
-  const start = getPeriodStart(date, period, weekStartDay)
-  const end = getPeriodEnd(date, period, weekStartDay)
+  const baseDate = typeof date === 'string' ? parseDateKey(date) : date
+  const start = getPeriodStart(baseDate, period, weekStartDay)
+  const end = getPeriodEnd(baseDate, period, weekStartDay)
+  const startKey = formatDateKey(start)
+  const endKey = formatDateKey(end)
 
   const result = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(checkins)
-    .where(and(eq(checkins.habitId, habitId), gte(checkins.date, start), lte(checkins.date, end)))
+    .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
   return result[0]?.count ?? 0
 }
@@ -168,7 +265,7 @@ export async function calculateStreak(
   // 期間ごとにチェックインをグループ化
   const checkinsByPeriod = new Map<string, number>()
   for (const checkin of allCheckins) {
-    const periodKey = getPeriodKey(checkin.date, period, weekStartDay)
+    const periodKey = getPeriodKey(normalizeCheckinDate(checkin.date), period, weekStartDay)
     checkinsByPeriod.set(periodKey, (checkinsByPeriod.get(periodKey) ?? 0) + 1)
   }
 
@@ -203,14 +300,7 @@ export async function calculateStreak(
  */
 function getPeriodKey(date: Date, period: Period, weekStartDay: WeekStartDay = 1): string {
   const start = getPeriodStart(date, period, weekStartDay)
-  return formatLocalDate(start)
-}
-
-function formatLocalDate(date: Date): string {
-  const year = date.getFullYear()
-  const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getDate()}`.padStart(2, '0')
-  return `${year}-${month}-${day}`
+  return formatDateKey(start)
 }
 
 /**
@@ -242,7 +332,7 @@ function getPreviousPeriod(date: Date, period: Period): Date {
 export async function getHabitsWithProgress(
   userId: string,
   clerkId: string,
-  date: Date = new Date()
+  date: Date | string = new Date()
 ): Promise<HabitWithProgress[]> {
   const db = await getDb()
   const habitList = await getHabitsByUserId(userId)
@@ -250,6 +340,8 @@ export async function getHabitsWithProgress(
   if (habitList.length === 0) {
     return []
   }
+
+  const baseDate = typeof date === 'string' ? parseDateKey(date) : date
 
   // ユーザーの週開始日設定を取得
   const weekStartStr = await getUserWeekStart(clerkId)
@@ -275,15 +367,15 @@ export async function getHabitsWithProgress(
     const habitCheckins = checkinsByHabit.get(habit.id) ?? []
 
     // 現在の期間の進捗を計算
-    const start = getPeriodStart(date, habit.period, weekStartDay)
-    const end = getPeriodEnd(date, habit.period, weekStartDay)
+    const start = getPeriodStart(baseDate, habit.period, weekStartDay)
+    const end = getPeriodEnd(baseDate, habit.period, weekStartDay)
     const currentProgress = habitCheckins.filter((c) => {
-      const checkinDate = new Date(c.date)
+      const checkinDate = normalizeCheckinDate(c.date)
       return checkinDate >= start && checkinDate <= end
     }).length
 
     // ストリークを計算
-    const streak = calculateStreakFromCheckins(habit, habitCheckins, weekStartDay, date)
+    const streak = calculateStreakFromCheckins(habit, habitCheckins, weekStartDay, baseDate)
 
     const completionRate = Math.min(
       COMPLETION_THRESHOLD,
@@ -325,7 +417,7 @@ function calculateStreakFromCheckins(
   // 期間ごとにチェックインをグループ化
   const checkinsByPeriod = new Map<string, number>()
   for (const checkin of checkins) {
-    const checkinDate = typeof checkin.date === 'string' ? new Date(checkin.date) : checkin.date
+    const checkinDate = normalizeCheckinDate(checkin.date)
     const periodKey = getPeriodKey(checkinDate, habit.period, weekStartDay)
     checkinsByPeriod.set(periodKey, (checkinsByPeriod.get(periodKey) ?? 0) + 1)
   }

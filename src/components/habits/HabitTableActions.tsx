@@ -1,30 +1,28 @@
 'use client'
 
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { HabitArchiveDialog } from './HabitArchiveDialog'
+import { HabitDeleteDialog } from './HabitDeleteDialog'
 
 interface HabitTableActionsProps {
   habitId: string
+  habitName: string
+  archived: boolean
+  onEdit: (habitId: string) => void
 }
 
-export function HabitTableActions({ habitId }: HabitTableActionsProps) {
-  // TODO: 編集・削除機能は別タスクで実装
-  const handleEdit = () => {
-    console.log('Edit habit:', habitId)
-  }
-
-  const handleDelete = () => {
-    console.log('Delete habit:', habitId)
-  }
-
+export function HabitTableActions({ habitId, habitName, archived, onEdit }: HabitTableActionsProps) {
   return (
     <div className="flex justify-end gap-1">
-      <Button aria-label="編集" onClick={handleEdit} size="icon" variant="ghost">
+      <Button aria-label="編集" onClick={() => onEdit(habitId)} size="icon" variant="ghost">
         <Pencil className="h-4 w-4" />
       </Button>
-      <Button aria-label="削除" onClick={handleDelete} size="icon" variant="ghost">
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      {archived ? (
+        <HabitDeleteDialog habitId={habitId} habitName={habitName} />
+      ) : (
+        <HabitArchiveDialog habitId={habitId} habitName={habitName} />
+      )}
     </div>
   )
 }

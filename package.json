@@ -30,10 +30,12 @@
   "dependencies": {
     "@clerk/nextjs": "^6.36.10",
     "@hookform/resolvers": "^5.2.2",
-    "@opennextjs/cloudflare": "^1.15.1",
+    "@opennextjs/cloudflare": "^1.16.0",
     "@paralleldrive/cuid2": "^3.3.0",
     "@praha/byethrow": "^0.9.0",
     "@praha/error-factory": "^1.2.1",
+    "@radix-ui/colors": "^3.0.0",
+    "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -66,9 +68,9 @@
   "devDependencies": {
     "@biomejs/biome": "2.3.13",
     "@dotenvx/dotenvx": "^1.52.0",
-    "@storybook/addon-a11y": "^10.2.0",
-    "@storybook/addon-themes": "^10.2.0",
-    "@storybook/nextjs-vite": "^10.2.0",
+    "@storybook/addon-a11y": "^10.2.1",
+    "@storybook/addon-themes": "^10.2.1",
+    "@storybook/nextjs-vite": "^10.2.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -86,11 +88,11 @@
     "npm-run-all2": "^8.0.4",
     "postcss": "^8",
     "sharp": "^0.34.5",
-    "storybook": "^10.2.0",
+    "storybook": "^10.2.1",
     "tailwindcss": "^4.1.18",
     "typescript": "^5",
-    "ultracite": "7.0.12",
+    "ultracite": "7.1.1",
     "vitest": "^4.0.18",
-    "wrangler": "^4.60.0"
+    "wrangler": "^4.61.0"
   }
 }

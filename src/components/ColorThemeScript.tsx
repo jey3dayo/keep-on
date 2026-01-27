@@ -1,12 +1,13 @@
-const STORAGE_KEY = 'color-theme'
-const DEFAULT_THEME = 'lime'
-const VALID_THEMES = ['lime', 'orange', 'red', 'pink', 'purple', 'blue', 'cyan', 'yellow']
+import { COLOR_THEME_COOKIE_KEY, COLOR_THEMES, DEFAULT_COLOR_THEME } from '@/constants/theme'
 
 const colorThemeScript = `
 (function() {
   try {
-    var stored = localStorage.getItem('${STORAGE_KEY}');
-    var theme = stored && ${JSON.stringify(VALID_THEMES)}.includes(stored) ? stored : '${DEFAULT_THEME}';
+    var cookieValue = document.cookie
+      .split('; ')
+      .find(function (row) { return row.startsWith('${COLOR_THEME_COOKIE_KEY}='); });
+    var value = cookieValue ? decodeURIComponent(cookieValue.split('=').slice(1).join('=')) : null;
+    var theme = value && ${JSON.stringify(COLOR_THEMES)}.includes(value) ? value : '${DEFAULT_COLOR_THEME}';
     document.documentElement.setAttribute('data-theme', theme);
   } catch (e) {}
 })();

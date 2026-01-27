@@ -9,39 +9,48 @@ import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
-import {
-  DEFAULT_HABIT_COLOR,
-  DEFAULT_HABIT_FREQUENCY,
-  DEFAULT_HABIT_ICON,
-  DEFAULT_HABIT_PERIOD,
-  type Period,
-} from '@/constants/habit'
+import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, DEFAULT_HABIT_PERIOD } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
 import { formatSerializableError } from '@/lib/errors/serializable'
 import { cn } from '@/lib/utils'
-import { HabitInputSchema, type HabitInputSchemaType } from '@/schemas/habit'
+import { HabitInputSchema } from '@/schemas/habit'
+import { buildHabitFormData, getHabitFormDefaults, type HabitFormValues } from '@/transforms/habitFormData'
+import type { HabitWithProgress } from '@/types/habit'
 
 interface HabitFormServerProps {
+  initialData?: HabitWithProgress
+  onSubmit?: (data: FormValues) => Promise<void> | void
   onSuccess?: 'close' | 'redirect'
+  submitLabel?: string
 }
 
-type FormValues = Omit<HabitInputSchemaType, 'period'> & {
-  period: Period
-}
+type FormValues = HabitFormValues
 
-export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps = {}) {
+export function HabitFormServer({
+  initialData,
+  onSubmit,
+  onSuccess = 'redirect',
+  submitLabel = '保存',
+}: HabitFormServerProps = {}) {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
+
+  // 初期値を設定
+  const defaultValues: HabitFormValues = getHabitFormDefaults(initialData)
+
   const form = useForm<FormValues>({
     resolver: valibotResolver(HabitInputSchema) as Resolver<FormValues>,
-    defaultValues: {
-      name: '',
-      icon: DEFAULT_HABIT_ICON,
-      color: DEFAULT_HABIT_COLOR,
-      period: DEFAULT_HABIT_PERIOD,
-      frequency: DEFAULT_HABIT_FREQUENCY,
-    },
+    defaultValues,
   })
+
+  // 初期値がセットされた後に初期ロードフラグを解除
+  useEffect(() => {
+    if (isInitialLoad) {
+      form.reset(defaultValues)
+      setIsInitialLoad(false)
+    }
+  }, [isInitialLoad, form, defaultValues])
 
   const watchedIcon = form.watch('icon')
   const watchedColor = form.watch('color')
@@ -49,39 +58,33 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
   const watchedFrequency = form.watch('frequency')
   const watchedName = form.watch('name')
 
-  const isDaily = watchedPeriod === 'daily'
   const selectedColorValue = getColorById(watchedColor || DEFAULT_HABIT_COLOR).color
   const SelectedIconComponent = getIconById(watchedIcon || DEFAULT_HABIT_ICON).icon
   const currentPeriod = getPeriodById(watchedPeriod || DEFAULT_HABIT_PERIOD)
 
-  useEffect(() => {
-    if (isDaily && watchedFrequency !== 1) {
-      form.setValue('frequency', 1, { shouldDirty: true, shouldValidate: true })
+  async function handleExternalSubmit(data: FormValues) {
+    if (!onSubmit) {
+      return
     }
-  }, [form, isDaily, watchedFrequency])
+    setIsSaving(true)
+    try {
+      await onSubmit(data)
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
-  async function onSubmit(data: FormValues) {
+  async function handleDefaultSubmit(data: FormValues) {
     setIsSaving(true)
 
-    // FormDataを作成してServer Actionを呼び出し
-    const formData = new FormData()
-    formData.append('name', data.name)
-    if (data.icon?.trim()) {
-      formData.append('icon', data.icon)
-    }
-    if (data.color?.trim()) {
-      formData.append('color', data.color)
-    }
-    formData.append('period', data.period)
-    formData.append('frequency', String(data.frequency))
-
+    const formData = buildHabitFormData(data)
     const result = await createHabit(formData)
 
     setIsSaving(false)
 
     if (Result.isSuccess(result)) {
-      toast.success('習慣を作成しました', {
-        description: `「${data.name}」が追加されました`,
+      toast.success(initialData ? '習慣を更新しました' : '習慣を作成しました', {
+        description: initialData ? `「${data.name}」を更新しました` : `「${data.name}」が追加されました`,
       })
       form.reset()
 
@@ -91,9 +94,17 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
         router.push('/dashboard')
       }
     } else {
-      toast.error('習慣の作成に失敗しました', {
+      toast.error(initialData ? '習慣の更新に失敗しました' : '習慣の作成に失敗しました', {
         description: formatSerializableError(result.error),
       })
+    }
+  }
+
+  async function handleSubmit(data: FormValues) {
+    if (onSubmit) {
+      await handleExternalSubmit(data)
+    } else {
+      await handleDefaultSubmit(data)
     }
   }
 
@@ -118,15 +129,15 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
               : 'cursor-not-allowed text-muted-foreground'
           )}
           disabled={!watchedName?.trim() || isSaving}
-          onClick={form.handleSubmit(onSubmit)}
+          onClick={form.handleSubmit(handleSubmit)}
           style={{ color: watchedName?.trim() && !isSaving ? selectedColorValue : undefined }}
           type="button"
         >
-          {isSaving ? <Check className="h-5 w-5" /> : '保存'}
+          {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
         </button>
       </header>
 
-      <form className="space-y-8 px-4 py-6" onSubmit={form.handleSubmit(onSubmit)}>
+      <form className="space-y-8 px-4 py-6" onSubmit={form.handleSubmit(handleSubmit)}>
         {/* Icon Preview */}
         <div className="flex flex-col items-center gap-4">
           <div
@@ -291,8 +302,7 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-center justify-between">
                   <button
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={isDaily}
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80"
                     onClick={() => field.onChange(Math.max(1, field.value - 1))}
                     type="button"
                   >
@@ -305,8 +315,7 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
                     <span className="text-muted-foreground text-sm">{currentPeriod.frequencyLabel}</span>
                   </div>
                   <button
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={isDaily}
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80"
                     onClick={() => field.onChange(field.value + 1)}
                     type="button"
                   >
