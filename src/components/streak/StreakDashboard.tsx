@@ -21,18 +21,9 @@ interface Checkin {
   createdAt: Date
 }
 
-interface User {
-  id: string
-  clerkId: string
-  email: string
-  createdAt: Date
-  updatedAt: Date
-}
-
 interface StreakDashboardProps {
   habits: HabitWithProgress[]
   todayCheckins: Checkin[]
-  user: User
   onAddHabit: (
     name: string,
     icon: IconName,
@@ -67,7 +58,6 @@ const persistMainView = (view: MainView) => {
 export function StreakDashboard({
   habits,
   todayCheckins,
-  user,
   onAddHabit,
   onToggleCheckin,
   onArchiveHabit,

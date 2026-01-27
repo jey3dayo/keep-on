@@ -1,10 +1,16 @@
 'use client'
 
-import { MoreVertical } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
@@ -72,6 +78,9 @@ export function HabitSimpleView({
 }: HabitSimpleViewProps) {
   const [currentPage, setCurrentPage] = useState(0)
   const [resetConfirm, setResetConfirm] = useState<{ habitId: string; habitName: string } | null>(null)
+  const [actionDrawerOpen, setActionDrawerOpen] = useState(false)
+  const [selectedHabit, setSelectedHabit] = useState<HabitWithProgress | null>(null)
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const habitsPerPage = 6
   const totalPages = Math.max(1, Math.ceil(habits.length / habitsPerPage))
@@ -113,8 +122,50 @@ export function HabitSimpleView({
     setResetConfirm(null)
   }
 
-  const handleContextMenu = (e: React.MouseEvent) => {
+  const handleLongPressStart = (habit: HabitWithProgress) => {
+    longPressTimerRef.current = setTimeout(() => {
+      setSelectedHabit(habit)
+      setActionDrawerOpen(true)
+    }, 500)
+  }
+
+  const handleLongPressEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }
+
+  const handleContextMenu = (e: React.MouseEvent, habit: HabitWithProgress) => {
     e.preventDefault()
+    setSelectedHabit(habit)
+    setActionDrawerOpen(true)
+  }
+
+  const handleActionDrawerClose = () => {
+    setActionDrawerOpen(false)
+    setSelectedHabit(null)
+  }
+
+  const handleEdit = () => {
+    if (selectedHabit && onEdit) {
+      onEdit(selectedHabit.id)
+    }
+    handleActionDrawerClose()
+  }
+
+  const handleArchive = () => {
+    if (selectedHabit && onArchive) {
+      onArchive(selectedHabit.id)
+    }
+    handleActionDrawerClose()
+  }
+
+  const handleDelete = () => {
+    if (selectedHabit && onDelete) {
+      onDelete(selectedHabit.id)
+    }
+    handleActionDrawerClose()
   }
 
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
@@ -132,63 +183,42 @@ export function HabitSimpleView({
 
             return (
               <div className="flex flex-col items-center gap-3" key={habit.id}>
-                <div className="relative">
-                  <button
-                    className="relative flex h-[140px] w-[140px] items-center justify-center transition-transform hover:scale-105 active:scale-95"
-                    onClick={() => handleProgressClick(habit, isCheckedToday)}
-                    onContextMenu={handleContextMenu}
-                    type="button"
+                <button
+                  className="relative flex h-[140px] w-[140px] items-center justify-center transition-transform hover:scale-105 active:scale-95"
+                  onClick={() => handleProgressClick(habit, isCheckedToday)}
+                  onContextMenu={(e) => handleContextMenu(e, habit)}
+                  onPointerDown={() => handleLongPressStart(habit)}
+                  onPointerLeave={handleLongPressEnd}
+                  onPointerUp={handleLongPressEnd}
+                  type="button"
+                >
+                  <ProgressRing
+                    backgroundColor={ringBgColor}
+                    progress={progressPercent}
+                    progressColor="rgba(255, 255, 255, 0.95)"
+                    size={140}
+                    strokeWidth={6}
+                  />
+
+                  <div
+                    className={cn(
+                      'flex h-[120px] w-[120px] items-center justify-center rounded-full transition-all duration-300',
+                      isCheckedToday && 'scale-105'
+                    )}
+                    style={{
+                      backgroundColor: bgColor,
+                      boxShadow: isCheckedToday ? '0 0 20px rgba(255, 255, 255, 0.3)' : 'none',
+                    }}
                   >
-                    <ProgressRing
-                      backgroundColor={ringBgColor}
-                      progress={progressPercent}
-                      progressColor="rgba(255, 255, 255, 0.95)"
-                      size={140}
-                      strokeWidth={6}
-                    />
-
-                    <div
+                    <IconComponent
                       className={cn(
-                        'flex h-[120px] w-[120px] items-center justify-center rounded-full transition-all duration-300',
-                        isCheckedToday && 'scale-105'
+                        'h-14 w-14 transition-all duration-300',
+                        isCheckedToday ? 'text-white' : 'text-white/90'
                       )}
-                      style={{
-                        backgroundColor: bgColor,
-                        boxShadow: isCheckedToday ? '0 0 20px rgba(255, 255, 255, 0.3)' : 'none',
-                      }}
-                    >
-                      <IconComponent
-                        className={cn(
-                          'h-14 w-14 transition-all duration-300',
-                          isCheckedToday ? 'text-white' : 'text-white/90'
-                        )}
-                        strokeWidth={1.5}
-                      />
-                    </div>
-                  </button>
-
-                  {/* アクションメニューボタン */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        className="absolute -top-2 -right-2 h-8 w-8 rounded-full border-2 border-white/80 bg-white/90 p-0 hover:bg-white"
-                        size="icon"
-                        variant="ghost"
-                      >
-                        <MoreVertical className="h-4 w-4 text-foreground" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      {onEdit && <DropdownMenuItem onClick={() => onEdit(habit.id)}>編集</DropdownMenuItem>}
-                      {onArchive && <DropdownMenuItem onClick={() => onArchive(habit.id)}>アーカイブ</DropdownMenuItem>}
-                      {onDelete && (
-                        <DropdownMenuItem className="text-destructive" onClick={() => onDelete(habit.id)}>
-                          削除
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                </button>
 
                 <p
                   className={cn(
@@ -228,6 +258,38 @@ export function HabitSimpleView({
           </div>
         </div>
       </main>
+
+      {/* アクションDrawer */}
+      <Drawer onOpenChange={handleActionDrawerOpen} open={actionDrawerOpen}>
+        <DrawerContent className="h-[70vh]">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>習慣の操作</DrawerTitle>
+            <DrawerDescription>{selectedHabit?.name}</DrawerDescription>
+          </DrawerHeader>
+          <div className="space-y-2 p-4">
+            {onEdit && (
+              <Button className="w-full justify-start" onClick={handleEdit} variant="outline">
+                編集
+              </Button>
+            )}
+            {onArchive && (
+              <Button className="w-full justify-start" onClick={handleArchive} variant="outline">
+                アーカイブ
+              </Button>
+            )}
+            {onDelete && (
+              <Button className="w-full justify-start text-destructive" onClick={handleDelete} variant="outline">
+                削除
+              </Button>
+            )}
+          </div>
+          <DrawerFooter className="pt-2">
+            <Button className="w-full" onClick={handleActionDrawerClose} variant="outline">
+              キャンセル
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       {resetConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

@@ -217,7 +217,6 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
           onAddHabit={handleAddHabit}
           onToggleCheckin={handleToggleCheckin}
           todayCheckins={activeCheckins}
-          user={user}
         />
       </div>
 

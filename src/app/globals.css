@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@config "../../tailwind.config.ts";
-
 @import "@radix-ui/colors/blue.css";
 @import "@radix-ui/colors/blue-dark.css";
 @import "@radix-ui/colors/cyan.css";
@@ -19,6 +17,8 @@
 @import "@radix-ui/colors/slate-dark.css";
 @import "@radix-ui/colors/yellow.css";
 @import "@radix-ui/colors/yellow-dark.css";
+
+@config "../../tailwind.config.ts";
 @theme inline {
   /* カラートークン - Tailwind ユーティリティクラスにマッピング */
   --color-background: var(--background);
