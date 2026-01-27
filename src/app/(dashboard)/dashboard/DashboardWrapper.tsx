@@ -187,15 +187,19 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
     }
   }
 
+  const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
+  const activeHabitIds = new Set(activeHabits.map((habit) => habit.id))
+  const activeCheckins = optimisticCheckins.filter((checkin) => activeHabitIds.has(checkin.habitId))
+
   return (
     <>
       {/* スマホ版: STREAK風フルスクリーンUI */}
       <div className="md:hidden">
         <StreakDashboard
-          habits={optimisticHabits}
+          habits={activeHabits}
           onAddHabit={handleAddHabit}
           onToggleCheckin={handleToggleCheckin}
-          todayCheckins={optimisticCheckins}
+          todayCheckins={activeCheckins}
           user={user}
         />
       </div>
@@ -203,10 +207,10 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
       {/* PC版: shadcn/ui Cardレイアウト */}
       <div className="hidden md:block">
         <DesktopDashboard
-          habits={optimisticHabits}
+          habits={activeHabits}
           onAddHabit={handleAddHabit}
           onToggleCheckin={handleToggleCheckin}
-          todayCheckins={optimisticCheckins}
+          todayCheckins={activeCheckins}
           user={user}
         />
       </div>
