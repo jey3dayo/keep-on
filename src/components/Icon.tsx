@@ -22,6 +22,7 @@ import {
   Mail,
   Menu,
   Moon,
+  MoreHorizontal,
   Music,
   Palette,
   Pencil,
@@ -36,6 +37,7 @@ import {
   Timer,
   Trash2,
   Users,
+  X,
 } from 'lucide-react'
 
 export type IconName =
@@ -60,6 +62,7 @@ export type IconName =
   | 'info'
   | 'mail'
   | 'menu'
+  | 'more-horizontal'
   | 'moon'
   | 'music'
   | 'palette'
@@ -73,8 +76,9 @@ export type IconName =
   | 'sun'
   | 'target'
   | 'timer'
-  | 'trash'
+  | 'trash-2'
   | 'users'
+  | 'x'
 
 const icons: Record<IconName, React.ComponentType<LucideProps>> = {
   apple: Apple,
@@ -98,6 +102,7 @@ const icons: Record<IconName, React.ComponentType<LucideProps>> = {
   info: Info,
   mail: Mail,
   menu: Menu,
+  'more-horizontal': MoreHorizontal,
   moon: Moon,
   music: Music,
   palette: Palette,
@@ -111,8 +116,9 @@ const icons: Record<IconName, React.ComponentType<LucideProps>> = {
   sun: Sun,
   target: Target,
   timer: Timer,
-  trash: Trash2,
+  'trash-2': Trash2,
   users: Users,
+  x: X,
 }
 
 export type IconProps = LucideProps & {
