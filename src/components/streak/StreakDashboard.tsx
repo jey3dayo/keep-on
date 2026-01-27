@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import type { IconName } from '@/components/Icon'
-import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PERIOD_DISPLAY_NAME } from '@/constants/habit'
 import { useColorTheme } from '@/hooks/use-color-theme'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import type { HabitWithProgress } from '@/types/habit'
 import { AddTaskSheet } from './AddTaskSheet'
+import { DashboardHeader } from './DashboardHeader'
 import { StreakToolbar } from './StreakToolbar'
 import { TaskGrid } from './TaskGrid'
 
@@ -48,8 +48,10 @@ export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleChe
   const filteredHabits = filterHabitsByPeriod(habits, periodFilter)
 
   // 統計計算
-  const todayCompleted = filteredHabits.filter((h) => h.currentProgress >= h.frequency).length
-  const totalStreak = filteredHabits.reduce((sum, h) => sum + h.streak, 0)
+  const dailyHabits = habits.filter((h) => h.period === 'daily')
+  const todayCompleted = dailyHabits.filter((h) => h.currentProgress >= h.frequency).length
+  const totalDaily = dailyHabits.length
+  const totalStreak = habits.reduce((sum, h) => sum + h.streak, 0)
 
   const handleAddHabit = async (name: string, icon: IconName) => {
     await onAddHabit(name, icon)
@@ -62,23 +64,13 @@ export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleChe
   return (
     <div className="streak-bg flex h-screen flex-col">
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
-        {/* 統計カード */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-muted-foreground text-sm">今日の進捗</div>
-              <div className="font-bold text-2xl">
-                {todayCompleted}/{filteredHabits.length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-muted-foreground text-sm">総ストリーク</div>
-              <div className="font-bold text-2xl">{totalStreak}</div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* ヘッダーと統計カード */}
+        <DashboardHeader
+          todayCompleted={todayCompleted}
+          totalDaily={totalDaily}
+          totalStreak={totalStreak}
+          variant="mobile"
+        />
 
         {/* 期間フィルター */}
         <Tabs defaultValue="all" onValueChange={(v) => setPeriodFilter(v as PeriodFilter)} value={periodFilter}>

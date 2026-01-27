@@ -39,6 +39,7 @@
     "**/*.stories.tsx",
     "vitest.config.ts",
     "vitest.setup.ts",
-    ".storybook"
+    ".storybook",
+    "tmp"
   ]
 }
