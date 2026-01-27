@@ -1,4 +1,5 @@
 import { UserButton } from '@clerk/nextjs'
+import { Settings } from 'lucide-react'
 import { SidebarTrigger } from '@/components/Sidebar'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Separator } from '@/components/ui/separator'
@@ -12,7 +13,11 @@ export function SiteHeader({ title = 'Dashboard' }: { title?: string }) {
         <h1 className="font-medium text-base">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
-          <UserButton />
+          <UserButton>
+            <UserButton.MenuItems>
+              <UserButton.Link href="/settings" label="設定" labelIcon={<Settings className="size-4" />} />
+            </UserButton.MenuItems>
+          </UserButton>
         </div>
       </div>
     </header>
