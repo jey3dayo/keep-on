@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { storybookToast } from '@/lib/storybook'
 import { DashboardHeader } from './DashboardHeader'
 
 const meta = {
@@ -29,7 +30,7 @@ export const Desktop: Story = {
     totalDaily: 8,
     totalStreak: 12,
     onAddClick: () => {
-      // noop for storybook
+      storybookToast.success('追加ボタンがクリックされました', 'これはStorybookでのデモです')
     },
   },
 }
@@ -41,7 +42,7 @@ export const DesktopCompleted: Story = {
     totalDaily: 8,
     totalStreak: 30,
     onAddClick: () => {
-      // noop for storybook
+      storybookToast.success('すべての習慣を完了しました！', '素晴らしい習慣継続です')
     },
   },
 }

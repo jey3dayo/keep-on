@@ -4,7 +4,6 @@ import { createId } from '@paralleldrive/cuid2'
 import { Result } from '@praha/byethrow'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
 import { toggleCheckinAction } from '@/app/actions/habits/checkin'
 import { createHabit } from '@/app/actions/habits/create'
 import type { IconName } from '@/components/Icon'
@@ -16,7 +15,7 @@ import {
   DEFAULT_HABIT_FREQUENCY,
   DEFAULT_HABIT_PERIOD,
 } from '@/constants/habit'
-import { formatSerializableError } from '@/lib/errors/serializable'
+import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
 
 interface Checkin {
@@ -86,10 +85,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
     }
 
     setOptimisticHabits((current) => current.filter((habit) => habit.id !== optimisticId))
-    console.error('習慣の作成に失敗しました:', result.error)
-    toast.error('習慣の作成に失敗しました', {
-      description: formatSerializableError(result.error),
-    })
+    appToast.error('習慣の作成に失敗しました', result.error)
   }
 
   const handleToggleCheckin = async (habitId: string) => {
@@ -163,15 +159,11 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
 
       setOptimisticCheckins((current) => rollbackOptimisticCheckins(current))
       setOptimisticHabits((current) => updateHabitProgress(current, isCompleted ? 1 : -1))
-      console.error('チェックインの切り替えに失敗しました:', result.error)
-      toast.error('チェックインの切り替えに失敗しました', {
-        description: result.error.message,
-      })
+      appToast.error('チェックインの切り替えに失敗しました', result.error)
     } catch (error) {
       setOptimisticCheckins((current) => rollbackOptimisticCheckins(current))
       setOptimisticHabits((current) => updateHabitProgress(current, isCompleted ? 1 : -1))
-      console.error('チェックインの切り替えに失敗しました:', error)
-      toast.error('チェックインの切り替えに失敗しました')
+      appToast.error('チェックインの切り替えに失敗しました', error)
     } finally {
       setPendingCheckins((current) => {
         const next = new Set(current)
