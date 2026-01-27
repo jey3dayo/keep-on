@@ -3,7 +3,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import { Result } from '@praha/byethrow'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toggleCheckinAction } from '@/app/actions/habits/checkin'
 import { createHabit } from '@/app/actions/habits/create'
 import type { IconName } from '@/components/Icon'
@@ -41,25 +41,43 @@ interface DashboardWrapperProps {
   todayCheckins: Checkin[]
   user: User
   initialView?: 'dashboard' | 'simple'
+  hasTimeZoneCookie?: boolean
 }
 
-export function DashboardWrapper({ habits, todayCheckins, user, initialView }: DashboardWrapperProps) {
+export function DashboardWrapper({
+  habits,
+  todayCheckins,
+  user,
+  initialView,
+  hasTimeZoneCookie = true,
+}: DashboardWrapperProps) {
   const router = useRouter()
+  const [isTimeZoneReady, setIsTimeZoneReady] = useState(hasTimeZoneCookie)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [optimisticCheckins, setOptimisticCheckins] = useState(todayCheckins)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
+  const hasRefreshedForTimeZone = useRef(false)
 
   useEffect(() => {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (!timeZone) {
+      setIsTimeZoneReady(true)
       return
     }
 
     const existingTimeZone = getClientCookie('ko_tz') ?? ''
     if (existingTimeZone === timeZone) {
+      setIsTimeZoneReady(true)
       return
     }
 
+    if (hasRefreshedForTimeZone.current) {
+      setIsTimeZoneReady(true)
+      return
+    }
+
+    hasRefreshedForTimeZone.current = true
+    setIsTimeZoneReady(false)
     setClientCookie('ko_tz', timeZone, { maxAge: 31_536_000, path: '/', sameSite: 'lax' })
     router.refresh()
   }, [router])
@@ -208,6 +226,10 @@ export function DashboardWrapper({ habits, todayCheckins, user, initialView }: D
   const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
   const activeHabitIds = new Set(activeHabits.map((habit) => habit.id))
   const activeCheckins = optimisticCheckins.filter((checkin) => activeHabitIds.has(checkin.habitId))
+
+  if (!isTimeZoneReady) {
+    return <div className="flex h-screen items-center justify-center text-muted-foreground text-sm">読み込み中...</div>
+  }
 
   return (
     <>

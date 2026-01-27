@@ -26,6 +26,8 @@ export function HabitActionDrawer({ open, habit, onOpenChange }: HabitActionDraw
     return null
   }
 
+  const isArchived = habit.archived || Boolean(habit.archivedAt)
+
   return (
     <>
       <Drawer onOpenChange={onOpenChange} open={open}>
@@ -39,9 +41,11 @@ export function HabitActionDrawer({ open, habit, onOpenChange }: HabitActionDraw
               編集
             </Button>
 
-            <HabitArchiveDialog habitId={habit.id} habitName={habit.name} />
-
-            <HabitDeleteDialog habitId={habit.id} habitName={habit.name} />
+            {isArchived ? (
+              <HabitDeleteDialog habitId={habit.id} habitName={habit.name} />
+            ) : (
+              <HabitArchiveDialog habitId={habit.id} habitName={habit.name} />
+            )}
           </div>
         </DrawerContent>
       </Drawer>

@@ -1,14 +1,14 @@
 'use client'
 
-import type { ThemeName } from '@/hooks/use-color-theme'
+import type { ColorThemeName } from '@/constants/theme'
 import { cn } from '@/lib/utils'
 
 interface ColorPaletteProps {
-  currentTheme: ThemeName
-  onThemeChange: (theme: ThemeName) => void
+  currentTheme: ColorThemeName
+  onThemeChange: (theme: ColorThemeName) => void
 }
 
-const colors: { name: ThemeName; bg: string }[] = [
+const colors: { name: ColorThemeName; bg: string }[] = [
   { name: 'lime', bg: 'oklch(0.64 0.19 128)' },
   { name: 'orange', bg: 'oklch(0.68 0.21 48)' },
   { name: 'red', bg: 'oklch(0.61 0.225 25)' },

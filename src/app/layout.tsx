@@ -1,11 +1,13 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata, Viewport } from 'next'
+import { cookies } from 'next/headers'
 import type React from 'react'
 import { ColorThemeScript } from '@/components/ColorThemeScript'
 import { A2HSPrompt } from '@/components/pwa/A2HSPrompt'
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Toaster } from '@/components/ui/sonner'
+import { COLOR_THEME_COOKIE_KEY, DEFAULT_THEME_MODE, isColorTheme, THEME_MODE_COOKIE_KEY } from '@/constants/theme'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -36,19 +38,27 @@ export const viewport: Viewport = {
   maximumScale: 1,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const cookieStore = await cookies()
+  const rawThemeMode = cookieStore.get(THEME_MODE_COOKIE_KEY)?.value ?? null
+  const themeMode =
+    rawThemeMode === 'light' || rawThemeMode === 'dark' || rawThemeMode === 'system' ? rawThemeMode : DEFAULT_THEME_MODE
+  const rawColorTheme = cookieStore.get(COLOR_THEME_COOKIE_KEY)?.value ?? null
+  const colorTheme = rawColorTheme && isColorTheme(rawColorTheme) ? rawColorTheme : undefined
+  const htmlClassName = themeMode === 'light' || themeMode === 'dark' ? themeMode : undefined
+
   return (
     <ClerkProvider>
-      <html lang="ja" suppressHydrationWarning>
+      <html className={htmlClassName} data-theme={colorTheme} lang="ja" suppressHydrationWarning>
         <head>
           <ColorThemeScript />
         </head>
         <body>
-          <ThemeProvider>
+          <ThemeProvider defaultTheme={themeMode}>
             {children}
             <Toaster position="bottom-right" richColors />
           </ThemeProvider>

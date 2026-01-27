@@ -1,9 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { AppSidebar } from '@/components/dashboard/AppSidebar'
 import { SiteHeader } from '@/components/dashboard/SiteHeader'
 import { SidebarInset, SidebarProvider } from '@/components/Sidebar'
 import { SIGN_IN_PATH } from '@/constants/auth'
+
+const SIDEBAR_COOKIE_NAME = 'sidebar_state'
 
 export default async function DashboardLayout({
   children,
@@ -17,8 +20,13 @@ export default async function DashboardLayout({
     redirect(SIGN_IN_PATH)
   }
 
+  const cookieStore = await cookies()
+  const sidebarCookie = cookieStore.get(SIDEBAR_COOKIE_NAME)?.value ?? null
+  const defaultOpen = sidebarCookie ? sidebarCookie === 'true' : true
+
   return (
     <SidebarProvider
+      defaultOpen={defaultOpen}
       style={
         {
           '--sidebar-width': 'calc(var(--spacing) * 72)',

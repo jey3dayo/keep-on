@@ -51,7 +51,7 @@ export function ThemeToggle() {
 
       <Button
         aria-label={`${isDark ? 'ライト' : 'ダーク'}モードに切り替え`}
-        className="h-10 w-10 rounded-full p-0"
+        className="h-8 w-8 rounded-full p-0"
         onClick={() => setTheme(isDark ? 'light' : 'dark')}
         size="icon"
         variant="secondary"

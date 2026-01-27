@@ -18,5 +18,12 @@ export async function getServerDateKey(options: { cookieKey?: string; date?: Dat
   const { cookieKey = DEFAULT_TIMEZONE_COOKIE_KEY, date = new Date() } = options
   const timeZoneRaw = await getServerCookie(cookieKey)
   const timeZone = decodeCookieValue(timeZoneRaw)
-  return timeZone ? getDateKeyInTimeZone(date, timeZone) : formatDateKey(date)
+  if (!timeZone) {
+    return formatDateKey(date)
+  }
+  try {
+    return getDateKeyInTimeZone(date, timeZone)
+  } catch {
+    return formatDateKey(date)
+  }
 }

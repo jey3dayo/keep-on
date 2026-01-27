@@ -74,6 +74,7 @@ export function HabitSimpleView({
     habit: null,
   })
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const longPressTriggeredRef = useRef(false)
 
   const habitsPerPage = 6
   const totalPages = Math.max(1, Math.ceil(habits.length / habitsPerPage))
@@ -99,7 +100,17 @@ export function HabitSimpleView({
 
   const ringBgColor = getRingColorFromBackground(bgColor)
 
-  const handleProgressClick = (habit: HabitWithProgress, isCheckedToday: boolean) => {
+  const handleProgressClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    habit: HabitWithProgress,
+    isCheckedToday: boolean
+  ) => {
+    if (longPressTriggeredRef.current) {
+      event.preventDefault()
+      event.stopPropagation()
+      longPressTriggeredRef.current = false
+      return
+    }
     if (isCheckedToday) {
       setResetConfirm({ habitId: habit.id, habitName: habit.name })
       return
@@ -124,20 +135,26 @@ export function HabitSimpleView({
   }
 
   const handleLongPressStart = (habit: HabitWithProgress) => {
+    longPressTriggeredRef.current = false
     longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true
       openDrawer(habit)
     }, 500)
   }
 
-  const handleLongPressEnd = () => {
+  const handleLongPressEnd = (resetTriggered: boolean) => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
+    }
+    if (resetTriggered) {
+      longPressTriggeredRef.current = false
     }
   }
 
   const handleContextMenu = (e: React.MouseEvent, habit: HabitWithProgress) => {
     e.preventDefault()
+    longPressTriggeredRef.current = true
     openDrawer(habit)
   }
 
@@ -158,11 +175,12 @@ export function HabitSimpleView({
               <div className="flex flex-col items-center gap-3" key={habit.id}>
                 <button
                   className="relative flex h-[140px] w-[140px] items-center justify-center transition-transform hover:scale-105 active:scale-95"
-                  onClick={() => handleProgressClick(habit, isCheckedToday)}
+                  onClick={(event) => handleProgressClick(event, habit, isCheckedToday)}
                   onContextMenu={(e) => handleContextMenu(e, habit)}
+                  onPointerCancel={() => handleLongPressEnd(true)}
                   onPointerDown={() => handleLongPressStart(habit)}
-                  onPointerLeave={handleLongPressEnd}
-                  onPointerUp={handleLongPressEnd}
+                  onPointerLeave={() => handleLongPressEnd(true)}
+                  onPointerUp={() => handleLongPressEnd(false)}
                   type="button"
                 >
                   <ProgressRing
