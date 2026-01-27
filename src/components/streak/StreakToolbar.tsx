@@ -1,6 +1,7 @@
 'use client'
 
 import { Icon } from '@/components/Icon'
+import { Button } from '@/components/ui/button'
 import {
   Drawer,
   DrawerContent,
@@ -28,10 +29,10 @@ export function StreakToolbar({ currentTheme, onThemeChange, ready }: StreakTool
       <div className="mx-auto max-w-md">
         <Drawer>
           <DrawerTrigger asChild>
-            <button className={cn(tabBaseClass, 'w-full hover:bg-white/10')} type="button">
+            <Button className={cn(tabBaseClass, 'w-full hover:bg-white/10')} suppressHydrationWarning variant="ghost">
               <Icon className="h-4 w-4" name="settings" />
               設定
-            </button>
+            </Button>
           </DrawerTrigger>
           <DrawerContent className="pb-6">
             <DrawerHeader>
