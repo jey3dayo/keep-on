@@ -62,7 +62,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               },
             }}
           >
-            <UserButton.Link href="/settings" label="設定" labelIcon={<Settings className="size-4" />} />
+            <UserButton.MenuItems>
+              <UserButton.Link href="/settings" label="設定" labelIcon={<Settings className="size-4" />} />
+            </UserButton.MenuItems>
           </UserButton>
         </div>
       </SidebarFooter>

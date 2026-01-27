@@ -14,7 +14,9 @@ export function SiteHeader({ title = 'Dashboard' }: { title?: string }) {
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
           <UserButton>
-            <UserButton.Link href="/settings" label="設定" labelIcon={<Settings className="size-4" />} />
+            <UserButton.MenuItems>
+              <UserButton.Link href="/settings" label="設定" labelIcon={<Settings className="size-4" />} />
+            </UserButton.MenuItems>
           </UserButton>
         </div>
       </div>
