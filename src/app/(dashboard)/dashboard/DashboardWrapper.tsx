@@ -17,6 +17,7 @@ import {
   type Period,
 } from '@/constants/habit'
 import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
+import { formatDateKey } from '@/lib/utils/date'
 import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
 
@@ -125,7 +126,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
 
     const isCompleted = optimisticCheckins.some((checkin) => checkin.habitId === habitId)
     const now = new Date()
-    const dateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    const dateKey = formatDateKey(now)
     const removedCheckin = isCompleted
       ? (optimisticCheckins.find((checkin) => checkin.habitId === habitId) ?? null)
       : null

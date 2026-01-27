@@ -11,7 +11,6 @@ import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
 import {
   DEFAULT_HABIT_COLOR,
-  DEFAULT_HABIT_FREQUENCY,
   DEFAULT_HABIT_ICON,
   DEFAULT_HABIT_PERIOD,
   type Period,
@@ -20,6 +19,7 @@ import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, task
 import { formatSerializableError } from '@/lib/errors/serializable'
 import { cn } from '@/lib/utils'
 import { HabitInputSchema, type HabitInputSchemaType } from '@/schemas/habit'
+import { buildHabitFormData, getHabitFormDefaults, type HabitFormValues } from '@/transforms/habitFormData'
 import type { HabitWithProgress } from '@/types/habit'
 
 interface HabitFormServerProps {
@@ -44,21 +44,7 @@ export function HabitFormServer({
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   // 初期値を設定
-  const defaultValues: FormValues = initialData
-    ? {
-        name: initialData.name,
-        icon: initialData.icon ?? DEFAULT_HABIT_ICON,
-        color: initialData.color ?? DEFAULT_HABIT_COLOR,
-        period: initialData.period,
-        frequency: initialData.frequency,
-      }
-    : {
-        name: '',
-        icon: DEFAULT_HABIT_ICON,
-        color: DEFAULT_HABIT_COLOR,
-        period: DEFAULT_HABIT_PERIOD,
-        frequency: DEFAULT_HABIT_FREQUENCY,
-      }
+  const defaultValues: HabitFormValues = getHabitFormDefaults(initialData)
 
   const form = useForm<FormValues>({
     resolver: valibotResolver(HabitInputSchema) as Resolver<FormValues>,
@@ -90,20 +76,6 @@ export function HabitFormServer({
     }
   }, [form, isDaily, watchedFrequency])
 
-  function buildFormData(data: FormValues): FormData {
-    const formData = new FormData()
-    formData.append('name', data.name)
-    if (data.icon?.trim()) {
-      formData.append('icon', data.icon)
-    }
-    if (data.color?.trim()) {
-      formData.append('color', data.color)
-    }
-    formData.append('period', data.period)
-    formData.append('frequency', String(data.frequency))
-    return formData
-  }
-
   async function handleExternalSubmit(data: FormValues) {
     if (!onSubmit) {
       return
@@ -119,7 +91,7 @@ export function HabitFormServer({
   async function handleDefaultSubmit(data: FormValues) {
     setIsSaving(true)
 
-    const formData = buildFormData(data)
+    const formData = buildHabitFormData(data)
     const result = await createHabit(formData)
 
     setIsSaving(false)

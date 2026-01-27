@@ -4,9 +4,8 @@ import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
-import { getServerCookie } from '@/lib/server/cookies'
+import { getServerDateKey } from '@/lib/server/date'
 import { syncUser } from '@/lib/user'
-import { formatDateKey, getDateKeyInTimeZone } from '@/lib/utils/date'
 import { DashboardWrapper } from './DashboardWrapper'
 
 export const metadata: Metadata = {
@@ -23,9 +22,7 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const timeoutMs = 8000
   const requestMeta = createRequestMeta('/dashboard')
-  const timeZoneRaw = await getServerCookie('ko_tz')
-  const timeZone = timeZoneRaw ? decodeURIComponent(timeZoneRaw) : undefined
-  const dateKey = timeZone ? getDateKeyInTimeZone(new Date(), timeZone) : formatDateKey(new Date())
+  const dateKey = await getServerDateKey()
 
   logInfo('request.dashboard:start', requestMeta)
 
