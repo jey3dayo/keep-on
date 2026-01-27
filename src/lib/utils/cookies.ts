@@ -1,10 +1,4 @@
-type CookieSameSite = 'lax' | 'strict' | 'none'
-
-interface CookieOptions {
-  path?: string
-  maxAge?: number
-  sameSite?: CookieSameSite
-}
+import { type CookieOptions, safeParseCookieOptions } from '@/schemas/cookies'
 
 export function getClientCookie(key: string): string | null {
   if (typeof document === 'undefined') {
@@ -33,16 +27,19 @@ export function setClientCookie(key: string, value: string, options: CookieOptio
     return
   }
 
+  const parsed = safeParseCookieOptions(options)
+  const safeOptions = parsed.success ? parsed.output : {}
+
   const parts = [`${key}=${encodeURIComponent(value)}`]
-  const path = options.path ?? '/'
+  const path = safeOptions.path ?? '/'
   parts.push(`path=${path}`)
 
-  if (typeof options.maxAge === 'number') {
-    parts.push(`max-age=${options.maxAge}`)
+  if (typeof safeOptions.maxAge === 'number') {
+    parts.push(`max-age=${safeOptions.maxAge}`)
   }
 
-  if (options.sameSite) {
-    parts.push(`samesite=${options.sameSite}`)
+  if (safeOptions.sameSite) {
+    parts.push(`samesite=${safeOptions.sameSite}`)
   }
 
   if ('cookieStore' in window) {
@@ -51,8 +48,8 @@ export function setClientCookie(key: string, value: string, options: CookieOptio
       name: key,
       value,
       path,
-      sameSite: options.sameSite,
-      maxAge: options.maxAge,
+      sameSite: safeOptions.sameSite,
+      expires: typeof safeOptions.maxAge === 'number' ? Date.now() + safeOptions.maxAge * 1000 : undefined,
     })
     return
   }
