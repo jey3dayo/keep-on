@@ -40,9 +40,10 @@ interface DashboardWrapperProps {
   habits: HabitWithProgress[]
   todayCheckins: Checkin[]
   user: User
+  initialView?: 'dashboard' | 'simple'
 }
 
-export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapperProps) {
+export function DashboardWrapper({ habits, todayCheckins, user, initialView }: DashboardWrapperProps) {
   const router = useRouter()
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [optimisticCheckins, setOptimisticCheckins] = useState(todayCheckins)
@@ -214,6 +215,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
       <div className="md:hidden">
         <StreakDashboard
           habits={activeHabits}
+          initialView={initialView}
           onAddHabit={handleAddHabit}
           onToggleCheckin={handleToggleCheckin}
           todayCheckins={activeCheckins}

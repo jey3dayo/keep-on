@@ -1,21 +1,18 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/Icon'
-import { Button } from '@/components/ui/button'
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import { getRingColorFromBackground } from '@/lib/utils/color'
 import type { HabitWithProgress } from '@/types/habit'
+
+// Drawerコンポーネントを動的にインポート
+const HabitActionDrawer = dynamic(() => import('./HabitActionDrawer').then((mod) => mod.HabitActionDrawer), {
+  ssr: false,
+})
 
 interface HabitSimpleViewProps {
   habits: HabitWithProgress[]
@@ -23,9 +20,6 @@ interface HabitSimpleViewProps {
   onToggleHabit: (habitId: string) => void
   onAddHabit: () => void
   onSettings?: () => void
-  onArchive?: (habitId: string) => void
-  onEdit?: (habitId: string) => void
-  onDelete?: (habitId: string) => void
   backgroundColor?: string
 }
 
@@ -71,15 +65,14 @@ export function HabitSimpleView({
   onToggleHabit,
   onAddHabit,
   onSettings,
-  onArchive,
-  onEdit,
-  onDelete,
   backgroundColor,
 }: HabitSimpleViewProps) {
   const [currentPage, setCurrentPage] = useState(0)
   const [resetConfirm, setResetConfirm] = useState<{ habitId: string; habitName: string } | null>(null)
-  const [actionDrawerOpen, setActionDrawerOpen] = useState(false)
-  const [selectedHabit, setSelectedHabit] = useState<HabitWithProgress | null>(null)
+  const [drawerState, setDrawerState] = useState<{ open: boolean; habit: HabitWithProgress | null }>({
+    open: false,
+    habit: null,
+  })
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const habitsPerPage = 6
@@ -122,10 +115,17 @@ export function HabitSimpleView({
     setResetConfirm(null)
   }
 
+  const openDrawer = (habit: HabitWithProgress) => {
+    setDrawerState({ open: true, habit })
+  }
+
+  const closeDrawer = () => {
+    setDrawerState({ open: false, habit: null })
+  }
+
   const handleLongPressStart = (habit: HabitWithProgress) => {
     longPressTimerRef.current = setTimeout(() => {
-      setSelectedHabit(habit)
-      setActionDrawerOpen(true)
+      openDrawer(habit)
     }, 500)
   }
 
@@ -138,34 +138,7 @@ export function HabitSimpleView({
 
   const handleContextMenu = (e: React.MouseEvent, habit: HabitWithProgress) => {
     e.preventDefault()
-    setSelectedHabit(habit)
-    setActionDrawerOpen(true)
-  }
-
-  const handleActionDrawerClose = () => {
-    setActionDrawerOpen(false)
-    setSelectedHabit(null)
-  }
-
-  const handleEdit = () => {
-    if (selectedHabit && onEdit) {
-      onEdit(selectedHabit.id)
-    }
-    handleActionDrawerClose()
-  }
-
-  const handleArchive = () => {
-    if (selectedHabit && onArchive) {
-      onArchive(selectedHabit.id)
-    }
-    handleActionDrawerClose()
-  }
-
-  const handleDelete = () => {
-    if (selectedHabit && onDelete) {
-      onDelete(selectedHabit.id)
-    }
-    handleActionDrawerClose()
+    openDrawer(habit)
   }
 
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
@@ -260,45 +233,17 @@ export function HabitSimpleView({
       </main>
 
       {/* アクションDrawer */}
-      <Drawer
+      <HabitActionDrawer
+        habit={drawerState.habit}
         onOpenChange={(open) => {
           if (!open) {
-            handleActionDrawerClose()
+            closeDrawer()
           }
         }}
-        open={actionDrawerOpen}
-      >
-        <DrawerContent className="h-[70vh]">
-          <DrawerHeader className="text-left">
-            <DrawerTitle>習慣の操作</DrawerTitle>
-            <DrawerDescription>{selectedHabit?.name}</DrawerDescription>
-          </DrawerHeader>
-          <div className="flex gap-2 p-4">
-            {onEdit && (
-              <Button className="flex-1" onClick={handleEdit} variant="outline">
-                編集
-              </Button>
-            )}
-            {onArchive && (
-              <Button className="flex-1" onClick={handleArchive} variant="outline">
-                アーカイブ
-              </Button>
-            )}
-            {onDelete && (
-              <Button className="flex-1 text-destructive" onClick={handleDelete} variant="outline">
-                削除
-              </Button>
-            )}
-          </div>
-          <DrawerFooter className="pt-2">
-            <Button className="w-full" onClick={handleActionDrawerClose} variant="outline">
-              キャンセル
-            </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+        open={drawerState.open}
+      />
 
-      {resetConfirm && (
+      {resetConfirm ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <button
             aria-label="閉じる"
@@ -332,7 +277,7 @@ export function HabitSimpleView({
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between px-6 py-4">
         <button

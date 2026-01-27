@@ -1,12 +1,12 @@
 'use client'
 
 import { Circle, LayoutGrid } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import type { IconName } from '@/components/Icon'
 import { DEFAULT_HABIT_COLOR, type Period } from '@/constants/habit'
 import { getColorById, type HabitPreset } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
-import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
+import { setClientCookie } from '@/lib/utils/cookies'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import type { HabitWithProgress } from '@/types/habit'
 import { HabitForm } from './HabitForm'
@@ -30,9 +30,7 @@ interface StreakDashboardProps {
     options?: { color?: string | null; period?: Period; frequency?: number }
   ) => Promise<void>
   onToggleCheckin: (habitId: string) => Promise<void>
-  onArchiveHabit?: (habitId: string) => Promise<void>
-  onEditHabit?: (habitId: string) => void
-  onDeleteHabit?: (habitId: string) => Promise<void>
+  initialView?: MainView
 }
 
 type PeriodFilter = 'all' | Period
@@ -41,11 +39,6 @@ type MainView = 'dashboard' | 'simple'
 
 const VIEW_COOKIE_KEY = 'ko_dashboard_view'
 const VIEW_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
-
-const getInitialMainView = (): MainView => {
-  const raw = getClientCookie(VIEW_COOKIE_KEY)
-  return raw === 'simple' || raw === 'dashboard' ? raw : 'dashboard'
-}
 
 const persistMainView = (view: MainView) => {
   setClientCookie(VIEW_COOKIE_KEY, view, {
@@ -60,15 +53,12 @@ export function StreakDashboard({
   todayCheckins,
   onAddHabit,
   onToggleCheckin,
-  onArchiveHabit,
-  onEditHabit,
-  onDeleteHabit,
+  initialView = 'dashboard',
 }: StreakDashboardProps) {
-  const [currentView, setCurrentView] = useState<View>('dashboard')
-  const [returnView, setReturnView] = useState<MainView>('dashboard')
+  const [currentView, setCurrentView] = useState<View>(initialView)
+  const [returnView, setReturnView] = useState<MainView>(initialView)
   const [selectedPreset, setSelectedPreset] = useState<HabitPreset | null>(null)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
-  const didUserChangeView = useRef(false)
 
   const completedHabitIds = new Set(todayCheckins.map((c) => c.habitId))
 
@@ -82,20 +72,7 @@ export function StreakDashboard({
   const totalStreak = habits.reduce((sum, h) => sum + h.streak, 0)
   const mainBackgroundColor = getColorById(habits[0]?.color ?? DEFAULT_HABIT_COLOR).color
 
-  useEffect(() => {
-    if (didUserChangeView.current) {
-      return
-    }
-
-    const savedView = getInitialMainView()
-    if (savedView !== 'dashboard') {
-      setReturnView(savedView)
-      setCurrentView(savedView)
-    }
-  }, [])
-
   const openPresetSelector = () => {
-    didUserChangeView.current = true
     const nextReturnView = currentView === 'simple' ? 'simple' : 'dashboard'
     setReturnView(nextReturnView)
     setCurrentView('preset-selector')
@@ -114,7 +91,6 @@ export function StreakDashboard({
   }
 
   const handleViewChange = (view: View) => {
-    didUserChangeView.current = true
     setCurrentView(view)
     if (view === 'dashboard' || view === 'simple') {
       setReturnView(view)
@@ -167,9 +143,6 @@ export function StreakDashboard({
           completedHabitIds={completedHabitIds}
           habits={habits}
           onAddHabit={openPresetSelector}
-          onArchive={onArchiveHabit}
-          onDelete={onDeleteHabit}
-          onEdit={onEditHabit}
           onSettings={() => handleViewChange('dashboard')}
           onToggleHabit={handleToggleHabit}
         />
