@@ -59,4 +59,4 @@ storybook-static/
 
 # git worktrees
 .worktrees/
-tmp
+tmp/
