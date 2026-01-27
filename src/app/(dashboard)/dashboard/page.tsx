@@ -9,7 +9,13 @@ import { DashboardWrapper } from './DashboardWrapper'
 
 export const metadata: Metadata = {
   title: 'ダッシュボード - KeepOn',
-  description: '習慣の進捗状況とアクティビティを確認',
+  description:
+    'あなたの習慣追踪の進捗状況とアクティビティを一目で確認。今日の達成状況、習慣の連続記録（ストリーク）、統計情報をダッシュボードでチェック。',
+  openGraph: {
+    title: 'ダッシュボード - KeepOn',
+    description: '習慣追踪の進捗状況とアクティビティを一目で確認',
+    type: 'website',
+  },
 }
 
 export default async function DashboardPage() {

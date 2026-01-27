@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import type { IconName } from '@/components/Icon'
 import type { Period } from '@/constants/habit'
+import type { HabitPreset } from '@/constants/habit-data'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import type { HabitWithProgress } from '@/types/habit'
-import { AddTaskSheet } from './AddTaskSheet'
+import { HabitForm } from './HabitForm'
 import { HabitListView } from './HabitListView'
 
 interface Checkin {
@@ -33,15 +34,15 @@ interface DesktopDashboardProps {
     options?: { color?: string | null; period?: Period; frequency?: number }
   ) => Promise<void>
   onToggleCheckin: (habitId: string) => Promise<void>
-  // TODO: 編集・削除機能の実装 (https://github.com/jey3dayo/keep-on/issues/46)
-  // onUpdateHabit?: (habitId: string, updates: Partial<HabitWithProgress>) => Promise<void>
-  // onDeleteHabit?: (habitId: string) => Promise<void>
 }
 
 type PeriodFilter = 'all' | Period
+type View = 'dashboard' | 'add'
+type MainView = 'dashboard'
 
 export function DesktopDashboard({ habits, todayCheckins, onAddHabit, onToggleCheckin }: DesktopDashboardProps) {
-  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
+  const [currentView, setCurrentView] = useState<View>('dashboard')
+  const [selectedPreset, setSelectedPreset] = useState<HabitPreset | null>(null)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
 
   const completedHabitIds = new Set(todayCheckins.map((c) => c.habitId))
@@ -67,13 +68,34 @@ export function DesktopDashboard({ habits, todayCheckins, onAddHabit, onToggleCh
     await onToggleCheckin(habitId)
   }
 
+  if (currentView === 'add') {
+    return (
+      <HabitForm
+        onBack={() => {
+          setSelectedPreset(null)
+          setCurrentView('dashboard')
+        }}
+        onSubmit={async (input) => {
+          await handleAddHabit(input.name, input.icon, {
+            color: input.color,
+            period: input.period,
+            frequency: input.frequency,
+          })
+          setSelectedPreset(null)
+          setCurrentView('dashboard')
+        }}
+        preset={selectedPreset}
+      />
+    )
+  }
+
   return (
     <div className="space-y-6 p-6">
       <HabitListView
         completedHabitIds={completedHabitIds}
         filteredHabits={filteredHabits}
         habits={habits}
-        onAddHabit={() => setIsAddSheetOpen(true)}
+        onAddHabit={() => setCurrentView('add')}
         onPeriodChange={setPeriodFilter}
         onToggleHabit={handleToggleHabit}
         periodFilter={periodFilter}
@@ -81,8 +103,6 @@ export function DesktopDashboard({ habits, todayCheckins, onAddHabit, onToggleCh
         totalDaily={totalDaily}
         totalStreak={totalStreak}
       />
-
-      <AddTaskSheet onOpenChange={setIsAddSheetOpen} onSubmit={handleAddHabit} open={isAddSheetOpen} />
     </div>
   )
 }

@@ -5,7 +5,13 @@ import { WeekStartSettings } from '@/components/settings/WeekStartSettings'
 
 export const metadata: Metadata = {
   title: '設定 - KeepOn',
-  description: 'アプリの設定とプロフィール管理',
+  description:
+    'アプリの表示設定、テーマカスタマイズ、週の開始日の設定など、KeepOnを快適に使うための各種設定を管理できます。',
+  openGraph: {
+    title: '設定 - KeepOn',
+    description: 'アプリの表示と動作をカスタマイズ',
+    type: 'website',
+  },
 }
 
 export default function SettingsPage() {

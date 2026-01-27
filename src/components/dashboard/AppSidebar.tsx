@@ -1,9 +1,7 @@
 'use client'
 
-import { BarChart3, HelpCircle, LayoutDashboard, ListChecks, Settings } from 'lucide-react'
 import Image from 'next/image'
 import type * as React from 'react'
-
 import { ClerkUserButton } from '@/components/ClerkUserButton'
 import { NavMain } from '@/components/dashboard/NavMain'
 import { NavSecondary } from '@/components/dashboard/NavSecondary'
@@ -16,38 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/Sidebar'
-
-const data = {
-  navMain: [
-    {
-      title: 'ダッシュボード',
-      url: '/dashboard',
-      icon: LayoutDashboard,
-    },
-    {
-      title: '習慣',
-      url: '/habits',
-      icon: ListChecks,
-    },
-    {
-      title: 'アナリティクス',
-      url: '/analytics',
-      icon: BarChart3,
-    },
-  ],
-  navSecondary: [
-    {
-      title: '設定',
-      url: '/settings',
-      icon: Settings,
-    },
-    {
-      title: 'ヘルプ',
-      url: '/help',
-      icon: HelpCircle,
-    },
-  ],
-}
+import { NAV_ITEMS } from '@/constants/navigation'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -65,8 +32,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavSecondary className="mt-auto" items={data.navSecondary} />
+        <NavMain items={NAV_ITEMS.main} />
+        <NavSecondary className="mt-auto" items={NAV_ITEMS.secondary} />
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center gap-2 p-2">

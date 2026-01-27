@@ -10,8 +10,14 @@ import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCurrentUserId } from '@/lib/user'
 
 export const metadata: Metadata = {
-  title: '習慣管理 - KeepOn',
-  description: '習慣の作成、編集、削除を行う',
+  title: '習慣 - KeepOn',
+  description:
+    'あなたの習慣を一元管理。新しい習慣の作成、既存の習慣の編集・削除、カテゴリ別の整理、絵文字やカラーのカスタマイズができます。',
+  openGraph: {
+    title: '習慣管理 - KeepOn',
+    description: '習慣の作成、編集、管理を簡単に',
+    type: 'website',
+  },
 }
 
 export default async function HabitsPage() {
@@ -40,7 +46,7 @@ export default async function HabitsPage() {
     <div className="flex flex-1 flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <h1 className="font-bold text-3xl text-foreground">習慣管理</h1>
+          <h1 className="font-bold text-3xl text-foreground">習慣</h1>
           <p className="text-muted-foreground">あなたの習慣を管理しましょう</p>
         </div>
         <Button asChild size="lg" variant="default">
