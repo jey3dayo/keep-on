@@ -29,7 +29,7 @@ export const Desktop: Story = {
     totalDaily: 8,
     totalStreak: 12,
     onAddClick: () => {
-      alert('追加ボタンがクリックされました')
+      // noop for storybook
     },
   },
 }
@@ -41,7 +41,7 @@ export const DesktopCompleted: Story = {
     totalDaily: 8,
     totalStreak: 30,
     onAddClick: () => {
-      alert('追加ボタンがクリックされました')
+      // noop for storybook
     },
   },
 }
