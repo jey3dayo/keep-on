@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { DatabaseError, UnauthorizedError, ValidationError } from '../habit'
+import { AuthorizationError, DatabaseError, UnauthorizedError, ValidationError } from '../habit'
 import { formatSerializableError, serializeHabitError } from '../serializable'
 
 describe('serializeHabitError', () => {
@@ -21,6 +21,16 @@ describe('serializeHabitError', () => {
       name: 'ValidationError',
       field: 'name',
       reason: 'Name is required',
+    })
+  })
+
+  it('AuthorizationErrorをシリアライズ', () => {
+    const error = new AuthorizationError({ detail: 'No access' })
+    const serialized = serializeHabitError(error)
+
+    expect(serialized).toEqual({
+      name: 'AuthorizationError',
+      message: 'No access',
     })
   })
 
@@ -60,6 +70,16 @@ describe('formatSerializableError', () => {
     const message = formatSerializableError(error)
 
     expect(message).toBe('Name is required')
+  })
+
+  it('AuthorizationErrorをmessageフィールドの値に変換', () => {
+    const error = {
+      name: 'AuthorizationError' as const,
+      message: 'No access',
+    }
+    const message = formatSerializableError(error)
+
+    expect(message).toBe('No access')
   })
 
   it('DatabaseErrorをmessageフィールドの値に変換', () => {
