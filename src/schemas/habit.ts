@@ -1,10 +1,10 @@
 import * as v from 'valibot'
+import { DEFAULT_HABIT_PERIOD, PERIODS } from '@/constants/habit'
 
 /**
  * 習慣のタスク期間
  */
-export const TaskPeriodSchema = v.picklist(['daily', 'weekly', 'monthly'])
-export type TaskPeriod = v.InferOutput<typeof TaskPeriodSchema>
+export const PeriodSchema = v.picklist(PERIODS)
 
 /**
  * 習慣入力のバリデーションスキーマ
@@ -25,7 +25,7 @@ export const HabitInputSchema = v.pipe(
       v.nullable(v.string()),
       v.transform((val) => (val?.trim() ? val.trim() : null))
     ),
-    period: v.optional(TaskPeriodSchema, 'daily'),
+    period: v.optional(PeriodSchema, DEFAULT_HABIT_PERIOD),
     frequency: v.pipe(
       v.number(),
       v.minValue(1, 'Frequency must be at least 1'),

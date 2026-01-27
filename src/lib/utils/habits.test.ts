@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import type { TaskPeriod } from '@/constants/habit-data'
+import type { Period } from '@/constants/habit'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 
 interface Habit {
   id: string
   name: string
-  period: TaskPeriod
+  period: Period
 }
 
 const habits: Habit[] = [

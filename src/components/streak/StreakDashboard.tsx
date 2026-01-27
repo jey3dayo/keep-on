@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { IconName } from '@/components/Icon'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { PERIOD_DISPLAY_NAME } from '@/constants/habit'
+import { PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
 import { useColorTheme } from '@/hooks/use-color-theme'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import type { HabitWithProgress } from '@/types/habit'
@@ -35,7 +35,7 @@ interface StreakDashboardProps {
   onToggleCheckin: (habitId: string) => Promise<void>
 }
 
-type PeriodFilter = 'all' | 'daily' | 'weekly' | 'monthly'
+type PeriodFilter = 'all' | Period
 
 export function StreakDashboard({ habits, todayCheckins, onAddHabit, onToggleCheckin }: StreakDashboardProps) {
   const { theme, setTheme, ready } = useColorTheme()

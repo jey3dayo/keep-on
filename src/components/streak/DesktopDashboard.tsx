@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { IconName } from '@/components/Icon'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { PERIOD_DISPLAY_NAME } from '@/constants/habit'
+import { PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import type { HabitWithProgress } from '@/types/habit'
 import { AddTaskSheet } from './AddTaskSheet'
@@ -36,7 +36,7 @@ interface DesktopDashboardProps {
   // onDeleteHabit?: (habitId: string) => Promise<void>
 }
 
-type PeriodFilter = 'all' | 'daily' | 'weekly' | 'monthly'
+type PeriodFilter = 'all' | Period
 
 export function DesktopDashboard({ habits, todayCheckins, onAddHabit, onToggleCheckin }: DesktopDashboardProps) {
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)

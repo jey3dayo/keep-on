@@ -1,12 +1,12 @@
 import { createId } from '@paralleldrive/cuid2'
 import { date, integer, pgEnum, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
-import { DEFAULT_WEEK_START } from '@/constants/habit'
 import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
   DEFAULT_HABIT_ICON,
   DEFAULT_HABIT_PERIOD,
-} from '@/constants/habit-data'
+  DEFAULT_WEEK_START,
+} from '@/constants/habit'
 
 export const taskPeriodEnum = pgEnum('task_period', ['daily', 'weekly', 'monthly'])
 

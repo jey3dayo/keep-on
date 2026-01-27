@@ -12,14 +12,12 @@ import type { InferOutput } from 'valibot'
 import { createHabit } from '@/app/actions/habits/create'
 import {
   DEFAULT_HABIT_COLOR,
+  DEFAULT_HABIT_FREQUENCY,
   DEFAULT_HABIT_ICON,
-  getColorById,
-  getIconById,
-  getPeriodById,
-  habitColors,
-  habitIcons,
-  taskPeriods,
-} from '@/constants/habit-data'
+  DEFAULT_HABIT_PERIOD,
+  type Period,
+} from '@/constants/habit'
+import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
 import { formatSerializableError } from '@/lib/errors/serializable'
 import { cn } from '@/lib/utils'
 import { HabitInputSchema } from '@/schemas/habit'
@@ -29,7 +27,7 @@ interface HabitFormServerProps {
 }
 
 type FormValues = Omit<InferOutput<typeof HabitInputSchema>, 'period'> & {
-  period: 'daily' | 'weekly' | 'monthly'
+  period: Period
 }
 
 export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps = {}) {
@@ -41,8 +39,8 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
       name: '',
       icon: DEFAULT_HABIT_ICON,
       color: DEFAULT_HABIT_COLOR,
-      period: 'daily',
-      frequency: 1,
+      period: DEFAULT_HABIT_PERIOD,
+      frequency: DEFAULT_HABIT_FREQUENCY,
     },
   })
 
@@ -55,7 +53,7 @@ export function HabitFormServer({ onSuccess = 'redirect' }: HabitFormServerProps
   const isDaily = watchedPeriod === 'daily'
   const selectedColorValue = getColorById(watchedColor || DEFAULT_HABIT_COLOR).color
   const SelectedIconComponent = getIconById(watchedIcon || DEFAULT_HABIT_ICON).icon
-  const currentPeriod = getPeriodById(watchedPeriod || 'daily')
+  const currentPeriod = getPeriodById(watchedPeriod || DEFAULT_HABIT_PERIOD)
 
   useEffect(() => {
     if (isDaily && watchedFrequency !== 1) {
