@@ -1,3 +1,5 @@
+'use client'
+
 import { UserButton } from '@clerk/nextjs'
 import { Settings } from 'lucide-react'
 import { SidebarTrigger } from '@/components/Sidebar'
