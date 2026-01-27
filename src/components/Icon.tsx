@@ -62,8 +62,8 @@ export type IconName =
   | 'info'
   | 'mail'
   | 'menu'
-  | 'more-horizontal'
   | 'moon'
+  | 'more-horizontal'
   | 'music'
   | 'palette'
   | 'pencil'
@@ -76,6 +76,7 @@ export type IconName =
   | 'sun'
   | 'target'
   | 'timer'
+  | 'trash'
   | 'trash-2'
   | 'users'
   | 'x'
@@ -102,8 +103,8 @@ const icons: Record<IconName, React.ComponentType<LucideProps>> = {
   info: Info,
   mail: Mail,
   menu: Menu,
-  'more-horizontal': MoreHorizontal,
   moon: Moon,
+  'more-horizontal': MoreHorizontal,
   music: Music,
   palette: Palette,
   pencil: Pencil,
@@ -116,6 +117,7 @@ const icons: Record<IconName, React.ComponentType<LucideProps>> = {
   sun: Sun,
   target: Target,
   timer: Timer,
+  trash: Trash2,
   'trash-2': Trash2,
   users: Users,
   x: X,
