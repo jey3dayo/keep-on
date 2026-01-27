@@ -84,7 +84,7 @@ export function HabitSimpleView({
   }, [currentHabits])
 
   const getDarkerColor = (color: string) =>
-    color.replace(OKLCH_LIGHTNESS_REGEX, (_, l) => `oklch(${Math.max(0, Number.parseFloat(l) - 0.25)}`)
+    color.replace(OKLCH_LIGHTNESS_REGEX, (_, l) => `oklch(${Math.max(0, Number.parseFloat(l) - 0.25)})`)
 
   const ringBgColor = getDarkerColor(bgColor)
 

@@ -185,11 +185,11 @@ export interface HabitPreset {
 export const habitPresets: HabitPreset[] = [
   {
     id: 'p1',
-    name: '水を8杯飲む',
+    name: '水を飲む',
     iconId: 'droplets',
     colorId: 'cyan',
     period: 'daily',
-    frequency: 8,
+    frequency: 1,
     category: 'health',
   },
   {
@@ -231,11 +231,11 @@ export const habitPresets: HabitPreset[] = [
   { id: 'p6', name: '瞑想する', iconId: 'brain', colorId: 'teal', period: 'daily', frequency: 1, category: 'health' },
   {
     id: 'p7',
-    name: 'ポモドーロ',
+    name: 'ポモドーロタイマーを使う',
     iconId: 'clock',
     colorId: 'red',
     period: 'daily',
-    frequency: 4,
+    frequency: 1,
     category: 'productivity',
   },
   {

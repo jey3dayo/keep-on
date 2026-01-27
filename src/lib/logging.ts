@@ -113,7 +113,17 @@ export async function logSpan<T>(
       : null
 
   try {
-    const result = await (timeoutPromise ? Promise.race([fn(), timeoutPromise]) : fn())
+    // fn() に .catch() を追加して、タイムアウト勝利時の unhandled rejection を防止
+    const fnPromise = fn().catch((error) => {
+      if (timedOut) {
+        // タイムアウト済みの場合はエラーを無視（ログのみ出力）
+        logError(`${name}:late-error`, data ? { ...data, error: formatError(error) } : { error: formatError(error) })
+        return undefined as T
+      }
+      throw error
+    })
+
+    const result = await (timeoutPromise ? Promise.race([fnPromise, timeoutPromise]) : fn())
     const ms = Math.round(nowMs() - start)
     logInfo(`${name}:end`, data ? { ...data, ms } : { ms })
     return result
