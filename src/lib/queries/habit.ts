@@ -25,7 +25,11 @@ import type { HabitInput } from '@/validators/habit'
  */
 export async function getHabitsByUserId(userId: string) {
   const db = await getDb()
-  return await db.select().from(habits).where(eq(habits.userId, userId)).orderBy(desc(habits.createdAt))
+  return await db
+    .select()
+    .from(habits)
+    .where(and(eq(habits.userId, userId), eq(habits.archived, false)))
+    .orderBy(desc(habits.createdAt))
 }
 
 /**

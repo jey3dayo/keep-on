@@ -42,6 +42,12 @@ export async function deleteHabitAction(
       return Result.fail(serializeHabitError(new AuthorizationError()))
     }
 
+    if (!habit.archived) {
+      return Result.fail(
+        serializeHabitError(new AuthorizationError({ detail: 'アーカイブされた習慣のみ削除できます' }))
+      )
+    }
+
     const deleted = await deleteHabit(habitId, userId)
 
     if (!deleted) {

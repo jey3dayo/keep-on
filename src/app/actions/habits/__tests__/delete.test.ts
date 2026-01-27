@@ -70,4 +70,24 @@ describe('deleteHabitAction', () => {
       expect(result.error.name).toBe('NotFoundError')
     }
   })
+
+  it('アーカイブされていない習慣は削除できない', async () => {
+    const { getCurrentUserId } = await import('@/lib/user')
+    vi.mocked(getCurrentUserId).mockResolvedValue(userId)
+
+    const mockHabit = {
+      id: habitId,
+      userId,
+      name: 'Test Habit',
+      archived: false, // アクティブな習慣
+    }
+    vi.mocked(getHabitById).mockResolvedValue(mockHabit as any)
+
+    const result = await deleteHabitAction(habitId)
+
+    expect(Result.isFailure(result)).toBe(true)
+    if (Result.isFailure(result)) {
+      expect(result.error.name).toBe('AuthorizationError')
+    }
+  })
 })
