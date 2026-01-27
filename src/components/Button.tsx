@@ -71,4 +71,23 @@ export function AddHabitButton({ children, icon = true, className, ...props }: A
   )
 }
 
+interface CheckInButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  completed?: boolean
+}
+
+export function CheckInButton({ children, completed = false, className, ...props }: CheckInButtonProps) {
+  return (
+    <button
+      className={cn(
+        'flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95',
+        completed && 'ring-2 ring-offset-2 ring-offset-background',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  )
+}
+
 export { Button, buttonVariants, type ButtonProps }

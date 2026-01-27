@@ -120,7 +120,7 @@ export function HabitSimpleView({
             return (
               <div className="flex flex-col items-center gap-3" key={habit.id}>
                 <button
-                  className="relative flex h-[140px] w-[140px] items-center justify-center transition-transform active:scale-95"
+                  className="relative flex h-[140px] w-[140px] items-center justify-center transition-transform hover:scale-105 active:scale-95"
                   onClick={() => handleProgressClick(habit, isCheckedToday)}
                   type="button"
                 >

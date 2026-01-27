@@ -2,7 +2,7 @@
 
 import { Calendar } from 'lucide-react'
 import { type CSSProperties, type ReactNode, useMemo } from 'react'
-import { AddHabitButton } from '@/components/Button'
+import { AddHabitButton, CheckInButton } from '@/components/Button'
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById } from '@/constants/habit-data'
@@ -149,11 +149,8 @@ function HabitListCard({
       }}
     >
       <div className="flex items-center gap-4">
-        <button
-          className={cn(
-            'flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full transition-all duration-300',
-            completed && 'ring-2 ring-offset-2 ring-offset-background'
-          )}
+        <CheckInButton
+          completed={completed}
           onClick={onToggle}
           style={
             {
@@ -162,14 +159,13 @@ function HabitListCard({
               '--tw-ring-color': colorData.color,
             } as CSSProperties
           }
-          type="button"
         >
           {completed ? (
             <Icon className="h-7 w-7 text-background" name="check" />
           ) : (
             <IconComponent className="h-7 w-7 text-background" />
           )}
-        </button>
+        </CheckInButton>
 
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex items-center gap-2">
