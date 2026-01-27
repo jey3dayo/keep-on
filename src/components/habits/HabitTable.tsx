@@ -1,15 +1,23 @@
 import { format } from 'date-fns'
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getHabitsByUserId } from '@/lib/queries/habit'
 import { HabitTableActions } from './HabitTableActions'
 
 interface HabitTableProps {
   userId: string
+  requestMeta?: { route: string; requestId: string }
 }
 
-export async function HabitTable({ userId }: HabitTableProps) {
-  const habits = await getHabitsByUserId(userId)
+export async function HabitTable({ userId, requestMeta }: HabitTableProps) {
+  const timeoutMs = 8000
+  const meta = requestMeta ?? createRequestMeta('/habits')
+
+  logInfo('habits.table:start', meta)
+
+  const habits = await logSpan('habits.table.query', () => getHabitsByUserId(userId), meta, { timeoutMs })
+  logInfo('habits.table:end', { ...meta, habits: habits.length })
 
   if (habits.length === 0) {
     return (

@@ -1,24 +1,47 @@
 'use client'
 
+import { useTheme } from 'next-themes'
 import { ColorPalette } from '@/components/streak/ColorPalette'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useColorTheme } from '@/hooks/use-color-theme'
 
 export function ThemeSettings() {
-  const { theme, setTheme, ready } = useColorTheme()
+  const { theme: mode, setTheme: setMode } = useTheme()
+  const { theme: colorTheme, setTheme: setColorTheme, ready } = useColorTheme()
+  const currentMode = mode ?? 'system'
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>テーマカラー</CardTitle>
-        <CardDescription>アプリのアクセントカラーを変更します。</CardDescription>
+        <CardTitle>テーマ設定</CardTitle>
+        <CardDescription>ダークモードとアクセントカラーを変更します。</CardDescription>
       </CardHeader>
-      <CardContent>
-        {ready ? (
-          <ColorPalette currentTheme={theme} onThemeChange={setTheme} />
-        ) : (
-          <div className="h-8 w-44 rounded-full bg-muted" />
-        )}
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <p className="font-medium text-foreground">表示モード</p>
+          <Tabs onValueChange={(value) => setMode(value)} value={currentMode}>
+            <TabsList className="w-full">
+              <TabsTrigger className="flex-1" value="light">
+                ライト
+              </TabsTrigger>
+              <TabsTrigger className="flex-1" value="dark">
+                ダーク
+              </TabsTrigger>
+              <TabsTrigger className="flex-1" value="system">
+                システム
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+        <div className="space-y-2">
+          <p className="font-medium text-foreground">アクセントカラー</p>
+          {ready ? (
+            <ColorPalette currentTheme={colorTheme} onThemeChange={setColorTheme} />
+          ) : (
+            <div className="h-8 w-44 rounded-full bg-muted" />
+          )}
+        </div>
       </CardContent>
     </Card>
   )

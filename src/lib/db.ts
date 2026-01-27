@@ -2,6 +2,7 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@/db/schema'
 import { env } from '@/env'
+import { logInfo } from '@/lib/logging'
 
 function normalizeConnectionString(raw: string): string {
   try {
@@ -16,7 +17,27 @@ function normalizeConnectionString(raw: string): string {
   }
 }
 
-async function getConnectionString(): Promise<string> {
+type ConnectionSource = 'hyperdrive' | 'env'
+
+interface ConnectionInfo {
+  connectionString: string
+  source: ConnectionSource
+}
+
+function getConnectionMeta(connectionString: string): { host?: string; port?: number; protocol?: string } {
+  try {
+    const url = new URL(connectionString)
+    return {
+      host: url.hostname || undefined,
+      port: url.port ? Number(url.port) : undefined,
+      protocol: url.protocol ? url.protocol.replace(':', '') : undefined,
+    }
+  } catch {
+    return {}
+  }
+}
+
+async function getConnectionInfo(): Promise<ConnectionInfo> {
   // Cloudflare Workers環境でHyperdriveが利用可能な場合
   if (typeof globalThis !== 'undefined' && 'caches' in globalThis) {
     try {
@@ -24,7 +45,7 @@ async function getConnectionString(): Promise<string> {
       const { env } = getCloudflareContext()
       const hyperdrive = (env as { HYPERDRIVE?: { connectionString: string } }).HYPERDRIVE
       if (hyperdrive?.connectionString) {
-        return hyperdrive.connectionString
+        return { connectionString: hyperdrive.connectionString, source: 'hyperdrive' }
       }
     } catch {
       // Hyperdrive未設定の場合はフォールバック
@@ -32,12 +53,14 @@ async function getConnectionString(): Promise<string> {
   }
 
   // ローカル開発環境ではDATABASE_URLを使用
-  return env.DATABASE_URL
+  return { connectionString: env.DATABASE_URL, source: 'env' }
 }
 
 async function createDb() {
-  const rawConnectionString = await getConnectionString()
+  const { connectionString: rawConnectionString, source } = await getConnectionInfo()
   const connectionString = normalizeConnectionString(rawConnectionString)
+  const meta = getConnectionMeta(connectionString)
+  logInfo('db.connection', { source, ...meta })
 
   // Cloudflare Workers最適化設定
   const client = postgres(connectionString, {
@@ -46,6 +69,9 @@ async function createDb() {
     max: 1, // Workers環境では1接続のみ
     idle_timeout: 20, // アイドルタイムアウト（秒）
     connect_timeout: 5, // 接続タイムアウト（秒） - Workersの30秒制限内に収めるため短縮
+    connection: {
+      statement_timeout: 8000, // クエリのハングを防ぐ（ミリ秒）
+    },
   })
 
   return drizzle(client, { schema })

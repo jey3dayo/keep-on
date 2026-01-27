@@ -14,6 +14,7 @@ import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
   DEFAULT_HABIT_PERIOD,
+  type Period,
 } from '@/constants/habit'
 import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
@@ -53,7 +54,15 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
     setOptimisticCheckins(todayCheckins)
   }, [todayCheckins])
 
-  const handleAddHabit = async (name: string, icon: IconName) => {
+  const handleAddHabit = async (
+    name: string,
+    icon: IconName,
+    options?: { color?: string | null; period?: Period; frequency?: number }
+  ) => {
+    const nextPeriod = options?.period ?? DEFAULT_HABIT_PERIOD
+    const nextColor = options?.color ?? DEFAULT_HABIT_COLOR
+    const nextFrequency = options?.frequency ?? DEFAULT_HABIT_FREQUENCY
+    const normalizedFrequency = nextPeriod === 'daily' ? 1 : nextFrequency
     const optimisticId = `optimistic-${createId()}`
     const now = new Date()
     const optimisticHabit: HabitWithProgress = {
@@ -61,9 +70,9 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
       userId: user.id,
       name,
       icon,
-      color: DEFAULT_HABIT_COLOR,
-      period: DEFAULT_HABIT_PERIOD,
-      frequency: DEFAULT_HABIT_FREQUENCY,
+      color: nextColor,
+      period: nextPeriod,
+      frequency: normalizedFrequency,
       createdAt: now,
       updatedAt: now,
       currentProgress: 0,
@@ -76,6 +85,9 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
     const formData = new FormData()
     formData.append('name', name)
     formData.append('icon', icon)
+    formData.append('color', nextColor)
+    formData.append('period', nextPeriod)
+    formData.append('frequency', String(normalizedFrequency))
 
     const result = await createHabit(formData)
 

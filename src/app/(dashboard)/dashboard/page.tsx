@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { syncUser } from '@/lib/user'
@@ -10,17 +11,37 @@ export const metadata: Metadata = {
 }
 
 export default async function DashboardPage() {
-  const user = await syncUser()
+  const timeoutMs = 8000
+  const requestMeta = createRequestMeta('/dashboard')
+
+  logInfo('request.dashboard:start', requestMeta)
+
+  const user = await logSpan('dashboard.syncUser', () => syncUser(), requestMeta, { timeoutMs })
 
   if (!user) {
+    logInfo('dashboard.syncUser:missing', requestMeta)
     throw new Error('Failed to sync user')
   }
 
-  // クエリを並列実行してレスポンス時間を短縮
-  const [habits, todayCheckins] = await Promise.all([
-    getHabitsWithProgress(user.id, user.clerkId, new Date()),
-    getCheckinsByUserAndDate(user.id, new Date()),
-  ])
+  // 同時リクエストの詰まりを避けるため順次実行
+  const habits = await logSpan(
+    'dashboard.habits',
+    () => getHabitsWithProgress(user.id, user.clerkId, new Date()),
+    requestMeta,
+    { timeoutMs }
+  )
+  const todayCheckins = await logSpan(
+    'dashboard.checkins',
+    () => getCheckinsByUserAndDate(user.id, new Date()),
+    requestMeta,
+    { timeoutMs }
+  )
+
+  logInfo('request.dashboard:end', {
+    ...requestMeta,
+    habits: habits.length,
+    checkins: todayCheckins.length,
+  })
 
   return <DashboardWrapper habits={habits} todayCheckins={todayCheckins} user={user} />
 }

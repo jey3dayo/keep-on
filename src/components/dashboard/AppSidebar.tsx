@@ -19,29 +19,29 @@ import {
 const data = {
   navMain: [
     {
-      title: 'Dashboard',
+      title: 'ダッシュボード',
       url: '/dashboard',
       icon: LayoutDashboard,
     },
     {
-      title: 'Habits',
+      title: '習慣',
       url: '/habits',
       icon: ListChecks,
     },
     {
-      title: 'Analytics',
+      title: 'アナリティクス',
       url: '/analytics',
       icon: BarChart3,
     },
   ],
   navSecondary: [
     {
-      title: 'Settings',
+      title: '設定',
       url: '/settings',
       icon: Settings,
     },
     {
-      title: 'Help',
+      title: 'ヘルプ',
       url: '/help',
       icon: HelpCircle,
     },
