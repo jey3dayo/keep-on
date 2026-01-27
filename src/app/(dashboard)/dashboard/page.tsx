@@ -6,6 +6,8 @@ import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { syncUser } from '@/lib/user'
 import { DashboardWrapper } from './DashboardWrapper'
 
+const SIGN_IN_PATH = '/sign-in'
+
 export const metadata: Metadata = {
   title: 'ダッシュボード - KeepOn',
   description: '習慣の進捗状況とアクティビティを確認',
@@ -21,7 +23,7 @@ export default async function DashboardPage() {
 
   if (!user) {
     logInfo('dashboard.syncUser:missing', requestMeta)
-    redirect('/sign-in')
+    redirect(SIGN_IN_PATH)
   }
 
   // 同時リクエストの詰まりを避けるため順次実行

@@ -7,16 +7,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useColorTheme } from '@/hooks/use-color-theme'
 
+const DEFAULT_THEME_MODE = 'system'
+
 export function ThemeSettings() {
   const { theme: mode, setTheme: setMode } = useTheme()
   const { theme: colorTheme, setTheme: setColorTheme, ready } = useColorTheme()
-  const [mounted, setMounted] = useState(false)
+  const [mounted, setMounted] = useState<boolean>(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  const currentMode = mounted ? (mode ?? 'system') : 'system'
+  const currentMode = mounted ? (mode ?? DEFAULT_THEME_MODE) : DEFAULT_THEME_MODE
 
   return (
     <Card>

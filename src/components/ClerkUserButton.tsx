@@ -3,15 +3,7 @@
 import { UserButton } from '@clerk/nextjs'
 import type { ComponentProps, ReactNode } from 'react'
 import React from 'react'
-
-const MISSING_PROVIDER_PATTERN = /MissingClerkProvider|<ClerkProvider\s*\/>/i
-
-function isMissingClerkProviderError(error: unknown): boolean {
-  if (!(error instanceof Error)) {
-    return false
-  }
-  return MISSING_PROVIDER_PATTERN.test(error.message)
-}
+import { isMissingClerkProviderError } from '@/lib/utils/clerk'
 
 class ClerkUserButtonBoundary extends React.Component<
   { children: ReactNode; fallback?: ReactNode },

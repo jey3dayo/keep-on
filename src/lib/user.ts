@@ -1,32 +1,42 @@
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { currentUser } from '@clerk/nextjs/server'
+import * as v from 'valibot'
 import { logError } from './logging'
 import { upsertUser } from './queries/user'
 
-interface ClerkAPIResponseErrorLike {
-  name?: string
-  status?: number
-  clerkTraceId?: string | null
-  errors?: Array<{ code?: string; message?: string }>
-  constructor?: { kind?: string }
-}
+const ClerkApiErrorEntrySchema = v.object({
+  code: v.optional(v.string()),
+  message: v.optional(v.string()),
+})
 
-function isClerkAPIResponseErrorLike(error: unknown): error is ClerkAPIResponseErrorLike {
+const ClerkApiResponseErrorSchema = v.object({
+  name: v.optional(v.string()),
+  status: v.optional(v.number()),
+  clerkTraceId: v.optional(v.nullable(v.string())),
+  errors: v.optional(v.array(v.optional(ClerkApiErrorEntrySchema))),
+})
+
+function parseClerkApiResponseError(error: unknown) {
   if (isClerkAPIResponseError(error)) {
-    return true
+    return {
+      status: error.status,
+      clerkTraceId: error.clerkTraceId ?? undefined,
+      errors: error.errors?.map((entry) => ({ code: entry?.code, message: entry?.message })),
+    }
   }
 
-  if (!error || typeof error !== 'object') {
-    return false
+  const parsed = v.safeParse(ClerkApiResponseErrorSchema, error)
+  if (!parsed.success || parsed.output.name !== 'ClerkAPIResponseError') {
+    return null
   }
 
-  const candidate = error as ClerkAPIResponseErrorLike
+  const { status, clerkTraceId, errors } = parsed.output
 
-  if (candidate.name === 'ClerkAPIResponseError') {
-    return true
+  return {
+    status,
+    clerkTraceId: clerkTraceId ?? undefined,
+    errors: errors?.map((entry) => ({ code: entry?.code, message: entry?.message })),
   }
-
-  return candidate.constructor?.kind === 'ClerkAPIResponseError'
 }
 
 /**
@@ -39,16 +49,9 @@ export async function syncUser() {
   try {
     clerkUser = await currentUser()
   } catch (error) {
-    if (isClerkAPIResponseErrorLike(error)) {
-      const errors = Array.isArray(error.errors)
-        ? error.errors.map((entry) => ({ code: entry.code, message: entry.message }))
-        : undefined
-
-      logError('clerk.currentUser:api-error', {
-        status: typeof error.status === 'number' ? error.status : undefined,
-        clerkTraceId: typeof error.clerkTraceId === 'string' ? error.clerkTraceId : undefined,
-        errors,
-      })
+    const parsed = parseClerkApiResponseError(error)
+    if (parsed) {
+      logError('clerk.currentUser:api-error', parsed)
       return null
     }
     throw error
