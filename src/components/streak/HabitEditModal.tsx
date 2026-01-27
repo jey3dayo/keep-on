@@ -24,7 +24,8 @@ import {
 import { useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/Icon'
 import { Button } from '@/components/ui/button'
-import { habitColors, type TaskPeriod, taskPeriods } from '@/constants/habit-data'
+import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, type Period } from '@/constants/habit'
+import { habitColors, taskPeriods } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
 
@@ -37,9 +38,9 @@ interface HabitEditModalProps {
 
 export function HabitEditModal({ habit, onClose, onSave, onDelete }: HabitEditModalProps) {
   const [habitName, setHabitName] = useState(habit.name)
-  const [selectedIcon, setSelectedIcon] = useState(habit.icon)
-  const [selectedColor, setSelectedColor] = useState(habit.color ?? 'lime')
-  const [selectedPeriod, setSelectedPeriod] = useState<TaskPeriod>(habit.period)
+  const [selectedIcon, setSelectedIcon] = useState(habit.icon ?? DEFAULT_HABIT_ICON)
+  const [selectedColor, setSelectedColor] = useState(habit.color ?? DEFAULT_HABIT_COLOR)
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>(habit.period)
   const [frequency, setFrequency] = useState(habit.frequency)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 

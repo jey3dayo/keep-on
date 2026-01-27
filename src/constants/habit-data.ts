@@ -20,6 +20,7 @@ import {
   Target,
 } from 'lucide-react'
 import type { IconName } from '@/components/Icon'
+import type { Period } from '@/constants/habit'
 
 export interface HabitIcon {
   id: IconName
@@ -61,10 +62,8 @@ export const habitColors = [
   { id: 'yellow', color: 'oklch(0.85 0.16 95)', label: 'イエロー' },
 ]
 
-export type TaskPeriod = 'daily' | 'weekly' | 'monthly'
-
 export interface TaskPeriodOption {
-  id: TaskPeriod
+  id: Period
   label: string
   sublabel: string
   frequencyLabel: string
@@ -81,7 +80,7 @@ export interface Habit {
   name: string
   iconId: string
   colorId: string
-  period: TaskPeriod
+  period: Period
   frequency: number
   streak: number
   currentProgress: number
@@ -165,6 +164,6 @@ export function getColorById(id: string) {
   return habitColors.find((c) => c.id === id) || habitColors[0]
 }
 
-export function getPeriodById(id: TaskPeriod) {
+export function getPeriodById(id: Period) {
   return taskPeriods.find((p) => p.id === id) || taskPeriods[0]
 }
