@@ -56,7 +56,7 @@ export function ThemeToggle() {
         size="icon"
         variant="secondary"
       >
-        {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        {isDark ? <Sun className="h-[20px] w-[20px]" /> : <Moon className="h-[20px] w-[20px]" />}
       </Button>
     </div>
   )
