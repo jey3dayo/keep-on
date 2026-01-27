@@ -3,6 +3,7 @@
 import { Circle, LayoutGrid } from 'lucide-react'
 import { useState } from 'react'
 import type { IconName } from '@/components/Icon'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DEFAULT_HABIT_COLOR, type Period } from '@/constants/habit'
 import { getColorById, type HabitPreset } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
@@ -181,31 +182,62 @@ function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
   return (
     <div className="fixed right-4 bottom-6 z-50">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1 rounded-full border border-border bg-card/90 p-1 shadow-lg backdrop-blur-md">
-          <button
-            className={cn(
-              'rounded-full p-2 transition-all',
-              currentView === 'dashboard'
-                ? 'bg-foreground text-background'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-            onClick={() => onViewChange('dashboard')}
-            title="リストビュー"
-            type="button"
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </button>
-          <button
-            className={cn(
-              'rounded-full p-2 transition-all',
-              currentView === 'simple' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
-            )}
-            onClick={() => onViewChange('simple')}
-            title="シンプルビュー"
-            type="button"
-          >
-            <Circle className="h-4 w-4" />
-          </button>
+        <div className="group relative">
+          <div className="absolute right-0 bottom-full mb-2 hidden w-64 group-hover:block">
+            <Card className="border-border bg-popover shadow-xl">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">ビュー切り替え</CardTitle>
+                <CardDescription className="text-xs">表示スタイルを選択できます</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-start gap-2">
+                    <LayoutGrid className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">リストビュー</p>
+                      <p className="text-muted-foreground text-xs">詳細なリスト表示</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Circle className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">シンプルビュー</p>
+                      <p className="text-muted-foreground text-xs">円形アイコン表示</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="flex items-center gap-1 rounded-full border border-border bg-card/90 p-1 shadow-lg backdrop-blur-md">
+            <button
+              className={cn(
+                'rounded-full p-2 transition-all',
+                currentView === 'dashboard'
+                  ? 'bg-foreground text-background'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+              onClick={() => onViewChange('dashboard')}
+              title="リストビュー"
+              type="button"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              className={cn(
+                'rounded-full p-2 transition-all',
+                currentView === 'simple'
+                  ? 'bg-foreground text-background'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+              onClick={() => onViewChange('simple')}
+              title="シンプルビュー"
+              type="button"
+            >
+              <Circle className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
