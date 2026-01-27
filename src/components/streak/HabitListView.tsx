@@ -45,20 +45,11 @@ export function HabitListView({
   return (
     <div className="flex-1 space-y-6 px-4 pt-4 pb-8">
       <header className="sticky top-0 z-10 rounded-2xl border border-border bg-background/80 px-4 py-4 backdrop-blur-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground text-sm">
-              {today.getMonth() + 1}月{today.getDate()}日（{currentDayName}）
-            </p>
-            <h1 className="font-bold text-2xl text-foreground">今日の習慣</h1>
-          </div>
-          <button
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-accent transition-opacity hover:opacity-90"
-            onClick={onAddHabit}
-            type="button"
-          >
-            <Icon className="h-5 w-5 text-accent-foreground" name="plus" />
-          </button>
+        <div className="mb-4">
+          <p className="text-muted-foreground text-sm">
+            {today.getMonth() + 1}月{today.getDate()}日（{currentDayName}）
+          </p>
+          <h1 className="font-bold text-2xl text-foreground">今日の習慣</h1>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
