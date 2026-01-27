@@ -9,16 +9,11 @@ import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
-import {
-  DEFAULT_HABIT_COLOR,
-  DEFAULT_HABIT_ICON,
-  DEFAULT_HABIT_PERIOD,
-  type Period,
-} from '@/constants/habit'
+import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, DEFAULT_HABIT_PERIOD } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
 import { formatSerializableError } from '@/lib/errors/serializable'
 import { cn } from '@/lib/utils'
-import { HabitInputSchema, type HabitInputSchemaType } from '@/schemas/habit'
+import { HabitInputSchema } from '@/schemas/habit'
 import { buildHabitFormData, getHabitFormDefaults, type HabitFormValues } from '@/transforms/habitFormData'
 import type { HabitWithProgress } from '@/types/habit'
 
@@ -29,9 +24,7 @@ interface HabitFormServerProps {
   submitLabel?: string
 }
 
-type FormValues = Omit<HabitInputSchemaType, 'period'> & {
-  period: Period
-}
+type FormValues = HabitFormValues
 
 export function HabitFormServer({
   initialData,
@@ -65,16 +58,9 @@ export function HabitFormServer({
   const watchedFrequency = form.watch('frequency')
   const watchedName = form.watch('name')
 
-  const isDaily = watchedPeriod === 'daily'
   const selectedColorValue = getColorById(watchedColor || DEFAULT_HABIT_COLOR).color
   const SelectedIconComponent = getIconById(watchedIcon || DEFAULT_HABIT_ICON).icon
   const currentPeriod = getPeriodById(watchedPeriod || DEFAULT_HABIT_PERIOD)
-
-  useEffect(() => {
-    if (isDaily && watchedFrequency !== 1) {
-      form.setValue('frequency', 1, { shouldDirty: true, shouldValidate: true })
-    }
-  }, [form, isDaily, watchedFrequency])
 
   async function handleExternalSubmit(data: FormValues) {
     if (!onSubmit) {
@@ -316,8 +302,7 @@ export function HabitFormServer({
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-center justify-between">
                   <button
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={isDaily}
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80"
                     onClick={() => field.onChange(Math.max(1, field.value - 1))}
                     type="button"
                   >
@@ -330,8 +315,7 @@ export function HabitFormServer({
                     <span className="text-muted-foreground text-sm">{currentPeriod.frequencyLabel}</span>
                   </div>
                   <button
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={isDaily}
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80"
                     onClick={() => field.onChange(field.value + 1)}
                     type="button"
                   >

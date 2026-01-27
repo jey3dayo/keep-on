@@ -79,7 +79,6 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
     const nextPeriod = options?.period ?? DEFAULT_HABIT_PERIOD
     const nextColor = options?.color ?? DEFAULT_HABIT_COLOR
     const nextFrequency = options?.frequency ?? DEFAULT_HABIT_FREQUENCY
-    const normalizedFrequency = nextPeriod === 'daily' ? 1 : nextFrequency
     const optimisticId = `optimistic-${createId()}`
     const now = new Date()
     const optimisticHabit: HabitWithProgress = {
@@ -89,7 +88,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
       icon,
       color: nextColor,
       period: nextPeriod,
-      frequency: normalizedFrequency,
+      frequency: nextFrequency,
       archived: false,
       archivedAt: null,
       createdAt: now,
@@ -106,7 +105,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
     formData.append('icon', icon)
     formData.append('color', nextColor)
     formData.append('period', nextPeriod)
-    formData.append('frequency', String(normalizedFrequency))
+    formData.append('frequency', String(nextFrequency))
 
     const result = await createHabit(formData)
 

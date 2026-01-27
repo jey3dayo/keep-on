@@ -5,7 +5,7 @@ import {
   DEFAULT_HABIT_PERIOD,
   type Period,
 } from '@/constants/habit'
-import { safeParseHabitInput, type HabitInputSchemaType } from '@/schemas/habit'
+import { type HabitInputSchemaType, safeParseHabitInput } from '@/schemas/habit'
 import type { HabitWithProgress } from '@/types/habit'
 
 /**
@@ -78,15 +78,9 @@ export function transformHabitInput(formData: FormData) {
   const frequencyRaw = getString('frequency')
   const parsedFrequency = frequencyRaw ? Number(frequencyRaw) : undefined
 
-  // periodが省略された場合は 'daily' とみなす
-  const isDaily = periodRaw === 'daily' || periodRaw === undefined
-
-  // Daily の場合は frequency を 1 に固定
-  // それ以外の場合は数値変換した値を使用（undefinedのままの場合あり）
+  // frequency はそのまま使用（デイリーでも複数回可能）
   let frequency: number | undefined
-  if (isDaily) {
-    frequency = 1
-  } else if (typeof parsedFrequency === 'number' && Number.isFinite(parsedFrequency)) {
+  if (typeof parsedFrequency === 'number' && Number.isFinite(parsedFrequency)) {
     frequency = parsedFrequency
   } else {
     frequency = undefined
@@ -128,10 +122,6 @@ export function transformHabitUpdate(formData: FormData) {
   const period = getOptionalString('period')
   const frequency = getOptionalNumber('frequency')
 
-  // Daily の場合は frequency を 1 に
-  const isDaily = period === 'daily'
-  const adjustedFrequency = isDaily ? 1 : frequency
-
   // 部分更新のため、値があるフィールドのみを含める
   const input: Record<string, unknown> = {}
 
@@ -154,8 +144,8 @@ export function transformHabitUpdate(formData: FormData) {
     input.period = period
   }
 
-  if (adjustedFrequency !== undefined) {
-    input.frequency = adjustedFrequency
+  if (frequency !== undefined) {
+    input.frequency = frequency
   }
 
   return input
