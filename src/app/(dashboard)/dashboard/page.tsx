@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
@@ -20,6 +21,9 @@ export const metadata: Metadata = {
 }
 
 export default async function DashboardPage() {
+  const cookieStore = await cookies()
+  const rawView = cookieStore.get('ko_dashboard_view')?.value
+  const initialView = rawView === 'simple' || rawView === 'dashboard' ? rawView : 'dashboard'
   const timeoutMs = 8000
   const requestMeta = createRequestMeta('/dashboard')
   const dateKey = await getServerDateKey()
@@ -53,5 +57,5 @@ export default async function DashboardPage() {
     checkins: todayCheckins.length,
   })
 
-  return <DashboardWrapper habits={habits} todayCheckins={todayCheckins} user={user} />
+  return <DashboardWrapper habits={habits} initialView={initialView} todayCheckins={todayCheckins} user={user} />
 }
