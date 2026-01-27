@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { isError } from '@/lib/utils/guards'
 
 export const ClerkApiErrorEntrySchema = v.object({
   code: v.optional(v.string()),
@@ -19,6 +20,10 @@ export interface ClerkApiResponseErrorPayload extends Record<string, unknown> {
 }
 
 export function parseClerkApiResponseErrorPayload(error: unknown): ClerkApiResponseErrorPayload | null {
+  if (isError(error)) {
+    return null
+  }
+
   const parsed = v.safeParse(ClerkApiResponseErrorSchema, error)
   if (!parsed.success || parsed.output.name !== 'ClerkAPIResponseError') {
     return null
@@ -29,6 +34,8 @@ export function parseClerkApiResponseErrorPayload(error: unknown): ClerkApiRespo
   return {
     status,
     clerkTraceId: clerkTraceId ?? undefined,
-    errors: errors?.map((entry) => ({ code: entry?.code, message: entry?.message })),
+    errors: errors
+      ?.filter((entry): entry is { code?: string; message?: string } => entry !== undefined)
+      .map((entry) => ({ code: entry.code, message: entry.message })),
   }
 }

@@ -6,10 +6,16 @@ import { upsertUser } from './queries/user'
 
 function parseClerkApiResponseError(error: unknown) {
   if (isClerkAPIResponseError(error)) {
+    const errors = Array.isArray(error.errors)
+      ? error.errors
+          .filter((entry): entry is NonNullable<typeof entry> => entry != null)
+          .map((entry) => ({ code: entry.code, message: entry.message }))
+      : undefined
+
     return {
       status: error.status,
       clerkTraceId: error.clerkTraceId ?? undefined,
-      errors: error.errors?.map((entry) => ({ code: entry?.code, message: entry?.message })),
+      errors,
     }
   }
 
