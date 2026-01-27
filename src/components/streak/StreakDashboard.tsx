@@ -164,7 +164,7 @@ function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
         <div className="flex items-center gap-1 rounded-full border border-border bg-card/90 p-1 shadow-lg backdrop-blur-md">
           <button
             className={cn(
-              'rounded-full p-2 transition-all',
+              'rounded-full px-3 py-3 transition-all',
               currentView === 'dashboard'
                 ? 'bg-foreground text-background'
                 : 'text-muted-foreground hover:text-foreground'
@@ -173,18 +173,18 @@ function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
             title="リストビュー"
             type="button"
           >
-            <LayoutGrid className="h-4 w-4" />
+            <LayoutGrid className="h-5 w-5" />
           </button>
           <button
             className={cn(
-              'rounded-full p-2 transition-all',
+              'rounded-full px-3 py-3 transition-all',
               currentView === 'simple' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
             )}
             onClick={() => onViewChange('simple')}
             title="シンプルビュー"
             type="button"
           >
-            <Circle className="h-4 w-4" />
+            <Circle className="h-5 w-5" />
           </button>
         </div>
       </div>
