@@ -88,7 +88,7 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 ### データベース接続と Edge 対応
 
 - Edge 環境でも動く `postgres` ドライバを採用
-- React `cache()` で接続初期化をメモ化し、Server Component から安全に利用
+- 接続初期化は `globalThis` 上の Promise を再利用して多重初期化を回避
 - 接続文字列は `DATABASE_URL` / Hyperdrive を切り替え
 
 ## 開発ツール
@@ -178,6 +178,12 @@ if (Result.isSuccess(result)) {
   // 成功処理
 }
 ```
+
+## ロギング / 観測性
+
+- `src/lib/logging.ts` に軽量ログユーティリティを集約
+- `LOG_LEVEL`（debug/info/warn/error）で出力制御し、デフォルトは info
+- `logSpan` で処理時間・タイムアウトの簡易計測と構造化ログ
 
 ## テスト
 
