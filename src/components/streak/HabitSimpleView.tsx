@@ -1,7 +1,10 @@
 'use client'
 
+import { MoreVertical } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/Icon'
+import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'

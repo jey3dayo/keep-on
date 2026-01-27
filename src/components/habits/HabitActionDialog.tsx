@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { formatSerializableError } from '@/lib/errors/serializable'
+import { formatSerializableError, type SerializableHabitError } from '@/lib/errors/serializable'
 
 interface HabitActionDialogProps {
   habitId: string
@@ -27,7 +27,7 @@ interface HabitActionDialogProps {
   confirmClassName?: string
   successMessage: string
   errorMessage: string
-  action: (habitId: string) => Promise<Result.Result<unknown, unknown>>
+  action: (habitId: string) => Result.ResultAsync<unknown, SerializableHabitError>
 }
 
 export function HabitActionDialog({
