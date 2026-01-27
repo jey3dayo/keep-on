@@ -63,6 +63,95 @@ export async function createHabit(input: HabitInput) {
 }
 
 /**
+ * 習慣を更新
+ * 所有権確認込みで更新し、存在しない場合はnullを返す
+ *
+ * @param id - 習慣ID
+ * @param userId - ユーザーID
+ * @param input - 更新データ
+ * @returns 更新された習慣または null
+ */
+export async function updateHabit(id: string, userId: string, input: Partial<HabitInput>) {
+  const db = await getDb()
+  const [habit] = await db
+    .update(habits)
+    .set(input)
+    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+    .returning()
+  return habit ?? null
+}
+
+/**
+ * 習慣をアーカイブ（論理削除）
+ *
+ * @param id - 習慣ID
+ * @param userId - ユーザーID
+ * @returns アーカイブ成功フラグ
+ */
+export async function archiveHabit(id: string, userId: string) {
+  const db = await getDb()
+  const result = await db
+    .update(habits)
+    .set({
+      archived: true,
+      archivedAt: new Date(),
+    })
+    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+    .returning()
+  return result.length > 0
+}
+
+/**
+ * 習慣を完全削除
+ *
+ * @param id - 習慣ID
+ * @param userId - ユーザーID
+ * @returns 削除成功フラグ
+ */
+export async function deleteHabit(id: string, userId: string) {
+  const db = await getDb()
+  const result = await db
+    .delete(habits)
+    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+    .returning()
+  return result.length > 0
+}
+
+/**
+ * アーカイブ済み習慣を取得
+ *
+ * @param userId - ユーザーID
+ * @returns アーカイブ済み習慣の配列
+ */
+export async function getArchivedHabits(userId: string) {
+  const db = await getDb()
+  return await db
+    .select()
+    .from(habits)
+    .where(and(eq(habits.userId, userId), eq(habits.archived, true)))
+}
+
+/**
+ * 習慣をアンアーカイブ（復元）
+ *
+ * @param id - 習慣ID
+ * @param userId - ユーザーID
+ * @returns 復元成功フラグ
+ */
+export async function unarchiveHabit(id: string, userId: string) {
+  const db = await getDb()
+  const result = await db
+    .update(habits)
+    .set({
+      archived: false,
+      archivedAt: null,
+    })
+    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+    .returning()
+  return result.length > 0
+}
+
+/**
  * 期間の開始日時を計算
  *
  * @param date - 基準日
