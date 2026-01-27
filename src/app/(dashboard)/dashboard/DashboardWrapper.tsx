@@ -58,7 +58,7 @@ export function DashboardWrapper({ habits, todayCheckins, user }: DashboardWrapp
       return
     }
 
-    setClientCookie('ko_tz', timeZone, { maxAge: 31536000, path: '/', sameSite: 'lax' })
+    setClientCookie('ko_tz', timeZone, { maxAge: 31_536_000, path: '/', sameSite: 'lax' })
     router.refresh()
   }, [router])
 
