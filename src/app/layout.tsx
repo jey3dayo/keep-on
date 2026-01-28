@@ -3,11 +3,18 @@ import type { Metadata, Viewport } from 'next'
 import { cookies } from 'next/headers'
 import type React from 'react'
 import { ColorThemeScript } from '@/components/basics/ColorThemeScript'
+import { ThemeModeScript } from '@/components/basics/ThemeModeScript'
 import { ThemeProvider } from '@/components/basics/ThemeProvider'
 import { A2HSPrompt } from '@/components/pwa/A2HSPrompt'
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration'
 import { Toaster } from '@/components/ui/sonner'
-import { COLOR_THEME_COOKIE_KEY, DEFAULT_THEME_MODE, isColorTheme, THEME_MODE_COOKIE_KEY } from '@/constants/theme'
+import {
+  COLOR_THEME_COOKIE_KEY,
+  DEFAULT_THEME_MODE,
+  isColorTheme,
+  THEME_COLOR_LIGHT,
+  THEME_MODE_COOKIE_KEY,
+} from '@/constants/theme'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -32,7 +39,6 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -55,6 +61,9 @@ export default async function RootLayout({
     <ClerkProvider>
       <html className={htmlClassName} data-theme={colorTheme} lang="ja" suppressHydrationWarning>
         <head>
+          <meta content="light dark" name="color-scheme" />
+          <meta content={THEME_COLOR_LIGHT} name="theme-color" />
+          <ThemeModeScript />
           <ColorThemeScript />
         </head>
         <body>
