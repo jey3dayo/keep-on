@@ -28,6 +28,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+debug-storybook.log
 
 # env files
 # 暗号化された .env はコミット対象
