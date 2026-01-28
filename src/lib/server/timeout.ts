@@ -1,5 +1,4 @@
-const DEFAULT_REQUEST_TIMEOUT_MS = 8000
-const CLOUDFLARE_REQUEST_TIMEOUT_MS = 15_000
+import { CLOUDFLARE_REQUEST_TIMEOUT_MS, DEFAULT_REQUEST_TIMEOUT_MS } from '@/constants/request-timeout'
 
 const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env
 
