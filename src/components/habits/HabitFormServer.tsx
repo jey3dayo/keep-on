@@ -23,6 +23,7 @@ interface HabitFormServerProps {
   onSubmit?: (data: FormValues) => Promise<void> | void
   onSuccess?: 'close' | 'redirect'
   submitLabel?: string
+  hideHeader?: boolean
 }
 
 type FormValues = HabitFormValues
@@ -32,6 +33,7 @@ export function HabitFormServer({
   onSubmit,
   onSuccess = 'redirect',
   submitLabel = '保存',
+  hideHeader = false,
 }: HabitFormServerProps = {}) {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
@@ -112,35 +114,40 @@ export function HabitFormServer({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex items-center justify-between border-border border-b bg-background/80 px-4 py-3 backdrop-blur-xl">
-        <Button
-          className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
-          onClick={() => router.back()}
-          type="button"
-          variant="ghost"
-        >
-          <ChevronLeft className="h-5 w-5" />
-          <span className="text-sm">戻る</span>
-        </Button>
-        <h1 className="font-semibold text-foreground text-lg">{initialData ? '習慣を編集' : '新しい習慣'}</h1>
-        <Button
-          className={cn(
-            'h-auto p-0 hover:bg-transparent',
-            watchedName?.trim() && !isSaving
-              ? 'text-foreground hover:opacity-80'
-              : 'cursor-not-allowed text-muted-foreground'
-          )}
-          disabled={!watchedName?.trim() || isSaving}
-          onClick={form.handleSubmit(handleSubmit)}
-          style={{ color: watchedName?.trim() && !isSaving ? selectedColorValue : undefined }}
-          type="button"
-          variant="ghost"
-        >
-          {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
-        </Button>
-      </header>
+      {!hideHeader && (
+        <header className="sticky top-0 z-10 flex items-center justify-between border-border border-b bg-background/80 px-4 py-3 backdrop-blur-xl">
+          <Button
+            className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+            onClick={() => router.back()}
+            type="button"
+            variant="ghost"
+          >
+            <ChevronLeft className="h-5 w-5" />
+            <span className="text-sm">戻る</span>
+          </Button>
+          <h1 className="font-semibold text-foreground text-lg">{initialData ? '習慣を編集' : '新しい習慣'}</h1>
+          <Button
+            className={cn(
+              'h-auto p-0 hover:bg-transparent',
+              watchedName?.trim() && !isSaving
+                ? 'text-foreground hover:opacity-80'
+                : 'cursor-not-allowed text-muted-foreground'
+            )}
+            disabled={!watchedName?.trim() || isSaving}
+            onClick={form.handleSubmit(handleSubmit)}
+            style={{ color: watchedName?.trim() && !isSaving ? selectedColorValue : undefined }}
+            type="button"
+            variant="ghost"
+          >
+            {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
+          </Button>
+        </header>
+      )}
 
-      <form className="space-y-8 px-4 py-6" onSubmit={form.handleSubmit(handleSubmit)}>
+      <form
+        className={hideHeader ? 'space-y-8 px-4 py-2' : 'space-y-8 px-4 py-6'}
+        onSubmit={form.handleSubmit(handleSubmit)}
+      >
         {/* Icon Preview */}
         <div className="flex flex-col items-center gap-4">
           <div

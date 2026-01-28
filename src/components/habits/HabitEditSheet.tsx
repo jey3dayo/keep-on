@@ -58,7 +58,7 @@ export function HabitEditSheet({ habit, open, onOpenChange }: HabitEditSheetProp
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <HabitFormServer initialData={habit} onSubmit={handleSubmit} submitLabel="更新する" />
+          <HabitFormServer hideHeader initialData={habit} onSubmit={handleSubmit} submitLabel="更新する" />
         )}
       </SheetContent>
     </Sheet>
