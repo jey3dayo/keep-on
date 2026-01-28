@@ -162,17 +162,8 @@ export function HabitListView({
               setResetConfirmHabit(null)
             }
           }}
-          trigger={
-            <button
-              className="hidden"
-              ref={(el) => {
-                if (el) {
-                  el.click()
-                }
-              }}
-              type="button"
-            />
-          }
+          open
+          trigger={null}
         />
       )}
     </>

@@ -23,17 +23,22 @@ import { formatSerializableError } from '@/lib/errors/serializable'
 interface HabitResetDialogProps {
   habitId: string
   habitName: string
-  trigger?: ReactNode
+  trigger?: ReactNode | null
+  open?: boolean
   onOpenChange?: (open: boolean) => void
 }
 
-export function HabitResetDialog({ habitId, habitName, trigger, onOpenChange }: HabitResetDialogProps) {
+export function HabitResetDialog({ habitId, habitName, trigger, open, onOpenChange }: HabitResetDialogProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const isControlled = open !== undefined
+  const dialogOpen = isControlled ? open : isOpen
 
   const handleOpenChange = (open: boolean) => {
-    setIsOpen(open)
+    if (!isControlled) {
+      setIsOpen(open)
+    }
     onOpenChange?.(open)
   }
 
@@ -60,9 +65,11 @@ export function HabitResetDialog({ habitId, habitName, trigger, onOpenChange }: 
     </Button>
   )
 
+  const triggerContent = trigger === undefined ? defaultTrigger : trigger
+
   return (
-    <AlertDialog onOpenChange={handleOpenChange} open={isOpen}>
-      <AlertDialogTrigger asChild>{trigger ?? defaultTrigger}</AlertDialogTrigger>
+    <AlertDialog onOpenChange={handleOpenChange} open={dialogOpen}>
+      {triggerContent !== null && <AlertDialogTrigger asChild>{triggerContent}</AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>進捗をリセットしますか？</AlertDialogTitle>
