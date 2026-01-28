@@ -52,18 +52,23 @@ export function HabitListView({
   })
   const [resetConfirmHabit, setResetConfirmHabit] = useState<HabitWithProgress | null>(null)
   const previousCompletedIds = useRef<Set<string>>(completedHabitIds)
+  const habitsRef = useRef(habits)
+
+  useEffect(() => {
+    habitsRef.current = habits
+  }, [habits])
 
   // 達成検知: 新たに達成した習慣があれば確認ダイアログを表示
   useEffect(() => {
     const newlyCompleted = Array.from(completedHabitIds).filter((id) => !previousCompletedIds.current.has(id))
     if (newlyCompleted.length > 0) {
-      const newlyCompletedHabit = habits.find((h) => h.id === newlyCompleted[0])
+      const newlyCompletedHabit = habitsRef.current.find((h) => h.id === newlyCompleted[0])
       if (newlyCompletedHabit) {
         setResetConfirmHabit(newlyCompletedHabit)
       }
     }
-    previousCompletedIds.current = completedHabitIds
-  }, [completedHabitIds, habits])
+    previousCompletedIds.current = new Set(completedHabitIds)
+  }, [completedHabitIds])
 
   const today = new Date()
   const dayNames = ['日', '月', '火', '水', '木', '金', '土']
