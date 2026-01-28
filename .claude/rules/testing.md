@@ -58,6 +58,14 @@ Clerkの開発インスタンスでは、デフォルトで**テストモード*
 - 電話番号（SMS）認証
 - パスコード認証
 
+## テスト用パスワード
+
+テスト環境で使用する固定パスワード:
+
+```text
+dyc.PBR3pjc.cmh!fmx
+```
+
 ## 手動テスト手順
 
 ### サインアップフロー
@@ -272,6 +280,9 @@ use: {
 - 開発用に固定のテストメールアドレスを使用
   - `dev+clerk_test@example.com`
   - `staging+clerk_test@example.com`
+- 推奨テストユーザー
+  - メールアドレス: `jane+clerk_test@example.com`
+  - パスワード: `dyc.PBR3pjc.cmh!fmx`
 - 各環境で異なるメールアドレスを使用して混同を防ぐ
 
 **非推奨:**
