@@ -9,6 +9,7 @@ import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
+import { updateHabitAction } from '@/app/actions/habits/update'
 import { Button } from '@/components/basics/Button'
 import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, DEFAULT_HABIT_PERIOD } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
@@ -81,7 +82,7 @@ export function HabitFormServer({
     setIsSaving(true)
 
     const formData = buildHabitFormData(data)
-    const result = await createHabit(formData)
+    const result = initialData ? await updateHabitAction(initialData.id, formData) : await createHabit(formData)
 
     setIsSaving(false)
 
@@ -115,7 +116,7 @@ export function HabitFormServer({
     <div className="min-h-screen bg-background">
       {/* Header */}
       {!hideHeader && (
-        <header className="sticky top-0 z-10 flex items-center justify-between border-border border-b bg-background/80 px-4 py-3 backdrop-blur-xl">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-border/50 border-b bg-background/50 px-4 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
           <Button
             className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
             onClick={() => router.back()}

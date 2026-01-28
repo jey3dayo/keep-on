@@ -140,7 +140,7 @@ export function StreakDashboard({
           onToggleHabit={handleToggleHabit}
         />
       ) : (
-        <div className="streak-bg flex h-screen flex-col" style={{ backgroundColor: mainBackgroundColor }}>
+        <div className="streak-bg flex min-h-screen flex-col" style={{ backgroundColor: mainBackgroundColor }}>
           <HabitListView
             completedHabitIds={completedHabitIds}
             filteredHabits={filteredHabits}

@@ -50,7 +50,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-border border-b bg-background/80 px-4 py-3 backdrop-blur-xl">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-border/50 border-b bg-background/50 px-4 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
         <Button
           className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
           onClick={onBack}

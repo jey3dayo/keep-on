@@ -150,6 +150,31 @@ export function DashboardWrapper({
     const isCompleted = targetHabit.currentProgress >= targetHabit.frequency
     const now = new Date()
     const dateKey = formatDateKey(now)
+
+    if (isCompleted) {
+      setPendingCheckins((current) => new Set(current).add(habitId))
+
+      try {
+        const result = await toggleCheckinAction(habitId, dateKey)
+
+        if (Result.isSuccess(result)) {
+          router.refresh()
+          return
+        }
+
+        appToast.error('チェックインの切り替えに失敗しました', result.error)
+      } catch (error) {
+        appToast.error('チェックインの切り替えに失敗しました', error)
+      } finally {
+        setPendingCheckins((current) => {
+          const next = new Set(current)
+          next.delete(habitId)
+          return next
+        })
+      }
+      return
+    }
+
     const removedCheckin = isCompleted
       ? optimisticCheckins
           .filter((checkin) => checkin.habitId === habitId)
