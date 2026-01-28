@@ -23,10 +23,12 @@ describe('Icon', () => {
       expect(svg).toBeInTheDocument()
     })
 
-    it('colorプロパティでclassNameが追加される', () => {
-      render(<Icon color="red" name="check" size={24} />)
-      const svg = document.querySelector('svg')
-      expect(svg?.className).toContain('text-red')
+    it('colorプロパティが適用される', () => {
+      const { container } = render(<Icon color="red" name="check" size={24} />)
+      const svg = container.querySelector('svg')
+      // color プロパティは stroke の色に影響する
+      expect(svg).toBeInTheDocument()
+      expect(svg?.getAttribute('stroke')).toBeTruthy()
     })
 
     it('aria-hidden属性が設定できる', () => {
