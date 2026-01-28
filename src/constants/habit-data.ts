@@ -49,7 +49,7 @@ export const habitIcons: HabitIcon[] = [
   { id: 'flame', icon: Flame, label: '連続' },
 ]
 
-export const newHabitColors = [
+export const habitColors = [
   { id: 'orange', color: 'var(--orange-9)', label: 'オレンジ' },
   { id: 'red', color: 'var(--red-9)', label: 'レッド' },
   { id: 'pink', color: 'var(--pink-9)', label: 'ピンク' },
@@ -62,7 +62,7 @@ export const newHabitColors = [
   { id: 'yellow', color: 'var(--yellow-9)', label: 'イエロー' },
 ]
 
-export const habitColors = [
+export const oldHabitColors = [
   { id: 'orange', color: 'oklch(0.70 0.18 45)', label: 'オレンジ' },
   { id: 'red', color: 'oklch(0.65 0.22 25)', label: 'レッド' },
   { id: 'pink', color: 'oklch(0.70 0.18 350)', label: 'ピンク' },
