@@ -7,7 +7,13 @@ vi.mock('next/image', () => ({
   __esModule: true,
   // biome-ignore lint/correctness/useImageSize: テスト用のモック
   // biome-ignore lint/performance/noImgElement: テスト用のモック
-  default: ({ alt, ...props }: { alt?: string; [key: string]: unknown }): JSX.Element => <img alt={alt} {...props} />,
+  default: ({
+    alt,
+    priority,
+    ...props
+  }: { alt?: string; priority?: boolean; [key: string]: unknown }): JSX.Element => (
+    <img alt={alt} {...props} />
+  ),
 }))
 
 vi.mock('next/link', () => ({
