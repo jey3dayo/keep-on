@@ -165,7 +165,7 @@ export function HabitSimpleView({
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
 
   return (
-    <div className="flex min-h-screen flex-col transition-colors duration-500" style={{ backgroundColor: bgColor }}>
+    <div className="flex min-h-full flex-col transition-colors duration-500" style={{ backgroundColor: bgColor }}>
       <main className="flex flex-1 items-start justify-center px-4 pt-8 pb-24">
         <div className={cn('grid w-full max-w-md grid-cols-2 gap-6')}>
           {currentHabits.map((habit) => {

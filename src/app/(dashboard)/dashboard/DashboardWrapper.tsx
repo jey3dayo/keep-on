@@ -250,7 +250,7 @@ export function DashboardWrapper({
   return (
     <>
       {/* スマホ版: STREAK風フルスクリーンUI */}
-      <div className="md:hidden">
+      <div className="flex-1 md:hidden">
         <StreakDashboard
           habits={activeHabits}
           initialView={initialView}
@@ -260,7 +260,7 @@ export function DashboardWrapper({
       </div>
 
       {/* PC版: shadcn/ui Cardレイアウト */}
-      <div className="hidden md:block">
+      <div className="hidden flex-1 md:block">
         <DesktopDashboard
           habits={activeHabits}
           onAddHabit={handleAddHabit}

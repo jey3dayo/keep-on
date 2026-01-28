@@ -154,7 +154,7 @@
 
 /* STREAK風スタイル */
 .streak-bg {
-  @apply min-h-screen transition-colors duration-300;
+  @apply transition-colors duration-300;
 }
 
 .task-circle-border {
