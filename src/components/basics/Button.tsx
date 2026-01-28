@@ -64,7 +64,7 @@ interface AddHabitButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEleme
 export function AddHabitButton({ children, icon = true, className, ...props }: AddHabitButtonProps) {
   return (
     <Button
-      className={cn('h-auto rounded-full px-6 py-3 shadow-lg', className)}
+      className={cn('h-auto rounded-full bg-foreground px-6 py-3 text-background shadow-lg hover:bg-foreground/90', className)}
       scale="md"
       type="button"
       variant="default"

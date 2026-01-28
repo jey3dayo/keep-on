@@ -6,8 +6,8 @@ import { Button } from '@/components/basics/Button'
 import type { IconName } from '@/components/basics/Icon'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
-import { DEFAULT_HABIT_COLOR, type Period } from '@/constants/habit'
-import { getColorById, type HabitPreset } from '@/constants/habit-data'
+import { type Period } from '@/constants/habit'
+import { type HabitPreset } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import { setClientCookie } from '@/lib/utils/cookies'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
@@ -64,7 +64,7 @@ export function StreakDashboard({
   const todayCompleted = dailyHabits.filter((h) => h.currentProgress >= h.frequency).length
   const totalDaily = dailyHabits.length
   const totalStreak = habits.reduce((sum, h) => sum + h.streak, 0)
-  const mainBackgroundColor = getColorById(habits[0]?.color ?? DEFAULT_HABIT_COLOR).color
+  const mainBackgroundColor = 'var(--primary)'
 
   useEffect(() => {
     const root = document.documentElement
