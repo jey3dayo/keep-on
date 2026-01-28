@@ -91,3 +91,23 @@ export async function deleteLatestCheckinByHabitAndPeriod(
   await db.delete(checkins).where(eq(checkins.id, latestCheckin.id))
   return true
 }
+
+export async function deleteAllCheckinsByHabitAndPeriod(
+  habitId: string,
+  date: Date | string,
+  period: Period,
+  weekStartDay: WeekStartDay = 1
+) {
+  const db = await getDb()
+  const baseDate = typeof date === 'string' ? parseDateKey(date) : date
+  const start = getPeriodStart(baseDate, period, weekStartDay)
+  const end = getPeriodEnd(baseDate, period, weekStartDay)
+  const startKey = formatDateKey(start)
+  const endKey = formatDateKey(end)
+
+  const result = await db
+    .delete(checkins)
+    .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+
+  return result
+}

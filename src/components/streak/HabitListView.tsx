@@ -3,10 +3,11 @@
 import { Calendar } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import type { CSSProperties, ReactNode } from 'react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AddHabitButton, Button, CheckInButton } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
+import { HabitResetDialog } from '@/components/habits/HabitResetDialog'
 import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
@@ -49,6 +50,25 @@ export function HabitListView({
     open: false,
     habit: null,
   })
+  const [resetConfirmHabit, setResetConfirmHabit] = useState<HabitWithProgress | null>(null)
+  const previousCompletedIds = useRef<Set<string>>(completedHabitIds)
+  const habitsRef = useRef(habits)
+
+  useEffect(() => {
+    habitsRef.current = habits
+  }, [habits])
+
+  // 達成検知: 新たに達成した習慣があれば確認ダイアログを表示
+  useEffect(() => {
+    const newlyCompleted = Array.from(completedHabitIds).filter((id) => !previousCompletedIds.current.has(id))
+    if (newlyCompleted.length > 0) {
+      const newlyCompletedHabit = habitsRef.current.find((h) => h.id === newlyCompleted[0])
+      if (newlyCompletedHabit) {
+        setResetConfirmHabit(newlyCompletedHabit)
+      }
+    }
+    previousCompletedIds.current = new Set(completedHabitIds)
+  }, [completedHabitIds])
 
   const today = new Date()
   const dayNames = ['日', '月', '火', '水', '木', '金', '土']
@@ -61,9 +81,9 @@ export function HabitListView({
   return (
     <>
       <div className="flex-1 space-y-6 px-4 pt-4 pb-8">
-        <header className="sticky top-0 z-10 rounded-2xl border border-border bg-background/80 px-4 py-4 backdrop-blur-xl">
+        <header className="sticky top-0 z-10 rounded-2xl border border-border/50 bg-background/50 px-4 py-4 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
           <div className="mb-4">
-            <p className="text-muted-foreground text-sm">
+            <p className="text-foreground text-sm">
               {today.getMonth() + 1}月{today.getDate()}日（{currentDayName}）
             </p>
             <h1 className="font-bold text-2xl text-foreground">今日の習慣</h1>
@@ -131,6 +151,21 @@ export function HabitListView({
         }}
         open={drawerState.open}
       />
+
+      {/* リセット確認ダイアログ（達成時のみ表示） */}
+      {resetConfirmHabit && (
+        <HabitResetDialog
+          habitId={resetConfirmHabit.id}
+          habitName={resetConfirmHabit.name}
+          onOpenChange={(open) => {
+            if (!open) {
+              setResetConfirmHabit(null)
+            }
+          }}
+          open
+          trigger={null}
+        />
+      )}
     </>
   )
 }

@@ -2,14 +2,13 @@
 
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById } from '@/constants/habit-data'
 import { getPeriodLabel } from '@/lib/utils/habits'
 import type { HabitWithProgress } from '@/types/habit'
-import { HabitEditSheet } from './HabitEditSheet'
 import { HabitTableActions } from './HabitTableActions'
 import { HabitUnarchiveButton } from './HabitUnarchiveButton'
 
@@ -18,7 +17,7 @@ interface HabitTableClientProps {
 }
 
 export function HabitTableClient({ habits }: HabitTableClientProps) {
-  const [editingHabit, setEditingHabit] = useState<HabitWithProgress | null>(null)
+  const router = useRouter()
 
   const activeHabits = habits.filter((h) => !h.archived)
   const archivedHabits = habits.filter((h) => h.archived)
@@ -67,7 +66,7 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
                         archived={habit.archived}
                         habitId={habit.id}
                         habitName={habit.name}
-                        onEdit={() => setEditingHabit(habit)}
+                        onEdit={() => router.push(`/habits/${habit.id}/edit`)}
                       />
                     </TableCell>
                   </TableRow>
@@ -110,7 +109,7 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
                         archived={habit.archived}
                         habitId={habit.id}
                         habitName={habit.name}
-                        onEdit={() => setEditingHabit(habit)}
+                        onEdit={() => router.push(`/habits/${habit.id}/edit`)}
                       />
                     </div>
                   </TableCell>
@@ -119,15 +118,6 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
             </TableBody>
           </Table>
         </div>
-      )}
-
-      {/* 編集シート */}
-      {editingHabit && (
-        <HabitEditSheet
-          habit={editingHabit}
-          onOpenChange={(open) => !open && setEditingHabit(null)}
-          open={!!editingHabit}
-        />
       )}
     </div>
   )

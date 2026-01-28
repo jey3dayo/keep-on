@@ -9,6 +9,7 @@ import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
+import { updateHabitAction } from '@/app/actions/habits/update'
 import { Button } from '@/components/basics/Button'
 import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, DEFAULT_HABIT_PERIOD } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
@@ -16,13 +17,14 @@ import { formatSerializableError } from '@/lib/errors/serializable'
 import { cn } from '@/lib/utils'
 import { HabitInputSchema } from '@/schemas/habit'
 import { buildHabitFormData, getHabitFormDefaults, type HabitFormValues } from '@/transforms/habitFormData'
-import type { HabitWithProgress } from '@/types/habit'
+import type { Habit, HabitWithProgress } from '@/types/habit'
 
 interface HabitFormServerProps {
-  initialData?: HabitWithProgress
+  initialData?: Habit | HabitWithProgress
   onSubmit?: (data: FormValues) => Promise<void> | void
   onSuccess?: 'close' | 'redirect'
   submitLabel?: string
+  hideHeader?: boolean
 }
 
 type FormValues = HabitFormValues
@@ -32,6 +34,7 @@ export function HabitFormServer({
   onSubmit,
   onSuccess = 'redirect',
   submitLabel = '保存',
+  hideHeader = false,
 }: HabitFormServerProps = {}) {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
@@ -79,7 +82,7 @@ export function HabitFormServer({
     setIsSaving(true)
 
     const formData = buildHabitFormData(data)
-    const result = await createHabit(formData)
+    const result = initialData ? await updateHabitAction(initialData.id, formData) : await createHabit(formData)
 
     setIsSaving(false)
 
@@ -112,35 +115,40 @@ export function HabitFormServer({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex items-center justify-between border-border border-b bg-background/80 px-4 py-3 backdrop-blur-xl">
-        <Button
-          className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
-          onClick={() => router.back()}
-          type="button"
-          variant="ghost"
-        >
-          <ChevronLeft className="h-5 w-5" />
-          <span className="text-sm">戻る</span>
-        </Button>
-        <h1 className="font-semibold text-foreground text-lg">{initialData ? '習慣を編集' : '新しい習慣'}</h1>
-        <Button
-          className={cn(
-            'h-auto p-0 hover:bg-transparent',
-            watchedName?.trim() && !isSaving
-              ? 'text-foreground hover:opacity-80'
-              : 'cursor-not-allowed text-muted-foreground'
-          )}
-          disabled={!watchedName?.trim() || isSaving}
-          onClick={form.handleSubmit(handleSubmit)}
-          style={{ color: watchedName?.trim() && !isSaving ? selectedColorValue : undefined }}
-          type="button"
-          variant="ghost"
-        >
-          {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
-        </Button>
-      </header>
+      {!hideHeader && (
+        <header className="sticky top-0 z-10 flex items-center justify-between border-border/50 border-b bg-background/50 px-4 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
+          <Button
+            className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+            onClick={() => router.back()}
+            type="button"
+            variant="ghost"
+          >
+            <ChevronLeft className="h-5 w-5" />
+            <span className="text-sm">戻る</span>
+          </Button>
+          <h1 className="font-semibold text-foreground text-lg">{initialData ? '習慣を編集' : '新しい習慣'}</h1>
+          <Button
+            className={cn(
+              'h-auto p-0 hover:bg-transparent',
+              watchedName?.trim() && !isSaving
+                ? 'text-foreground hover:opacity-80'
+                : 'cursor-not-allowed text-muted-foreground'
+            )}
+            disabled={!watchedName?.trim() || isSaving}
+            onClick={form.handleSubmit(handleSubmit)}
+            style={{ color: watchedName?.trim() && !isSaving ? selectedColorValue : undefined }}
+            type="button"
+            variant="ghost"
+          >
+            {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
+          </Button>
+        </header>
+      )}
 
-      <form className="space-y-8 px-4 py-6" onSubmit={form.handleSubmit(handleSubmit)}>
+      <form
+        className={hideHeader ? 'space-y-8 px-4 py-2' : 'space-y-8 px-4 py-6'}
+        onSubmit={form.handleSubmit(handleSubmit)}
+      >
         {/* Icon Preview */}
         <div className="flex flex-col items-center gap-4">
           <div
@@ -270,14 +278,14 @@ export function HabitFormServer({
           render={({ field }) => (
             <div className="space-y-3">
               <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">カラー</div>
-              <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
+              <div className="scrollbar-hide flex justify-center gap-3 overflow-x-auto pt-1 pb-2">
                 {habitColors.map((color) => {
                   const isSelected = field.value === color.id
                   return (
                     <Button
                       className={cn(
                         'h-10 w-10 flex-shrink-0 rounded-full transition-all duration-200',
-                        isSelected && 'ring-2 ring-offset-2 ring-offset-background'
+                        isSelected && 'ring-2 ring-offset-background'
                       )}
                       key={color.id}
                       onClick={() => field.onChange(color.id)}
@@ -406,6 +414,23 @@ export function HabitFormServer({
             </div>
           </div>
         </div>
+
+        {/* Submit Button for Modal */}
+        {hideHeader && (
+          <div className="mt-8">
+            <Button
+              className="w-full"
+              disabled={!watchedName?.trim() || isSaving}
+              onClick={form.handleSubmit(handleSubmit)}
+              style={{
+                backgroundColor: watchedName?.trim() && !isSaving ? selectedColorValue : undefined,
+              }}
+              type="button"
+            >
+              {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
+            </Button>
+          </div>
+        )}
       </form>
     </div>
   )
