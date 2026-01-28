@@ -22,7 +22,7 @@ export function ThemeToggle() {
 
   return (
     <div className="group relative">
-      <div className="absolute right-0 bottom-full mb-2 hidden w-64 group-hover:block">
+      <div className="absolute top-full right-0 mt-2 hidden w-64 group-hover:block">
         <Card className="border-border bg-popover shadow-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">テーマ切り替え</CardTitle>
@@ -50,13 +50,13 @@ export function ThemeToggle() {
       </div>
 
       <Button
-        aria-label={`${isDark ? 'ライト' : 'ダーク'}モードに切り替え`}
+        aria-label={`${isDark ? 'ダーク' : 'ライト'}モード中`}
         className="h-8 w-8 rounded-full p-0"
         onClick={() => setTheme(isDark ? 'light' : 'dark')}
         size="icon"
         variant="secondary"
       >
-        {isDark ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+        {isDark ? <Moon className="h-6 w-6" /> : <Sun className="h-6 w-6" />}
       </Button>
     </div>
   )
