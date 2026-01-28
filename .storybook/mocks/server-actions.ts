@@ -24,6 +24,10 @@ export function toggleCheckinAction(_habitId: string, _dateKey?: string) {
   return Promise.resolve(Result.succeed(undefined))
 }
 
+export function resetHabitProgressAction(_habitId: string) {
+  return Promise.resolve(Result.succeed(undefined))
+}
+
 export function updateWeekStartAction(_weekStart: unknown) {
   return Promise.resolve(undefined)
 }
