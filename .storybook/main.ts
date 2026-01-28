@@ -1,4 +1,8 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { StorybookConfig } from '@storybook/nextjs-vite'
+
+const storybookDir = path.dirname(fileURLToPath(import.meta.url))
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
@@ -12,6 +16,34 @@ const config: StorybookConfig = {
   },
   typescript: {
     check: false,
+  },
+  viteFinal: async (config) => {
+    config.resolve = config.resolve ?? {}
+    const replacement = path.resolve(storybookDir, './mocks/clerk.tsx')
+    const serverActionsMock = path.resolve(storybookDir, './mocks/server-actions.ts')
+    const serverActionAliases = [
+      {
+        find: /^@\/app\/actions\/habits\/(archive|unarchive|delete|update|create|checkin)$/,
+        replacement: serverActionsMock,
+      },
+      {
+        find: /^@\/app\/actions\/settings\/updateWeekStart$/,
+        replacement: serverActionsMock,
+      },
+    ]
+
+    const existingAliases = Array.isArray(config.resolve.alias)
+      ? config.resolve.alias
+      : Object.entries(config.resolve.alias ?? {}).map(([find, replacement]) => ({ find, replacement }))
+
+    config.resolve.alias = [
+      ...serverActionAliases,
+      { find: '@clerk/nextjs', replacement },
+      ...existingAliases,
+    ]
+    config.optimizeDeps = config.optimizeDeps ?? {}
+    config.optimizeDeps.exclude = [...(config.optimizeDeps.exclude ?? []), '@clerk/nextjs']
+    return config
   },
 }
 
