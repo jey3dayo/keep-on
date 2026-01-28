@@ -5,13 +5,16 @@ import { Appbar } from './Appbar'
 
 vi.mock('next/image', () => ({
   __esModule: true,
-  // biome-ignore lint/correctness/useImageSize: テスト用のモック
-  // biome-ignore lint/performance/noImgElement: テスト用のモック
   default: ({
     alt,
-    priority,
+    priority: _priority,
     ...props
-  }: { alt?: string; priority?: boolean; [key: string]: unknown }): JSX.Element => (
+  }: {
+    alt?: string
+    priority?: boolean
+    [key: string]: unknown
+  }): JSX.Element => (
+    // biome-ignore lint/correctness/useImageSize lint/performance/noImgElement: テスト用のモック
     <img alt={alt} {...props} />
   ),
 }))

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { HabitArchiveDialog } from '@/components/habits/HabitArchiveDialog'
 import { HabitDeleteDialog } from '@/components/habits/HabitDeleteDialog'
 import { HabitResetDialog } from '@/components/habits/HabitResetDialog'
@@ -19,16 +19,20 @@ export function HabitActionDrawer({ open, habit, onOpenChange }: HabitActionDraw
   const router = useRouter()
   const [dialogType, setDialogType] = useState<'reset' | 'archive' | 'delete' | null>(null)
   const [activeHabit, setActiveHabit] = useState<HabitWithProgress | null>(habit)
+  const prevOpenRef = useRef(open)
 
   useEffect(() => {
+    const prevOpen = prevOpenRef.current
+    prevOpenRef.current = open
+
     if (habit) {
       setActiveHabit(habit)
       return
     }
-    if (!dialogType) {
+    if (prevOpen && !open && !dialogType) {
       setActiveHabit(null)
     }
-  }, [habit, dialogType])
+  }, [habit, open, dialogType])
 
   const openDialog = (type: 'reset' | 'archive' | 'delete') => {
     if (!activeHabit) {
@@ -57,7 +61,7 @@ export function HabitActionDrawer({ open, habit, onOpenChange }: HabitActionDraw
     }, 350)
   }
 
-  if (!activeHabit && !dialogType) {
+  if (!(activeHabit || dialogType)) {
     return null
   }
 
