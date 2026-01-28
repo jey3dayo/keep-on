@@ -41,9 +41,9 @@ export const WithUserButton: Story = {
 }
 
 export const WithContent: Story = {
-  render: () => (
+  render: (args) => (
     <div className="min-h-screen bg-background">
-      <Appbar />
+      <Appbar {...args} />
       <main className="container mx-auto p-8">
         <h1 className="mb-4 font-bold text-3xl">KeepOnへようこそ</h1>
         <div className="space-y-4">
@@ -68,9 +68,9 @@ export const MobileView: Story = {
       defaultViewport: 'mobile1',
     },
   },
-  render: () => (
+  render: (args) => (
     <div className="min-h-screen bg-background">
-      <Appbar showUserButton />
+      <Appbar {...args} />
       <main className="p-4">
         <h1 className="mb-4 font-bold text-2xl">モバイルビュー</h1>
         <p className="text-muted-foreground text-sm">

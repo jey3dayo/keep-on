@@ -44,7 +44,7 @@ export const Default: Story = {
 
 export const WithValue: Story = {
   args: {
-    value: 'Sample text',
+    defaultValue: 'Sample text',
     type: 'text',
   },
 }
