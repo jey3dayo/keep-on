@@ -50,6 +50,19 @@ export const habitIcons: HabitIcon[] = [
 ]
 
 export const habitColors = [
+  { id: 'orange', color: 'var(--orange-9)', label: 'オレンジ' },
+  { id: 'red', color: 'var(--red-9)', label: 'レッド' },
+  { id: 'pink', color: 'var(--pink-9)', label: 'ピンク' },
+  { id: 'purple', color: 'var(--purple-9)', label: 'パープル' },
+  { id: 'blue', color: 'var(--blue-9)', label: 'ブルー' },
+  { id: 'cyan', color: 'var(--cyan-9)', label: 'シアン' },
+  { id: 'teal', color: 'var(--teal-9)', label: 'ティール' },
+  { id: 'green', color: 'var(--green-9)', label: 'グリーン' },
+  { id: 'lime', color: 'var(--lime-9)', label: 'ライム' },
+  { id: 'yellow', color: 'var(--yellow-9)', label: 'イエロー' },
+]
+
+export const oldHabitColors = [
   { id: 'orange', color: 'oklch(0.70 0.18 45)', label: 'オレンジ' },
   { id: 'red', color: 'oklch(0.65 0.22 25)', label: 'レッド' },
   { id: 'pink', color: 'oklch(0.70 0.18 350)', label: 'ピンク' },
