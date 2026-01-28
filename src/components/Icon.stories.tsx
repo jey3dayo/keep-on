@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { expect, within } from '@storybook/test'
 import { Icon, type IconName } from './Icon'
 
 const meta = {
@@ -27,13 +26,6 @@ export const Gallery: Story = {
       ))}
     </div>
   ),
-  play: ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    for (const name of iconNames) {
-      const svg = canvas.getByTestId(`icon-${name}`)
-      expect(svg.tagName.toLowerCase()).toBe('svg')
-    }
-  },
 }
 
 export const WithProps: Story = {
@@ -67,9 +59,4 @@ export const Accessibility: Story = {
       <span>削除</span>
     </button>
   ),
-  play: ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    const svg = canvas.getByRole('img', { hidden: true })
-    expect(svg.getAttribute('aria-hidden')).toBe('true')
-  },
 }

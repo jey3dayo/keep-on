@@ -9,13 +9,6 @@ import type { HabitWithProgress } from '@/types/habit'
 import { HabitForm } from './HabitForm'
 import { HabitListView } from './HabitListView'
 
-interface Checkin {
-  id: string
-  habitId: string
-  date: string
-  createdAt: Date
-}
-
 interface User {
   id: string
   clerkId: string
@@ -26,7 +19,6 @@ interface User {
 
 interface DesktopDashboardProps {
   habits: HabitWithProgress[]
-  todayCheckins: Checkin[]
   user: User
   onAddHabit: (
     name: string,
@@ -39,12 +31,12 @@ interface DesktopDashboardProps {
 type PeriodFilter = 'all' | Period
 type View = 'dashboard' | 'add'
 
-export function DesktopDashboard({ habits, todayCheckins, onAddHabit, onToggleCheckin }: DesktopDashboardProps) {
+export function DesktopDashboard({ habits, onAddHabit, onToggleCheckin }: DesktopDashboardProps) {
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const [selectedPreset, setSelectedPreset] = useState<HabitPreset | null>(null)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
 
-  const completedHabitIds = new Set(todayCheckins.map((c) => c.habitId))
+  const completedHabitIds = new Set(habits.filter((habit) => habit.currentProgress >= habit.frequency).map((h) => h.id))
 
   // 期間フィルター適用
   const filteredHabits = filterHabitsByPeriod(habits, periodFilter)
