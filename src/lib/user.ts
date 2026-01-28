@@ -1,9 +1,40 @@
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
-import { currentUser } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { StatusCodes } from 'http-status-codes'
 import { parseClerkApiResponseErrorPayload, safeParseUser } from '@/schemas/user'
-import { logError } from './logging'
+import { logError, logWarn } from './logging'
 import { getUserByClerkId, upsertUser } from './queries/user'
+
+function getEmailFromSessionClaims(claims: unknown): string | null {
+  if (!claims || typeof claims !== 'object') {
+    return null
+  }
+
+  const record = claims as Record<string, unknown>
+  const candidates = ['email', 'email_address', 'primary_email_address', 'primary_email']
+  for (const key of candidates) {
+    const value = record[key]
+    if (typeof value === 'string' && value.length > 0) {
+      return value
+    }
+  }
+  return null
+}
+
+const globalForSessionClaims = globalThis as typeof globalThis & {
+  __missingSessionEmailLogged?: boolean
+}
+
+function logMissingSessionEmail(clerkId: string, claims: unknown): void {
+  if (globalForSessionClaims.__missingSessionEmailLogged) {
+    return
+  }
+
+  const claimKeys = claims && typeof claims === 'object' ? Object.keys(claims as Record<string, unknown>) : []
+
+  logWarn('clerk.sessionClaims:missing-email', { clerkId, claimKeys })
+  globalForSessionClaims.__missingSessionEmailLogged = true
+}
 
 function parseClerkApiResponseError(error: unknown) {
   if (isClerkAPIResponseError(error)) {
@@ -28,6 +59,40 @@ function parseClerkApiResponseError(error: unknown) {
  * 存在しない場合は新規作成、存在する場合は更新
  */
 export async function syncUser() {
+  const { userId: clerkId, sessionClaims } = await auth()
+  if (!clerkId) {
+    return null
+  }
+
+  const parseUser = (user: unknown, source: 'existing' | 'upsert', logClerkId: string) => {
+    if (!user) {
+      return null
+    }
+    const parsed = safeParseUser(user)
+    if (!parsed.success) {
+      logError('user.schema:invalid', { clerkId: logClerkId, source, issues: parsed.issues })
+      return null
+    }
+    return parsed.output
+  }
+
+  const existing = await getUserByClerkId(clerkId)
+  const parsedExisting = parseUser(existing, 'existing', clerkId)
+  const emailFromClaims = getEmailFromSessionClaims(sessionClaims)
+  if (parsedExisting && !emailFromClaims) {
+    logMissingSessionEmail(clerkId, sessionClaims)
+  }
+  if (parsedExisting && emailFromClaims) {
+    if (parsedExisting.email !== emailFromClaims) {
+      const updated = await upsertUser({
+        clerkId,
+        email: emailFromClaims,
+      })
+      return parseUser(updated, 'upsert', clerkId)
+    }
+    return parsedExisting
+  }
+
   let clerkUser: Awaited<ReturnType<typeof currentUser>> = null
 
   try {
@@ -39,13 +104,13 @@ export async function syncUser() {
         return null
       }
       logError('clerk.currentUser:api-error', parsed)
-      return null
+      return parsedExisting ?? null
     }
     throw error
   }
 
   if (!clerkUser) {
-    return null
+    return parsedExisting ?? null
   }
 
   const email = clerkUser.emailAddresses[0]?.emailAddress
@@ -53,33 +118,12 @@ export async function syncUser() {
     throw new Error('Email address not found')
   }
 
-  const parseUser = (user: unknown, source: 'existing' | 'upsert') => {
-    if (!user) {
-      return null
-    }
-    const parsed = safeParseUser(user)
-    if (!parsed.success) {
-      logError('user.schema:invalid', { clerkId: clerkUser.id, source, issues: parsed.issues })
-      return null
-    }
-    return parsed.output
-  }
-
-  const existing = await getUserByClerkId(clerkUser.id)
-  const parsedExisting = parseUser(existing, 'existing')
-  if (parsedExisting) {
-    if (parsedExisting.email !== email) {
-      const updated = await upsertUser({
-        clerkId: clerkUser.id,
-        email,
-      })
-      return parseUser(updated, 'upsert')
-    }
+  if (parsedExisting && parsedExisting.email === email) {
     return parsedExisting
   }
 
   const created = await upsertUser({ clerkId: clerkUser.id, email })
-  return parseUser(created, 'upsert')
+  return parseUser(created, 'upsert', clerkUser.id)
 }
 
 /**
