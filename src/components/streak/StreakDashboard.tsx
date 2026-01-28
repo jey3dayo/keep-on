@@ -2,7 +2,7 @@
 
 import { Circle, LayoutGrid } from 'lucide-react'
 import { useState } from 'react'
-import type { IconName } from '@/components/Icon'
+import type { IconName } from '@/components/basics/Icon'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DEFAULT_HABIT_COLOR, type Period } from '@/constants/habit'
 import { getColorById, type HabitPreset } from '@/constants/habit-data'

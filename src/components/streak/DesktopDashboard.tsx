@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { IconName } from '@/components/Icon'
+import type { IconName } from '@/components/basics/Icon'
 import type { Period } from '@/constants/habit'
 import type { HabitPreset } from '@/constants/habit-data'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'

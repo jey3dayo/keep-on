@@ -1,8 +1,8 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
+import { Icon } from '@/components/basics/Icon'
+import { Button as BaseButton } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Icon } from './Icon'
-import { Button as BaseButton } from './ui/button'
 
 const buttonVariants = cva('focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95', {
   variants: {

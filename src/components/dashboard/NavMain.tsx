@@ -9,7 +9,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/components/Sidebar'
+} from '@/components/sidebar/Sidebar'
 
 export function NavMain({
   items,

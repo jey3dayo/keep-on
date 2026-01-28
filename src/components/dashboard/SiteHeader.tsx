@@ -1,9 +1,9 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { ClerkUserButton } from '@/components/ClerkUserButton'
-import { SidebarTrigger } from '@/components/Sidebar'
-import { ThemeToggle } from '@/components/ThemeToggle'
+import { ThemeToggle } from '@/components/basics/ThemeToggle'
+import { ClerkUserButton } from '@/components/clerk/ClerkUserButton'
+import { SidebarTrigger } from '@/components/sidebar/Sidebar'
 import { Separator } from '@/components/ui/separator'
 import { getPageTitle } from '@/constants/navigation'
 

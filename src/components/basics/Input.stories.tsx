@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Input } from './Input'
 
 const meta = {
-  title: 'Components/Input',
+  title: 'Basics/Input',
   component: Input,
   parameters: {
     layout: 'centered',
@@ -44,7 +44,7 @@ export const Default: Story = {
 
 export const WithValue: Story = {
   args: {
-    value: 'Sample text',
+    defaultValue: 'Sample text',
     type: 'text',
   },
 }
@@ -132,4 +132,41 @@ export const WithoutPasswordManagers: Story = {
     type: 'password',
     disablePasswordManagers: true,
   },
+}
+
+if (import.meta.vitest) {
+  const { describe, expect, it } = await import('vitest')
+  const { render } = await import('@testing-library/react')
+
+  const renderStory = (story: Story) => {
+    const args = { ...(meta.args ?? {}), ...(story.args ?? {}) }
+    const StoryComponent = () => {
+      if (story.render) {
+        return story.render(args) as JSX.Element | null
+      }
+
+      const Component = meta.component
+
+      if (!Component) {
+        throw new Error('meta.component is not defined')
+      }
+
+      return <Component {...args} />
+    }
+
+    const decorators = [...(meta.decorators ?? []), ...(story.decorators ?? [])] as Array<
+      (Story: () => JSX.Element | null) => JSX.Element | null
+    >
+
+    const DecoratedStory = decorators.reduce((Decorated, decorator) => () => decorator(Decorated), StoryComponent)
+
+    return render(<DecoratedStory />)
+  }
+
+  describe(`${meta.title} Stories`, () => {
+    it('Defaultがレンダリングされる', () => {
+      const { container } = renderStory(Default)
+      expect(container).not.toBeEmptyDOMElement()
+    })
+  })
 }

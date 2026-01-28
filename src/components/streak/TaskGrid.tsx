@@ -1,6 +1,6 @@
 'use client'
 
-import { Icon, normalizeIconName } from '@/components/Icon'
+import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById } from '@/constants/habit-data'
 import type { HabitWithProgress } from '@/types/habit'

@@ -1,6 +1,6 @@
 'use client'
 
-import { Icon, type IconName } from '@/components/Icon'
+import { Icon, type IconName } from '@/components/basics/Icon'
 import { COMPLETION_STATUS_LABEL } from '@/constants/habit'
 import { cn } from '@/lib/utils'
 

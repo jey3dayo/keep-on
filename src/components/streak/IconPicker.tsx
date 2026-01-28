@@ -1,6 +1,6 @@
 'use client'
 
-import { Icon, type IconName } from '@/components/Icon'
+import { Icon, type IconName } from '@/components/basics/Icon'
 import { cn } from '@/lib/utils'
 
 interface IconPickerProps {

@@ -28,7 +28,8 @@
       },
       "performance": {
         "noNamespaceImport": "off",
-        "noBarrelFile": "off"
+        "noBarrelFile": "off",
+        "useTopLevelRegex": "off"
       },
       "a11y": {
         "useSemanticElements": "off"

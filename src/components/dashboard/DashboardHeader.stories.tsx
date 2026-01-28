@@ -3,7 +3,7 @@ import { storybookToast } from '@/lib/storybook'
 import { DashboardHeader } from './DashboardHeader'
 
 const meta = {
-  title: 'Streak/DashboardHeader',
+  title: 'Dashboard/DashboardHeader',
   component: DashboardHeader,
   parameters: {
     layout: 'fullscreen',
@@ -54,4 +54,41 @@ export const MobileZero: Story = {
     totalDaily: 5,
     totalStreak: 0,
   },
+}
+
+if (import.meta.vitest) {
+  const { describe, expect, it } = await import('vitest')
+  const { render } = await import('@testing-library/react')
+
+  const renderStory = (story: Story) => {
+    const args = { ...(meta.args ?? {}), ...(story.args ?? {}) }
+    const StoryComponent = () => {
+      if (story.render) {
+        return story.render(args) as JSX.Element | null
+      }
+
+      const Component = meta.component
+
+      if (!Component) {
+        throw new Error('meta.component is not defined')
+      }
+
+      return <Component {...args} />
+    }
+
+    const decorators = [...(meta.decorators ?? []), ...(story.decorators ?? [])] as Array<
+      (Story: () => JSX.Element | null) => JSX.Element | null
+    >
+
+    const DecoratedStory = decorators.reduce((Decorated, decorator) => () => decorator(Decorated), StoryComponent)
+
+    return render(<DecoratedStory />)
+  }
+
+  describe(`${meta.title} Stories`, () => {
+    it('Mobileがレンダリングされる', () => {
+      const { container } = renderStory(Mobile)
+      expect(container).not.toBeEmptyDOMElement()
+    })
+  })
 }

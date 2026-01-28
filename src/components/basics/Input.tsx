@@ -1,6 +1,6 @@
 import * as React from 'react'
+import { Input as BaseInput } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import { Input as BaseInput } from './ui/input'
 
 export interface InputProps extends React.ComponentProps<'input'> {
   error?: boolean

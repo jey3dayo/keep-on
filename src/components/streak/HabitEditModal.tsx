@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Icon } from '@/components/Icon'
+import { Icon } from '@/components/basics/Icon'
 import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, type Period } from '@/constants/habit'
 import { habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'

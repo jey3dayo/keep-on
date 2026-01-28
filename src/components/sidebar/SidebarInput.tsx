@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Input } from './Input'
+import { Input } from '@/components/basics/Input'
 
 /**
  * Sidebar専用のInputコンポーネント

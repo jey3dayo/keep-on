@@ -1,7 +1,30 @@
 import '../src/app/globals.css'
-import { withThemeByClassName } from '@storybook/addon-themes'
+import { withThemeByClassName, withThemeByDataAttribute } from '@storybook/addon-themes'
 import type { Preview } from '@storybook/react'
 import { Toaster } from '@/components/ui/sonner'
+import { COLOR_THEMES, DEFAULT_COLOR_THEME } from '@/constants/theme'
+
+const STORYBOOK_JEST_MATCHERS = Symbol.for('$$jest-matchers-object-storybook')
+const existingStorybookMatchers = (globalThis as Record<symbol, unknown>)[STORYBOOK_JEST_MATCHERS]
+if (
+  !existingStorybookMatchers ||
+  typeof existingStorybookMatchers !== 'object' ||
+  !('customEqualityTesters' in existingStorybookMatchers)
+) {
+  const matchers = Object.create(null)
+  const customEqualityTesters: unknown[] = []
+  Object.defineProperty(globalThis, STORYBOOK_JEST_MATCHERS, {
+    configurable: true,
+    get: () => ({
+      state: {},
+      matchers,
+      customEqualityTesters,
+    }),
+  })
+}
+
+const colorThemes = Object.fromEntries(COLOR_THEMES.map((theme) => [theme, theme]))
+const classThemes = Object.fromEntries(COLOR_THEMES.map((theme) => [theme, '']))
 
 const preview: Preview = {
   parameters: {
@@ -21,10 +44,20 @@ const preview: Preview = {
   decorators: [
     withThemeByClassName({
       themes: {
+        ...classThemes,
         light: '',
         dark: 'dark',
       },
-      defaultTheme: 'light',
+      defaultTheme: DEFAULT_COLOR_THEME,
+    }),
+    withThemeByDataAttribute({
+      themes: {
+        ...colorThemes,
+        light: '',
+        dark: 'dark',
+      },
+      defaultTheme: DEFAULT_COLOR_THEME,
+      attributeName: 'data-theme',
     }),
     (Story) => (
       <>

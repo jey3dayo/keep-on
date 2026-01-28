@@ -1,6 +1,6 @@
 'use client'
 
-import { Icon } from '@/components/Icon'
+import { Icon } from '@/components/basics/Icon'
 import { Button } from '@/components/ui/button'
 import {
   Drawer,

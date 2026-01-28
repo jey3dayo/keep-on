@@ -1,5 +1,5 @@
 import type { InferSelectModel } from 'drizzle-orm'
-import { Icon, normalizeIconName } from '@/components/Icon'
+import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { getHabitsByUserId } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
 
