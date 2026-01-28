@@ -64,7 +64,10 @@ export function HabitResetDialog({ habitId, habitName, trigger, open, onOpenChan
       進捗をリセット
     </Button>
   )
-  const resolvedTrigger = trigger === undefined ? (isControlled ? null : defaultTrigger) : trigger
+  let resolvedTrigger = trigger ?? null
+  if (trigger === undefined) {
+    resolvedTrigger = isControlled ? null : defaultTrigger
+  }
 
   return (
     <AlertDialog onOpenChange={handleOpenChange} open={dialogOpen}>

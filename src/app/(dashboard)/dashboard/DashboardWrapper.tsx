@@ -241,7 +241,6 @@ export function DashboardWrapper({
     }
   }
 
-
   const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
 
   if (!isTimeZoneReady) {
