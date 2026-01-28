@@ -27,20 +27,22 @@ export function ThemeToggle() {
 
   const isDark = resolvedTheme === 'dark'
   const currentMode = theme ?? DEFAULT_THEME_MODE
-  const currentLabel = currentMode === 'system' ? 'システム' : isDark ? 'ダーク' : 'ライト'
-  const CurrentIcon = currentMode === 'system' ? Monitor : isDark ? Moon : Sun
+  let currentLabel = 'ライト'
+  let CurrentIcon = Sun
+
+  if (currentMode === 'system') {
+    currentLabel = 'システム'
+    CurrentIcon = Monitor
+  } else if (isDark) {
+    currentLabel = 'ダーク'
+    CurrentIcon = Moon
+  }
 
   return (
     <div className="relative">
-
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            aria-label={`${currentLabel}モード中`}
-            className="rounded-full p-0"
-            size="icon"
-            variant="secondary"
-          >
+          <Button aria-label={`${currentLabel}モード中`} className="rounded-full p-0" size="icon" variant="secondary">
             <CurrentIcon className="h-6 w-6" />
           </Button>
         </DropdownMenuTrigger>
