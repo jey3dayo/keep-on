@@ -16,11 +16,6 @@ interface AppbarProps {
   showUserButton?: boolean
 }
 
-const navLinks = [
-  { href: '/dashboard', label: 'ホーム', icon: 'home' as const },
-  { href: '/habits', label: '習慣', icon: 'target' as const },
-]
-
 export function Appbar({ showUserButton = false }: AppbarProps) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -36,7 +31,7 @@ export function Appbar({ showUserButton = false }: AppbarProps) {
 
           {/* Desktop Navigation */}
           <nav className="hidden items-center gap-6 md:flex">
-            {navLinks.map((link) => (
+            {APPBAR_NAV_LINKS.map((link) => (
               <Link
                 className="font-medium text-foreground/60 text-sm transition-colors hover:text-foreground"
                 href={link.href}
@@ -69,7 +64,7 @@ export function Appbar({ showUserButton = false }: AppbarProps) {
                 <SheetTitle>メニュー</SheetTitle>
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-4">
-                {navLinks.map((link) => (
+                {APPBAR_NAV_LINKS.map((link) => (
                   <Link
                     className="flex items-center gap-3 rounded-md px-3 py-2 font-medium text-foreground/60 transition-colors hover:bg-accent hover:text-foreground"
                     href={link.href}

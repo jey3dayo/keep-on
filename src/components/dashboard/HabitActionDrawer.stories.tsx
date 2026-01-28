@@ -1,9 +1,54 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { HabitActionDrawer } from './HabitActionDrawer'
+import { Button } from '@/components/ui/button'
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import type { HabitWithProgress } from '@/types/habit'
+
+// Storybook用の簡易版HabitActionDrawer（依存関係をモック化）
+function StorybookHabitActionDrawer({
+  open,
+  habit,
+  onOpenChange,
+}: {
+  open: boolean
+  habit: HabitWithProgress | null
+  onOpenChange: (open: boolean) => void
+}) {
+  if (!habit) {
+    return null
+  }
+
+  const isArchived = habit.archived || Boolean(habit.archivedAt)
+
+  return (
+    <Drawer onOpenChange={onOpenChange} open={open}>
+      <DrawerContent>
+        <DrawerHeader className="text-left">
+          <DrawerTitle>習慣の操作</DrawerTitle>
+          <DrawerDescription>{habit.name}</DrawerDescription>
+        </DrawerHeader>
+        <div className="flex gap-2 p-4 pt-0">
+          <Button className="flex-1" onClick={() => onOpenChange(false)} variant="outline">
+            編集
+          </Button>
+
+          {isArchived ? (
+            <Button className="flex-1" onClick={() => onOpenChange(false)} variant="destructive">
+              削除
+            </Button>
+          ) : (
+            <Button className="flex-1" onClick={() => onOpenChange(false)} variant="secondary">
+              アーカイブ
+            </Button>
+          )}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  )
+}
 
 const meta = {
   title: 'Dashboard/HabitActionDrawer',
-  component: HabitActionDrawer,
+  component: StorybookHabitActionDrawer,
   parameters: {
     layout: 'centered',
   },
@@ -20,7 +65,7 @@ const meta = {
       description: '開閉状態が変化したときのコールバック',
     },
   },
-} satisfies Meta<typeof HabitActionDrawer>
+} satisfies Meta<typeof StorybookHabitActionDrawer>
 
 export default meta
 type Story = StoryObj<typeof meta>
@@ -58,7 +103,7 @@ export const WeeklyHabit: Story = {
       ...mockHabit,
       id: '2',
       name: '週3回ジョギング',
-      icon: 'activity',
+      icon: 'dumbbell',
       color: 'green',
       period: 'weekly' as const,
       frequency: 3,
@@ -77,7 +122,7 @@ export const MonthlyHabit: Story = {
       ...mockHabit,
       id: '3',
       name: '月10回読書',
-      icon: 'book',
+      icon: 'book-open',
       color: 'purple',
       period: 'monthly' as const,
       frequency: 10,
@@ -99,6 +144,20 @@ export const Completed: Story = {
       currentProgress: 8,
       streak: 30,
       completionRate: 100,
+    },
+    onOpenChange: (open) => console.log('Drawer opened:', open),
+  },
+}
+
+export const Archived: Story = {
+  args: {
+    open: true,
+    habit: {
+      ...mockHabit,
+      id: '5',
+      name: 'アーカイブされた習慣',
+      archived: true,
+      archivedAt: new Date('2025-01-15'),
     },
     onOpenChange: (open) => console.log('Drawer opened:', open),
   },

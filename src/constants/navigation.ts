@@ -42,6 +42,18 @@ export const NAV_ITEMS: {
   ],
 }
 
+// Appbar用のシンプルなナビゲーションリンク
+export interface AppbarNavLink {
+  href: string
+  label: string
+  icon: string
+}
+
+export const APPBAR_NAV_LINKS: AppbarNavLink[] = [
+  { href: '/dashboard', label: 'ホーム', icon: 'home' },
+  { href: '/habits', label: '習慣', icon: 'target' },
+]
+
 // パスからページタイトルを取得するマッピング
 export const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'ダッシュボード',
