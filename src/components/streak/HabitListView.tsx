@@ -7,6 +7,7 @@ import { useRef, useState } from 'react'
 import { AddHabitButton, Button, CheckInButton } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
@@ -191,7 +192,7 @@ function HabitListCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border bg-card p-4 transition-all duration-300',
+        'relative rounded-2xl border bg-card p-4 transition-all duration-300',
         completed ? 'border-border/50' : 'border-border'
       )}
       onContextMenu={handleContextMenu}
@@ -205,6 +206,37 @@ function HabitListCard({
       }}
       tabIndex={0}
     >
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            aria-label="メニュー"
+            className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full bg-card/80 p-2 hover:bg-card"
+            onPointerDown={(e: React.PointerEvent) => {
+              e.stopPropagation()
+              if (longPressTimerRef.current) {
+                clearTimeout(longPressTimerRef.current)
+                longPressTimerRef.current = null
+              }
+            }}
+            type="button"
+            variant="ghost"
+          >
+            <Icon className="h-4 w-4 text-muted-foreground" name="more-horizontal" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation()
+              onLongPressOrContextMenu()
+            }}
+          >
+            <Icon className="mr-2 h-4 w-4" name="pencil" />
+            編集
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <div className="flex items-center gap-4">
         <CheckInButton
           completed={completed}
