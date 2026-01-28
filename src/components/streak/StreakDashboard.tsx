@@ -1,10 +1,11 @@
 'use client'
 
 import { Circle, LayoutGrid } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import type { IconName } from '@/components/basics/Icon'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import { DEFAULT_HABIT_COLOR, type Period } from '@/constants/habit'
 import { getColorById, type HabitPreset } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
@@ -46,7 +47,7 @@ export function StreakDashboard({
   habits,
   onAddHabit,
   onToggleCheckin,
-  initialView = 'dashboard',
+  initialView = DEFAULT_DASHBOARD_VIEW,
 }: StreakDashboardProps) {
   const [currentView, setCurrentView] = useState<View>(initialView)
   const [returnView, setReturnView] = useState<MainView>(initialView)
@@ -64,6 +65,21 @@ export function StreakDashboard({
   const totalDaily = dailyHabits.length
   const totalStreak = habits.reduce((sum, h) => sum + h.streak, 0)
   const mainBackgroundColor = getColorById(habits[0]?.color ?? DEFAULT_HABIT_COLOR).color
+
+  useEffect(() => {
+    const root = document.documentElement
+    const shouldApply = currentView === 'dashboard' || currentView === 'simple'
+
+    if (shouldApply) {
+      root.style.setProperty('--dashboard-bg', mainBackgroundColor)
+    } else {
+      root.style.removeProperty('--dashboard-bg')
+    }
+
+    return () => {
+      root.style.removeProperty('--dashboard-bg')
+    }
+  }, [currentView, mainBackgroundColor])
 
   const openPresetSelector = () => {
     const nextReturnView = currentView === 'simple' ? 'simple' : 'dashboard'

@@ -24,16 +24,29 @@ interface HabitResetDialogProps {
   habitId: string
   habitName: string
   trigger?: ReactNode
+  open?: boolean
+  defaultOpen?: boolean
   onOpenChange?: (open: boolean) => void
 }
 
-export function HabitResetDialog({ habitId, habitName, trigger, onOpenChange }: HabitResetDialogProps) {
+export function HabitResetDialog({
+  habitId,
+  habitName,
+  trigger,
+  open,
+  defaultOpen,
+  onOpenChange,
+}: HabitResetDialogProps) {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(defaultOpen ?? false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const isControlled = open !== undefined
+  const currentOpen = isControlled ? open : isOpen
 
   const handleOpenChange = (open: boolean) => {
-    setIsOpen(open)
+    if (!isControlled) {
+      setIsOpen(open)
+    }
     onOpenChange?.(open)
   }
 
@@ -59,10 +72,11 @@ export function HabitResetDialog({ habitId, habitName, trigger, onOpenChange }: 
       進捗をリセット
     </Button>
   )
+  const resolvedTrigger = trigger ?? (isControlled ? null : defaultTrigger)
 
   return (
-    <AlertDialog onOpenChange={handleOpenChange} open={isOpen}>
-      <AlertDialogTrigger asChild>{trigger ?? defaultTrigger}</AlertDialogTrigger>
+    <AlertDialog onOpenChange={handleOpenChange} open={currentOpen}>
+      {resolvedTrigger ? <AlertDialogTrigger asChild>{resolvedTrigger}</AlertDialogTrigger> : null}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>進捗をリセットしますか？</AlertDialogTitle>

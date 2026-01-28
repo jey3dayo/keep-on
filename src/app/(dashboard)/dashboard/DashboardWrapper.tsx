@@ -54,7 +54,7 @@ export function DashboardWrapper({
   const router = useRouter()
   const [isTimeZoneReady, setIsTimeZoneReady] = useState(hasTimeZoneCookie)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
-  const [optimisticCheckins, setOptimisticCheckins] = useState(todayCheckins)
+  const [, setOptimisticCheckins] = useState(todayCheckins)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
   const hasRefreshedForTimeZone = useRef(false)
 
@@ -175,26 +175,12 @@ export function DashboardWrapper({
       return
     }
 
-    const removedCheckin = isCompleted
-      ? optimisticCheckins
-          .filter((checkin) => checkin.habitId === habitId)
-          .reduce<Checkin | null>((latest, current) => {
-            if (!latest) {
-              return current
-            }
-            const latestTime = new Date(latest.createdAt).getTime()
-            const currentTime = new Date(current.createdAt).getTime()
-            return currentTime > latestTime ? current : latest
-          }, null)
-      : null
-    const addedCheckin = isCompleted
-      ? null
-      : {
-          id: `optimistic-${createId()}`,
-          habitId,
-          date: dateKey,
-          createdAt: now,
-        }
+    const addedCheckin: Checkin = {
+      id: `optimistic-${createId()}`,
+      habitId,
+      date: dateKey,
+      createdAt: now,
+    }
 
     const updateHabitProgress = (current: HabitWithProgress[], delta: number) =>
       current.map((habit) => {
@@ -213,32 +199,13 @@ export function DashboardWrapper({
         }
       })
 
-    const applyOptimisticCheckins = (current: Checkin[]) => {
-      if (isCompleted) {
-        if (!removedCheckin) {
-          return current
-        }
-        return current.filter((checkin) => checkin.id !== removedCheckin.id)
-      }
-      return addedCheckin ? [...current, addedCheckin] : current
-    }
+    const applyOptimisticCheckins = (current: Checkin[]) => [...current, addedCheckin]
 
-    const rollbackOptimisticCheckins = (current: Checkin[]) => {
-      if (isCompleted) {
-        if (!removedCheckin) {
-          return current
-        }
-        const alreadyExists = current.some((checkin) => checkin.id === removedCheckin.id)
-        return alreadyExists ? current : [...current, removedCheckin]
-      }
-      if (!addedCheckin) {
-        return current
-      }
-      return current.filter((checkin) => checkin.id !== addedCheckin.id)
-    }
+    const rollbackOptimisticCheckins = (current: Checkin[]) =>
+      current.filter((checkin) => checkin.id !== addedCheckin.id)
 
     setOptimisticCheckins((current) => applyOptimisticCheckins(current))
-    setOptimisticHabits((current) => updateHabitProgress(current, isCompleted ? -1 : 1))
+    setOptimisticHabits((current) => updateHabitProgress(current, 1))
     setPendingCheckins((current) => new Set(current).add(habitId))
 
     try {
@@ -250,11 +217,11 @@ export function DashboardWrapper({
       }
 
       setOptimisticCheckins((current) => rollbackOptimisticCheckins(current))
-      setOptimisticHabits((current) => updateHabitProgress(current, isCompleted ? 1 : -1))
+      setOptimisticHabits((current) => updateHabitProgress(current, -1))
       appToast.error('チェックインの切り替えに失敗しました', result.error)
     } catch (error) {
       setOptimisticCheckins((current) => rollbackOptimisticCheckins(current))
-      setOptimisticHabits((current) => updateHabitProgress(current, isCompleted ? 1 : -1))
+      setOptimisticHabits((current) => updateHabitProgress(current, -1))
       appToast.error('チェックインの切り替えに失敗しました', error)
     } finally {
       setPendingCheckins((current) => {

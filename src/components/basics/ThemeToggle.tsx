@@ -1,13 +1,21 @@
 'use client'
 
-import { Moon, Sun } from 'lucide-react'
+import { Monitor, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { DEFAULT_THEME_MODE } from '@/constants/theme'
 
 export function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme, theme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -19,6 +27,17 @@ export function ThemeToggle() {
   }
 
   const isDark = resolvedTheme === 'dark'
+  const currentMode = theme ?? DEFAULT_THEME_MODE
+  let currentLabel = 'ライト'
+  let CurrentIcon = Sun
+
+  if (currentMode === 'system') {
+    currentLabel = 'システム'
+    CurrentIcon = Monitor
+  } else if (isDark) {
+    currentLabel = 'ダーク'
+    CurrentIcon = Moon
+  }
 
   return (
     <div className="group relative">
@@ -44,20 +63,41 @@ export function ThemeToggle() {
                   <p className="text-muted-foreground text-xs">暗い配色</p>
                 </div>
               </div>
+              <div className="flex items-start gap-2">
+                <Monitor className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">システム</p>
+                  <p className="text-muted-foreground text-xs">端末設定に合わせる</p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Button
-        aria-label={`${isDark ? 'ダーク' : 'ライト'}モード中`}
-        className="rounded-full p-0"
-        onClick={() => setTheme(isDark ? 'light' : 'dark')}
-        size="icon"
-        variant="secondary"
-      >
-        {isDark ? <Moon className="h-6 w-6" /> : <Sun className="h-6 w-6" />}
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button aria-label={`${currentLabel}モード中`} className="rounded-full p-0" size="icon" variant="secondary">
+            <CurrentIcon className="h-6 w-6" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuRadioGroup onValueChange={setTheme} value={currentMode}>
+            <DropdownMenuRadioItem value="light">
+              <Sun className="h-4 w-4" />
+              ライト
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="dark">
+              <Moon className="h-4 w-4" />
+              ダーク
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="system">
+              <Monitor className="h-4 w-4" />
+              システム
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

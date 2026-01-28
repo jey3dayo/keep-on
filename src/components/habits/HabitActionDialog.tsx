@@ -20,7 +20,7 @@ import { formatSerializableError, type SerializableHabitError } from '@/lib/erro
 
 interface HabitActionDialogProps {
   habitId: string
-  trigger: ReactNode
+  trigger?: ReactNode
   title: string
   description: ReactNode
   confirmLabel: string
@@ -28,6 +28,9 @@ interface HabitActionDialogProps {
   successMessage: string
   errorMessage: string
   action: (habitId: string) => Result.ResultAsync<unknown, SerializableHabitError>
+  open?: boolean
+  defaultOpen?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export function HabitActionDialog({
@@ -40,10 +43,22 @@ export function HabitActionDialog({
   successMessage,
   errorMessage,
   action,
+  open,
+  defaultOpen,
+  onOpenChange,
 }: HabitActionDialogProps) {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(defaultOpen ?? false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const isControlled = open !== undefined
+  const currentOpen = isControlled ? open : isOpen
+
+  const handleOpenChange = (open: boolean) => {
+    if (!isControlled) {
+      setIsOpen(open)
+    }
+    onOpenChange?.(open)
+  }
 
   const handleConfirm = async () => {
     setIsProcessing(true)
@@ -52,7 +67,7 @@ export function HabitActionDialog({
 
     if (Result.isSuccess(result)) {
       toast.success(successMessage)
-      setIsOpen(false)
+      handleOpenChange(false)
       router.refresh()
       return
     }
@@ -63,8 +78,8 @@ export function HabitActionDialog({
   }
 
   return (
-    <AlertDialog onOpenChange={setIsOpen} open={isOpen}>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+    <AlertDialog onOpenChange={handleOpenChange} open={currentOpen}>
+      {trigger ? <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger> : null}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

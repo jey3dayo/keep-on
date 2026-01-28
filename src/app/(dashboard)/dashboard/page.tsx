@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { SIGN_IN_PATH } from '@/constants/auth'
+import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const cookieStore = await cookies()
   const rawView = cookieStore.get('ko_dashboard_view')?.value
-  const initialView = rawView === 'simple' || rawView === 'dashboard' ? rawView : 'dashboard'
+  const initialView = rawView === 'simple' || rawView === 'dashboard' ? rawView : DEFAULT_DASHBOARD_VIEW
   const hasTimeZoneCookie = cookieStore.has('ko_tz')
   const timeoutMs = 8000
   const requestMeta = createRequestMeta('/dashboard')
