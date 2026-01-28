@@ -3,7 +3,7 @@
 import { Monitor, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button, type ButtonProps } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,8 +12,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DEFAULT_THEME_MODE } from '@/constants/theme'
+import { cn } from '@/lib/utils'
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  buttonVariant?: ButtonProps['variant']
+  buttonClassName?: string
+}
+
+export function ThemeToggle({ buttonVariant = 'secondary', buttonClassName }: ThemeToggleProps) {
   const { resolvedTheme, setTheme, theme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -22,7 +28,12 @@ export function ThemeToggle() {
   }, [])
 
   if (!mounted) {
-    return <div aria-hidden="true" className="h-9 w-9 animate-pulse rounded-full bg-secondary" />
+    return (
+      <div
+        aria-hidden="true"
+        className={cn('h-9 w-9 animate-pulse rounded-full border border-border/40 bg-transparent')}
+      />
+    )
   }
 
   const isDark = resolvedTheme === 'dark'
@@ -42,7 +53,12 @@ export function ThemeToggle() {
     <div className="relative">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button aria-label={`${currentLabel}モード中`} className="rounded-full p-0" size="icon" variant="secondary">
+          <Button
+            aria-label={`${currentLabel}モード中`}
+            className={cn('rounded-full bg-transparent p-0 hover:bg-white/10 dark:hover:bg-white/5', buttonClassName)}
+            size="icon"
+            variant={buttonVariant}
+          >
             <CurrentIcon className="h-6 w-6" />
           </Button>
         </DropdownMenuTrigger>
