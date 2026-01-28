@@ -7,6 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const config: StorybookConfig = {
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   addons: ['@storybook/addon-docs', '@storybook/addon-themes', '@storybook/addon-a11y'],
+  staticDirs: ['../public'],
   framework: {
     name: '@storybook/nextjs-vite',
     options: {},
@@ -20,10 +21,10 @@ const config: StorybookConfig = {
   viteFinal: (config) => {
     config.resolve = config.resolve ?? {}
     const replacement = path.resolve(__dirname, './mocks/clerk.tsx')
-    const srcRoot = path.resolve(__dirname, '../src')
     const serverActionsMock = path.resolve(__dirname, './mocks/server-actions.ts')
     const dbMock = path.resolve(__dirname, './mocks/db.ts')
     const postgresMock = path.resolve(__dirname, './mocks/postgres.ts')
+    const srcRoot = path.resolve(__dirname, '../src')
     const serverActionAliases = [
       {
         find: /^@\/app\/actions\/habits\/(archive|unarchive|delete|update|create|checkin|reset)$/,
@@ -49,13 +50,13 @@ const config: StorybookConfig = {
       { find: '@clerk/nextjs', replacement },
       ...existingAliases,
     ]
-    config.esbuild = {
-      ...(config.esbuild ?? {}),
-      target: 'esnext',
-    }
     config.define = {
       ...(config.define ?? {}),
       'process.env.SKIP_ENV_VALIDATION': '"1"',
+    }
+    config.esbuild = {
+      ...(config.esbuild ?? {}),
+      target: 'esnext',
     }
     config.optimizeDeps = config.optimizeDeps ?? {}
     config.optimizeDeps.exclude = [...(config.optimizeDeps.exclude ?? []), '@clerk/nextjs']
