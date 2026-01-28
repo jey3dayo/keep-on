@@ -32,11 +32,9 @@ export const WithUserButton: Story = {
     <div>
       <Appbar {...args} />
       <div className="p-8">
-        <h1 className="mb-4 font-bold text-3xl">Dashboard</h1>
-        <p className="text-muted-foreground">This story shows the Appbar with user authentication enabled.</p>
-        <p className="mt-2 text-muted-foreground text-sm">
-          Note: UserButton requires Clerk authentication context to render properly.
-        </p>
+        <h1 className="mb-4 font-bold text-3xl">ダッシュボード</h1>
+        <p className="text-muted-foreground">ユーザー認証ありのAppbarサンプルです</p>
+        <p className="mt-2 text-muted-foreground text-sm">※ UserButtonはClerk認証コンテキストが必要です</p>
       </div>
     </div>
   ),
@@ -47,22 +45,16 @@ export const WithContent: Story = {
     <div className="min-h-screen bg-background">
       <Appbar />
       <main className="container mx-auto p-8">
-        <h1 className="mb-4 font-bold text-3xl">Welcome to KeepOn</h1>
+        <h1 className="mb-4 font-bold text-3xl">KeepOnへようこそ</h1>
         <div className="space-y-4">
-          <p className="text-muted-foreground">
-            This is an example page showing how the Appbar integrates with content.
-          </p>
+          <p className="text-muted-foreground">Appbarがコンテンツと統合されているサンプルページです</p>
           <div className="rounded-lg border bg-card p-6">
-            <h2 className="mb-2 font-semibold text-xl">Card Title</h2>
-            <p className="text-muted-foreground text-sm">
-              This card demonstrates the visual hierarchy with the new design system.
-            </p>
+            <h2 className="mb-2 font-semibold text-xl">カードタイトル</h2>
+            <p className="text-muted-foreground text-sm">新しいデザインシステムの視覚階層を示すカードです</p>
           </div>
           <div className="rounded-lg border bg-card p-6">
-            <h2 className="mb-2 font-semibold text-xl">Another Card</h2>
-            <p className="text-muted-foreground text-sm">
-              Notice the subtle difference between the card background and page background.
-            </p>
+            <h2 className="mb-2 font-semibold text-xl">もう一つのカード</h2>
+            <p className="text-muted-foreground text-sm">カード背景とページ背景の微妙な違いを確認してください</p>
           </div>
         </div>
       </main>
@@ -80,9 +72,9 @@ export const MobileView: Story = {
     <div className="min-h-screen bg-background">
       <Appbar showUserButton />
       <main className="p-4">
-        <h1 className="mb-4 font-bold text-2xl">Mobile View</h1>
+        <h1 className="mb-4 font-bold text-2xl">モバイルビュー</h1>
         <p className="text-muted-foreground text-sm">
-          On mobile, navigation links are hidden and accessible via the menu button.
+          モバイルではナビゲーションリンクが非表示になり、メニューボタンでアクセスできます
         </p>
       </main>
     </div>

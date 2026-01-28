@@ -17,9 +17,8 @@ interface AppbarProps {
 }
 
 const navLinks = [
-  { href: '/dashboard', label: 'Home', icon: 'home' as const },
-  { href: '/about', label: 'About', icon: 'info' as const },
-  { href: '/contact', label: 'Contact', icon: 'mail' as const },
+  { href: '/dashboard', label: 'ホーム', icon: 'home' as const },
+  { href: '/habits', label: '習慣', icon: 'target' as const },
 ]
 
 export function Appbar({ showUserButton = false }: AppbarProps) {
@@ -67,7 +66,7 @@ export function Appbar({ showUserButton = false }: AppbarProps) {
             </SheetTrigger>
             <SheetContent side="right">
               <SheetHeader>
-                <SheetTitle>Menu</SheetTitle>
+                <SheetTitle>メニュー</SheetTitle>
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-4">
                 {navLinks.map((link) => (
