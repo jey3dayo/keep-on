@@ -3,7 +3,7 @@ import { currentUser } from '@clerk/nextjs/server'
 import { StatusCodes } from 'http-status-codes'
 import { parseClerkApiResponseErrorPayload } from '@/schemas/user'
 import { logError } from './logging'
-import { upsertUser } from './queries/user'
+import { getUserByClerkId, upsertUser } from './queries/user'
 
 function parseClerkApiResponseError(error: unknown) {
   if (isClerkAPIResponseError(error)) {
@@ -53,7 +53,18 @@ export async function syncUser() {
     throw new Error('Email address not found')
   }
 
-  // ユーザーを取得または作成
+  const existing = await getUserByClerkId(clerkUser.id)
+  if (existing) {
+    if (existing.email !== email) {
+      return await upsertUser({
+        clerkId: clerkUser.id,
+        email,
+      })
+    }
+    return existing
+  }
+
+  // 初回ログイン時はユーザーを作成
   return await upsertUser({
     clerkId: clerkUser.id,
     email,
