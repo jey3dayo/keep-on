@@ -122,7 +122,7 @@ export function HabitFormServer({
           <ChevronLeft className="h-5 w-5" />
           <span className="text-sm">戻る</span>
         </Button>
-        <h1 className="font-semibold text-foreground text-lg">新しい習慣</h1>
+        <h1 className="font-semibold text-foreground text-lg">{initialData ? '習慣を編集' : '新しい習慣'}</h1>
         <Button
           className={cn(
             'h-auto p-0 hover:bg-transparent',
