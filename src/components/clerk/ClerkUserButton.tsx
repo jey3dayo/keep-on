@@ -30,9 +30,30 @@ type ClerkUserButtonProps = ComponentProps<typeof UserButton> & {
 }
 
 export function ClerkUserButton({ fallback, ...props }: ClerkUserButtonProps) {
+  const defaultAppearance = {
+    elements: {
+      userButtonAvatarBox: 'h-9 w-9',
+      userButtonTrigger: 'h-9 w-9',
+    },
+  }
+
+  const mergedAppearance = props.appearance
+    ? {
+        ...props.appearance,
+        elements: {
+          ...defaultAppearance.elements,
+          ...props.appearance.elements,
+        },
+      }
+    : defaultAppearance
+
+  const resolvedFallback = fallback ?? <div aria-hidden="true" className="h-9 w-9 rounded-full bg-secondary" />
+
   return (
-    <ClerkUserButtonBoundary fallback={fallback}>
-      <UserButton {...props} />
+    <ClerkUserButtonBoundary fallback={resolvedFallback}>
+      <div className="flex h-9 w-9 items-center justify-center">
+        <UserButton {...props} appearance={mergedAppearance} />
+      </div>
     </ClerkUserButtonBoundary>
   )
 }

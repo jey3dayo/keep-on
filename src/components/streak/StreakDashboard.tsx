@@ -2,6 +2,7 @@
 
 import { Circle, LayoutGrid } from 'lucide-react'
 import { useState } from 'react'
+import { Button } from '@/components/basics/Button'
 import type { IconName } from '@/components/basics/Icon'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DEFAULT_HABIT_COLOR, type Period } from '@/constants/habit'
@@ -202,32 +203,36 @@ function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
           </div>
 
           <div className="flex items-center gap-1 rounded-full border border-border bg-card/90 p-1 shadow-lg backdrop-blur-md">
-            <button
+            <Button
               className={cn(
-                'rounded-full p-2 transition-all',
+                'rounded-full p-2 transition-all hover:bg-transparent',
                 currentView === 'dashboard'
                   ? 'bg-foreground text-background'
                   : 'text-muted-foreground hover:text-foreground'
               )}
               onClick={() => onViewChange('dashboard')}
+              size="icon"
               title="リストビュー"
               type="button"
+              variant="ghost"
             >
               <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button
+            </Button>
+            <Button
               className={cn(
-                'rounded-full p-2 transition-all',
+                'rounded-full p-2 transition-all hover:bg-transparent',
                 currentView === 'simple'
                   ? 'bg-foreground text-background'
                   : 'text-muted-foreground hover:text-foreground'
               )}
               onClick={() => onViewChange('simple')}
+              size="icon"
               title="シンプルビュー"
               type="button"
+              variant="ghost"
             >
               <Circle className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>

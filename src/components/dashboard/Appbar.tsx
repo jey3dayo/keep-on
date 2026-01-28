@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
+import { Button } from '@/components/basics/Button'
 import { Icon } from '@/components/basics/Icon'
 import { ThemeToggle } from '@/components/basics/ThemeToggle'
 import { ClerkUserButton } from '@/components/clerk/ClerkUserButton'
@@ -52,13 +53,9 @@ export function Appbar({ showUserButton = false }: AppbarProps) {
           {/* Mobile Menu */}
           <Sheet onOpenChange={setIsOpen} open={isOpen}>
             <SheetTrigger asChild>
-              <button
-                aria-label="メニューを開く"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground md:hidden"
-                type="button"
-              >
+              <Button aria-label="メニューを開く" className="md:hidden" size="icon" type="button" variant="ghost">
                 <Icon name="menu" size={20} />
-              </button>
+              </Button>
             </SheetTrigger>
             <SheetContent side="right">
               <SheetHeader>

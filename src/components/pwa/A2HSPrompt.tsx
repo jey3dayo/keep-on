@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Button } from '@/components/basics/Button'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -66,23 +67,21 @@ export function A2HSPrompt() {
   if (deferredPrompt) {
     return (
       <div className="fixed right-4 bottom-4 left-4 z-50 rounded-lg border border-border bg-card p-4 shadow-lg sm:left-auto sm:w-80">
-        <button
+        <Button
           aria-label="閉じる"
-          className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+          className="absolute top-2 right-2 text-muted-foreground hover:bg-transparent hover:text-foreground"
           onClick={handleDismiss}
+          size="icon"
           type="button"
+          variant="ghost"
         >
           <X className="h-4 w-4" />
-        </button>
+        </Button>
         <p className="pr-6 font-medium text-foreground text-sm">ホーム画面に追加</p>
         <p className="mt-1 text-muted-foreground text-xs">アプリのようにすぐアクセスできます</p>
-        <button
-          className="mt-3 w-full rounded-md bg-primary px-4 py-2 text-primary-foreground text-sm hover:bg-primary/90"
-          onClick={handleInstall}
-          type="button"
-        >
+        <Button className="mt-3 w-full" onClick={handleInstall} type="button" variant="default">
           インストール
-        </button>
+        </Button>
       </div>
     )
   }
@@ -91,14 +90,16 @@ export function A2HSPrompt() {
   if (showIOSPrompt) {
     return (
       <div className="fixed right-4 bottom-4 left-4 z-50 rounded-lg border border-border bg-card p-4 shadow-lg sm:left-auto sm:w-80">
-        <button
+        <Button
           aria-label="閉じる"
-          className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+          className="absolute top-2 right-2 text-muted-foreground hover:bg-transparent hover:text-foreground"
           onClick={handleDismiss}
+          size="icon"
           type="button"
+          variant="ghost"
         >
           <X className="h-4 w-4" />
-        </button>
+        </Button>
         <p className="pr-6 font-medium text-foreground text-sm">ホーム画面に追加</p>
         <p className="mt-2 text-muted-foreground text-xs">
           <span className="inline-flex items-center gap-1">

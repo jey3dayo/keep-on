@@ -2,6 +2,7 @@
 
 import { ChevronRight, Search, X } from 'lucide-react'
 import { useState } from 'react'
+import { Button } from '@/components/basics/Button'
 import {
   getColorById,
   getIconById,
@@ -35,25 +36,29 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
   return (
     <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
       <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3">
-        <button
-          className="flex h-10 w-10 items-center justify-center rounded-full transition-colors"
+        <Button
+          className="h-10 w-10 rounded-full p-0"
           onClick={onClose}
+          size="icon"
           style={{ backgroundColor: bgColorLight }}
           type="button"
+          variant="ghost"
         >
           <X className="h-5 w-5 text-white" />
-        </button>
+        </Button>
 
         <h1 className="font-semibold text-lg text-white">タスクを追加</h1>
 
-        <button
-          className="flex h-10 w-10 items-center justify-center rounded-full transition-colors"
+        <Button
+          className="h-10 w-10 rounded-full p-0"
           onClick={() => setShowSearch(!showSearch)}
+          size="icon"
           style={{ backgroundColor: bgColorLight }}
           type="button"
+          variant="ghost"
         >
           <Search className="h-5 w-5 text-white" />
-        </button>
+        </Button>
       </header>
 
       {showSearch && (
@@ -76,18 +81,20 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
             const IconComponent = category.icon
             const isSelected = selectedCategory === category.id
             return (
-              <button
+              <Button
                 className={cn(
-                  'flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full transition-all',
+                  'h-14 w-14 flex-shrink-0 rounded-full p-0 transition-all',
                   isSelected ? 'bg-white/90 shadow-lg' : 'hover:bg-white/20'
                 )}
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
+                size="icon"
                 style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.9)' : bgColorLight }}
                 type="button"
+                variant="ghost"
               >
                 <IconComponent className="h-6 w-6" style={{ color: isSelected ? bgColor : 'white' }} />
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -101,14 +108,15 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
 
       <div className="px-4 pb-2">
         <p className="mb-2 text-sm text-white/70">自身で作成:</p>
-        <button
-          className="w-full rounded-xl px-4 py-4 text-left text-white/50 transition-colors hover:bg-white/10"
+        <Button
+          className="h-auto w-full justify-start rounded-xl px-4 py-4 text-left text-white/50 hover:bg-white/10"
           onClick={onCreateCustom}
           style={{ backgroundColor: bgColorLight }}
           type="button"
+          variant="ghost"
         >
           タスクのタイトルを入力...
-        </button>
+        </Button>
       </div>
 
       <div className="px-4 pt-4">
@@ -121,12 +129,13 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
             const IconComponent = icon.icon
 
             return (
-              <button
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-white/10"
+              <Button
+                className="h-auto w-full justify-start gap-3 rounded-xl px-4 py-3 hover:bg-white/10"
                 key={preset.id}
                 onClick={() => onSelectPreset(preset)}
                 style={{ backgroundColor: bgColorLight }}
                 type="button"
+                variant="ghost"
               >
                 <div
                   className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full"
@@ -140,7 +149,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
                 </div>
 
                 <ChevronRight className="h-5 w-5 text-white/60" />
-              </button>
+              </Button>
             )
           })}
         </div>

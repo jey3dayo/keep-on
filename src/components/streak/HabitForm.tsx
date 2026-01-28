@@ -2,8 +2,8 @@
 
 import { Check, ChevronLeft, Clock } from 'lucide-react'
 import { type CSSProperties, useMemo, useState } from 'react'
+import { Button } from '@/components/basics/Button'
 import type { IconName } from '@/components/basics/Icon'
-import { Button } from '@/components/ui/button'
 import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
@@ -51,14 +51,15 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 flex items-center justify-between border-border border-b bg-background/80 px-4 py-3 backdrop-blur-xl">
-        <button
-          className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+        <Button
+          className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
           onClick={onBack}
           type="button"
+          variant="ghost"
         >
           <ChevronLeft className="h-5 w-5" />
           <span className="text-sm">戻る</span>
-        </button>
+        </Button>
         <h1 className="font-semibold text-foreground text-lg">新しい習慣</h1>
         <Button
           className={cn(
@@ -109,13 +110,14 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
               const IconComponent = item.icon
               const isSelected = selectedIcon === item.id
               return (
-                <button
+                <Button
                   className={cn(
-                    'flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-200',
+                    'h-12 w-12 rounded-xl transition-all duration-200',
                     isSelected ? 'ring-2 ring-offset-2 ring-offset-background' : 'bg-card hover:bg-card/80'
                   )}
                   key={item.id}
                   onClick={() => setSelectedIcon(item.id)}
+                  size="icon"
                   style={
                     {
                       backgroundColor: isSelected ? selectedColorValue : undefined,
@@ -123,6 +125,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
                     } as CSSProperties
                   }
                   type="button"
+                  variant="ghost"
                 >
                   <IconComponent
                     className={cn(
@@ -130,7 +133,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
                       isSelected ? 'text-background' : 'text-muted-foreground'
                     )}
                   />
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -142,9 +145,9 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
             {taskPeriods.map((period) => {
               const isSelected = selectedPeriod === period.id
               return (
-                <button
+                <Button
                   className={cn(
-                    'relative flex flex-col items-center gap-1 rounded-xl border px-3 py-4 transition-all duration-200',
+                    'relative h-auto flex-col gap-1 rounded-xl border px-3 py-4 transition-all duration-200',
                     isSelected ? 'border-transparent' : 'border-border bg-card hover:bg-card/80'
                   )}
                   key={period.id}
@@ -154,6 +157,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
                     borderColor: isSelected ? selectedColorValue : undefined,
                   }}
                   type="button"
+                  variant="ghost"
                 >
                   <span
                     className={cn(
@@ -171,7 +175,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
                       style={{ backgroundColor: selectedColorValue }}
                     />
                   )}
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -183,13 +187,14 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
             {habitColors.map((color) => {
               const isSelected = selectedColor === color.id
               return (
-                <button
+                <Button
                   className={cn(
                     'h-10 w-10 flex-shrink-0 rounded-full transition-all duration-200',
                     isSelected && 'ring-2 ring-offset-2 ring-offset-background'
                   )}
                   key={color.id}
                   onClick={() => setSelectedColor(color.id)}
+                  size="icon"
                   style={
                     {
                       backgroundColor: color.color,
@@ -197,9 +202,10 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
                     } as CSSProperties
                   }
                   type="button"
+                  variant="ghost"
                 >
                   {isSelected && <Check className="mx-auto h-5 w-5 text-background" />}
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -210,7 +216,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between">
               <Button
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0"
+                className="h-10 w-10 shrink-0 rounded-full p-0"
                 onClick={() => setFrequency((current) => Math.max(1, current - 1))}
                 type="button"
                 variant="secondary"
@@ -224,7 +230,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
                 <span className="text-muted-foreground text-sm">{currentPeriod.frequencyLabel}</span>
               </div>
               <Button
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0"
+                className="h-10 w-10 shrink-0 rounded-full p-0"
                 onClick={() => setFrequency((current) => Math.min(99, current + 1))}
                 type="button"
                 variant="secondary"
@@ -237,9 +243,10 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
 
         <div className="space-y-3">
           <p className="font-medium text-muted-foreground text-sm uppercase tracking-wide">リマインダー</p>
-          <button
-            className="flex w-full items-center justify-between rounded-xl border border-border bg-card p-4 transition-colors hover:bg-card/80"
+          <Button
+            className="h-auto w-full justify-between rounded-xl border border-border bg-card p-4 hover:bg-card/80"
             type="button"
+            variant="ghost"
           >
             <div className="flex items-center gap-3">
               <div
@@ -254,7 +261,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
               </div>
             </div>
             <ChevronLeft className="h-5 w-5 rotate-180 text-muted-foreground" />
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-3">

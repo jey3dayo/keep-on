@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/basics/Button'
 import { Icon, type IconName } from '@/components/basics/Icon'
 import { COMPLETION_STATUS_LABEL } from '@/constants/habit'
 import { cn } from '@/lib/utils'
@@ -48,13 +49,15 @@ export function TaskCircle({
   const borderColor = color ? `oklch(from ${color} l c h)` : DEFAULT_BORDER_COLOR
 
   return (
-    <button
+    <Button
       aria-checked={completed}
       aria-label={`${habitName} - ${completed ? COMPLETION_STATUS_LABEL.completed : COMPLETION_STATUS_LABEL.incomplete}`}
-      className="flex flex-col items-center gap-2 transition-transform active:scale-95"
+      className="h-auto flex-col whitespace-normal break-words p-0 hover:bg-transparent"
       onClick={() => onToggle(habitId)}
       role="checkbox"
+      scale="md"
       type="button"
+      variant="ghost"
     >
       <div
         className={cn(
@@ -72,6 +75,6 @@ export function TaskCircle({
         )}
       </div>
       <span className={cn('text-center font-medium text-white', TEXT_SIZE_CLASSES[size])}>{habitName}</span>
-    </button>
+    </Button>
   )
 }

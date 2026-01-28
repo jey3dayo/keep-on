@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { Button } from '@/components/basics/Button'
 import { Icon, type IconName } from './Icon'
 
 const meta = {
@@ -54,10 +55,10 @@ export const WithProps: Story = {
 
 export const Accessibility: Story = {
   render: () => (
-    <button className="flex items-center gap-2" type="button">
+    <Button className="h-auto p-0" type="button" variant="ghost">
       <Icon aria-hidden="true" name="trash" />
       <span>削除</span>
-    </button>
+    </Button>
   ),
 }
 

@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
@@ -175,15 +176,17 @@ export function HabitSimpleView({
 
             return (
               <div className="flex flex-col items-center gap-3" key={habit.id}>
-                <button
-                  className="relative flex h-[140px] w-[140px] items-center justify-center transition-transform hover:scale-105 active:scale-95"
+                <Button
+                  className="relative h-[140px] w-[140px] p-0 hover:bg-transparent"
                   onClick={(event) => handleProgressClick(event, habit, isCompleted)}
                   onContextMenu={(e) => handleContextMenu(e, habit)}
                   onPointerCancel={() => handleLongPressEnd(true)}
                   onPointerDown={() => handleLongPressStart(habit)}
                   onPointerLeave={() => handleLongPressEnd(true)}
                   onPointerUp={() => handleLongPressEnd(false)}
+                  scale="md"
                   type="button"
+                  variant="ghost"
                 >
                   <ProgressRing
                     backgroundColor={ringBgColor}
@@ -211,7 +214,7 @@ export function HabitSimpleView({
                       strokeWidth={1.5}
                     />
                   </div>
-                </button>
+                </Button>
 
                 <p
                   className={cn(
@@ -226,10 +229,12 @@ export function HabitSimpleView({
           })}
 
           <div className="flex flex-col items-center gap-3">
-            <button
-              className="relative flex h-[140px] w-[140px] items-center justify-center transition-transform active:scale-95"
+            <Button
+              className="relative h-[140px] w-[140px] p-0 hover:bg-transparent"
               onClick={onAddHabit}
+              scale="md"
               type="button"
+              variant="ghost"
             >
               <ProgressRing
                 backgroundColor={ringBgColor}
@@ -245,7 +250,7 @@ export function HabitSimpleView({
               >
                 <Icon className="h-14 w-14 text-white/90" name="plus" />
               </div>
-            </button>
+            </Button>
 
             <p className="text-center font-medium text-base text-white">タスクを追加</p>
           </div>
@@ -265,11 +270,12 @@ export function HabitSimpleView({
 
       {resetConfirm ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <button
+          <Button
             aria-label="閉じる"
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 h-full w-full bg-black/50 p-0 backdrop-blur-sm hover:bg-black/50"
             onClick={() => setResetConfirm(null)}
             type="button"
+            variant="ghost"
           />
 
           <div className="relative w-full max-w-xs rounded-2xl bg-card p-6 shadow-2xl">
@@ -279,46 +285,52 @@ export function HabitSimpleView({
             </p>
 
             <div className="flex gap-3">
-              <button
-                className="flex-1 rounded-xl bg-secondary px-4 py-3 font-medium text-secondary-foreground transition-colors hover:bg-secondary/80"
+              <Button
+                className="flex-1 rounded-xl px-4 py-3"
                 onClick={() => setResetConfirm(null)}
                 type="button"
+                variant="secondary"
               >
                 キャンセル
-              </button>
-              <button
-                className="flex-1 rounded-xl px-4 py-3 font-medium text-white transition-colors"
+              </Button>
+              <Button
+                className="flex-1 rounded-xl px-4 py-3 text-white"
                 onClick={handleResetConfirm}
                 style={{ backgroundColor: bgColor }}
                 type="button"
+                variant="ghost"
               >
                 解除する
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       ) : null}
 
       <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between px-6 py-4">
-        <button
-          className="flex h-10 w-10 items-center justify-center text-white/70 transition-colors hover:text-white"
+        <Button
+          className="h-10 w-10 p-0 text-white/70 hover:bg-transparent hover:text-white"
           onClick={onSettings}
+          size="icon"
           type="button"
+          variant="ghost"
         >
           <Icon className="h-6 w-6" name="settings" />
-        </button>
+        </Button>
 
         {totalPages > 1 ? (
           <div className="flex items-center gap-2">
             {pages.map((page) => (
-              <button
+              <Button
                 className={cn(
-                  'h-2 w-2 rounded-full transition-all duration-300',
+                  'h-2 w-2 rounded-full p-0 transition-all duration-300 hover:bg-transparent',
                   currentPage === page ? 'h-2.5 w-2.5 bg-white' : 'bg-white/40 hover:bg-white/60'
                 )}
                 key={`page-${page}`}
                 onClick={() => setCurrentPage(page)}
+                size="icon"
                 type="button"
+                variant="ghost"
               />
             ))}
           </div>

@@ -15,14 +15,14 @@ export function ThemeToggle() {
   }, [])
 
   if (!mounted) {
-    return <div aria-hidden="true" className="h-10 w-10 animate-pulse rounded-full bg-secondary" />
+    return <div aria-hidden="true" className="h-9 w-9 animate-pulse rounded-full bg-secondary" />
   }
 
   const isDark = resolvedTheme === 'dark'
 
   return (
     <div className="group relative">
-      <div className="absolute top-full right-0 mt-2 hidden w-64 group-hover:block">
+      <div className="absolute top-full right-0 z-50 mt-2 hidden w-64 group-hover:block">
         <Card className="border-border bg-popover shadow-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">テーマ切り替え</CardTitle>
@@ -51,7 +51,7 @@ export function ThemeToggle() {
 
       <Button
         aria-label={`${isDark ? 'ダーク' : 'ライト'}モード中`}
-        className="h-8 w-8 rounded-full p-0"
+        className="rounded-full p-0"
         onClick={() => setTheme(isDark ? 'light' : 'dark')}
         size="icon"
         variant="secondary"
