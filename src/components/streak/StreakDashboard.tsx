@@ -6,8 +6,8 @@ import { Button } from '@/components/basics/Button'
 import type { IconName } from '@/components/basics/Icon'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
-import { type Period } from '@/constants/habit'
-import { type HabitPreset } from '@/constants/habit-data'
+import type { Period } from '@/constants/habit'
+import type { HabitPreset } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import { setClientCookie } from '@/lib/utils/cookies'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
@@ -34,6 +34,7 @@ type MainView = 'dashboard' | 'simple'
 
 const VIEW_COOKIE_KEY = 'ko_dashboard_view'
 const VIEW_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
+const MAIN_BACKGROUND_COLOR = 'var(--primary)'
 
 const persistMainView = (view: MainView) => {
   setClientCookie(VIEW_COOKIE_KEY, view, {
@@ -64,7 +65,7 @@ export function StreakDashboard({
   const todayCompleted = dailyHabits.filter((h) => h.currentProgress >= h.frequency).length
   const totalDaily = dailyHabits.length
   const totalStreak = habits.reduce((sum, h) => sum + h.streak, 0)
-  const mainBackgroundColor = 'var(--primary)'
+  const mainBackgroundColor = MAIN_BACKGROUND_COLOR
 
   useEffect(() => {
     const root = document.documentElement
@@ -79,7 +80,7 @@ export function StreakDashboard({
     return () => {
       root.style.removeProperty('--dashboard-bg')
     }
-  }, [currentView, mainBackgroundColor])
+  }, [currentView])
 
   const openPresetSelector = () => {
     const nextReturnView = currentView === 'simple' ? 'simple' : 'dashboard'
