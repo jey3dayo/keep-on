@@ -3,6 +3,7 @@ import { HabitFormServer } from '@/components/habits/HabitFormServer'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
+import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 
 interface EditHabitPageProps {
@@ -10,7 +11,7 @@ interface EditHabitPageProps {
 }
 
 export default async function EditHabitPage({ params }: EditHabitPageProps) {
-  const timeoutMs = 8000
+  const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/habits/[id]/edit')
 
   logInfo('request.habits.edit.page:start', requestMeta)

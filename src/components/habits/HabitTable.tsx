@@ -1,5 +1,6 @@
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getArchivedHabits, getHabitsWithProgress } from '@/lib/queries/habit'
+import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import type { HabitWithProgress } from '@/types/habit'
 import { HabitTableClient } from './HabitTableClient'
 
@@ -10,7 +11,7 @@ interface HabitTableProps {
 }
 
 export async function HabitTable({ userId, clerkId, requestMeta }: HabitTableProps) {
-  const timeoutMs = 8000
+  const timeoutMs = getRequestTimeoutMs()
   const meta = requestMeta ?? createRequestMeta('/habits')
 
   logInfo('habits.table:start', meta)
