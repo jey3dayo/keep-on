@@ -53,28 +53,42 @@ export async function syncUser() {
     throw new Error('Email address not found')
   }
 
-  const existing = await getUserByClerkId(clerkUser.id)
-  if (existing) {
-    const parsed = safeParseUser(existing)
+  const parseUser = (user: unknown, source: 'existing' | 'upsert') => {
+    const parsed = safeParseUser(user)
     if (!parsed.success) {
-      logError('user.schema:invalid', { clerkId: clerkUser.id, issues: parsed.issues })
+      logError('user.schema:invalid', { clerkId: clerkUser.id, source, issues: parsed.issues })
       return null
-    }
-
-    if (parsed.output.email !== email) {
-      return await upsertUser({
-        clerkId: clerkUser.id,
-        email,
-      })
     }
     return parsed.output
   }
 
+  const existing = await getUserByClerkId(clerkUser.id)
+  if (existing) {
+    const parsedExisting = parseUser(existing, 'existing')
+    if (!parsedExisting) {
+      const repaired = await upsertUser({
+        clerkId: clerkUser.id,
+        email,
+      })
+      return parseUser(repaired, 'upsert')
+    }
+
+    if (parsedExisting.email !== email) {
+      const updated = await upsertUser({
+        clerkId: clerkUser.id,
+        email,
+      })
+      return parseUser(updated, 'upsert')
+    }
+    return parsedExisting
+  }
+
   // 初回ログイン時はユーザーを作成
-  return await upsertUser({
+  const created = await upsertUser({
     clerkId: clerkUser.id,
     email,
   })
+  return parseUser(created, 'upsert')
 }
 
 /**
