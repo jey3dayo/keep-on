@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { HabitActionDrawer } from './HabitActionDrawer'
 
-const DELETE_BUTTON_REGEX = /完全削除/
+const DELETE_BUTTON_REGEX = /完全に削除/
 
 // mocks
 vi.mock('@/components/habits/HabitEditSheet', () => ({

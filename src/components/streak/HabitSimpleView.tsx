@@ -1,13 +1,17 @@
 'use client'
 
+import { Result } from '@praha/byethrow'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { resetHabitProgressAction } from '@/app/actions/habits/reset'
 import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import { getRingColorFromBackground } from '@/lib/utils/color'
+import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
 
 // Drawerコンポーネントを動的にインポート
@@ -71,8 +75,10 @@ export function HabitSimpleView({
   onSettings,
   backgroundColor,
 }: HabitSimpleViewProps) {
+  const router = useRouter()
   const [currentPage, setCurrentPage] = useState(0)
   const [resetConfirm, setResetConfirm] = useState<{ habitId: string; habitName: string } | null>(null)
+  const [isResetting, setIsResetting] = useState(false)
   const [drawerState, setDrawerState] = useState<{ open: boolean; habit: HabitWithProgress | null }>({
     open: false,
     habit: null,
@@ -122,12 +128,23 @@ export function HabitSimpleView({
     onToggleHabit(habit.id)
   }
 
-  const handleResetConfirm = () => {
-    if (!resetConfirm) {
+  const handleResetConfirm = async () => {
+    if (!resetConfirm || isResetting) {
       return
     }
-    onToggleHabit(resetConfirm.habitId)
-    setResetConfirm(null)
+
+    setIsResetting(true)
+    const result = await resetHabitProgressAction(resetConfirm.habitId)
+    setIsResetting(false)
+
+    if (Result.isSuccess(result)) {
+      appToast.success('進捗をリセットしました')
+      setResetConfirm(null)
+      router.refresh()
+      return
+    }
+
+    appToast.error('進捗のリセットに失敗しました', result.error)
   }
 
   const openDrawer = (habit: HabitWithProgress) => {
@@ -165,7 +182,7 @@ export function HabitSimpleView({
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
 
   return (
-    <div className="flex min-h-screen flex-col transition-colors duration-500" style={{ backgroundColor: bgColor }}>
+    <div className="flex min-h-full flex-col transition-colors duration-500" style={{ backgroundColor: bgColor }}>
       <main className="flex flex-1 items-start justify-center px-4 pt-8 pb-24">
         <div className={cn('grid w-full max-w-md grid-cols-2 gap-6')}>
           {currentHabits.map((habit) => {
@@ -279,14 +296,15 @@ export function HabitSimpleView({
           />
 
           <div className="relative w-full max-w-xs rounded-2xl bg-card p-6 shadow-2xl">
-            <h3 className="mb-2 text-center font-semibold text-foreground text-lg">チェックインを戻しますか？</h3>
+            <h3 className="mb-2 text-center font-semibold text-foreground text-lg">進捗をリセットしますか？</h3>
             <p className="mb-6 text-center text-muted-foreground text-sm">
-              「{resetConfirm.habitName}」を未完了に戻します
+              「{resetConfirm.habitName}」の今日のチェックインを削除して、進捗を0に戻します
             </p>
 
             <div className="flex gap-3">
               <Button
                 className="flex-1 rounded-xl px-4 py-3"
+                disabled={isResetting}
                 onClick={() => setResetConfirm(null)}
                 type="button"
                 variant="secondary"
@@ -295,12 +313,13 @@ export function HabitSimpleView({
               </Button>
               <Button
                 className="flex-1 rounded-xl px-4 py-3 text-white"
+                disabled={isResetting}
                 onClick={handleResetConfirm}
                 style={{ backgroundColor: bgColor }}
                 type="button"
                 variant="ghost"
               >
-                解除する
+                リセットする
               </Button>
             </div>
           </div>

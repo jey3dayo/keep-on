@@ -4,7 +4,7 @@ import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
 import { weekStartToDay } from '@/constants/habit'
 import { AuthorizationError, DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
-import { createCheckin, deleteLatestCheckinByHabitAndPeriod } from '@/lib/queries/checkin'
+import { createCheckin } from '@/lib/queries/checkin'
 import { getCheckinCountForPeriod, getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
 import { getCurrentUserId } from '@/lib/user'
@@ -32,7 +32,7 @@ const serializeCheckinError = (error: unknown): SerializableCheckinError => {
   return { name: 'DatabaseError', message: databaseError.message }
 }
 
-export async function toggleCheckinAction(
+export async function addCheckinAction(
   habitId: string,
   dateKey?: string
 ): Result.ResultAsync<void, SerializableCheckinError> {
@@ -58,10 +58,8 @@ export async function toggleCheckinAction(
       const weekStartDay = weekStartToDay(weekStart)
       const currentCount = await getCheckinCountForPeriod(habitId, targetDate, habit.period, weekStartDay)
 
+      // 達成済みの場合は追加せずに終了
       if (currentCount >= habit.frequency) {
-        await deleteLatestCheckinByHabitAndPeriod(habitId, targetDate, habit.period, weekStartDay)
-        revalidatePath('/dashboard')
-        revalidatePath('/habits')
         return
       }
 

@@ -35,11 +35,11 @@ export function HabitResetDialog({ habitId, habitName, trigger, open, onOpenChan
   const isControlled = open !== undefined
   const dialogOpen = isControlled ? open : isOpen
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = (nextOpen: boolean) => {
     if (!isControlled) {
-      setIsOpen(open)
+      setIsOpen(nextOpen)
     }
-    onOpenChange?.(open)
+    onOpenChange?.(nextOpen)
   }
 
   const handleConfirm = async () => {
@@ -64,12 +64,14 @@ export function HabitResetDialog({ habitId, habitName, trigger, open, onOpenChan
       進捗をリセット
     </Button>
   )
-
-  const triggerContent = trigger === undefined ? defaultTrigger : trigger
+  let resolvedTrigger = trigger ?? null
+  if (trigger === undefined) {
+    resolvedTrigger = isControlled ? null : defaultTrigger
+  }
 
   return (
     <AlertDialog onOpenChange={handleOpenChange} open={dialogOpen}>
-      {triggerContent !== null && <AlertDialogTrigger asChild>{triggerContent}</AlertDialogTrigger>}
+      {resolvedTrigger ? <AlertDialogTrigger asChild>{resolvedTrigger}</AlertDialogTrigger> : null}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>進捗をリセットしますか？</AlertDialogTitle>
