@@ -2,8 +2,6 @@ import { eq } from 'drizzle-orm'
 import { DEFAULT_WEEK_START, type WeekStart } from '@/constants/habit'
 import { users } from '@/db/schema'
 import { getDb } from '@/lib/db'
-import { logError } from '@/lib/logging'
-import { safeParseUser } from '@/schemas/user'
 
 /**
  * ユーザーのupsert入力データ
@@ -47,17 +45,7 @@ export async function upsertUser(input: UpsertUserInput) {
 export async function getUserByClerkId(clerkId: string) {
   const db = await getDb()
   const [user] = await db.select().from(users).where(eq(users.clerkId, clerkId))
-  if (!user) {
-    return null
-  }
-
-  const parsed = safeParseUser(user)
-  if (!parsed.success) {
-    logError('user.schema:invalid', { clerkId, issues: parsed.issues })
-    return null
-  }
-
-  return parsed.output
+  return user ?? null
 }
 
 /**

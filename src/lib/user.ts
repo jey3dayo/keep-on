@@ -1,7 +1,7 @@
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { currentUser } from '@clerk/nextjs/server'
 import { StatusCodes } from 'http-status-codes'
-import { parseClerkApiResponseErrorPayload } from '@/schemas/user'
+import { parseClerkApiResponseErrorPayload, safeParseUser } from '@/schemas/user'
 import { logError } from './logging'
 import { getUserByClerkId, upsertUser } from './queries/user'
 
@@ -55,13 +55,19 @@ export async function syncUser() {
 
   const existing = await getUserByClerkId(clerkUser.id)
   if (existing) {
-    if (existing.email !== email) {
+    const parsed = safeParseUser(existing)
+    if (!parsed.success) {
+      logError('user.schema:invalid', { clerkId: clerkUser.id, issues: parsed.issues })
+      return null
+    }
+
+    if (parsed.output.email !== email) {
       return await upsertUser({
         clerkId: clerkUser.id,
         email,
       })
     }
-    return existing
+    return parsed.output
   }
 
   // 初回ログイン時はユーザーを作成
