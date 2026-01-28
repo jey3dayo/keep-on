@@ -22,6 +22,7 @@ keep-on/
 │   ├── lib/              # ユーティリティ・共通ロジック
 │   ├── middleware.ts     # 認証ミドルウェア
 │   ├── schemas/          # Valibot スキーマ
+│   ├── transforms/       # 入力/表示の変換レイヤー
 │   ├── types/            # 共有 TypeScript 型
 │   ├── validators/       # バリデーション（Result 型）
 ├── public/               # 静的アセット・PWA ファイル
@@ -43,6 +44,7 @@ Next.js 16 App Router の規約に従ったページ・レイアウト構成。
 - **ルーティング**: ファイルシステムベースのルーティング
 - **モーダル遷移**: Parallel Routes + Route Interception（`@modal` / `(.)`）を活用
 - **テーマ変数の集中管理**: `globals.css` に CSS 変数トークン（Radix Colors ベース）を定義
+- **メタデータルート**: `manifest.ts` などを `src/app/` 直下に配置
 
 **例:**
 
@@ -73,6 +75,7 @@ src/app/
 │       └── page.tsx
 ├── offline/
 │   └── page.tsx        # オフライン時フォールバック
+├── manifest.ts         # Metadata Route
 ├── sign-in/[[...sign-in]]/
 │   └── page.tsx        # Clerk サインインページ
 └── sign-up/[[...sign-up]]/
@@ -132,6 +135,7 @@ export async function createHabit(formData: FormData) {
 - `user.ts`: Clerk ユーザーを `users` テーブルへ同期（upsert）
 - `queries/`: ドメインごとのDBアクセス層（habit/user など、Drizzle クエリ）
 - `errors/`: ドメインエラー定義とシリアライズ変換
+- `server/`: Server Component 専用のユーティリティ（cookies/date/timeout など）
 - `utils/`: 小さなドメイン/日付ユーティリティを集約
 - テストファイル: `*.test.ts` / `__tests__/`（対象ファイルと同じディレクトリ or サブフォルダ）
 
@@ -247,6 +251,16 @@ Valibot スキーマを使ったバリデーションを Result 型で返す層�
 
 - `validate*` 関数で `Result<ResultType, ValidationError>` を返す
 - テストは `__tests__/` 配下に配置
+
+### `src/transforms/` - 入力/表示の変換層
+
+UI 由来の入力をバリデーション可能な形に整形する中間層。
+
+**パターン:**
+
+- FormData などの入力をスキーマ入力へ変換
+- UI 都合のデフォルト値・型変換のみを扱い、ドメインロジックは持たない
+- 例: `habitFormData.ts` のように UI 入力とスキーマの橋渡しを行う
 
 ### `src/generated/` - 自動生成ファイル
 
