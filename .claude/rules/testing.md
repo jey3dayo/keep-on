@@ -4,17 +4,33 @@
 
 開発・テスト環境でのClerkログインを効率化するためのガイドです。
 
+## クイックリファレンス
+
+このセクションの値を**唯一の正**として扱い、以降はプレースホルダで参照します。
+
+**推奨テストユーザー（1件だけ使う場合）**
+
+- メールアドレス: `jane+clerk_test@example.com`
+- パスワード: `dyc.PBR3pjc.cmh!fmx`
+- OTP（テストモード）: `424242`
+
+**固定テストメール（環境別）**
+
+- `dev+clerk_test@example.com`
+- `staging+clerk_test@example.com`
+
+**プレースホルダ**
+
+- `<TEST_EMAIL>` = 推奨テストユーザーのメールアドレス
+- `<TEST_PASSWORD>` = 推奨テストユーザーのパスワード
+- `<TEST_OTP>` = 推奨テストユーザーのOTP
+
 ## テストユーザーの管理
 
 **推奨:**
 
-- 推奨テストユーザー
-  - メールアドレス: `jane+clerk_test@example.com`
-  - パスワード: `dyc.PBR3pjc.cmh!fmx`
-- 開発用に固定のテストメールアドレスを使用
-  - `dev+clerk_test@example.com`
-  - `staging+clerk_test@example.com`
-- 各環境で異なるメールアドレスを使用して混同を防ぐ
+- クイックリファレンスの値を共通のテスト基準として使用
+- 環境ごとに固定のテストメールアドレスを使い分ける
 
 **非推奨:**
 
@@ -40,7 +56,7 @@ Clerkの開発インスタンスでは、デフォルトで**テストモード*
 **例:**
 
 - `test+clerk_test@example.com`
-- `jane+clerk_test@example.com`
+- `sample+clerk_test@example.com`
 - `user123+clerk_test@domain.org`
 
 **形式:**
@@ -67,7 +83,7 @@ Clerkの開発インスタンスでは、デフォルトで**テストモード*
 
 ## 認証コード
 
-すべてのOTP認証（メール・SMS）で固定値 `424242` を使用します。
+すべてのOTP認証（メール・SMS）で固定値を使用します。値はクイックリファレンスを参照してください。
 
 **適用される認証フロー:**
 
@@ -77,11 +93,7 @@ Clerkの開発インスタンスでは、デフォルトで**テストモード*
 
 ## テスト用パスワード
 
-テスト環境で使用する固定パスワード:
-
-```text
-dyc.PBR3pjc.cmh!fmx
-```
+テスト環境で使用する固定パスワードはクイックリファレンスを参照してください。
 
 ## 手動テスト手順
 
@@ -96,13 +108,13 @@ dyc.PBR3pjc.cmh!fmx
 2. **テストメールアドレスを入力**
 
    ```text
-   test+clerk_test@example.com
+   <TEST_EMAIL>
    ```
 
 3. **認証コード入力**
 
    ```text
-   424242
+   <TEST_OTP>
    ```
 
 4. **ログイン完了**
@@ -120,13 +132,13 @@ dyc.PBR3pjc.cmh!fmx
 2. **登録済みテストメールアドレスを入力**
 
    ```text
-   test+clerk_test@example.com
+   <TEST_EMAIL>
    ```
 
 3. **認証コード入力**
 
    ```text
-   424242
+   <TEST_OTP>
    ```
 
 4. **ログイン完了**
@@ -169,16 +181,19 @@ export default defineConfig({
 import { test, expect } from "@playwright/test";
 import { clerkClient } from "@clerk/testing/playwright";
 
+const TEST_EMAIL = "<TEST_EMAIL>";
+const TEST_OTP = "<TEST_OTP>";
+
 test.describe("Authentication", () => {
   test("should sign up with test email", async ({ page }) => {
     await page.goto("/sign-up");
 
     // テストメールアドレスを入力
-    await page.fill('input[name="email"]', "test+clerk_test@example.com");
+    await page.fill('input[name="email"]', TEST_EMAIL);
     await page.click('button[type="submit"]');
 
     // 認証コードを入力
-    await page.fill('input[name="code"]', "424242");
+    await page.fill('input[name="code"]', TEST_OTP);
     await page.click('button[type="submit"]');
 
     // ダッシュボードへリダイレクトされることを確認
@@ -204,6 +219,9 @@ test.describe("Authentication", () => {
 import { test as base } from "@playwright/test";
 import { clerkClient } from "@clerk/testing/playwright";
 
+const TEST_EMAIL = "<TEST_EMAIL>";
+const TEST_OTP = "<TEST_OTP>";
+
 // 認証済みテスト拡張
 export const test = base.extend<{
   authenticatedPage: typeof clerkClient;
@@ -211,9 +229,9 @@ export const test = base.extend<{
   authenticatedPage: async ({ page }, use) => {
     // テストユーザーでサインイン
     await page.goto("/sign-in");
-    await page.fill('input[name="email"]', "test+clerk_test@example.com");
+    await page.fill('input[name="email"]', TEST_EMAIL);
     await page.click('button[type="submit"]');
-    await page.fill('input[name="code"]', "424242");
+    await page.fill('input[name="code"]', TEST_OTP);
     await page.click('button[type="submit"]');
 
     // セッション状態を保存
@@ -231,6 +249,8 @@ export const test = base.extend<{
 ```typescript
 import { Page } from "@playwright/test";
 
+const TEST_OTP = "<TEST_OTP>";
+
 export async function signInWithTestUser(page: Page, email: string) {
   await page.goto("/sign-in");
   await page.fill('input[name="email"]', email);
@@ -239,7 +259,7 @@ export async function signInWithTestUser(page: Page, email: string) {
   // 認証コード入力
   const codeInput = page.locator('input[name="code"]');
   await codeInput.waitFor({ state: "visible" });
-  await codeInput.fill("424242");
+  await codeInput.fill(TEST_OTP);
   await page.click('button[type="submit"]');
 
   // ログイン完了を待機
@@ -254,7 +274,7 @@ export async function signOut(page: Page) {
 
 ## トラブルシューティング
 
-### 認証コード `424242` が受け付けられない
+### 認証コードが受け付けられない
 
 **原因**: プロダクション環境でテスト識別子を使用している
 
