@@ -1,23 +1,10 @@
 'use server'
 
 import { Result } from '@praha/byethrow'
-import { revalidatePath } from 'next/cache'
-import { AuthorizationError, NotFoundError, UnauthorizedError } from '@/lib/errors/habit'
+import { AuthorizationError, NotFoundError } from '@/lib/errors/habit'
 import { serializeHabitError } from '@/lib/errors/serializable'
-import { deleteHabit, getHabitById } from '@/lib/queries/habit'
-import { getCurrentUserId } from '@/lib/user'
-
-/**
- * 認証チェック
- * @returns Result<userId, UnauthorizedError>
- */
-const authenticateUser = async (): Result.ResultAsync<string, UnauthorizedError> => {
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    return Result.fail(new UnauthorizedError())
-  }
-  return Result.succeed(userId)
-}
+import { deleteHabit } from '@/lib/queries/habit'
+import { type HabitActionResult, requireOwnedHabit, requireUserId, revalidateHabitPaths } from './utils'
 
 /**
  * 習慣を完全削除するServer Action
@@ -25,39 +12,30 @@ const authenticateUser = async (): Result.ResultAsync<string, UnauthorizedError>
  * @param habitId - 習慣ID
  * @returns Result<void, SerializableHabitError>
  */
-export async function deleteHabitAction(
-  habitId: string
-): Result.ResultAsync<void, ReturnType<typeof serializeHabitError>> {
-  const userIdResult = await authenticateUser()
+export async function deleteHabitAction(habitId: string): HabitActionResult {
+  const userIdResult = await requireUserId()
 
-  if (Result.isSuccess(userIdResult)) {
-    const userId = userIdResult.value
-    const habit = await getHabitById(habitId)
-
-    if (!habit) {
-      return Result.fail(serializeHabitError(new NotFoundError()))
-    }
-
-    if (habit.userId !== userId) {
-      return Result.fail(serializeHabitError(new AuthorizationError()))
-    }
-
-    if (!habit.archived) {
-      return Result.fail(
-        serializeHabitError(new AuthorizationError({ detail: 'アーカイブされた習慣のみ削除できます' }))
-      )
-    }
-
-    const deleted = await deleteHabit(habitId, userId)
-
-    if (!deleted) {
-      return Result.fail(serializeHabitError(new NotFoundError()))
-    }
-
-    revalidatePath('/habits')
-    revalidatePath('/dashboard')
-
-    return Result.succeed(undefined)
+  if (!Result.isSuccess(userIdResult)) {
+    return Result.fail(userIdResult.error)
   }
-  return Result.fail(serializeHabitError(userIdResult.error))
+
+  const habitResult = await requireOwnedHabit(habitId, userIdResult.value)
+
+  if (!Result.isSuccess(habitResult)) {
+    return Result.fail(habitResult.error)
+  }
+
+  if (!habitResult.value.archived) {
+    return Result.fail(serializeHabitError(new AuthorizationError({ detail: 'アーカイブされた習慣のみ削除できます' })))
+  }
+
+  const deleted = await deleteHabit(habitId, userIdResult.value)
+
+  if (!deleted) {
+    return Result.fail(serializeHabitError(new NotFoundError()))
+  }
+
+  revalidateHabitPaths()
+
+  return Result.succeed(undefined)
 }

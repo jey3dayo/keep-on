@@ -20,20 +20,13 @@ import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
 import { formatDateKey } from '@/lib/utils/date'
 import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
+import type { User } from '@/types/user'
 
 interface Checkin {
   id: string
   habitId: string
   date: string
   createdAt: Date
-}
-
-interface User {
-  id: string
-  clerkId: string
-  email: string
-  createdAt: Date
-  updatedAt: Date
 }
 
 interface DashboardWrapperProps {

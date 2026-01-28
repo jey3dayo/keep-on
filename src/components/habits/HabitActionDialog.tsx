@@ -20,7 +20,7 @@ import { formatSerializableError, type SerializableHabitError } from '@/lib/erro
 
 interface HabitActionDialogProps {
   habitId: string
-  trigger?: ReactNode
+  trigger?: ReactNode | null
   title: string
   description: ReactNode
   confirmLabel: string

@@ -1,23 +1,10 @@
 'use server'
 
 import { Result } from '@praha/byethrow'
-import { revalidatePath } from 'next/cache'
-import { AuthorizationError, NotFoundError, UnauthorizedError } from '@/lib/errors/habit'
+import { NotFoundError } from '@/lib/errors/habit'
 import { serializeHabitError } from '@/lib/errors/serializable'
-import { archiveHabit, getHabitById } from '@/lib/queries/habit'
-import { getCurrentUserId } from '@/lib/user'
-
-/**
- * 認証チェック
- * @returns Result<userId, UnauthorizedError>
- */
-const authenticateUser = async (): Result.ResultAsync<string, UnauthorizedError> => {
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    return Result.fail(new UnauthorizedError())
-  }
-  return Result.succeed(userId)
-}
+import { archiveHabit } from '@/lib/queries/habit'
+import { type HabitActionResult, requireOwnedHabit, requireUserId, revalidateHabitPaths } from './utils'
 
 /**
  * 習慣をアーカイブするServer Action
@@ -25,33 +12,26 @@ const authenticateUser = async (): Result.ResultAsync<string, UnauthorizedError>
  * @param habitId - 習慣ID
  * @returns Result<void, SerializableHabitError>
  */
-export async function archiveHabitAction(
-  habitId: string
-): Result.ResultAsync<void, ReturnType<typeof serializeHabitError>> {
-  const userIdResult = await authenticateUser()
+export async function archiveHabitAction(habitId: string): HabitActionResult {
+  const userIdResult = await requireUserId()
 
-  if (Result.isSuccess(userIdResult)) {
-    const userId = userIdResult.value
-    const habit = await getHabitById(habitId)
-
-    if (!habit) {
-      return Result.fail(serializeHabitError(new NotFoundError()))
-    }
-
-    if (habit.userId !== userId) {
-      return Result.fail(serializeHabitError(new AuthorizationError()))
-    }
-
-    const archived = await archiveHabit(habitId, userId)
-
-    if (!archived) {
-      return Result.fail(serializeHabitError(new NotFoundError()))
-    }
-
-    revalidatePath('/habits')
-    revalidatePath('/dashboard')
-
-    return Result.succeed(undefined)
+  if (!Result.isSuccess(userIdResult)) {
+    return Result.fail(userIdResult.error)
   }
-  return Result.fail(serializeHabitError(userIdResult.error))
+
+  const habitResult = await requireOwnedHabit(habitId, userIdResult.value)
+
+  if (!Result.isSuccess(habitResult)) {
+    return Result.fail(habitResult.error)
+  }
+
+  const archived = await archiveHabit(habitId, userIdResult.value)
+
+  if (!archived) {
+    return Result.fail(serializeHabitError(new NotFoundError()))
+  }
+
+  revalidateHabitPaths()
+
+  return Result.succeed(undefined)
 }

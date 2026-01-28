@@ -1,27 +1,11 @@
 'use client'
 
-import type { ReactNode } from 'react'
 import { deleteHabitAction } from '@/app/actions/habits/delete'
 import { Button } from '@/components/ui/button'
 import { HabitActionDialog } from './HabitActionDialog'
+import type { HabitDialogProps } from './types'
 
-interface HabitDeleteDialogProps {
-  habitId: string
-  habitName: string
-  trigger?: ReactNode
-  open?: boolean
-  defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
-}
-
-export function HabitDeleteDialog({
-  habitId,
-  habitName,
-  trigger,
-  open,
-  defaultOpen,
-  onOpenChange,
-}: HabitDeleteDialogProps) {
+export function HabitDeleteDialog({ habitId, habitName, trigger, open, defaultOpen, onOpenChange }: HabitDialogProps) {
   const shouldUseDefaultTrigger = trigger === undefined && open === undefined
   const resolvedTrigger =
     trigger ??

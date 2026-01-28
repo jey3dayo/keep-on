@@ -5,12 +5,9 @@ import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
+import type { HabitIdPageProps } from '@/types/route'
 
-interface EditHabitPageProps {
-  params: Promise<{ id: string }>
-}
-
-export default async function EditHabitPage({ params }: EditHabitPageProps) {
+export default async function EditHabitPage({ params }: HabitIdPageProps) {
   const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/habits/[id]/edit')
 
