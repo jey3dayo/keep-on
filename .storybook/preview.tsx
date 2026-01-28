@@ -1,5 +1,5 @@
 import '../src/app/globals.css'
-import { withThemeByDataAttribute } from '@storybook/addon-themes'
+import { withThemeByClassName, withThemeByDataAttribute } from '@storybook/addon-themes'
 import type { Preview } from '@storybook/react'
 import { Toaster } from '@/components/ui/sonner'
 import { COLOR_THEMES, DEFAULT_COLOR_THEME } from '@/constants/theme'
@@ -23,6 +23,9 @@ if (
   })
 }
 
+const colorThemes = Object.fromEntries(COLOR_THEMES.map((theme) => [theme, theme]))
+const classThemes = Object.fromEntries(COLOR_THEMES.map((theme) => [theme, '']))
+
 const preview: Preview = {
   parameters: {
     controls: {
@@ -39,9 +42,17 @@ const preview: Preview = {
     },
   },
   decorators: [
+    withThemeByClassName({
+      themes: {
+        ...classThemes,
+        light: '',
+        dark: 'dark',
+      },
+      defaultTheme: DEFAULT_COLOR_THEME,
+    }),
     withThemeByDataAttribute({
       themes: {
-        ...Object.fromEntries(COLOR_THEMES.map((theme) => [theme, theme])),
+        ...colorThemes,
         light: '',
         dark: 'dark',
       },

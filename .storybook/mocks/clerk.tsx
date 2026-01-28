@@ -1,5 +1,10 @@
 import type { ReactNode } from 'react'
 
+interface ClerkUser {
+  id: string
+  emailAddresses: Array<{ emailAddress: string }>
+}
+
 export function ClerkProvider({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
@@ -30,4 +35,19 @@ export function ClerkLoaded({ children }: { children: ReactNode }) {
 
 export function ClerkLoading() {
   return null
+}
+
+export function isClerkAPIResponseError(_error: unknown): boolean {
+  return false
+}
+
+export function currentUser(): Promise<ClerkUser | null> {
+  return Promise.resolve({
+    id: 'storybook-user',
+    emailAddresses: [{ emailAddress: 'storybook@example.com' }],
+  })
+}
+
+export function auth() {
+  return Promise.resolve({ userId: 'storybook-user' })
 }

@@ -7,6 +7,9 @@ const baseUrl = process.env.STORYBOOK_URL ?? `http://localhost:${process.env.STO
 const indexUrl = new URL('index.json', baseUrl).toString()
 const iframeUrl = new URL('iframe.html', baseUrl).toString()
 
+const ignoredConsolePatterns = [/Failed to load resource/i]
+const transientConsolePatterns = [/Outdated Optimize Dep/i, /Failed to fetch dynamically imported module/i]
+
 const fetchJson = async (url, timeoutMs = 3000) => {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
@@ -57,9 +60,7 @@ const getStoryIds = (index) => {
     .map(([id, entry]) => entry.id ?? id)
 }
 
-const main = async () => {
-  const { index, server } = await ensureServer()
-
+const setupCleanup = (server) => {
   const cleanup = () => {
     if (server && !server.killed) {
       server.kill('SIGTERM')
@@ -75,6 +76,111 @@ const main = async () => {
     cleanup()
     process.exit(143)
   })
+}
+
+const classifyConsoleErrors = (consoleErrors) => {
+  const ignoredErrors = consoleErrors.filter((error) => ignoredConsolePatterns.some((pattern) => pattern.test(error)))
+  const transientErrors = consoleErrors.filter((error) =>
+    transientConsolePatterns.some((pattern) => pattern.test(error))
+  )
+  const remainingErrors = consoleErrors.filter(
+    (error) =>
+      !(
+        ignoredConsolePatterns.some((pattern) => pattern.test(error)) ||
+        transientConsolePatterns.some((pattern) => pattern.test(error))
+      )
+  )
+
+  return { ignoredErrors, transientErrors, remainingErrors }
+}
+
+const runStory = async (browser, id) => {
+  const page = await browser.newPage()
+  const pageErrors = []
+  const consoleErrors = []
+
+  page.on('pageerror', (error) => {
+    pageErrors.push(error.message)
+  })
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      consoleErrors.push(message.text())
+    }
+  })
+
+  const url = `${iframeUrl}?id=${encodeURIComponent(id)}&viewMode=story`
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+  await page.waitForSelector('#storybook-root', { state: 'attached', timeout: 20_000 })
+  await delay(300)
+
+  await page.close()
+
+  const { ignoredErrors, transientErrors, remainingErrors } = classifyConsoleErrors(consoleErrors)
+  return { pageErrors, transientErrors, consoleErrors: remainingErrors, ignoredErrors }
+}
+
+const runStoryWithRetry = async (browser, id, maxRetries) => {
+  let attempt = 0
+  let lastResult = null
+
+  while (attempt < maxRetries) {
+    attempt += 1
+    lastResult = await runStory(browser, id)
+
+    if (lastResult.pageErrors.length > 0 || lastResult.consoleErrors.length > 0) {
+      break
+    }
+
+    if (lastResult.transientErrors.length === 0) {
+      break
+    }
+
+    await delay(1000)
+  }
+
+  if (!lastResult) {
+    return { errors: [] }
+  }
+
+  if (lastResult.pageErrors.length > 0 || lastResult.consoleErrors.length > 0) {
+    return { errors: [...lastResult.pageErrors, ...lastResult.consoleErrors] }
+  }
+
+  return { errors: [] }
+}
+
+const collectFailures = async (browser, storyIds) => {
+  const failures = []
+  const maxRetries = 2
+
+  for (const id of storyIds) {
+    const result = await runStoryWithRetry(browser, id, maxRetries)
+    if (result.errors.length > 0) {
+      failures.push({ id, errors: result.errors })
+    }
+  }
+
+  return failures
+}
+
+const reportFailures = (failures) => {
+  if (failures.length === 0) {
+    return
+  }
+
+  console.error('Storybook runtime errors found:')
+  for (const failure of failures) {
+    console.error(`- ${failure.id}`)
+    for (const error of failure.errors) {
+      console.error(`  - ${error}`)
+    }
+  }
+  process.exit(1)
+}
+
+const main = async () => {
+  const { index, server } = await ensureServer()
+  setupCleanup(server)
 
   const storyIds = getStoryIds(index)
   if (storyIds.length === 0) {
@@ -82,95 +188,10 @@ const main = async () => {
   }
 
   const browser = await chromium.launch()
-  const failures = []
-
-  const ignoredConsolePatterns = [/Failed to load resource/i]
-  const transientConsolePatterns = [/Outdated Optimize Dep/i, /Failed to fetch dynamically imported module/i]
-
-  const runStory = async (id) => {
-    const page = await browser.newPage()
-    const pageErrors = []
-    const consoleErrors = []
-
-    page.on('pageerror', (error) => {
-      pageErrors.push(error.message)
-    })
-    page.on('console', (message) => {
-      if (message.type() === 'error') {
-        consoleErrors.push(message.text())
-      }
-    })
-
-    const url = `${iframeUrl}?id=${encodeURIComponent(id)}&viewMode=story`
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 })
-    await page.waitForSelector('#storybook-root', { state: 'attached', timeout: 20_000 })
-    await delay(300)
-
-    await page.close()
-
-    const ignoredErrors = consoleErrors.filter((error) =>
-      ignoredConsolePatterns.some((pattern) => pattern.test(error))
-    )
-    const transientErrors = consoleErrors.filter((error) =>
-      transientConsolePatterns.some((pattern) => pattern.test(error))
-    )
-    const remainingErrors = consoleErrors.filter(
-      (error) =>
-        !ignoredConsolePatterns.some((pattern) => pattern.test(error)) &&
-        !transientConsolePatterns.some((pattern) => pattern.test(error))
-    )
-
-    return { pageErrors, transientErrors, consoleErrors: remainingErrors, ignoredErrors }
-  }
-
-  const maxRetries = 2
-
-  for (const id of storyIds) {
-    let attempt = 0
-    let lastResult = null
-
-    while (attempt < maxRetries) {
-      attempt += 1
-      lastResult = await runStory(id)
-
-      if (lastResult.pageErrors.length > 0 || lastResult.consoleErrors.length > 0) {
-        break
-      }
-
-      if (lastResult.transientErrors.length === 0) {
-        break
-      }
-
-      await delay(1000)
-    }
-
-    if (!lastResult) {
-      continue
-    }
-
-    if (lastResult.pageErrors.length > 0 || lastResult.consoleErrors.length > 0) {
-      failures.push({
-        id,
-        errors: [...lastResult.pageErrors, ...lastResult.consoleErrors],
-      })
-      continue
-    }
-
-    // Transient optimize-dep errors are ignored after retries.
-  }
-
+  const failures = await collectFailures(browser, storyIds)
   await browser.close()
 
-  if (failures.length > 0) {
-    console.error('Storybook runtime errors found:')
-    for (const failure of failures) {
-      console.error(`- ${failure.id}`)
-      for (const error of failure.errors) {
-        console.error(`  - ${error}`)
-      }
-    }
-    process.exit(1)
-  }
+  reportFailures(failures)
 }
 
 await main()
