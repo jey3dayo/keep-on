@@ -32,7 +32,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.36.10",
     "@hookform/resolvers": "^5.2.2",
-    "@opennextjs/cloudflare": "^1.16.0",
+    "@opennextjs/cloudflare": "^1.16.1",
     "@paralleldrive/cuid2": "^3.3.0",
     "@praha/byethrow": "^0.9.0",
     "@praha/error-factory": "^1.2.1",
