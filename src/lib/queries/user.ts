@@ -49,6 +49,18 @@ export async function getUserWeekStart(clerkId: string): Promise<WeekStart> {
 }
 
 /**
+ * ユーザーIDから週開始日設定を取得
+ *
+ * @param userId - アプリ内ユーザーID
+ * @returns 週開始日設定 ('monday' | 'sunday')
+ */
+export async function getUserWeekStartById(userId: string): Promise<WeekStart> {
+  const db = await getDb()
+  const [user] = await db.select({ weekStart: users.weekStart }).from(users).where(eq(users.id, userId))
+  return (user?.weekStart as WeekStart) ?? DEFAULT_WEEK_START
+}
+
+/**
  * ユーザーの週開始日設定を更新
  *
  * @param clerkId - ClerkのユーザーID
