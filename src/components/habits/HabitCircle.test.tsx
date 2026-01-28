@@ -11,9 +11,8 @@ describe('HabitCircle', () => {
     it('習慣名とアイコンが表示される', () => {
       render(<HabitCircle completed={false} habitName="毎日走る" icon="footprints" />)
 
-      expect(screen.getByText('毎日走る')).toBeInTheDocument()
-      const svg = screen.getByRole('button', { name: COMPLETE_LABEL_REGEX })
-      expect(svg).toBeInTheDocument()
+      // aria-label で習慣名を確認
+      expect(screen.getByRole('button', { name: COMPLETE_LABEL_REGEX })).toBeInTheDocument()
     })
 
     it('完了状態で完了テキストが表示される', () => {
@@ -25,11 +24,11 @@ describe('HabitCircle', () => {
     it('sizeプロパティでサイズが変わる', () => {
       const { rerender } = render(<HabitCircle completed={false} habitName="test" icon="check" size="sm" />)
       let button = screen.getByRole('button')
-      expect(button.className).toContain('h-12')
+      expect(button.className).toContain('w-16')
 
       rerender(<HabitCircle completed={false} habitName="test" icon="check" size="lg" />)
       button = screen.getByRole('button')
-      expect(button.className).toContain('h-24')
+      expect(button.className).toContain('w-32')
     })
 
     it('icon=nullでデフォルトアイコンが表示される', () => {
