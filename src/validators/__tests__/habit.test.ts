@@ -10,18 +10,10 @@ describe('validateHabitInput', () => {
     const formData = new FormData()
     formData.append('name', '朝の運動')
     formData.append('icon', 'footprints')
+    formData.append('period', 'daily')
+    formData.append('frequency', '1')
 
     const result = validateHabitInput(userId, formData)
-
-    // Debug: 失敗時のエラー内容を確認
-    if (Result.isFailure(result)) {
-      console.error('Validation failed:', {
-        errorName: result.error.name,
-        errorMessage: result.error.message,
-        errorField: result.error.field,
-        errorReason: result.error.reason,
-      })
-    }
 
     expect(Result.isSuccess(result)).toBe(true)
     if (Result.isSuccess(result)) {
@@ -68,6 +60,8 @@ describe('validateHabitInput', () => {
   it('iconが省略された場合はnullとして扱う', () => {
     const formData = new FormData()
     formData.append('name', '朝の運動')
+    formData.append('period', 'daily')
+    formData.append('frequency', '1')
 
     const result = validateHabitInput(userId, formData)
 
@@ -80,6 +74,8 @@ describe('validateHabitInput', () => {
   it('nameの前後の空白をトリム', () => {
     const formData = new FormData()
     formData.append('name', '  朝の運動  ')
+    formData.append('period', 'daily')
+    formData.append('frequency', '1')
 
     const result = validateHabitInput(userId, formData)
 
