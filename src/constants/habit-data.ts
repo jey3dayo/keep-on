@@ -49,7 +49,7 @@ export const habitIcons: HabitIcon[] = [
   { id: 'flame', icon: Flame, label: '連続' },
 ]
 
-export const habitColors = [
+export const newHabitColors = [
   { id: 'orange', color: 'var(--orange-9)', label: 'オレンジ' },
   { id: 'red', color: 'var(--red-9)', label: 'レッド' },
   { id: 'pink', color: 'var(--pink-9)', label: 'ピンク' },
@@ -60,6 +60,19 @@ export const habitColors = [
   { id: 'green', color: 'var(--green-9)', label: 'グリーン' },
   { id: 'lime', color: 'var(--lime-9)', label: 'ライム' },
   { id: 'yellow', color: 'var(--yellow-9)', label: 'イエロー' },
+]
+
+export const habitColors = [
+  { id: 'orange', color: 'oklch(0.70 0.18 45)', label: 'オレンジ' },
+  { id: 'red', color: 'oklch(0.65 0.22 25)', label: 'レッド' },
+  { id: 'pink', color: 'oklch(0.70 0.18 350)', label: 'ピンク' },
+  { id: 'purple', color: 'oklch(0.65 0.20 300)', label: 'パープル' },
+  { id: 'blue', color: 'oklch(0.65 0.18 250)', label: 'ブルー' },
+  { id: 'cyan', color: 'oklch(0.75 0.14 200)', label: 'シアン' },
+  { id: 'teal', color: 'oklch(0.70 0.14 175)', label: 'ティール' },
+  { id: 'green', color: 'oklch(0.70 0.18 145)', label: 'グリーン' },
+  { id: 'lime', color: 'oklch(0.80 0.18 125)', label: 'ライム' },
+  { id: 'yellow', color: 'oklch(0.85 0.16 95)', label: 'イエロー' },
 ]
 
 export interface TaskPeriodOption {
