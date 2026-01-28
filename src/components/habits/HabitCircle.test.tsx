@@ -3,20 +3,23 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { HabitCircle } from './HabitCircle'
 
+const COMPLETE_LABEL_REGEX = /毎日走るを完了にする/
+const INCOMPLETE_LABEL_REGEX = /毎日走るを未完了にする/
+
 describe('HabitCircle', () => {
   describe('レンダリング', () => {
     it('習慣名とアイコンが表示される', () => {
       render(<HabitCircle completed={false} habitName="毎日走る" icon="footprints" />)
 
       expect(screen.getByText('毎日走る')).toBeInTheDocument()
-      const svg = screen.getByRole('button', { name: /毎日走るを完了にする/ })
+      const svg = screen.getByRole('button', { name: COMPLETE_LABEL_REGEX })
       expect(svg).toBeInTheDocument()
     })
 
     it('完了状態で完了テキストが表示される', () => {
       render(<HabitCircle completed habitName="毎日走る" icon="footprints" />)
 
-      expect(screen.getByRole('button', { name: /毎日走るを未完了にする/ })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: INCOMPLETE_LABEL_REGEX })).toBeInTheDocument()
     })
 
     it('sizeプロパティでサイズが変わる', () => {
