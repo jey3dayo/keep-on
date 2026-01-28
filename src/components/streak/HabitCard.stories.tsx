@@ -102,15 +102,11 @@ if (import.meta.vitest) {
       return <Component {...args} />
     }
 
-    const decorators = [
-      ...(meta.decorators ?? []),
-      ...(story.decorators ?? []),
-    ] as Array<(Story: () => JSX.Element | null) => JSX.Element | null>
+    const decorators = [...(meta.decorators ?? []), ...(story.decorators ?? [])] as Array<
+      (Story: () => JSX.Element | null) => JSX.Element | null
+    >
 
-    const DecoratedStory = decorators.reduce(
-      (Decorated, decorator) => () => decorator(Decorated),
-      StoryComponent,
-    )
+    const DecoratedStory = decorators.reduce((Decorated, decorator) => () => decorator(Decorated), StoryComponent)
 
     return render(<DecoratedStory />)
   }

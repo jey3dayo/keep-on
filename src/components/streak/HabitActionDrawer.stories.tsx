@@ -1,9 +1,54 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { HabitActionDrawer } from './HabitActionDrawer'
+import { Button } from '@/components/ui/button'
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import type { HabitWithProgress } from '@/types/habit'
+
+// Storybook用の簡易版HabitActionDrawer（依存関係をモック化）
+function StorybookHabitActionDrawer({
+  open,
+  habit,
+  onOpenChange,
+}: {
+  open: boolean
+  habit: HabitWithProgress | null
+  onOpenChange: (open: boolean) => void
+}) {
+  if (!habit) {
+    return null
+  }
+
+  const isArchived = habit.archived || Boolean(habit.archivedAt)
+
+  return (
+    <Drawer onOpenChange={onOpenChange} open={open}>
+      <DrawerContent>
+        <DrawerHeader className="text-left">
+          <DrawerTitle>習慣の操作</DrawerTitle>
+          <DrawerDescription>{habit.name}</DrawerDescription>
+        </DrawerHeader>
+        <div className="flex gap-2 p-4 pt-0">
+          <Button className="flex-1" onClick={() => onOpenChange(false)} variant="outline">
+            編集
+          </Button>
+
+          {isArchived ? (
+            <Button className="flex-1" onClick={() => onOpenChange(false)} variant="destructive">
+              削除
+            </Button>
+          ) : (
+            <Button className="flex-1" onClick={() => onOpenChange(false)} variant="secondary">
+              アーカイブ
+            </Button>
+          )}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  )
+}
 
 const meta = {
   title: 'Streak/HabitActionDrawer',
-  component: HabitActionDrawer,
+  component: StorybookHabitActionDrawer,
   parameters: {
     layout: 'centered',
   },
@@ -20,7 +65,7 @@ const meta = {
       description: '開閉状態が変化したときのコールバック',
     },
   },
-} satisfies Meta<typeof HabitActionDrawer>
+} satisfies Meta<typeof StorybookHabitActionDrawer>
 
 export default meta
 type Story = StoryObj<typeof meta>
@@ -131,15 +176,11 @@ if (import.meta.vitest) {
       return <Component {...args} />
     }
 
-    const decorators = [
-      ...(meta.decorators ?? []),
-      ...(story.decorators ?? []),
-    ] as Array<(Story: () => JSX.Element | null) => JSX.Element | null>
+    const decorators = [...(meta.decorators ?? []), ...(story.decorators ?? [])] as Array<
+      (Story: () => JSX.Element | null) => JSX.Element | null
+    >
 
-    const DecoratedStory = decorators.reduce(
-      (Decorated, decorator) => () => decorator(Decorated),
-      StoryComponent,
-    )
+    const DecoratedStory = decorators.reduce((Decorated, decorator) => () => decorator(Decorated), StoryComponent)
 
     return render(<DecoratedStory />)
   }
