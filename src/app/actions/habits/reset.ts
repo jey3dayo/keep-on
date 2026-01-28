@@ -3,32 +3,14 @@
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
 import { weekStartToDay } from '@/constants/habit'
-import { AuthorizationError, DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
+import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
 import { deleteAllCheckinsByHabitAndPeriod } from '@/lib/queries/checkin'
 import { getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
 import { getCurrentUserId } from '@/lib/user'
+import { serializeActionError, type SerializableActionError } from './action-utils'
 
-type SerializableResetError =
-  | { name: 'UnauthorizedError'; message: string }
-  | { name: 'AuthorizationError'; message: string }
-  | { name: 'DatabaseError'; message: string }
-
-const serializeResetError = (error: unknown): SerializableResetError => {
-  if (error instanceof UnauthorizedError) {
-    return { name: 'UnauthorizedError', message: error.message }
-  }
-
-  if (error instanceof AuthorizationError) {
-    return { name: 'AuthorizationError', message: error.message }
-  }
-
-  const databaseError =
-    error instanceof DatabaseError ? error : new DatabaseError({ detail: '進捗のリセットに失敗しました', cause: error })
-
-  console.error('Database error:', databaseError.cause)
-  return { name: 'DatabaseError', message: databaseError.message }
-}
+type SerializableResetError = SerializableActionError
 
 export async function resetHabitProgressAction(
   habitId: string,
@@ -62,6 +44,6 @@ export async function resetHabitProgressAction(
       revalidatePath('/habits')
       return
     },
-    catch: (error) => serializeResetError(error),
+    catch: (error) => serializeActionError(error, '進捗のリセットに失敗しました'),
   })()
 }

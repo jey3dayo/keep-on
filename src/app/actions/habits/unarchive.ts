@@ -2,22 +2,10 @@
 
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
-import { AuthorizationError, NotFoundError, UnauthorizedError } from '@/lib/errors/habit'
+import { AuthorizationError, NotFoundError } from '@/lib/errors/habit'
 import { serializeHabitError } from '@/lib/errors/serializable'
 import { getHabitById, unarchiveHabit } from '@/lib/queries/habit'
-import { getCurrentUserId } from '@/lib/user'
-
-/**
- * 認証チェック
- * @returns Result<userId, UnauthorizedError>
- */
-const authenticateUser = async (): Result.ResultAsync<string, UnauthorizedError> => {
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    return Result.fail(new UnauthorizedError())
-  }
-  return Result.succeed(userId)
-}
+import { authenticateUser } from './action-utils'
 
 /**
  * 習慣を復元するServer Action

@@ -2,23 +2,11 @@
 
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
-import { DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
+import { DatabaseError } from '@/lib/errors/habit'
 import { type SerializableHabitError, serializeHabitError } from '@/lib/errors/serializable'
 import { createHabit as createHabitQuery } from '@/lib/queries/habit'
-import { getCurrentUserId } from '@/lib/user'
 import { validateHabitInput } from '@/validators/habit'
-
-/**
- * 認証チェック
- * @returns Result<userId, UnauthorizedError>
- */
-const authenticateUser = async (): Result.ResultAsync<string, UnauthorizedError> => {
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    return Result.fail(new UnauthorizedError())
-  }
-  return Result.succeed(userId)
-}
+import { authenticateUser } from './action-utils'
 
 /**
  * 習慣を作成するServer Action
