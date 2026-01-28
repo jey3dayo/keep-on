@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/basics/Button'
 import { Icon, type IconName } from '@/components/basics/Icon'
 import { cn } from '@/lib/utils'
 
@@ -36,20 +37,21 @@ export function IconPicker({ selectedIcon, onIconSelect }: IconPickerProps) {
           <h3 className="mb-3 font-semibold text-muted-foreground text-sm">{category.name}</h3>
           <div className="grid grid-cols-4 gap-2">
             {category.icons.map((iconName) => (
-              <button
+              <Button
                 aria-label={iconName}
                 aria-pressed={selectedIcon === iconName}
                 className={cn(
-                  'flex items-center justify-center rounded-lg p-3 transition-colors',
+                  'h-auto rounded-lg p-3',
                   'hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
                   selectedIcon === iconName ? 'bg-primary text-primary-foreground' : 'bg-secondary'
                 )}
                 key={iconName}
                 onClick={() => onIconSelect(iconName)}
                 type="button"
+                variant="ghost"
               >
                 <Icon className="h-6 w-6" name={iconName} />
-              </button>
+              </Button>
             ))}
           </div>
         </div>

@@ -9,6 +9,7 @@ import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
+import { Button } from '@/components/basics/Button'
 import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, DEFAULT_HABIT_PERIOD } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
 import { formatSerializableError } from '@/lib/errors/serializable'
@@ -112,18 +113,19 @@ export function HabitFormServer({
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-10 flex items-center justify-between border-border border-b bg-background/80 px-4 py-3 backdrop-blur-xl">
-        <button
-          className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+        <Button
+          className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
           onClick={() => router.back()}
           type="button"
+          variant="ghost"
         >
           <ChevronLeft className="h-5 w-5" />
           <span className="text-sm">戻る</span>
-        </button>
+        </Button>
         <h1 className="font-semibold text-foreground text-lg">新しい習慣</h1>
-        <button
+        <Button
           className={cn(
-            'font-medium text-sm transition-colors',
+            'h-auto p-0 hover:bg-transparent',
             watchedName?.trim() && !isSaving
               ? 'text-foreground hover:opacity-80'
               : 'cursor-not-allowed text-muted-foreground'
@@ -132,9 +134,10 @@ export function HabitFormServer({
           onClick={form.handleSubmit(handleSubmit)}
           style={{ color: watchedName?.trim() && !isSaving ? selectedColorValue : undefined }}
           type="button"
+          variant="ghost"
         >
           {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
-        </button>
+        </Button>
       </header>
 
       <form className="space-y-8 px-4 py-6" onSubmit={form.handleSubmit(handleSubmit)}>
@@ -180,13 +183,14 @@ export function HabitFormServer({
                   const IconComponent = item.icon
                   const isSelected = field.value === item.id
                   return (
-                    <button
+                    <Button
                       className={cn(
-                        'flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-200',
+                        'h-12 w-12 rounded-xl transition-all duration-200',
                         isSelected ? 'ring-2 ring-offset-2 ring-offset-background' : 'bg-card hover:bg-card/80'
                       )}
                       key={item.id}
                       onClick={() => field.onChange(item.id)}
+                      size="icon"
                       style={
                         {
                           backgroundColor: isSelected ? selectedColorValue : undefined,
@@ -194,6 +198,7 @@ export function HabitFormServer({
                         } as React.CSSProperties
                       }
                       type="button"
+                      variant="ghost"
                     >
                       <IconComponent
                         className={cn(
@@ -201,7 +206,7 @@ export function HabitFormServer({
                           isSelected ? 'text-background' : 'text-muted-foreground'
                         )}
                       />
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
@@ -220,9 +225,9 @@ export function HabitFormServer({
                 {taskPeriods.map((period) => {
                   const isSelected = field.value === period.id
                   return (
-                    <button
+                    <Button
                       className={cn(
-                        'relative flex flex-col items-center gap-1 rounded-xl border px-3 py-4 transition-all duration-200',
+                        'relative h-auto flex-col gap-1 rounded-xl border px-3 py-4 transition-all duration-200',
                         isSelected ? 'border-transparent' : 'border-border bg-card hover:bg-card/80'
                       )}
                       key={period.id}
@@ -232,6 +237,7 @@ export function HabitFormServer({
                         borderColor: isSelected ? selectedColorValue : undefined,
                       }}
                       type="button"
+                      variant="ghost"
                     >
                       <span
                         className={cn(
@@ -249,7 +255,7 @@ export function HabitFormServer({
                           style={{ backgroundColor: selectedColorValue }}
                         />
                       )}
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
@@ -268,13 +274,14 @@ export function HabitFormServer({
                 {habitColors.map((color) => {
                   const isSelected = field.value === color.id
                   return (
-                    <button
+                    <Button
                       className={cn(
                         'h-10 w-10 flex-shrink-0 rounded-full transition-all duration-200',
                         isSelected && 'ring-2 ring-offset-2 ring-offset-background'
                       )}
                       key={color.id}
                       onClick={() => field.onChange(color.id)}
+                      size="icon"
                       style={
                         {
                           backgroundColor: color.color,
@@ -282,9 +289,10 @@ export function HabitFormServer({
                         } as React.CSSProperties
                       }
                       type="button"
+                      variant="ghost"
                     >
                       {isSelected && <Check className="mx-auto h-5 w-5 text-background" />}
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
@@ -301,26 +309,30 @@ export function HabitFormServer({
               <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">目標回数</div>
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-center justify-between">
-                  <button
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80"
+                  <Button
+                    className="h-10 w-10 rounded-full p-0"
                     onClick={() => field.onChange(Math.max(1, field.value - 1))}
+                    size="icon"
                     type="button"
+                    variant="secondary"
                   >
                     <span className="font-medium text-xl">−</span>
-                  </button>
+                  </Button>
                   <div className="flex flex-col items-center">
                     <span className="font-bold text-4xl" style={{ color: selectedColorValue }}>
                       {field.value}
                     </span>
                     <span className="text-muted-foreground text-sm">{currentPeriod.frequencyLabel}</span>
                   </div>
-                  <button
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-secondary/80"
+                  <Button
+                    className="h-10 w-10 rounded-full p-0"
                     onClick={() => field.onChange(field.value + 1)}
+                    size="icon"
                     type="button"
+                    variant="secondary"
                   >
                     <span className="font-medium text-xl">+</span>
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -330,10 +342,11 @@ export function HabitFormServer({
         {/* Reminder Section (Future Feature) */}
         <div className="space-y-3">
           <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">リマインダー</div>
-          <button
-            className="flex w-full cursor-not-allowed items-center justify-between rounded-xl border border-border bg-card p-4 opacity-50 transition-colors hover:bg-card/80"
+          <Button
+            className="h-auto w-full cursor-not-allowed justify-between rounded-xl border border-border bg-card p-4 opacity-50 hover:bg-card/80"
             disabled
             type="button"
+            variant="ghost"
           >
             <div className="flex items-center gap-3">
               <div
@@ -348,7 +361,7 @@ export function HabitFormServer({
               </div>
             </div>
             <ChevronLeft className="h-5 w-5 rotate-180 text-muted-foreground" />
-          </button>
+          </Button>
         </div>
 
         {/* Preview Card */}

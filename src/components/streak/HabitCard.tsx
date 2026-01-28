@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { HabitCardToggleButton } from '@/components/streak/HabitCardToggleButton'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -27,16 +28,18 @@ export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: Habi
       {(onEdit || onDelete) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
+            <Button
               aria-label="メニューを開く"
               className="absolute top-2 right-2 z-10 rounded-full p-1.5 text-white/80 hover:bg-black/20 hover:text-white"
               onClick={(e) => {
                 e.stopPropagation()
               }}
+              size="icon"
               type="button"
+              variant="ghost"
             >
               <Icon className="h-4 w-4" name="more-horizontal" />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {onEdit && (

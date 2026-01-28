@@ -4,7 +4,7 @@ import { Calendar } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import type { CSSProperties, ReactNode } from 'react'
 import { useRef, useState } from 'react'
-import { AddHabitButton, CheckInButton } from '@/components/basics/Button'
+import { AddHabitButton, Button, CheckInButton } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
 import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
@@ -137,16 +137,17 @@ export function HabitListView({
 
 function FilterButton({ active, children, onClick }: { active: boolean; children: ReactNode; onClick: () => void }) {
   return (
-    <button
+    <Button
       className={cn(
-        'whitespace-nowrap rounded-full px-4 py-2 font-medium text-sm transition-all',
+        'h-auto rounded-full px-4 py-2',
         active ? 'bg-foreground text-background' : 'border border-border bg-card text-muted-foreground hover:bg-card/80'
       )}
       onClick={onClick}
       type="button"
+      variant="ghost"
     >
       {children}
-    </button>
+    </Button>
   )
 }
 

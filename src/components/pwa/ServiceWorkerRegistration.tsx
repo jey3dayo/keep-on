@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Button } from '@/components/basics/Button'
 
 export function ServiceWorkerRegistration() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
@@ -72,13 +73,9 @@ export function ServiceWorkerRegistration() {
   return (
     <div className="fixed right-4 bottom-4 z-50 rounded-lg border border-border bg-card p-4 shadow-lg">
       <p className="text-foreground text-sm">新しいバージョンが利用可能です</p>
-      <button
-        className="mt-2 rounded-md bg-primary px-4 py-2 text-primary-foreground text-sm hover:bg-primary/90"
-        onClick={handleUpdate}
-        type="button"
-      >
+      <Button className="mt-2" onClick={handleUpdate} type="button" variant="default">
         更新する
-      </button>
+      </Button>
     </div>
   )
 }

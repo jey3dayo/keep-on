@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/basics/Button'
 import type { ColorThemeName } from '@/constants/theme'
 import { cn } from '@/lib/utils'
 
@@ -23,14 +24,16 @@ export function ColorPalette({ currentTheme, onThemeChange }: ColorPaletteProps)
   return (
     <div className="flex items-center justify-center gap-2">
       {colors.map(({ name, bg }) => (
-        <button
+        <Button
           aria-label={`${name} テーマ`}
           aria-pressed={currentTheme === name}
-          className={cn('color-swatch', currentTheme === name && 'color-swatch-selected')}
+          className={cn('color-swatch hover:bg-transparent', currentTheme === name && 'color-swatch-selected')}
           key={name}
           onClick={() => onThemeChange(name)}
+          size="icon"
           style={{ backgroundColor: bg }}
           type="button"
+          variant="ghost"
         />
       ))}
     </div>

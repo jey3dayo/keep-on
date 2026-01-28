@@ -57,17 +57,18 @@ interface AddHabitButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEleme
 
 export function AddHabitButton({ children, icon = true, className, ...props }: AddHabitButtonProps) {
   return (
-    <button
+    <Button
       className={cn(
-        'flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-medium text-accent-foreground shadow-lg transition-all hover:scale-105 hover:bg-accent/80 active:scale-95',
+        'h-auto rounded-full px-6 py-3 shadow-lg transition-transform hover:scale-105 active:scale-95',
         className
       )}
       type="button"
+      variant="default"
       {...props}
     >
       {icon && <Icon className="h-5 w-5" name="plus" />}
       {children}
-    </button>
+    </Button>
   )
 }
 
@@ -77,16 +78,19 @@ interface CheckInButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export function CheckInButton({ children, completed = false, className, ...props }: CheckInButtonProps) {
   return (
-    <button
+    <Button
       className={cn(
-        'flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95',
+        'h-14 w-14 flex-shrink-0 rounded-full transition-all duration-300 hover:scale-110 hover:bg-transparent active:scale-95',
         completed && 'ring-2 ring-offset-2 ring-offset-background',
         className
       )}
+      size="icon"
+      type="button"
+      variant="ghost"
       {...props}
     >
       {children}
-    </button>
+    </Button>
   )
 }
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById } from '@/constants/habit-data'
@@ -28,17 +29,18 @@ export function TaskGrid({ habits, completedHabitIds, onToggleHabit, onAddClick 
             onToggle={onToggleHabit}
           />
         ))}
-        <button
+        <Button
           aria-label="タスクを追加"
-          className="flex flex-col items-center gap-2 transition-transform active:scale-95"
+          className="h-auto flex-col p-0 transition-transform hover:bg-transparent active:scale-95"
           onClick={onAddClick}
           type="button"
+          variant="ghost"
         >
           <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white/40 border-dashed bg-transparent">
             <Icon className="h-12 w-12 text-white" name="plus" />
           </div>
           <span className="font-medium text-sm text-white/80">追加</span>
-        </button>
+        </Button>
       </div>
     </div>
   )
