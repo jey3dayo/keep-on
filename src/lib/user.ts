@@ -1,9 +1,9 @@
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { currentUser } from '@clerk/nextjs/server'
 import { StatusCodes } from 'http-status-codes'
-import { parseClerkApiResponseErrorPayload } from '@/schemas/user'
+import { parseClerkApiResponseErrorPayload, safeParseUser } from '@/schemas/user'
 import { logError } from './logging'
-import { upsertUser } from './queries/user'
+import { getUserByClerkId, upsertUser } from './queries/user'
 
 function parseClerkApiResponseError(error: unknown) {
   if (isClerkAPIResponseError(error)) {
@@ -53,11 +53,33 @@ export async function syncUser() {
     throw new Error('Email address not found')
   }
 
-  // ユーザーを取得または作成
-  return await upsertUser({
-    clerkId: clerkUser.id,
-    email,
-  })
+  const parseUser = (user: unknown, source: 'existing' | 'upsert') => {
+    if (!user) {
+      return null
+    }
+    const parsed = safeParseUser(user)
+    if (!parsed.success) {
+      logError('user.schema:invalid', { clerkId: clerkUser.id, source, issues: parsed.issues })
+      return null
+    }
+    return parsed.output
+  }
+
+  const existing = await getUserByClerkId(clerkUser.id)
+  const parsedExisting = parseUser(existing, 'existing')
+  if (parsedExisting) {
+    if (parsedExisting.email !== email) {
+      const updated = await upsertUser({
+        clerkId: clerkUser.id,
+        email,
+      })
+      return parseUser(updated, 'upsert')
+    }
+    return parsedExisting
+  }
+
+  const created = await upsertUser({ clerkId: clerkUser.id, email })
+  return parseUser(created, 'upsert')
 }
 
 /**
