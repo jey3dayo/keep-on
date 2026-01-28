@@ -1,22 +1,46 @@
 @import "tailwindcss";
 @import "@radix-ui/colors/blue.css";
 @import "@radix-ui/colors/blue-dark.css";
+@import "@radix-ui/colors/blue-alpha.css";
+@import "@radix-ui/colors/blue-dark-alpha.css";
 @import "@radix-ui/colors/cyan.css";
 @import "@radix-ui/colors/cyan-dark.css";
+@import "@radix-ui/colors/cyan-alpha.css";
+@import "@radix-ui/colors/cyan-dark-alpha.css";
+@import "@radix-ui/colors/green.css";
+@import "@radix-ui/colors/green-dark.css";
+@import "@radix-ui/colors/green-alpha.css";
+@import "@radix-ui/colors/green-dark-alpha.css";
 @import "@radix-ui/colors/lime.css";
 @import "@radix-ui/colors/lime-dark.css";
+@import "@radix-ui/colors/lime-alpha.css";
+@import "@radix-ui/colors/lime-dark-alpha.css";
 @import "@radix-ui/colors/orange.css";
 @import "@radix-ui/colors/orange-dark.css";
+@import "@radix-ui/colors/orange-alpha.css";
+@import "@radix-ui/colors/orange-dark-alpha.css";
 @import "@radix-ui/colors/pink.css";
 @import "@radix-ui/colors/pink-dark.css";
+@import "@radix-ui/colors/pink-alpha.css";
+@import "@radix-ui/colors/pink-dark-alpha.css";
 @import "@radix-ui/colors/purple.css";
 @import "@radix-ui/colors/purple-dark.css";
+@import "@radix-ui/colors/purple-alpha.css";
+@import "@radix-ui/colors/purple-dark-alpha.css";
 @import "@radix-ui/colors/red.css";
 @import "@radix-ui/colors/red-dark.css";
+@import "@radix-ui/colors/red-alpha.css";
+@import "@radix-ui/colors/red-dark-alpha.css";
 @import "@radix-ui/colors/slate.css";
 @import "@radix-ui/colors/slate-dark.css";
+@import "@radix-ui/colors/teal.css";
+@import "@radix-ui/colors/teal-dark.css";
+@import "@radix-ui/colors/teal-alpha.css";
+@import "@radix-ui/colors/teal-dark-alpha.css";
 @import "@radix-ui/colors/yellow.css";
 @import "@radix-ui/colors/yellow-dark.css";
+@import "@radix-ui/colors/yellow-alpha.css";
+@import "@radix-ui/colors/yellow-dark-alpha.css";
 
 @config "../../tailwind.config.ts";
 @theme inline {
@@ -63,8 +87,6 @@
 :root {
   --radius: 0.625rem;
 
-  --lime-contrast: #fff;
-
   /* shadcn/ui 互換マッピング */
   --background: var(--slate-1);
   --foreground: var(--slate-12);
@@ -73,7 +95,7 @@
   --popover: var(--slate-1);
   --popover-foreground: var(--slate-12);
   --primary: var(--lime-9);
-  --primary-foreground: var(--lime-contrast);
+  --primary-foreground: var(--lime-1);
   --secondary: var(--slate-3);
   --secondary-foreground: var(--slate-11);
   --muted: var(--slate-3);
@@ -81,9 +103,9 @@
   --accent: var(--slate-4);
   --accent-foreground: var(--slate-11);
   --destructive: var(--red-9);
-  --destructive-foreground: #fff;
+  --destructive-foreground: var(--red-1);
   --success: var(--lime-9);
-  --success-foreground: var(--lime-contrast);
+  --success-foreground: var(--lime-1);
   --border: var(--slate-6);
   --input: var(--slate-6);
   --ring: var(--lime-8);
@@ -97,6 +119,12 @@
   --sidebar-accent-foreground: var(--slate-11);
   --sidebar-border: var(--slate-6);
   --sidebar-ring: var(--ring);
+}
+
+.dark {
+  --primary-foreground: var(--lime-12);
+  --destructive-foreground: var(--red-12);
+  --success-foreground: var(--lime-12);
 }
 
 /* テーマバリエーション（data-theme属性で切替）- Radix Colors */
@@ -141,6 +169,28 @@
   --primary-foreground: var(--yellow-1);
   --ring: var(--yellow-8);
   --accent: var(--yellow-3);
+}
+
+.dark[data-theme="orange"] {
+  --primary-foreground: var(--orange-12);
+}
+.dark[data-theme="red"] {
+  --primary-foreground: var(--red-12);
+}
+.dark[data-theme="pink"] {
+  --primary-foreground: var(--pink-12);
+}
+.dark[data-theme="purple"] {
+  --primary-foreground: var(--purple-12);
+}
+.dark[data-theme="blue"] {
+  --primary-foreground: var(--blue-12);
+}
+.dark[data-theme="cyan"] {
+  --primary-foreground: var(--cyan-12);
+}
+.dark[data-theme="yellow"] {
+  --primary-foreground: var(--yellow-12);
 }
 
 @layer base {

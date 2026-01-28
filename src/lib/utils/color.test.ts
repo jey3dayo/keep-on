@@ -13,4 +13,8 @@ describe('getRingColorFromBackground', () => {
     expect(getRingColorFromBackground('rgb(255 0 0)')).toBe('rgba(0, 0, 0, 0.15)')
     expect(getRingColorFromBackground('invalid', 0.62, 'hotpink')).toBe('hotpink')
   })
+
+  it('CSS 変数は color-mix を返す', () => {
+    expect(getRingColorFromBackground('var(--orange-9)')).toBe('color-mix(in oklch, var(--orange-9) 62%, black)')
+  })
 })

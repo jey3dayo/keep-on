@@ -37,6 +37,18 @@ export async function upsertUser(input: UpsertUserInput) {
 }
 
 /**
+ * Clerk IDでユーザーを取得
+ *
+ * @param clerkId - ClerkのユーザーID
+ * @returns ユーザーまたは null
+ */
+export async function getUserByClerkId(clerkId: string) {
+  const db = await getDb()
+  const [user] = await db.select().from(users).where(eq(users.clerkId, clerkId))
+  return user ?? null
+}
+
+/**
  * ユーザーの週開始日設定を取得
  *
  * @param clerkId - ClerkのユーザーID

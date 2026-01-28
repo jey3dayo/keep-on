@@ -37,6 +37,11 @@ export function getRingColorFromBackground(
 ) {
   const match = color.match(OKLCH_COLOR_REGEX)
   if (!match) {
+    const trimmed = color.trim()
+    if (trimmed.startsWith('var(')) {
+      const mixPercent = Math.round(mixRatio * 100)
+      return `color-mix(in oklch, ${trimmed} ${mixPercent}%, black)`
+    }
     return fallback
   }
 
