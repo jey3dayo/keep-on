@@ -6,7 +6,7 @@ import {
   type Period,
 } from '@/constants/habit'
 import { type HabitInputSchemaType, safeParseHabitInput } from '@/schemas/habit'
-import type { HabitWithProgress } from '@/types/habit'
+import type { Habit, HabitWithProgress } from '@/types/habit'
 
 /**
  * Transform層: FormDataから習慣データへの変換
@@ -17,7 +17,7 @@ export type HabitFormValues = Omit<HabitInputSchemaType, 'period'> & {
   period: Period
 }
 
-export function getHabitFormDefaults(initialData?: HabitWithProgress): HabitFormValues {
+export function getHabitFormDefaults(initialData?: Habit | HabitWithProgress): HabitFormValues {
   if (initialData) {
     return {
       name: initialData.name,

@@ -16,10 +16,10 @@ import { formatSerializableError } from '@/lib/errors/serializable'
 import { cn } from '@/lib/utils'
 import { HabitInputSchema } from '@/schemas/habit'
 import { buildHabitFormData, getHabitFormDefaults, type HabitFormValues } from '@/transforms/habitFormData'
-import type { HabitWithProgress } from '@/types/habit'
+import type { Habit, HabitWithProgress } from '@/types/habit'
 
 interface HabitFormServerProps {
-  initialData?: HabitWithProgress
+  initialData?: Habit | HabitWithProgress
   onSubmit?: (data: FormValues) => Promise<void> | void
   onSuccess?: 'close' | 'redirect'
   submitLabel?: string
@@ -277,14 +277,14 @@ export function HabitFormServer({
           render={({ field }) => (
             <div className="space-y-3">
               <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">カラー</div>
-              <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
+              <div className="scrollbar-hide flex justify-center gap-3 overflow-x-auto pt-1 pb-2">
                 {habitColors.map((color) => {
                   const isSelected = field.value === color.id
                   return (
                     <Button
                       className={cn(
                         'h-10 w-10 flex-shrink-0 rounded-full transition-all duration-200',
-                        isSelected && 'ring-2 ring-offset-2 ring-offset-background'
+                        isSelected && 'ring-2 ring-offset-background'
                       )}
                       key={color.id}
                       onClick={() => field.onChange(color.id)}
@@ -413,6 +413,23 @@ export function HabitFormServer({
             </div>
           </div>
         </div>
+
+        {/* Submit Button for Modal */}
+        {hideHeader && (
+          <div className="mt-8">
+            <Button
+              className="w-full"
+              disabled={!watchedName?.trim() || isSaving}
+              onClick={form.handleSubmit(handleSubmit)}
+              style={{
+                backgroundColor: watchedName?.trim() && !isSaving ? selectedColorValue : undefined,
+              }}
+              type="button"
+            >
+              {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
+            </Button>
+          </div>
+        )}
       </form>
     </div>
   )

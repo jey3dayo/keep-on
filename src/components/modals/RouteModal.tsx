@@ -24,11 +24,13 @@ export function RouteModal({ title, children }: RouteModalProps) {
 
   return (
     <Sheet onOpenChange={handleOpenChange} open={true}>
-      <SheetContent className="h-[90vh] sm:mx-auto sm:h-auto sm:max-w-xl" side="bottom">
-        <SheetHeader>
-          <SheetTitle>{title}</SheetTitle>
-        </SheetHeader>
-        <div className="mt-6">{children}</div>
+      <SheetContent className="mt-2 h-[90vh] p-6 sm:mx-auto sm:h-auto sm:max-w-xl" side="bottom">
+        <div className="flex h-full flex-col overflow-hidden">
+          <SheetHeader className="flex-shrink-0 pb-2">
+            <SheetTitle>{title}</SheetTitle>
+          </SheetHeader>
+          <div className="-mx-6 flex-1 overflow-y-auto overflow-x-hidden px-6">{children}</div>
+        </div>
       </SheetContent>
     </Sheet>
   )
