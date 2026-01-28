@@ -4,7 +4,6 @@ import { Monitor, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,40 +31,7 @@ export function ThemeToggle() {
   const CurrentIcon = currentMode === 'system' ? Monitor : isDark ? Moon : Sun
 
   return (
-    <div className="group relative">
-      <div className="absolute top-full right-0 z-50 mt-2 hidden w-64 group-hover:block">
-        <Card className="border-border bg-popover shadow-xl">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">テーマ切り替え</CardTitle>
-            <CardDescription className="text-xs">見た目のスタイルを選択できます</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-2 text-sm">
-              <div className="flex items-start gap-2">
-                <Sun className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">ライトモード</p>
-                  <p className="text-muted-foreground text-xs">明るい配色</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <Moon className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">ダークモード</p>
-                  <p className="text-muted-foreground text-xs">暗い配色</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <Monitor className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">システム</p>
-                  <p className="text-muted-foreground text-xs">端末設定に合わせる</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="relative">
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
