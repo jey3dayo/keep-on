@@ -4,6 +4,25 @@ import type { Preview } from '@storybook/react'
 import { Toaster } from '@/components/ui/sonner'
 import { COLOR_THEMES, DEFAULT_COLOR_THEME } from '@/constants/theme'
 
+const STORYBOOK_JEST_MATCHERS = Symbol.for('$$jest-matchers-object-storybook')
+const existingStorybookMatchers = (globalThis as Record<symbol, unknown>)[STORYBOOK_JEST_MATCHERS]
+if (
+  !existingStorybookMatchers ||
+  typeof existingStorybookMatchers !== 'object' ||
+  !('customEqualityTesters' in existingStorybookMatchers)
+) {
+  const matchers = Object.create(null)
+  const customEqualityTesters: unknown[] = []
+  Object.defineProperty(globalThis, STORYBOOK_JEST_MATCHERS, {
+    configurable: true,
+    get: () => ({
+      state: {},
+      matchers,
+      customEqualityTesters,
+    }),
+  })
+}
+
 const preview: Preview = {
   parameters: {
     controls: {

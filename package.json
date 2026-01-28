@@ -11,6 +11,7 @@
     "test:run": "dotenvx run -- vitest run",
     "test:coverage": "dotenvx run -- vitest run --coverage",
     "test:storybook": "dotenvx run -- vitest --config vitest.storybook.config.ts",
+    "test:storybook:browser": "node scripts/storybook-smoke.mjs",
     "lint": "ultracite check",
     "format": "ultracite fix",
     "doctor": "ultracite doctor",
