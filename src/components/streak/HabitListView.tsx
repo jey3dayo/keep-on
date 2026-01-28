@@ -121,7 +121,7 @@ export function HabitListView({
         </div>
 
         {filteredHabits.length > 0 && (
-          <div className="fixed bottom-0 left-1/2 -translate-x-1/2">
+          <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
             <AddHabitButton onClick={onAddHabit}>習慣を追加</AddHabitButton>
           </div>
         )}
