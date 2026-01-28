@@ -5,6 +5,22 @@ import { parseClerkApiResponseErrorPayload, safeParseUser } from '@/schemas/user
 import { logError } from './logging'
 import { getUserByClerkId, upsertUser } from './queries/user'
 
+function getEmailFromSessionClaims(claims: unknown): string | null {
+  if (!claims || typeof claims !== 'object') {
+    return null
+  }
+
+  const record = claims as Record<string, unknown>
+  const candidates = ['email', 'email_address', 'primary_email_address', 'primary_email']
+  for (const key of candidates) {
+    const value = record[key]
+    if (typeof value === 'string' && value.length > 0) {
+      return value
+    }
+  }
+  return null
+}
+
 function parseClerkApiResponseError(error: unknown) {
   if (isClerkAPIResponseError(error)) {
     const errors = Array.isArray(error.errors)
@@ -28,7 +44,7 @@ function parseClerkApiResponseError(error: unknown) {
  * 存在しない場合は新規作成、存在する場合は更新
  */
 export async function syncUser() {
-  const { userId: clerkId } = await auth()
+  const { userId: clerkId, sessionClaims } = await auth()
   if (!clerkId) {
     return null
   }
@@ -47,7 +63,15 @@ export async function syncUser() {
 
   const existing = await getUserByClerkId(clerkId)
   const parsedExisting = parseUser(existing, 'existing', clerkId)
-  if (parsedExisting) {
+  const emailFromClaims = getEmailFromSessionClaims(sessionClaims)
+  if (parsedExisting && emailFromClaims) {
+    if (parsedExisting.email !== emailFromClaims) {
+      const updated = await upsertUser({
+        clerkId,
+        email: emailFromClaims,
+      })
+      return parseUser(updated, 'upsert', clerkId)
+    }
     return parsedExisting
   }
 
@@ -62,18 +86,22 @@ export async function syncUser() {
         return null
       }
       logError('clerk.currentUser:api-error', parsed)
-      return null
+      return parsedExisting ?? null
     }
     throw error
   }
 
   if (!clerkUser) {
-    return null
+    return parsedExisting ?? null
   }
 
   const email = clerkUser.emailAddresses[0]?.emailAddress
   if (!email) {
     throw new Error('Email address not found')
+  }
+
+  if (parsedExisting && parsedExisting.email === email) {
+    return parsedExisting
   }
 
   const created = await upsertUser({ clerkId: clerkUser.id, email })
