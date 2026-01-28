@@ -4,5 +4,7 @@ export const COLOR_THEME_COOKIE_KEY = 'color-theme'
 export const COLOR_THEMES = ['lime', 'orange', 'red', 'pink', 'purple', 'blue', 'cyan', 'yellow'] as const
 export type ColorThemeName = (typeof COLOR_THEMES)[number]
 export const DEFAULT_COLOR_THEME: ColorThemeName = 'lime'
+export const THEME_COLOR_LIGHT = '#ffffff'
+export const THEME_COLOR_DARK = '#000000'
 
 export const isColorTheme = (value: string): value is ColorThemeName => COLOR_THEMES.includes(value as ColorThemeName)
