@@ -21,6 +21,12 @@ const buttonVariants = cva('focus-visible:ring-2 focus-visible:ring-offset-2 act
       lg: 'h-11',
       icon: 'h-10 w-10',
     },
+    scale: {
+      none: '',
+      sm: 'transition-transform hover:scale-102',
+      md: 'transition-transform hover:scale-105',
+      lg: 'transition-transform hover:scale-110',
+    },
   },
   defaultVariants: {
     variant: 'default',
@@ -33,13 +39,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, Var
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild, type = 'button', ...props }, ref) => {
+  ({ className, variant, size, scale, asChild, type = 'button', ...props }, ref) => {
     const baseVariant = variant === 'primary' ? 'default' : variant
 
     return (
       <BaseButton
         asChild={asChild}
-        className={cn(buttonVariants({ variant, size }), className)}
+        className={cn(buttonVariants({ variant, size, scale }), className)}
         ref={ref}
         size={size}
         type={type}
@@ -58,10 +64,8 @@ interface AddHabitButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEleme
 export function AddHabitButton({ children, icon = true, className, ...props }: AddHabitButtonProps) {
   return (
     <Button
-      className={cn(
-        'h-auto rounded-full px-6 py-3 shadow-lg transition-transform hover:scale-105 active:scale-95',
-        className
-      )}
+      className={cn('h-auto rounded-full px-6 py-3 shadow-lg', className)}
+      scale="md"
       type="button"
       variant="default"
       {...props}
@@ -80,10 +84,11 @@ export function CheckInButton({ children, completed = false, className, ...props
   return (
     <Button
       className={cn(
-        'h-14 w-14 flex-shrink-0 rounded-full transition-all duration-300 hover:scale-110 hover:bg-transparent active:scale-95',
+        'h-14 w-14 flex-shrink-0 rounded-full transition-all duration-300 hover:bg-transparent',
         completed && 'ring-2 ring-offset-2 ring-offset-background',
         className
       )}
+      scale="lg"
       size="icon"
       type="button"
       variant="ghost"

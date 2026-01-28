@@ -17,6 +17,10 @@ const meta = {
       control: 'select',
       options: ['default', 'sm', 'lg', 'icon'],
     },
+    scale: {
+      control: 'select',
+      options: ['none', 'sm', 'md', 'lg'],
+    },
     disabled: {
       control: 'boolean',
     },
@@ -137,6 +141,22 @@ export const IconOnly: Story = {
       </svg>
     ),
   },
+}
+
+export const ScaleSm: Story = {
+  args: { children: 'Scale Small', scale: 'sm' },
+}
+
+export const ScaleMd: Story = {
+  args: { children: 'Scale Medium', scale: 'md' },
+}
+
+export const ScaleLg: Story = {
+  args: { children: 'Scale Large', scale: 'lg' },
+}
+
+export const ScaleNone: Story = {
+  args: { children: 'No Scale', scale: 'none' },
 }
 
 if (import.meta.vitest) {

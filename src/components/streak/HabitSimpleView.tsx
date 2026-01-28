@@ -177,13 +177,14 @@ export function HabitSimpleView({
             return (
               <div className="flex flex-col items-center gap-3" key={habit.id}>
                 <Button
-                  className="relative h-[140px] w-[140px] p-0 transition-transform hover:scale-105 hover:bg-transparent active:scale-95"
+                  className="relative h-[140px] w-[140px] p-0 hover:bg-transparent"
                   onClick={(event) => handleProgressClick(event, habit, isCompleted)}
                   onContextMenu={(e) => handleContextMenu(e, habit)}
                   onPointerCancel={() => handleLongPressEnd(true)}
                   onPointerDown={() => handleLongPressStart(habit)}
                   onPointerLeave={() => handleLongPressEnd(true)}
                   onPointerUp={() => handleLongPressEnd(false)}
+                  scale="md"
                   type="button"
                   variant="ghost"
                 >
@@ -229,8 +230,9 @@ export function HabitSimpleView({
 
           <div className="flex flex-col items-center gap-3">
             <Button
-              className="relative h-[140px] w-[140px] p-0 transition-transform hover:bg-transparent active:scale-95"
+              className="relative h-[140px] w-[140px] p-0 hover:bg-transparent"
               onClick={onAddHabit}
+              scale="md"
               type="button"
               variant="ghost"
             >
