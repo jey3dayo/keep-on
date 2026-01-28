@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
-import { boolean, date, integer, pgEnum, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { boolean, date, integer, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
@@ -45,17 +45,13 @@ export const habits = pgTable('Habit', {
     .notNull(),
 })
 
-export const checkins = pgTable(
-  'Checkin',
-  {
-    id: text('id')
-      .primaryKey()
-      .$defaultFn(() => createId()),
-    habitId: text('habitId')
-      .notNull()
-      .references(() => habits.id, { onDelete: 'cascade' }),
-    date: date('date', { mode: 'string' }).notNull(),
-    createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
-  },
-  (table) => [unique().on(table.habitId, table.date)]
-)
+export const checkins = pgTable('Checkin', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  habitId: text('habitId')
+    .notNull()
+    .references(() => habits.id, { onDelete: 'cascade' }),
+  date: date('date', { mode: 'string' }).notNull(),
+  createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
+})
