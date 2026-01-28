@@ -3,10 +3,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
-import { ClerkUserButton } from '@/components/ClerkUserButton'
-import { Icon } from './Icon'
-import { ThemeToggle } from './ThemeToggle'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet'
+import { Icon } from '@/components/basics/Icon'
+import { ThemeToggle } from '@/components/basics/ThemeToggle'
+import { ClerkUserButton } from '@/components/clerk/ClerkUserButton'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
 interface AppbarProps {
   /**

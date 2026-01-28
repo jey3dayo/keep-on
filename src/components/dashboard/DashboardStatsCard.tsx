@@ -1,6 +1,6 @@
 'use client'
 
-import { Icon } from '@/components/Icon'
+import { Icon } from '@/components/basics/Icon'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 

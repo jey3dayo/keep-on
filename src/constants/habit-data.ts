@@ -19,7 +19,7 @@ import {
   Sparkles,
   Target,
 } from 'lucide-react'
-import type { IconName } from '@/components/Icon'
+import type { IconName } from '@/components/basics/Icon'
 import type { Period } from '@/constants/habit'
 
 export interface HabitIcon {

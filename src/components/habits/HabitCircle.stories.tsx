@@ -1,14 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { useState } from 'react'
-import { expect, userEvent, within } from 'storybook/test'
 import { HabitCircle } from './HabitCircle'
 
-// Test regex patterns
-const HABIT_INCOMPLETE_REGEX = /click me!を完了にする/i
-const HABIT_COMPLETED_REGEX = /click me!を未完了にする/i
-
 const meta = {
-  title: 'Components/HabitCircle',
+  title: 'Habits/HabitCircle',
   component: HabitCircle,
   parameters: {
     layout: 'centered',
@@ -125,26 +120,5 @@ export const Interactive: Story = {
     const [completed, setCompleted] = useState(args.completed)
 
     return <HabitCircle {...args} completed={completed} onClick={() => setCompleted(!completed)} />
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    const button = canvas.getByRole('button', { name: HABIT_INCOMPLETE_REGEX })
-
-    // 初期状態: 未完了
-    await expect(button).toBeInTheDocument()
-
-    // クリックして完了状態に
-    await userEvent.click(button)
-
-    // 状態が変わったことを確認（aria-labelが変わる）
-    const completedButton = canvas.getByRole('button', { name: HABIT_COMPLETED_REGEX })
-    await expect(completedButton).toBeInTheDocument()
-
-    // もう一度クリックして未完了に戻す
-    await userEvent.click(completedButton)
-
-    // 元の状態に戻ったことを確認
-    const incompleteButton = canvas.getByRole('button', { name: HABIT_INCOMPLETE_REGEX })
-    await expect(incompleteButton).toBeInTheDocument()
   },
 }

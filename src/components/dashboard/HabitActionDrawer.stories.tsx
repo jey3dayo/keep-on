@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { HabitActionDrawer } from './HabitActionDrawer'
 
 const meta = {
-  title: 'Components/Streak/HabitActionDrawer',
+  title: 'Dashboard/HabitActionDrawer',
   component: HabitActionDrawer,
   parameters: {
     layout: 'centered',

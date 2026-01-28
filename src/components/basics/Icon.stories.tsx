@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Icon, type IconName } from './Icon'
 
 const meta = {
-  title: 'Components/Icon',
+  title: 'Basics/Icon',
   component: Icon,
   parameters: {
     layout: 'centered',

@@ -3,7 +3,7 @@
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { useState } from 'react'
-import { Icon, normalizeIconName } from '@/components/Icon'
+import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById } from '@/constants/habit-data'

@@ -3,7 +3,7 @@ import { storybookToast } from '@/lib/storybook'
 import { DashboardHeader } from './DashboardHeader'
 
 const meta = {
-  title: 'Streak/DashboardHeader',
+  title: 'Dashboard/DashboardHeader',
   component: DashboardHeader,
   parameters: {
     layout: 'fullscreen',

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { AppSidebar } from '@/components/dashboard/AppSidebar'
 import { SiteHeader } from '@/components/dashboard/SiteHeader'
-import { SidebarInset, SidebarProvider } from '@/components/Sidebar'
+import { SidebarInset, SidebarProvider } from '@/components/sidebar/Sidebar'
 import { SIGN_IN_PATH } from '@/constants/auth'
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'

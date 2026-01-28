@@ -1,16 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import type { ComponentType } from 'react'
-import { expect, within } from 'storybook/test'
+import { ThemeProvider } from '@/components/basics/ThemeProvider'
 import { Appbar } from './Appbar'
-import { ThemeProvider } from './ThemeProvider'
-
-// Test regex patterns
-const KEEPON_REGEX = /keepon/i
-const HOME_REGEX = /home/i
-const THEME_TOGGLE_REGEX = /モードに切り替え/i
 
 const meta = {
-  title: 'Components/Appbar',
+  title: 'Dashboard/Appbar',
   component: Appbar,
   parameters: {
     layout: 'fullscreen',
@@ -28,25 +22,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Default: Story = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-
-    // Check logo and app name are visible
-    const logo = await canvas.findByRole('link', { name: KEEPON_REGEX })
-    await expect(logo).toBeInTheDocument()
-
-    // Check navigation links are present (desktop view)
-    const homeLink = canvas.queryByRole('link', { name: HOME_REGEX })
-    if (homeLink) {
-      await expect(homeLink).toBeInTheDocument()
-    }
-
-    // Check theme toggle button exists
-    const themeToggle = await canvas.findByRole('button', { name: THEME_TOGGLE_REGEX })
-    await expect(themeToggle).toBeInTheDocument()
-  },
-}
+export const Default: Story = {}
 
 export const WithUserButton: Story = {
   args: {

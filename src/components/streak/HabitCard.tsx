@@ -1,6 +1,6 @@
 'use client'
 
-import { Icon, normalizeIconName } from '@/components/Icon'
+import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Progress } from '@/components/ui/progress'
 import { COMPLETION_STATUS_LABEL, DEFAULT_HABIT_COLOR, PERIOD_LABEL } from '@/constants/habit'

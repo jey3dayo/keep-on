@@ -4,18 +4,21 @@ import { Calendar } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import type { CSSProperties, ReactNode } from 'react'
 import { useRef, useState } from 'react'
-import { AddHabitButton, CheckInButton } from '@/components/Button'
-import { Icon, normalizeIconName } from '@/components/Icon'
+import { AddHabitButton, CheckInButton } from '@/components/basics/Button'
+import { Icon, normalizeIconName } from '@/components/basics/Icon'
+import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
 import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
-import { DashboardStatsCard } from './DashboardStatsCard'
 
 // Drawerコンポーネントを動的にインポート
-const HabitActionDrawer = dynamic(() => import('./HabitActionDrawer').then((mod) => mod.HabitActionDrawer), {
-  ssr: false,
-})
+const HabitActionDrawer = dynamic(
+  () => import('@/components/dashboard/HabitActionDrawer').then((mod) => mod.HabitActionDrawer),
+  {
+    ssr: false,
+  }
+)
 
 interface HabitListViewProps {
   habits: HabitWithProgress[]

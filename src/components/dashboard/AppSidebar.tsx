@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import type * as React from 'react'
-import { ClerkUserButton } from '@/components/ClerkUserButton'
+import { ClerkUserButton } from '@/components/clerk/ClerkUserButton'
 import { NavMain } from '@/components/dashboard/NavMain'
 import { NavSecondary } from '@/components/dashboard/NavSecondary'
 import {
@@ -13,7 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/components/Sidebar'
+} from '@/components/sidebar/Sidebar'
 import { NAV_ITEMS } from '@/constants/navigation'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

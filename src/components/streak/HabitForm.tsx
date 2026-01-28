@@ -2,7 +2,7 @@
 
 import { Check, ChevronLeft, Clock } from 'lucide-react'
 import { type CSSProperties, useMemo, useState } from 'react'
-import type { IconName } from '@/components/Icon'
+import type { IconName } from '@/components/basics/Icon'
 import { Button } from '@/components/ui/button'
 import {
   DEFAULT_HABIT_COLOR,

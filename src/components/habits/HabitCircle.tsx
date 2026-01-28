@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Icon, type IconName } from '@/components/basics/Icon'
 import { COMPLETION_ACTION_LABEL, DEFAULT_HABIT_ICON } from '@/constants/habit'
 import { cn } from '@/lib/utils'
-import { Icon, type IconName } from './Icon'
 
 export interface HabitCircleProps {
   /** 習慣名 */

@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Icon, normalizeIconName } from '@/components/Icon'
+import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
@@ -10,9 +10,12 @@ import { getRingColorFromBackground } from '@/lib/utils/color'
 import type { HabitWithProgress } from '@/types/habit'
 
 // Drawerコンポーネントを動的にインポート
-const HabitActionDrawer = dynamic(() => import('./HabitActionDrawer').then((mod) => mod.HabitActionDrawer), {
-  ssr: false,
-})
+const HabitActionDrawer = dynamic(
+  () => import('@/components/dashboard/HabitActionDrawer').then((mod) => mod.HabitActionDrawer),
+  {
+    ssr: false,
+  }
+)
 
 interface HabitSimpleViewProps {
   habits: HabitWithProgress[]
