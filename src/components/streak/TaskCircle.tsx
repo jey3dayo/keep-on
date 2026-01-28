@@ -52,9 +52,10 @@ export function TaskCircle({
     <Button
       aria-checked={completed}
       aria-label={`${habitName} - ${completed ? COMPLETION_STATUS_LABEL.completed : COMPLETION_STATUS_LABEL.incomplete}`}
-      className="h-auto flex-col p-0 transition-transform hover:bg-transparent active:scale-95"
+      className="h-auto flex-col whitespace-normal break-words p-0 hover:bg-transparent"
       onClick={() => onToggle(habitId)}
       role="checkbox"
+      scale="md"
       type="button"
       variant="ghost"
     >
