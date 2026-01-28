@@ -32,7 +32,7 @@ const serializeCheckinError = (error: unknown): SerializableCheckinError => {
   return { name: 'DatabaseError', message: databaseError.message }
 }
 
-export async function toggleCheckinAction(
+export async function addCheckinAction(
   habitId: string,
   dateKey?: string
 ): Result.ResultAsync<void, SerializableCheckinError> {

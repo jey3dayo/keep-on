@@ -4,7 +4,7 @@ import { createId } from '@paralleldrive/cuid2'
 import { Result } from '@praha/byethrow'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { toggleCheckinAction } from '@/app/actions/habits/checkin'
+import { addCheckinAction } from '@/app/actions/habits/checkin'
 import { createHabit } from '@/app/actions/habits/create'
 import type { IconName } from '@/components/basics/Icon'
 import { DesktopDashboard } from '@/components/streak/DesktopDashboard'
@@ -94,7 +94,7 @@ export function DashboardWrapper({
     addPendingCheckin(habitId)
 
     try {
-      const result = await toggleCheckinAction(habitId, dateKey)
+      const result = await addCheckinAction(habitId, dateKey)
 
       if (Result.isSuccess(result)) {
         router.refresh()
@@ -221,7 +221,7 @@ export function DashboardWrapper({
     let shouldRollback = true
 
     try {
-      const result = await toggleCheckinAction(habitId, dateKey)
+      const result = await addCheckinAction(habitId, dateKey)
 
       if (Result.isSuccess(result)) {
         shouldRollback = false
