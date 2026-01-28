@@ -2,7 +2,7 @@ import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { StatusCodes } from 'http-status-codes'
 import { parseClerkApiResponseErrorPayload, safeParseUser } from '@/schemas/user'
-import { logError } from './logging'
+import { logError, logWarn } from './logging'
 import { getUserByClerkId, upsertUser } from './queries/user'
 
 function getEmailFromSessionClaims(claims: unknown): string | null {
@@ -19,6 +19,21 @@ function getEmailFromSessionClaims(claims: unknown): string | null {
     }
   }
   return null
+}
+
+const globalForSessionClaims = globalThis as typeof globalThis & {
+  __missingSessionEmailLogged?: boolean
+}
+
+function logMissingSessionEmail(clerkId: string, claims: unknown): void {
+  if (globalForSessionClaims.__missingSessionEmailLogged) {
+    return
+  }
+
+  const claimKeys = claims && typeof claims === 'object' ? Object.keys(claims as Record<string, unknown>) : []
+
+  logWarn('clerk.sessionClaims:missing-email', { clerkId, claimKeys })
+  globalForSessionClaims.__missingSessionEmailLogged = true
 }
 
 function parseClerkApiResponseError(error: unknown) {
@@ -64,6 +79,9 @@ export async function syncUser() {
   const existing = await getUserByClerkId(clerkId)
   const parsedExisting = parseUser(existing, 'existing', clerkId)
   const emailFromClaims = getEmailFromSessionClaims(sessionClaims)
+  if (parsedExisting && !emailFromClaims) {
+    logMissingSessionEmail(clerkId, sessionClaims)
+  }
   if (parsedExisting && emailFromClaims) {
     if (parsedExisting.email !== emailFromClaims) {
       const updated = await upsertUser({
