@@ -15,12 +15,14 @@ const buttonVariants = cva(
         secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
+        card: 'text-white transition-shadow transition-transform hover:scale-102 hover:shadow-lg hover:text-white focus-visible:ring-offset-2',
       },
       size: {
         default: 'h-9 px-4 py-2',
         sm: 'h-8 rounded-md px-3 text-xs',
         lg: 'h-10 rounded-md px-8',
         icon: 'h-9 w-9',
+        card: 'h-auto w-full whitespace-normal rounded-lg p-6 text-left font-normal text-base',
       },
     },
     defaultVariants: {
