@@ -47,8 +47,7 @@ export function ClerkUserButton({ fallback, ...props }: ClerkUserButtonProps) {
       }
     : defaultAppearance
 
-  const resolvedFallback =
-    fallback ?? <div aria-hidden="true" className="h-9 w-9 rounded-full bg-secondary" />
+  const resolvedFallback = fallback ?? <div aria-hidden="true" className="h-9 w-9 rounded-full bg-secondary" />
 
   return (
     <ClerkUserButtonBoundary fallback={resolvedFallback}>
