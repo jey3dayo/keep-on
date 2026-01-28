@@ -57,7 +57,7 @@ export function HabitActionDrawer({ open, habit, onOpenChange }: HabitActionDraw
     }, 350)
   }
 
-  if (!(activeHabit || dialogType)) {
+  if (!activeHabit && !dialogType) {
     return null
   }
 

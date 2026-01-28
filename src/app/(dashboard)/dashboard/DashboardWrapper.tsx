@@ -58,6 +58,57 @@ export function DashboardWrapper({
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
   const hasRefreshedForTimeZone = useRef(false)
 
+  const updateHabitProgress = (habitId: string, delta: number) => {
+    setOptimisticHabits((current) =>
+      current.map((habit) => {
+        if (habit.id !== habitId) {
+          return habit
+        }
+        const nextProgress = Math.max(0, habit.currentProgress + delta)
+        const completionRate = Math.min(
+          COMPLETION_THRESHOLD,
+          Math.round((nextProgress / habit.frequency) * COMPLETION_THRESHOLD)
+        )
+        return {
+          ...habit,
+          currentProgress: nextProgress,
+          completionRate,
+        }
+      })
+    )
+  }
+
+  const addPendingCheckin = (habitId: string) => {
+    setPendingCheckins((current) => new Set(current).add(habitId))
+  }
+
+  const clearPendingCheckin = (habitId: string) => {
+    setPendingCheckins((current) => {
+      const next = new Set(current)
+      next.delete(habitId)
+      return next
+    })
+  }
+
+  const handleCompletedCheckin = async (habitId: string, dateKey: string) => {
+    addPendingCheckin(habitId)
+
+    try {
+      const result = await toggleCheckinAction(habitId, dateKey)
+
+      if (Result.isSuccess(result)) {
+        router.refresh()
+        return
+      }
+
+      appToast.error('チェックインの切り替えに失敗しました', result.error)
+    } catch (error) {
+      appToast.error('チェックインの切り替えに失敗しました', error)
+    } finally {
+      clearPendingCheckin(habitId)
+    }
+  }
+
   useEffect(() => {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (!timeZone) {
@@ -152,26 +203,7 @@ export function DashboardWrapper({
     const dateKey = formatDateKey(now)
 
     if (isCompleted) {
-      setPendingCheckins((current) => new Set(current).add(habitId))
-
-      try {
-        const result = await toggleCheckinAction(habitId, dateKey)
-
-        if (Result.isSuccess(result)) {
-          router.refresh()
-          return
-        }
-
-        appToast.error('チェックインの切り替えに失敗しました', result.error)
-      } catch (error) {
-        appToast.error('チェックインの切り替えに失敗しました', error)
-      } finally {
-        setPendingCheckins((current) => {
-          const next = new Set(current)
-          next.delete(habitId)
-          return next
-        })
-      }
+      await handleCompletedCheckin(habitId, dateKey)
       return
     }
 
@@ -182,55 +214,33 @@ export function DashboardWrapper({
       createdAt: now,
     }
 
-    const updateHabitProgress = (current: HabitWithProgress[], delta: number) =>
-      current.map((habit) => {
-        if (habit.id !== habitId) {
-          return habit
-        }
-        const nextProgress = Math.max(0, habit.currentProgress + delta)
-        const completionRate = Math.min(
-          COMPLETION_THRESHOLD,
-          Math.round((nextProgress / habit.frequency) * COMPLETION_THRESHOLD)
-        )
-        return {
-          ...habit,
-          currentProgress: nextProgress,
-          completionRate,
-        }
-      })
+    setOptimisticCheckins((current) => [...current, addedCheckin])
+    updateHabitProgress(habitId, 1)
+    addPendingCheckin(habitId)
 
-    const applyOptimisticCheckins = (current: Checkin[]) => [...current, addedCheckin]
-
-    const rollbackOptimisticCheckins = (current: Checkin[]) =>
-      current.filter((checkin) => checkin.id !== addedCheckin.id)
-
-    setOptimisticCheckins((current) => applyOptimisticCheckins(current))
-    setOptimisticHabits((current) => updateHabitProgress(current, 1))
-    setPendingCheckins((current) => new Set(current).add(habitId))
+    let shouldRollback = true
 
     try {
       const result = await toggleCheckinAction(habitId, dateKey)
 
       if (Result.isSuccess(result)) {
+        shouldRollback = false
         router.refresh()
         return
       }
 
-      setOptimisticCheckins((current) => rollbackOptimisticCheckins(current))
-      setOptimisticHabits((current) => updateHabitProgress(current, -1))
       appToast.error('チェックインの切り替えに失敗しました', result.error)
     } catch (error) {
-      setOptimisticCheckins((current) => rollbackOptimisticCheckins(current))
-      setOptimisticHabits((current) => updateHabitProgress(current, -1))
       appToast.error('チェックインの切り替えに失敗しました', error)
     } finally {
-      setPendingCheckins((current) => {
-        const next = new Set(current)
-        next.delete(habitId)
-        return next
-      })
+      if (shouldRollback) {
+        setOptimisticCheckins((current) => current.filter((checkin) => checkin.id !== addedCheckin.id))
+        updateHabitProgress(habitId, -1)
+      }
+      clearPendingCheckin(habitId)
     }
   }
+
 
   const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
 

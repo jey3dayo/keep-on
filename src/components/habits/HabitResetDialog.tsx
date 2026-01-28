@@ -23,31 +23,23 @@ import { formatSerializableError } from '@/lib/errors/serializable'
 interface HabitResetDialogProps {
   habitId: string
   habitName: string
-  trigger?: ReactNode
+  trigger?: ReactNode | null
   open?: boolean
-  defaultOpen?: boolean
   onOpenChange?: (open: boolean) => void
 }
 
-export function HabitResetDialog({
-  habitId,
-  habitName,
-  trigger,
-  open,
-  defaultOpen,
-  onOpenChange,
-}: HabitResetDialogProps) {
+export function HabitResetDialog({ habitId, habitName, trigger, open, onOpenChange }: HabitResetDialogProps) {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(defaultOpen ?? false)
+  const [isOpen, setIsOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const isControlled = open !== undefined
-  const currentOpen = isControlled ? open : isOpen
+  const dialogOpen = isControlled ? open : isOpen
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = (nextOpen: boolean) => {
     if (!isControlled) {
-      setIsOpen(open)
+      setIsOpen(nextOpen)
     }
-    onOpenChange?.(open)
+    onOpenChange?.(nextOpen)
   }
 
   const handleConfirm = async () => {
@@ -72,10 +64,10 @@ export function HabitResetDialog({
       進捗をリセット
     </Button>
   )
-  const resolvedTrigger = trigger ?? (isControlled ? null : defaultTrigger)
+  const resolvedTrigger = trigger === undefined ? (isControlled ? null : defaultTrigger) : trigger
 
   return (
-    <AlertDialog onOpenChange={handleOpenChange} open={currentOpen}>
+    <AlertDialog onOpenChange={handleOpenChange} open={dialogOpen}>
       {resolvedTrigger ? <AlertDialogTrigger asChild>{resolvedTrigger}</AlertDialogTrigger> : null}
       <AlertDialogContent>
         <AlertDialogHeader>
