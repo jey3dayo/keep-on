@@ -24,8 +24,8 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
 
-  const bgColor = 'oklch(0.70 0.18 45)'
-  const bgColorLight = 'oklch(0.65 0.16 45)'
+  const bgColor = 'var(--orange-9)'
+  const bgColorLight = 'var(--orange-8)'
 
   const filteredPresets = habitPresets.filter((preset) => {
     const matchesCategory = selectedCategory === 'all' || preset.category === selectedCategory

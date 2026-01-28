@@ -3,6 +3,8 @@
 @import "@radix-ui/colors/blue-dark.css";
 @import "@radix-ui/colors/cyan.css";
 @import "@radix-ui/colors/cyan-dark.css";
+@import "@radix-ui/colors/green.css";
+@import "@radix-ui/colors/green-dark.css";
 @import "@radix-ui/colors/lime.css";
 @import "@radix-ui/colors/lime-dark.css";
 @import "@radix-ui/colors/orange.css";
@@ -15,6 +17,8 @@
 @import "@radix-ui/colors/red-dark.css";
 @import "@radix-ui/colors/slate.css";
 @import "@radix-ui/colors/slate-dark.css";
+@import "@radix-ui/colors/teal.css";
+@import "@radix-ui/colors/teal-dark.css";
 @import "@radix-ui/colors/yellow.css";
 @import "@radix-ui/colors/yellow-dark.css";
 
@@ -63,8 +67,6 @@
 :root {
   --radius: 0.625rem;
 
-  --lime-contrast: #fff;
-
   /* shadcn/ui 互換マッピング */
   --background: var(--slate-1);
   --foreground: var(--slate-12);
@@ -73,7 +75,7 @@
   --popover: var(--slate-1);
   --popover-foreground: var(--slate-12);
   --primary: var(--lime-9);
-  --primary-foreground: var(--lime-contrast);
+  --primary-foreground: var(--lime-1);
   --secondary: var(--slate-3);
   --secondary-foreground: var(--slate-11);
   --muted: var(--slate-3);
@@ -81,9 +83,9 @@
   --accent: var(--slate-4);
   --accent-foreground: var(--slate-11);
   --destructive: var(--red-9);
-  --destructive-foreground: #fff;
+  --destructive-foreground: var(--red-1);
   --success: var(--lime-9);
-  --success-foreground: var(--lime-contrast);
+  --success-foreground: var(--lime-1);
   --border: var(--slate-6);
   --input: var(--slate-6);
   --ring: var(--lime-8);
@@ -97,6 +99,12 @@
   --sidebar-accent-foreground: var(--slate-11);
   --sidebar-border: var(--slate-6);
   --sidebar-ring: var(--ring);
+}
+
+.dark {
+  --primary-foreground: var(--lime-12);
+  --destructive-foreground: var(--red-12);
+  --success-foreground: var(--lime-12);
 }
 
 /* テーマバリエーション（data-theme属性で切替）- Radix Colors */
@@ -141,6 +149,28 @@
   --primary-foreground: var(--yellow-1);
   --ring: var(--yellow-8);
   --accent: var(--yellow-3);
+}
+
+.dark[data-theme="orange"] {
+  --primary-foreground: var(--orange-12);
+}
+.dark[data-theme="red"] {
+  --primary-foreground: var(--red-12);
+}
+.dark[data-theme="pink"] {
+  --primary-foreground: var(--pink-12);
+}
+.dark[data-theme="purple"] {
+  --primary-foreground: var(--purple-12);
+}
+.dark[data-theme="blue"] {
+  --primary-foreground: var(--blue-12);
+}
+.dark[data-theme="cyan"] {
+  --primary-foreground: var(--cyan-12);
+}
+.dark[data-theme="yellow"] {
+  --primary-foreground: var(--yellow-12);
 }
 
 @layer base {

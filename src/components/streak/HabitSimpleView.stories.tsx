@@ -128,7 +128,7 @@ export const CustomBackground: Story = {
       storybookToast.success('タスクを追加', 'Storybookでのデモです')
     },
     onSettings: () => undefined,
-    backgroundColor: 'oklch(0.62 0.18 250)',
+    backgroundColor: 'var(--blue-9)',
   },
 }
 

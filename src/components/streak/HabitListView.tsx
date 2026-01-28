@@ -188,6 +188,8 @@ function HabitListCard({
   const periodData = getPeriodById(habit.period)
   const IconComponent = getIconById(normalizeIconName(habit.icon)).icon
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const completedBackgroundColor = `oklch(from ${colorData.color} l c h / 0.1)`
+  const badgeBackgroundColor = `oklch(from ${colorData.color} l c h / 0.2)`
 
   const isCompleted = habit.currentProgress >= habit.frequency
   const progressPercent = Math.min((habit.currentProgress / habit.frequency) * 100, 100)
@@ -223,7 +225,7 @@ function HabitListCard({
       role="button"
       style={{
         borderColor: completed ? colorData.color : undefined,
-        backgroundColor: completed ? `${colorData.color}10` : undefined,
+        backgroundColor: completed ? completedBackgroundColor : undefined,
       }}
       tabIndex={0}
     >
@@ -259,7 +261,7 @@ function HabitListCard({
             <span
               className="flex-shrink-0 rounded-full px-2 py-0.5 text-xs"
               style={{
-                backgroundColor: `${colorData.color}20`,
+                backgroundColor: badgeBackgroundColor,
                 color: colorData.color,
               }}
             >
