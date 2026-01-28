@@ -15,16 +15,8 @@ import { HabitListView } from './HabitListView'
 import { HabitPresetSelector } from './HabitPresetSelector'
 import { HabitSimpleView } from './HabitSimpleView'
 
-interface Checkin {
-  id: string
-  habitId: string
-  date: string
-  createdAt: Date
-}
-
 interface StreakDashboardProps {
   habits: HabitWithProgress[]
-  todayCheckins: Checkin[]
   onAddHabit: (
     name: string,
     icon: IconName,
@@ -51,7 +43,6 @@ const persistMainView = (view: MainView) => {
 
 export function StreakDashboard({
   habits,
-  todayCheckins,
   onAddHabit,
   onToggleCheckin,
   initialView = 'dashboard',
@@ -61,7 +52,7 @@ export function StreakDashboard({
   const [selectedPreset, setSelectedPreset] = useState<HabitPreset | null>(null)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
 
-  const completedHabitIds = new Set(todayCheckins.map((c) => c.habitId))
+  const completedHabitIds = new Set(habits.filter((habit) => habit.currentProgress >= habit.frequency).map((h) => h.id))
 
   // 期間フィルター適用
   const filteredHabits = filterHabitsByPeriod(habits, periodFilter)

@@ -142,11 +142,25 @@ export function DashboardWrapper({
       return
     }
 
-    const isCompleted = optimisticCheckins.some((checkin) => checkin.habitId === habitId)
+    const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
+    if (!targetHabit) {
+      return
+    }
+
+    const isCompleted = targetHabit.currentProgress >= targetHabit.frequency
     const now = new Date()
     const dateKey = formatDateKey(now)
     const removedCheckin = isCompleted
-      ? (optimisticCheckins.find((checkin) => checkin.habitId === habitId) ?? null)
+      ? optimisticCheckins
+          .filter((checkin) => checkin.habitId === habitId)
+          .reduce<Checkin | null>((latest, current) => {
+            if (!latest) {
+              return current
+            }
+            const latestTime = new Date(latest.createdAt).getTime()
+            const currentTime = new Date(current.createdAt).getTime()
+            return currentTime > latestTime ? current : latest
+          }, null)
       : null
     const addedCheckin = isCompleted
       ? null
@@ -176,7 +190,10 @@ export function DashboardWrapper({
 
     const applyOptimisticCheckins = (current: Checkin[]) => {
       if (isCompleted) {
-        return current.filter((checkin) => checkin.habitId !== habitId)
+        if (!removedCheckin) {
+          return current
+        }
+        return current.filter((checkin) => checkin.id !== removedCheckin.id)
       }
       return addedCheckin ? [...current, addedCheckin] : current
     }
@@ -224,8 +241,6 @@ export function DashboardWrapper({
   }
 
   const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
-  const activeHabitIds = new Set(activeHabits.map((habit) => habit.id))
-  const activeCheckins = optimisticCheckins.filter((checkin) => activeHabitIds.has(checkin.habitId))
 
   if (!isTimeZoneReady) {
     return <div className="flex h-screen items-center justify-center text-muted-foreground text-sm">読み込み中...</div>
@@ -240,7 +255,6 @@ export function DashboardWrapper({
           initialView={initialView}
           onAddHabit={handleAddHabit}
           onToggleCheckin={handleToggleCheckin}
-          todayCheckins={activeCheckins}
         />
       </div>
 
@@ -250,7 +264,6 @@ export function DashboardWrapper({
           habits={activeHabits}
           onAddHabit={handleAddHabit}
           onToggleCheckin={handleToggleCheckin}
-          todayCheckins={activeCheckins}
           user={user}
         />
       </div>

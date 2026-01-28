@@ -103,7 +103,7 @@ export function HabitSimpleView({
   const handleProgressClick = (
     event: React.MouseEvent<HTMLButtonElement>,
     habit: HabitWithProgress,
-    isCheckedToday: boolean
+    isCompleted: boolean
   ) => {
     if (longPressTriggeredRef.current) {
       event.preventDefault()
@@ -111,7 +111,7 @@ export function HabitSimpleView({
       longPressTriggeredRef.current = false
       return
     }
-    if (isCheckedToday) {
+    if (isCompleted) {
       setResetConfirm({ habitId: habit.id, habitName: habit.name })
       return
     }
@@ -168,14 +168,13 @@ export function HabitSimpleView({
             const iconData = getIconById(normalizeIconName(habit.icon))
             const IconComponent = iconData.icon
             const progressPercent = Math.min((habit.currentProgress / habit.frequency) * 100, 100)
-            const isCheckedToday = completedHabitIds.has(habit.id)
-            const isCompleted = habit.currentProgress >= habit.frequency
+            const isCompleted = completedHabitIds.has(habit.id)
 
             return (
               <div className="flex flex-col items-center gap-3" key={habit.id}>
                 <button
                   className="relative flex h-[140px] w-[140px] items-center justify-center transition-transform hover:scale-105 active:scale-95"
-                  onClick={(event) => handleProgressClick(event, habit, isCheckedToday)}
+                  onClick={(event) => handleProgressClick(event, habit, isCompleted)}
                   onContextMenu={(e) => handleContextMenu(e, habit)}
                   onPointerCancel={() => handleLongPressEnd(true)}
                   onPointerDown={() => handleLongPressStart(habit)}
@@ -194,17 +193,17 @@ export function HabitSimpleView({
                   <div
                     className={cn(
                       'flex h-[120px] w-[120px] items-center justify-center rounded-full transition-all duration-300',
-                      isCheckedToday && 'scale-105'
+                      isCompleted && 'scale-105'
                     )}
                     style={{
                       backgroundColor: bgColor,
-                      boxShadow: isCheckedToday ? '0 0 20px rgba(255, 255, 255, 0.3)' : 'none',
+                      boxShadow: isCompleted ? '0 0 20px rgba(255, 255, 255, 0.3)' : 'none',
                     }}
                   >
                     <IconComponent
                       className={cn(
                         'h-14 w-14 transition-all duration-300',
-                        isCheckedToday ? 'text-white' : 'text-white/90'
+                        isCompleted ? 'text-white' : 'text-white/90'
                       )}
                       strokeWidth={1.5}
                     />
