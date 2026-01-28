@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import { BarChart3, HelpCircle, LayoutDashboard, ListChecks, Settings } from 'lucide-react'
+import type { IconName } from '@/components/basics/Icon'
 
 export interface NavItem {
   title: string
@@ -46,7 +47,7 @@ export const NAV_ITEMS: {
 export interface AppbarNavLink {
   href: string
   label: string
-  icon: string
+  icon: IconName
 }
 
 export const APPBAR_NAV_LINKS: AppbarNavLink[] = [

@@ -7,6 +7,7 @@ import { Icon } from '@/components/basics/Icon'
 import { ThemeToggle } from '@/components/basics/ThemeToggle'
 import { ClerkUserButton } from '@/components/clerk/ClerkUserButton'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { APPBAR_NAV_LINKS } from '@/constants/navigation'
 
 interface AppbarProps {
   /**
