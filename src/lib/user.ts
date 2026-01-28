@@ -54,6 +54,9 @@ export async function syncUser() {
   }
 
   const parseUser = (user: unknown, source: 'existing' | 'upsert') => {
+    if (!user) {
+      return null
+    }
     const parsed = safeParseUser(user)
     if (!parsed.success) {
       logError('user.schema:invalid', { clerkId: clerkUser.id, source, issues: parsed.issues })
@@ -63,16 +66,8 @@ export async function syncUser() {
   }
 
   const existing = await getUserByClerkId(clerkUser.id)
-  if (existing) {
-    const parsedExisting = parseUser(existing, 'existing')
-    if (!parsedExisting) {
-      const repaired = await upsertUser({
-        clerkId: clerkUser.id,
-        email,
-      })
-      return parseUser(repaired, 'upsert')
-    }
-
+  const parsedExisting = parseUser(existing, 'existing')
+  if (parsedExisting) {
     if (parsedExisting.email !== email) {
       const updated = await upsertUser({
         clerkId: clerkUser.id,
@@ -83,11 +78,7 @@ export async function syncUser() {
     return parsedExisting
   }
 
-  // 初回ログイン時はユーザーを作成
-  const created = await upsertUser({
-    clerkId: clerkUser.id,
-    email,
-  })
+  const created = await upsertUser({ clerkId: clerkUser.id, email })
   return parseUser(created, 'upsert')
 }
 
