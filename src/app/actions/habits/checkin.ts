@@ -4,7 +4,7 @@ import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
 import { weekStartToDay } from '@/constants/habit'
 import { AuthorizationError, DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
-import { createCheckin, deleteLatestCheckinByHabitAndPeriod } from '@/lib/queries/checkin'
+import { createCheckin } from '@/lib/queries/checkin'
 import { getCheckinCountForPeriod, getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
 import { getCurrentUserId } from '@/lib/user'
@@ -58,10 +58,8 @@ export async function toggleCheckinAction(
       const weekStartDay = weekStartToDay(weekStart)
       const currentCount = await getCheckinCountForPeriod(habitId, targetDate, habit.period, weekStartDay)
 
+      // 達成時は何もしない（リセットダイアログを使用）
       if (currentCount >= habit.frequency) {
-        await deleteLatestCheckinByHabitAndPeriod(habitId, targetDate, habit.period, weekStartDay)
-        revalidatePath('/dashboard')
-        revalidatePath('/habits')
         return
       }
 
