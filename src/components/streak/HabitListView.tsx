@@ -188,8 +188,8 @@ function HabitListCard({
   const periodData = getPeriodById(habit.period)
   const IconComponent = getIconById(normalizeIconName(habit.icon)).icon
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const completedBackgroundColor = `oklch(from ${colorData.color} l c h / 0.1)`
-  const badgeBackgroundColor = `oklch(from ${colorData.color} l c h / 0.2)`
+  const completedBackgroundColor = `var(--${colorData.id}-a3)`
+  const badgeBackgroundColor = `var(--${colorData.id}-a4)`
 
   const isCompleted = habit.currentProgress >= habit.frequency
   const progressPercent = Math.min((habit.currentProgress / habit.frequency) * 100, 100)
