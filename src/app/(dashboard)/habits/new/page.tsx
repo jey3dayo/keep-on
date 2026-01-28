@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { HabitFormServer } from '@/components/habits/HabitFormServer'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
+import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 
 export const metadata: Metadata = {
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 }
 
 export default async function NewHabitPage() {
-  const timeoutMs = 8000
+  const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/habits/new')
 
   logInfo('request.habits.new:start', requestMeta)

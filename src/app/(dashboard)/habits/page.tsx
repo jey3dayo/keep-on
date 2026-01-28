@@ -7,6 +7,7 @@ import { Icon } from '@/components/basics/Icon'
 import { HabitTable } from '@/components/habits/HabitTable'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
+import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
 }
 
 export default async function HabitsPage() {
-  const timeoutMs = 8000
+  const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/habits')
 
   logInfo('request.habits:start', requestMeta)

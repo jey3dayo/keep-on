@@ -7,6 +7,7 @@ import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { getServerDateKey } from '@/lib/server/date'
+import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { syncUser } from '@/lib/user'
 import { DashboardWrapper } from './DashboardWrapper'
 
@@ -26,7 +27,7 @@ export default async function DashboardPage() {
   const rawView = cookieStore.get('ko_dashboard_view')?.value
   const initialView = rawView === 'simple' || rawView === 'dashboard' ? rawView : DEFAULT_DASHBOARD_VIEW
   const hasTimeZoneCookie = cookieStore.has('ko_tz')
-  const timeoutMs = 8000
+  const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/dashboard')
   const dateKey = await getServerDateKey()
 

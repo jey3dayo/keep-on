@@ -4,6 +4,7 @@ import { RouteModal } from '@/components/modals/RouteModal'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
+import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 
 interface EditHabitModalPageProps {
@@ -11,7 +12,7 @@ interface EditHabitModalPageProps {
 }
 
 export default async function EditHabitModalPage({ params }: EditHabitModalPageProps) {
-  const timeoutMs = 8000
+  const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/habits/[id]/edit')
 
   logInfo('request.habits.edit.modal:start', requestMeta)
