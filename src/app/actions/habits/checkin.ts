@@ -2,6 +2,7 @@
 
 import { Result } from '@praha/byethrow'
 import { weekStartToDay } from '@/constants/habit'
+import { DEFAULT_REQUEST_TIMEOUT_MS } from '@/constants/request-timeout'
 import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { createCheckin } from '@/lib/queries/checkin'
@@ -13,14 +14,20 @@ import { type HabitActionResult, revalidateHabitPaths, serializeActionError } fr
 export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult {
   const requestMeta = createRequestMeta('action.habits.checkin')
   const baseMeta = { ...requestMeta, habitId, dateKey }
+  const logSpanWithTimeout = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) =>
+    logSpan(name, fn, data, { timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS })
 
   return await Result.try({
     try: async () => {
-      return await logSpan(
+      return await logSpanWithTimeout(
         'action.habits.checkin',
         async () => {
           // 認証チェック
-          const userId = await logSpan('action.habits.checkin.getCurrentUserId', () => getCurrentUserId(), baseMeta)
+          const userId = await logSpanWithTimeout(
+            'action.habits.checkin.getCurrentUserId',
+            () => getCurrentUserId(),
+            baseMeta
+          )
           if (!userId) {
             throw new UnauthorizedError({ detail: '認証されていません' })
           }
@@ -28,7 +35,11 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
           const metaWithUser = { ...baseMeta, userId }
 
           // habit所有権チェック
-          const habit = await logSpan('action.habits.checkin.getHabitById', () => getHabitById(habitId), metaWithUser)
+          const habit = await logSpanWithTimeout(
+            'action.habits.checkin.getHabitById',
+            () => getHabitById(habitId),
+            metaWithUser
+          )
           if (!habit) {
             throw new AuthorizationError({ detail: '習慣が見つかりません' })
           }
@@ -37,7 +48,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
           }
 
           const targetDate = dateKey ?? new Date()
-          const weekStart = await logSpan(
+          const weekStart = await logSpanWithTimeout(
             'action.habits.checkin.getUserWeekStartById',
             () => getUserWeekStartById(userId),
             metaWithUser
@@ -48,7 +59,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
             period: habit.period,
             frequency: habit.frequency,
           }
-          const currentCount = await logSpan(
+          const currentCount = await logSpanWithTimeout(
             'action.habits.checkin.getCheckinCountForPeriod',
             () => getCheckinCountForPeriod(habitId, targetDate, habit.period, weekStartDay),
             countMeta
@@ -60,7 +71,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
             return
           }
 
-          await logSpan(
+          await logSpanWithTimeout(
             'action.habits.checkin.createCheckin',
             () => createCheckin({ habitId, date: targetDate }),
             countMeta
