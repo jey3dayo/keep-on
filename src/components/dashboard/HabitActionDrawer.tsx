@@ -5,10 +5,10 @@ import { useEffect, useRef, useState } from 'react'
 import { HabitArchiveDialog } from '@/components/habits/HabitArchiveDialog'
 import { HabitDeleteDialog } from '@/components/habits/HabitDeleteDialog'
 import { HabitResetDialog } from '@/components/habits/HabitResetDialog'
+import type { OptimisticHandler } from '@/components/habits/types'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import type { HabitWithProgress } from '@/types/habit'
-import type { OptimisticHandler } from '@/components/habits/types'
 
 interface HabitActionDrawerProps {
   open: boolean
@@ -115,8 +115,8 @@ export function HabitActionDrawer({
         <HabitResetDialog
           habitId={activeHabit.id}
           habitName={activeHabit.name}
-          onOptimistic={onResetOptimistic}
           onOpenChange={handleDialogOpenChange}
+          onOptimistic={onResetOptimistic}
           open
         />
       ) : null}
@@ -124,8 +124,8 @@ export function HabitActionDrawer({
         <HabitArchiveDialog
           habitId={activeHabit.id}
           habitName={activeHabit.name}
-          onOptimistic={onArchiveOptimistic}
           onOpenChange={handleDialogOpenChange}
+          onOptimistic={onArchiveOptimistic}
           open
         />
       ) : null}
@@ -133,8 +133,8 @@ export function HabitActionDrawer({
         <HabitDeleteDialog
           habitId={activeHabit.id}
           habitName={activeHabit.name}
-          onOptimistic={onDeleteOptimistic}
           onOpenChange={handleDialogOpenChange}
+          onOptimistic={onDeleteOptimistic}
           open
         />
       ) : null}

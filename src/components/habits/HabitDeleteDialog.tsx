@@ -34,8 +34,8 @@ export function HabitDeleteDialog({
       }
       errorMessage="削除に失敗しました"
       habitId={habitId}
-      onOptimistic={onOptimistic}
       onOpenChange={onOpenChange}
+      onOptimistic={onOptimistic}
       open={open}
       successMessage="習慣を完全に削除しました"
       title="習慣を完全に削除しますか？"

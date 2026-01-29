@@ -354,11 +354,19 @@ Workers のログと突き合わせて確認するための手順です。
   - `request.habits:start` / `request.habits:end` が出る
   - `:timeout` / `TimeoutError` が出ていない
   - `GET /dashboard` / `GET /habits` が `Ok` になっている
+  - `dashboard.syncUser` / `dashboard.habits` / `dashboard.checkins` の `ms` がタイムアウト上限以内
+  - `db.connection` が毎回出続けない（過剰な再接続が起きていない）
   - `Clerk: Refreshing the session token resulted in an infinite redirect loop` が出ていない
 - **UI**
   - チェックイン後に進捗表示が 1 つ増える（例: `6 / 7` → `7 / 7`）
   - 連打時に重複反映しない（同一習慣の多重チェックインが起きない）
   - 失敗時はトーストでエラーが見える
+
+### 追加チェック（補強）
+
+- **チェックイン上限**: すでに達成済みの習慣でトグルしても進捗が増えない
+- **タイムゾーン Cookie**: 初回アクセス時に `ko_tz` が設定され、無限リロードにならない
+- **戻る遷移**: `/habits` から `/dashboard` に戻ってもチェックイン状態が維持される
 
 ### 失敗時の切り分けメモ
 
