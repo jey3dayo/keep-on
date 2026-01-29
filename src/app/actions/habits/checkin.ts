@@ -5,7 +5,7 @@ import { weekStartToDay } from '@/constants/habit'
 import { DEFAULT_REQUEST_TIMEOUT_MS } from '@/constants/request-timeout'
 import { toActionResult } from '@/lib/actions/result'
 import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
-import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
+import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
 import { createCheckin } from '@/lib/queries/checkin'
 import { getCheckinCountForPeriod, getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
@@ -24,10 +24,11 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
         'action.habits.checkin',
         async () => {
           // 認証チェック
-          const userId = await logSpanWithTimeout(
+          const userId = await logSpanOptional(
             'action.habits.checkin.getCurrentUserId',
             () => getCurrentUserId(),
-            baseMeta
+            baseMeta,
+            { timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS }
           )
           if (!userId) {
             throw new UnauthorizedError({ detail: '認証されていません' })

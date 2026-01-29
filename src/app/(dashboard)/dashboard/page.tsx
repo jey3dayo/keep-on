@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
-import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
+import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
 import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { getServerDateKey } from '@/lib/server/date'
@@ -33,7 +33,7 @@ export default async function DashboardPage() {
 
   logInfo('request.dashboard:start', requestMeta)
 
-  const user = await logSpan('dashboard.syncUser', () => syncUser(), requestMeta, { timeoutMs })
+  const user = await logSpanOptional('dashboard.syncUser', () => syncUser(), requestMeta, { timeoutMs })
 
   if (!user) {
     logInfo('dashboard.syncUser:missing', requestMeta)

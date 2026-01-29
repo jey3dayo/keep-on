@@ -7,7 +7,7 @@ import { Icon, type IconName } from '@/components/basics/Icon'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { PERIOD_DISPLAY_NAME, PERIODS, type Period } from '@/constants/habit'
-import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
+import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
 import { getCheckinCountsByDateRange, getCheckinsByUserAndDate, getTotalCheckinsByUserId } from '@/lib/queries/checkin'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { getServerDateKey } from '@/lib/server/date'
@@ -38,7 +38,7 @@ export default async function AnalyticsPage() {
 
   logInfo('request.analytics:start', requestMeta)
 
-  const user = await logSpan('analytics.syncUser', () => syncUser(), requestMeta, { timeoutMs })
+  const user = await logSpanOptional('analytics.syncUser', () => syncUser(), requestMeta, { timeoutMs })
 
   if (!user) {
     logInfo('analytics.syncUser:missing', requestMeta)
