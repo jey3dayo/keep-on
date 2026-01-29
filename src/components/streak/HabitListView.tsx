@@ -59,7 +59,7 @@ export function HabitListView({
     habit: null,
   })
   const [resetConfirmHabit, setResetConfirmHabit] = useState<HabitWithProgress | null>(null)
-  const drawerHabitId = drawerState.habit?.id
+  const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
 
   const today = new Date()
   const dayNames = ['日', '月', '火', '水', '木', '金', '土']
@@ -127,7 +127,10 @@ export function HabitListView({
                   dimmed={completedHabitIds.has(habit.id)}
                   habit={habit}
                   key={habit.id}
-                  onLongPressOrContextMenu={() => setDrawerState({ open: true, habit })}
+                  onLongPressOrContextMenu={() => {
+                    setDrawerHabitId(habit.id)
+                    setDrawerState({ open: true, habit })
+                  }}
                   onToggle={() => {
                     if (completedHabitIds.has(habit.id)) {
                       setResetConfirmHabit(habit)

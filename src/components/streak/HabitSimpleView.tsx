@@ -93,7 +93,7 @@ export function HabitSimpleView({
     open: false,
     habit: null,
   })
-  const drawerHabitId = drawerState.habit?.id
+  const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const longPressTriggeredRef = useRef(false)
 
@@ -211,6 +211,7 @@ export function HabitSimpleView({
   }
 
   const openDrawer = (habit: HabitWithProgress) => {
+    setDrawerHabitId(habit.id)
     setDrawerState({ open: true, habit })
   }
 
