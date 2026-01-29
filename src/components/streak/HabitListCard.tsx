@@ -1,6 +1,6 @@
 'use client'
 
-import type { CSSProperties } from 'react'
+import type { CSSProperties, KeyboardEvent } from 'react'
 import { useRef } from 'react'
 import { CheckInButton } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
@@ -54,10 +54,24 @@ export function HabitListCard({
     onLongPressOrContextMenu()
   }
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) {
+      return
+    }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onLongPressOrContextMenu()
+    }
+  }
+
   return (
     <div
-      className={cn('rounded-2xl border border-border bg-card p-4 transition-all duration-300')}
+      aria-label={`${habit.name}のメニューを開く`}
+      className={cn(
+        'group cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-4 shadow-sm transition-all duration-200 hover:border-border/80 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none'
+      )}
       onContextMenu={handleContextMenu}
+      onKeyDown={handleKeyDown}
       onPointerDown={handleLongPressStart}
       onPointerLeave={handleLongPressEnd}
       onPointerUp={handleLongPressEnd}
@@ -69,6 +83,8 @@ export function HabitListCard({
     >
       <div className="flex items-center gap-4">
         <CheckInButton
+          aria-label={`${habit.name}をチェックイン`}
+          aria-pressed={completed}
           completed={completed}
           disabled={pending}
           onClick={onToggle}
@@ -91,7 +107,7 @@ export function HabitListCard({
           <div className="mb-1 flex items-center gap-2">
             <h3 className="truncate font-semibold text-foreground text-lg transition-colors">{habit.name}</h3>
             <span
-              className="flex-shrink-0 rounded-full px-2 py-0.5 text-xs"
+              className="flex-shrink-0 rounded-full border border-transparent px-2 py-0.5 text-xs"
               style={{
                 backgroundColor: badgeBackgroundColor,
                 color: colorData.color,
@@ -102,16 +118,16 @@ export function HabitListCard({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary/70">
               <div
-                className="h-full rounded-full transition-all duration-300"
+                className="h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none"
                 style={{
                   width: `${progressPercent}%`,
                   backgroundColor: colorData.color,
                 }}
               />
             </div>
-            <span className="whitespace-nowrap text-muted-foreground text-sm">
+            <span className="whitespace-nowrap font-medium text-muted-foreground text-sm">
               {habit.currentProgress} / {habit.frequency}
             </span>
           </div>
