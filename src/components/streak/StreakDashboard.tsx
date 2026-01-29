@@ -192,7 +192,6 @@ function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
             <Card className="border-border bg-popover shadow-xl">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">ビュー切り替え</CardTitle>
-                <CardDescription className="text-xs">表示スタイルを選択できます</CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="space-y-2 text-sm">
@@ -200,14 +199,14 @@ function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
                     <LayoutGrid className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
                     <div>
                       <p className="font-medium">リストビュー</p>
-                      <p className="text-muted-foreground text-xs">詳細なリスト表示</p>
+                      <p className="text-muted-foreground text-xs">詳細重視の一覧</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
                     <Circle className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
                     <div>
                       <p className="font-medium">シンプルビュー</p>
-                      <p className="text-muted-foreground text-xs">円形アイコン表示</p>
+                      <p className="text-muted-foreground text-xs">コンパクト表示・スマホ向け</p>
                     </div>
                   </div>
                 </div>

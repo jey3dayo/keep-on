@@ -92,14 +92,14 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
             </TableHeader>
             <TableBody>
               {archivedHabits.map((habit) => (
-                <TableRow key={habit.id}>
+                <TableRow className="bg-black/50 text-white/80 hover:bg-black/60" key={habit.id}>
                   <TableCell>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                      <Icon className="h-5 w-5 text-muted-foreground" name={normalizeIconName(habit.icon)} />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/70">
+                      <Icon className="h-5 w-5 text-white/80" name={normalizeIconName(habit.icon)} />
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{habit.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell>{habit.name}</TableCell>
+                  <TableCell>
                     {habit.archivedAt ? format(new Date(habit.archivedAt), 'yyyy/MM/dd', { locale: ja }) : '-'}
                   </TableCell>
                   <TableCell className="text-right">
