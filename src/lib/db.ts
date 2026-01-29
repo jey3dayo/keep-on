@@ -89,7 +89,7 @@ async function createDb() {
   const client = postgres(connectionString, {
     prepare: false, // PgBouncer互換モード
     fetch_types: false, // 型フェッチを無効化（Workers環境では不要）
-    max: 1, // Workers環境では1接続のみ
+    max: 2, // Workers環境では最小限の接続数に抑える
     idle_timeout: 20, // アイドルタイムアウト（秒）
     connect_timeout: 5, // 接続タイムアウト（秒） - Workersの30秒制限内に収めるため短縮
     connection: {
