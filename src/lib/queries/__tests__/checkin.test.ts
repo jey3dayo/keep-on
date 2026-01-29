@@ -49,7 +49,7 @@ import {
   getCheckinsByUserAndDate,
 } from '../checkin'
 
-type Condition = {
+interface Condition {
   op: 'and' | 'eq' | 'gte' | 'lte' | 'desc'
   left?: unknown
   right?: unknown
