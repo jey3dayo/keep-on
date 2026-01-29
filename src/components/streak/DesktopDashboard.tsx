@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { IconName } from '@/components/basics/Icon'
-import type { OptimisticHandler } from '@/components/habits/types'
+import type { OptimisticRollback } from '@/components/habits/types'
 import type { Period } from '@/constants/habit'
 import type { HabitPreset } from '@/constants/habit-data'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
@@ -21,9 +21,9 @@ interface DesktopDashboardProps {
     options?: { color?: string | null; period?: Period; frequency?: number }
   ) => Promise<void>
   onToggleCheckin: (habitId: string) => Promise<void>
-  onArchiveOptimistic?: (habitId: string) => OptimisticHandler
-  onDeleteOptimistic?: (habitId: string) => OptimisticHandler
-  onResetOptimistic?: (habitId: string) => OptimisticHandler
+  onArchiveOptimistic?: (habitId: string) => OptimisticRollback
+  onDeleteOptimistic?: (habitId: string) => OptimisticRollback
+  onResetOptimistic?: (habitId: string) => OptimisticRollback
 }
 
 type PeriodFilter = 'all' | Period

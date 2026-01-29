@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { resetHabitProgressAction } from '@/app/actions/habits/reset'
 import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
-import type { OptimisticHandler } from '@/components/habits/types'
+import type { OptimisticRollback } from '@/components/habits/types'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
@@ -28,9 +28,9 @@ interface HabitSimpleViewProps {
   completedHabitIds: Set<string>
   onToggleHabit: (habitId: string) => void
   onAddHabit: () => void
-  onArchiveOptimistic?: (habitId: string) => OptimisticHandler
-  onDeleteOptimistic?: (habitId: string) => OptimisticHandler
-  onResetOptimistic?: (habitId: string) => OptimisticHandler
+  onArchiveOptimistic?: (habitId: string) => OptimisticRollback
+  onDeleteOptimistic?: (habitId: string) => OptimisticRollback
+  onResetOptimistic?: (habitId: string) => OptimisticRollback
   pendingCheckins?: Set<string>
   onSettings?: () => void
   backgroundColor?: string
@@ -328,17 +328,13 @@ export function HabitSimpleView({
         onArchiveOptimistic={
           drawerHabitId && onArchiveOptimistic ? () => onArchiveOptimistic(drawerHabitId) : undefined
         }
-        onDeleteOptimistic={
-          drawerHabitId && onDeleteOptimistic ? () => onDeleteOptimistic(drawerHabitId) : undefined
-        }
+        onDeleteOptimistic={drawerHabitId && onDeleteOptimistic ? () => onDeleteOptimistic(drawerHabitId) : undefined}
         onOpenChange={(open) => {
           if (!open) {
             closeDrawer()
           }
         }}
-        onResetOptimistic={
-          drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined
-        }
+        onResetOptimistic={drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined}
         open={drawerState.open}
       />
 
