@@ -12,9 +12,11 @@ keep-on/
 │   │   ├── (dashboard)/  # 認証後のダッシュボード群
 │   │   └── api/          # API Routes（必要時）
 │   ├── components/       # 共有 UI コンポーネント
+│   │   ├── basics/       # アプリ固有の基本コンポーネント
 │   │   ├── ui/           # shadcn/ui プリミティブ
 │   │   ├── habits/       # 機能別 UI
-│   │   └── dashboard/    # ダッシュボード UI
+│   │   ├── dashboard/    # ダッシュボード UI
+│   │   └── settings/     # 設定 UI
 │   ├── constants/        # ドメイン定数・プリセット
 │   ├── db/               # Drizzle スキーマ
 │   ├── env.ts            # 環境変数バリデーション
@@ -53,9 +55,11 @@ src/app/
 ├── layout.tsx          # Root Layout (Server Component)
 ├── page.tsx            # Home Page (Server Component)
 ├── actions/
-│   └── habits/
-│       ├── create.ts   # 習慣作成の Server Action
-│       └── checkin.ts  # チェックイン切替の Server Action
+│   ├── habits/
+│   │   ├── create.ts   # 習慣作成の Server Action
+│   │   └── checkin.ts  # チェックイン切替の Server Action
+│   └── settings/
+│       └── updateWeekStart.ts # 設定変更の Server Action
 ├── (dashboard)/        # Route Group
 │   ├── layout.tsx       # ダッシュボード共通レイアウト
 │   ├── dashboard/
@@ -92,6 +96,7 @@ Next.js 16 App Router の Server Actions を配置。
 - フォーム処理・データ変更操作に使用
 - Result型によるエラーハンドリング
 - `revalidatePath` でキャッシュ無効化
+- ドメイン単位でサブディレクトリ化（例: `habits/`, `settings/`）
 
 **例:**
 
@@ -191,8 +196,8 @@ User (Clerk 認証ユーザー)
 
 **構造:**
 
-- トップレベル: 汎用コンポーネント（Button, Input など）
-- サブディレクトリ: 機能別グルーピング（例: `habits/`, `dashboard/`, `pwa/`, `streak/`）
+- `basics/`: アプリ固有の基本コンポーネント（Button, Input, Theme など）
+- サブディレクトリ: 機能別グルーピング（例: `habits/`, `dashboard/`, `settings/`, `pwa/`, `streak/`）
 - `ui/`: shadcn/ui 由来のプリミティブ（Radix ラッパー）
 
 **Storybook:**
@@ -349,8 +354,8 @@ import { getDb } from "../../lib/db";
 ### デプロイフロー
 
 1. `mise run ci`: CI チェック（lint）
-2. `pnpm build:cf`: OpenNext ビルド
-3. `pnpm deploy`: Cloudflare Workers デプロイ
+2. `pnpm cf:build`: OpenNext ビルド
+3. `pnpm cf:deploy`（または `pnpm deploy`）: Cloudflare Workers デプロイ
 
 ### データベースマイグレーション
 

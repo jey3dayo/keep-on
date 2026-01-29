@@ -107,7 +107,7 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 
 - シングルクォート
 - セミコロンなし（`asNeeded`）
-- 行幅: 100文字
+- 行幅: 120文字
 - Trailing commas: ES5 準拠
 
 **拡張プリセット:**
@@ -120,6 +120,7 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 
 - `node_modules/`, `.next/`, `.open-next/`, `out/`, `build/`, `dist/`
 - `src/generated/`（自動生成ファイル）
+- `src/components/ui/`（shadcn/ui 由来のプリミティブ）
 
 ### mise タスク
 
