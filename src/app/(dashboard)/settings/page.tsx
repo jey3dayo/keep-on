@@ -23,12 +23,14 @@ export default async function SettingsPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <div className="space-y-2">
-        <h1 className="font-bold text-3xl text-foreground">設定</h1>
+      <header className="space-y-2">
+        <h1 className="text-balance font-bold text-3xl text-foreground">設定</h1>
         <p className="text-muted-foreground">アプリの表示をカスタマイズできます。</p>
-      </div>
-      <ThemeSettings initialColorTheme={initialColorTheme} />
-      <WeekStartSettings />
+      </header>
+      <section className="grid gap-6 lg:grid-cols-2">
+        <ThemeSettings initialColorTheme={initialColorTheme} />
+        <WeekStartSettings />
+      </section>
     </div>
   )
 }
