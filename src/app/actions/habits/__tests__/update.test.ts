@@ -1,4 +1,3 @@
-import { Result } from '@praha/byethrow'
 import { describe, expect, it, vi } from 'vitest'
 import { getHabitById, updateHabit } from '@/lib/queries/habit'
 import { updateHabitAction } from '../update'
@@ -55,7 +54,7 @@ describe('updateHabitAction', () => {
 
     const result = await updateHabitAction(habitId, formData)
 
-    expect(Result.isSuccess(result)).toBe(true)
+    expect(result.ok).toBe(true)
   })
 
   it('未認証ユーザーはUnauthorizedErrorを取得', async () => {
@@ -67,8 +66,8 @@ describe('updateHabitAction', () => {
 
     const result = await updateHabitAction(habitId, formData)
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
       expect(result.error.name).toBe('UnauthorizedError')
     }
   })
@@ -90,8 +89,8 @@ describe('updateHabitAction', () => {
 
     const result = await updateHabitAction(habitId, formData)
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
       expect(result.error.name).toBe('NotFoundError')
     }
   })
@@ -112,8 +111,8 @@ describe('updateHabitAction', () => {
 
     const result = await updateHabitAction(habitId, formData)
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
       expect(result.error.name).toBe('ValidationError')
     }
   })

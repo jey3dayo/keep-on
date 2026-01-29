@@ -1,6 +1,5 @@
 'use client'
 
-import { Result } from '@praha/byethrow'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -137,7 +136,7 @@ export function HabitSimpleView({
     const result = await resetHabitProgressAction(resetConfirm.habitId)
     setIsResetting(false)
 
-    if (Result.isSuccess(result)) {
+    if (result.ok) {
       appToast.success('進捗をリセットしました')
       setResetConfirm(null)
       router.refresh()

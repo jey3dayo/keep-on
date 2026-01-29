@@ -2,6 +2,7 @@
 
 import { Result } from '@praha/byethrow'
 import { weekStartToDay } from '@/constants/habit'
+import { toActionResult } from '@/lib/actions/result'
 import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
 import { createCheckin } from '@/lib/queries/checkin'
 import { getCheckinCountForPeriod, getHabitById } from '@/lib/queries/habit'
@@ -10,7 +11,7 @@ import { getCurrentUserId } from '@/lib/user'
 import { type HabitActionResult, revalidateHabitPaths, serializeActionError } from './utils'
 
 export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult {
-  return await Result.try({
+  const result = await Result.try({
     try: async () => {
       // 認証チェック
       const userId = await getCurrentUserId()
@@ -43,4 +44,6 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
     },
     catch: (error) => serializeActionError(error, 'チェックインの切り替えに失敗しました'),
   })()
+
+  return toActionResult(result)
 }

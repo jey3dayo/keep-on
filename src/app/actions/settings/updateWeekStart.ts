@@ -3,16 +3,29 @@
 import { auth } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import type { WeekStart } from '@/constants/habit'
+import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
 import { updateUserWeekStart } from '@/lib/queries/user'
 
-export async function updateWeekStartAction(weekStart: WeekStart) {
+type SerializableSettingsError =
+  | { name: 'UnauthorizedError'; message: string }
+  | { name: 'DatabaseError'; message: string }
+
+export async function updateWeekStartAction(
+  weekStart: WeekStart
+): ServerActionResultAsync<void, SerializableSettingsError> {
   const { userId } = await auth()
 
   if (!userId) {
-    throw new Error('Unauthorized')
+    return actionError({ name: 'UnauthorizedError', message: 'Unauthorized' })
   }
 
-  await updateUserWeekStart(userId, weekStart)
-  revalidatePath('/dashboard')
-  revalidatePath('/settings')
+  try {
+    await updateUserWeekStart(userId, weekStart)
+    revalidatePath('/dashboard')
+    revalidatePath('/settings')
+    return actionOk()
+  } catch (error) {
+    console.error('Failed to update week start', error)
+    return actionError({ name: 'DatabaseError', message: '週の開始日の更新に失敗しました' })
+  }
 }

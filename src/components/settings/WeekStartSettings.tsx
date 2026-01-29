@@ -18,9 +18,13 @@ export function WeekStartSettings() {
       const weekStartValue = value as WeekStart
       setIsUpdating(true)
       try {
-        await updateWeekStartAction(weekStartValue)
-        setWeekStart(weekStartValue)
-        appToast.success('週の開始日を更新しました')
+        const result = await updateWeekStartAction(weekStartValue)
+        if (result.ok) {
+          setWeekStart(weekStartValue)
+          appToast.success('週の開始日を更新しました')
+        } else {
+          appToast.error('更新に失敗しました', result.error)
+        }
       } catch (error) {
         appToast.error('更新に失敗しました', error)
       } finally {

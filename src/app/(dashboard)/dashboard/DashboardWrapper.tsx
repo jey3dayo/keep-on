@@ -1,7 +1,6 @@
 'use client'
 
 import { createId } from '@paralleldrive/cuid2'
-import { Result } from '@praha/byethrow'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { addCheckinAction } from '@/app/actions/habits/checkin'
@@ -89,7 +88,7 @@ export function DashboardWrapper({
     try {
       const result = await addCheckinAction(habitId, dateKey)
 
-      if (Result.isSuccess(result)) {
+      if (result.ok) {
         router.refresh()
         return
       }
@@ -172,7 +171,7 @@ export function DashboardWrapper({
 
     const result = await createHabit(formData)
 
-    if (Result.isSuccess(result)) {
+    if (result.ok) {
       router.refresh()
       return
     }
@@ -216,7 +215,7 @@ export function DashboardWrapper({
     try {
       const result = await addCheckinAction(habitId, dateKey)
 
-      if (Result.isSuccess(result)) {
+      if (result.ok) {
         shouldRollback = false
         router.refresh()
         return

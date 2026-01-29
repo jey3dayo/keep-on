@@ -1,6 +1,5 @@
 'use client'
 
-import { Result } from '@praha/byethrow'
 import { ArchiveRestore, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -22,7 +21,7 @@ export function HabitUnarchiveButton({ habitId }: HabitUnarchiveButtonProps) {
     const result = await unarchiveHabitAction(habitId)
     setIsRestoring(false)
 
-    if (Result.isSuccess(result)) {
+    if (result.ok) {
       toast.success('習慣を復元しました')
       router.refresh()
     } else {

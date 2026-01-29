@@ -1,6 +1,5 @@
 'use client'
 
-import { Result } from '@praha/byethrow'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { type ReactNode, useState } from 'react'
@@ -16,6 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import type { ServerActionResultAsync } from '@/lib/actions/result'
 import { formatSerializableError, type SerializableHabitError } from '@/lib/errors/serializable'
 
 interface HabitActionDialogProps {
@@ -27,7 +27,7 @@ interface HabitActionDialogProps {
   confirmClassName?: string
   successMessage: string
   errorMessage: string
-  action: (habitId: string) => Result.ResultAsync<unknown, SerializableHabitError>
+  action: (habitId: string) => ServerActionResultAsync<unknown, SerializableHabitError>
   open?: boolean
   defaultOpen?: boolean
   onOpenChange?: (open: boolean) => void
@@ -65,7 +65,7 @@ export function HabitActionDialog({
     const result = await action(habitId)
     setIsProcessing(false)
 
-    if (Result.isSuccess(result)) {
+    if (result.ok) {
       toast.success(successMessage)
       handleOpenChange(false)
       router.refresh()
