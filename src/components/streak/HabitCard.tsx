@@ -19,8 +19,10 @@ interface HabitCardProps {
 }
 
 export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: HabitCardProps) {
-  const bgColor = getColorById(habit.color ?? DEFAULT_HABIT_COLOR).color
+  const colorId = habit.color ?? DEFAULT_HABIT_COLOR
+  const bgColor = getColorById(colorId).color
   const isCompleted = habit.currentProgress >= habit.frequency
+  const isLightColor = colorId === 'yellow' || colorId === 'lime'
 
   return (
     <div className="relative">
@@ -30,7 +32,10 @@ export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: Habi
           <DropdownMenuTrigger asChild>
             <Button
               aria-label="メニューを開く"
-              className="absolute top-2 right-2 z-10 rounded-full p-1.5 text-white/80 hover:bg-black/20 hover:text-white"
+              className={cn(
+                'absolute top-2 right-2 z-10 rounded-full p-1.5 hover:bg-black/20',
+                isLightColor ? 'text-slate-900/80 hover:text-slate-900' : 'text-white/80 hover:text-white'
+              )}
               onClick={(e) => {
                 e.stopPropagation()
               }}
@@ -72,7 +77,7 @@ export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: Habi
       <HabitCardToggleButton
         aria-checked={completed}
         aria-label={`${habit.name} - ${isCompleted ? COMPLETION_STATUS_LABEL.completed : COMPLETION_STATUS_LABEL.incomplete} (${habit.currentProgress}/${habit.frequency})`}
-        className={cn(completed && 'scale-95')}
+        className={cn(isLightColor && 'text-slate-900', completed && 'scale-95')}
         onClick={onToggle}
         role="checkbox"
         style={{ backgroundColor: bgColor }}
@@ -112,7 +117,11 @@ export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: Habi
               </span>
               <span>{habit.completionRate}%</span>
             </div>
-            <Progress className="h-2 bg-black/20" indicatorClassName="bg-white" value={habit.completionRate} />
+            <Progress
+              className="h-2 bg-black/20"
+              indicatorClassName={cn(isLightColor ? 'bg-slate-900' : 'bg-white')}
+              value={habit.completionRate}
+            />
           </div>
         </div>
       </HabitCardToggleButton>

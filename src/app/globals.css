@@ -95,8 +95,8 @@
   --card-foreground: var(--slate-12);
   --popover: var(--slate-1);
   --popover-foreground: var(--slate-12);
-  --primary: var(--lime-10);
-  --primary-foreground: var(--lime-1);
+  --primary: var(--teal-10);
+  --primary-foreground: var(--teal-1);
   --secondary: var(--slate-3);
   --secondary-foreground: var(--slate-11);
   --muted: var(--slate-3);
@@ -105,11 +105,11 @@
   --accent-foreground: var(--slate-11);
   --destructive: var(--red-9);
   --destructive-foreground: var(--red-1);
-  --success: var(--lime-9);
-  --success-foreground: var(--lime-1);
+  --success: var(--teal-9);
+  --success-foreground: var(--teal-1);
   --border: var(--slate-6);
   --input: var(--slate-6);
-  --ring: var(--lime-9);
+  --ring: var(--teal-9);
 
   /* Sidebar 変数 */
   --sidebar-background: var(--slate-1);
@@ -124,9 +124,9 @@
 
 .dark {
   color-scheme: dark;
-  --primary-foreground: var(--lime-12);
+  --primary-foreground: var(--teal-12);
   --destructive-foreground: var(--red-12);
-  --success-foreground: var(--lime-12);
+  --success-foreground: var(--teal-12);
 }
 
 /* テーマバリエーション（data-theme属性で切替）- Radix Colors */
@@ -135,6 +135,12 @@
   --primary-foreground: var(--orange-1);
   --ring: var(--orange-9);
   --accent: var(--orange-3);
+}
+[data-theme="lime"] {
+  --primary: var(--lime-10);
+  --primary-foreground: var(--lime-1);
+  --ring: var(--lime-9);
+  --accent: var(--lime-3);
 }
 [data-theme="red"] {
   --primary: var(--red-10);
@@ -166,6 +172,12 @@
   --ring: var(--cyan-9);
   --accent: var(--cyan-3);
 }
+[data-theme="teal"] {
+  --primary: var(--teal-10);
+  --primary-foreground: var(--teal-1);
+  --ring: var(--teal-9);
+  --accent: var(--teal-3);
+}
 [data-theme="yellow"] {
   --primary: var(--yellow-10);
   --primary-foreground: var(--yellow-1);
@@ -175,6 +187,9 @@
 
 .dark[data-theme="orange"] {
   --primary-foreground: var(--orange-12);
+}
+.dark[data-theme="lime"] {
+  --primary-foreground: var(--lime-12);
 }
 .dark[data-theme="red"] {
   --primary-foreground: var(--red-12);
@@ -190,6 +205,9 @@
 }
 .dark[data-theme="cyan"] {
   --primary-foreground: var(--cyan-12);
+}
+.dark[data-theme="teal"] {
+  --primary-foreground: var(--teal-12);
 }
 .dark[data-theme="yellow"] {
   --primary-foreground: var(--yellow-12);

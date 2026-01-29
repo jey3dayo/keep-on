@@ -103,22 +103,9 @@ export function HabitSimpleView({
     setCurrentPage((current) => Math.min(current, totalPages - 1))
   }, [totalPages])
 
-  const sortedHabits = useMemo(() => {
-    const indexed = habits.map((habit, index) => ({ habit, index }))
-    indexed.sort((a, b) => {
-      const aCompleted = completedHabitIds.has(a.habit.id)
-      const bCompleted = completedHabitIds.has(b.habit.id)
-      if (aCompleted !== bCompleted) {
-        return Number(aCompleted) - Number(bCompleted)
-      }
-      return a.index - b.index
-    })
-    return indexed.map((item) => item.habit)
-  }, [habits, completedHabitIds])
-
   const currentHabits = useMemo(
-    () => sortedHabits.slice(currentPage * habitsPerPage, (currentPage + 1) * habitsPerPage),
-    [currentPage, sortedHabits]
+    () => habits.slice(currentPage * habitsPerPage, (currentPage + 1) * habitsPerPage),
+    [currentPage, habits]
   )
 
   const fallbackBgColor = useMemo(() => {
