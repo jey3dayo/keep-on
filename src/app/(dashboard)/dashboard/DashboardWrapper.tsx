@@ -152,7 +152,6 @@ export function DashboardWrapper({
       return { ok: false as const, error }
     }
   }
-
   const handleCompletedCheckin = async (habitId: string, dateKey: string) => {
     addPendingCheckin(habitId)
 
