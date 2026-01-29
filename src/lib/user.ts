@@ -79,10 +79,11 @@ export async function syncUser() {
   const existing = await getUserByClerkId(clerkId)
   const parsedExisting = parseUser(existing, 'existing', clerkId)
   const emailFromClaims = getEmailFromSessionClaims(sessionClaims)
-  if (parsedExisting && !emailFromClaims) {
-    logMissingSessionEmail(clerkId, sessionClaims)
-  }
-  if (parsedExisting && emailFromClaims) {
+  if (parsedExisting) {
+    if (!emailFromClaims) {
+      logMissingSessionEmail(clerkId, sessionClaims)
+      return parsedExisting
+    }
     if (parsedExisting.email !== emailFromClaims) {
       const updated = await upsertUser({
         clerkId,
@@ -91,6 +92,14 @@ export async function syncUser() {
       return parseUser(updated, 'upsert', clerkId)
     }
     return parsedExisting
+  }
+
+  if (emailFromClaims) {
+    const created = await upsertUser({
+      clerkId,
+      email: emailFromClaims,
+    })
+    return parseUser(created, 'upsert', clerkId)
   }
 
   let clerkUser: Awaited<ReturnType<typeof currentUser>> = null
@@ -104,22 +113,18 @@ export async function syncUser() {
         return null
       }
       logError('clerk.currentUser:api-error', parsed)
-      return parsedExisting ?? null
+      return null
     }
     throw error
   }
 
   if (!clerkUser) {
-    return parsedExisting ?? null
+    return null
   }
 
   const email = clerkUser.emailAddresses[0]?.emailAddress
   if (!email) {
     throw new Error('Email address not found')
-  }
-
-  if (parsedExisting && parsedExisting.email === email) {
-    return parsedExisting
   }
 
   const created = await upsertUser({ clerkId: clerkUser.id, email })
