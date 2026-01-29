@@ -4,7 +4,6 @@ import { Circle, LayoutGrid } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import type { IconName } from '@/components/basics/Icon'
-import type { OptimisticRollback } from '@/components/habits/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import type { Period } from '@/constants/habit'
@@ -12,24 +11,13 @@ import type { HabitPreset } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import { setClientCookie } from '@/lib/utils/cookies'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
-import type { HabitWithProgress } from '@/types/habit'
 import { HabitForm } from './HabitForm'
 import { HabitListView } from './HabitListView'
 import { HabitPresetSelector } from './HabitPresetSelector'
 import { HabitSimpleView } from './HabitSimpleView'
+import type { DashboardBaseProps } from './types'
 
-interface StreakDashboardProps {
-  habits: HabitWithProgress[]
-  pendingCheckins?: Set<string>
-  onAddHabit: (
-    name: string,
-    icon: IconName,
-    options?: { color?: string | null; period?: Period; frequency?: number }
-  ) => Promise<void>
-  onToggleCheckin: (habitId: string) => Promise<void>
-  onArchiveOptimistic?: (habitId: string) => OptimisticRollback
-  onDeleteOptimistic?: (habitId: string) => OptimisticRollback
-  onResetOptimistic?: (habitId: string) => OptimisticRollback
+interface StreakDashboardProps extends DashboardBaseProps {
   initialView?: MainView
 }
 

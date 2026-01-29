@@ -2,28 +2,16 @@
 
 import { useState } from 'react'
 import type { IconName } from '@/components/basics/Icon'
-import type { OptimisticRollback } from '@/components/habits/types'
 import type { Period } from '@/constants/habit'
 import type { HabitPreset } from '@/constants/habit-data'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
-import type { HabitWithProgress } from '@/types/habit'
 import type { User } from '@/types/user'
 import { HabitForm } from './HabitForm'
 import { HabitListView } from './HabitListView'
+import type { DashboardBaseProps } from './types'
 
-interface DesktopDashboardProps {
-  habits: HabitWithProgress[]
-  pendingCheckins?: Set<string>
+interface DesktopDashboardProps extends DashboardBaseProps {
   user: User
-  onAddHabit: (
-    name: string,
-    icon: IconName,
-    options?: { color?: string | null; period?: Period; frequency?: number }
-  ) => Promise<void>
-  onToggleCheckin: (habitId: string) => Promise<void>
-  onArchiveOptimistic?: (habitId: string) => OptimisticRollback
-  onDeleteOptimistic?: (habitId: string) => OptimisticRollback
-  onResetOptimistic?: (habitId: string) => OptimisticRollback
 }
 
 type PeriodFilter = 'all' | Period
