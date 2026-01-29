@@ -53,21 +53,39 @@ export function DashboardWrapper({
   const hasRefreshedForTimeZone = useRef(false)
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const runOptimisticUpdate = (updater: (current: HabitWithProgress[]) => HabitWithProgress[]) => {
-    let previousState: HabitWithProgress[] | null = null
+  const runOptimisticUpdateForHabit = (
+    habitId: string,
+    updater: (current: HabitWithProgress[]) => HabitWithProgress[]
+  ) => {
+    let previousHabit: HabitWithProgress | null = null
+    let previousIndex = -1
     setOptimisticHabits((current) => {
-      previousState = current
+      previousIndex = current.findIndex((habit) => habit.id === habitId)
+      previousHabit = previousIndex >= 0 ? current[previousIndex] : null
       return updater(current)
     })
     return () => {
-      if (previousState) {
-        setOptimisticHabits(previousState)
+      if (!previousHabit) {
+        return
       }
+      const rollbackHabit = previousHabit
+      setOptimisticHabits((current) => {
+        const existingIndex = current.findIndex((habit) => habit.id === habitId)
+        if (existingIndex >= 0) {
+          const next = [...current]
+          next[existingIndex] = rollbackHabit
+          return next
+        }
+        const next = [...current]
+        const insertIndex = previousIndex >= 0 && previousIndex <= next.length ? previousIndex : next.length
+        next.splice(insertIndex, 0, rollbackHabit)
+        return next
+      })
     }
   }
 
   const archiveOptimistically = (habitId: string) =>
-    runOptimisticUpdate((current) =>
+    runOptimisticUpdateForHabit(habitId, (current) =>
       current.map((habit) =>
         habit.id === habitId
           ? {
@@ -80,10 +98,10 @@ export function DashboardWrapper({
     )
 
   const deleteOptimistically = (habitId: string) =>
-    runOptimisticUpdate((current) => current.filter((habit) => habit.id !== habitId))
+    runOptimisticUpdateForHabit(habitId, (current) => current.filter((habit) => habit.id !== habitId))
 
   const resetOptimistically = (habitId: string) =>
-    runOptimisticUpdate((current) =>
+    runOptimisticUpdateForHabit(habitId, (current) =>
       current.map((habit) => {
         if (habit.id !== habitId) {
           return habit
