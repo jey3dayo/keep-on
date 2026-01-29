@@ -299,17 +299,15 @@ export function DashboardWrapper({
     if (pendingCheckins.has(habitId)) {
       return
     }
+    const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
+    if (!targetHabit) {
+      return
+    }
     if (!markCheckinInFlight(habitId)) {
       return
     }
 
     try {
-      const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
-      if (!targetHabit) {
-        clearCheckinInFlight(habitId)
-        return
-      }
-
       const isCompleted = targetHabit.currentProgress >= targetHabit.frequency
       const now = new Date()
       const dateKey = formatDateKey(now)
