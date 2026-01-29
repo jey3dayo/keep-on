@@ -124,8 +124,8 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
                         archived={habit.archived}
                         habitId={habit.id}
                         habitName={habit.name}
-                        onEdit={() => router.push(`/habits/${habit.id}/edit`)}
                         onArchiveOptimistic={() => archiveOptimistically(habit.id)}
+                        onEdit={() => router.push(`/habits/${habit.id}/edit`)}
                       />
                     </TableCell>
                   </TableRow>
@@ -141,7 +141,7 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
         <div className="space-y-4 rounded-lg border border-muted/60 bg-muted/20 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-bold text-muted-foreground text-xl">アーカイブ済み</h2>
-            <span className="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-xs text-muted-foreground">
+            <span className="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-muted-foreground text-xs">
               {archivedHabits.length}件
             </span>
           </div>
@@ -156,7 +156,7 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
             </TableHeader>
             <TableBody>
               {archivedHabits.map((habit) => (
-                <TableRow key={habit.id} className="bg-muted/20 text-muted-foreground hover:bg-muted/30">
+                <TableRow className="bg-muted/20 text-muted-foreground hover:bg-muted/30" key={habit.id}>
                   <TableCell>
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/70">
                       <Icon className="h-5 w-5 text-muted-foreground/80" name={normalizeIconName(habit.icon)} />
@@ -165,7 +165,7 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
                   <TableCell>
                     <div className="flex flex-wrap items-center gap-2">
                       <span>{habit.name}</span>
-                      <span className="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      <span className="rounded-full border border-muted-foreground/30 px-2 py-0.5 font-medium text-[10px] text-muted-foreground">
                         アーカイブ
                       </span>
                     </div>

@@ -7,13 +7,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { resetHabitProgressAction } from '@/app/actions/habits/reset'
 import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
+import type { OptimisticHandler } from '@/components/habits/types'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import { getRingColorFromBackground } from '@/lib/utils/color'
 import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
-import type { OptimisticHandler } from '@/components/habits/types'
 
 // Drawerコンポーネントを動的にインポート
 const HabitActionDrawer = dynamic(
@@ -325,19 +325,19 @@ export function HabitSimpleView({
       <HabitActionDrawer
         habit={drawerState.habit}
         onArchiveOptimistic={
-          drawerState.habit && onArchiveOptimistic ? (() => onArchiveOptimistic(drawerState.habit.id)) : undefined
+          drawerState.habit && onArchiveOptimistic ? () => onArchiveOptimistic(drawerState.habit.id) : undefined
         }
         onDeleteOptimistic={
-          drawerState.habit && onDeleteOptimistic ? (() => onDeleteOptimistic(drawerState.habit.id)) : undefined
-        }
-        onResetOptimistic={
-          drawerState.habit && onResetOptimistic ? (() => onResetOptimistic(drawerState.habit.id)) : undefined
+          drawerState.habit && onDeleteOptimistic ? () => onDeleteOptimistic(drawerState.habit.id) : undefined
         }
         onOpenChange={(open) => {
           if (!open) {
             closeDrawer()
           }
         }}
+        onResetOptimistic={
+          drawerState.habit && onResetOptimistic ? () => onResetOptimistic(drawerState.habit.id) : undefined
+        }
         open={drawerState.open}
       />
 

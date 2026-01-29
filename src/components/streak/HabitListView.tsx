@@ -8,11 +8,11 @@ import { AddHabitButton, Button, CheckInButton } from '@/components/basics/Butto
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
 import { HabitResetDialog } from '@/components/habits/HabitResetDialog'
+import type { OptimisticHandler } from '@/components/habits/types'
 import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
-import type { OptimisticHandler } from '@/components/habits/types'
 
 // Drawerコンポーネントを動的にインポート
 const HabitActionDrawer = dynamic(
@@ -122,21 +122,21 @@ export function HabitListView({
                 return a.index - b.index
               })
               .map(({ habit }) => (
-              <HabitListCard
-                completed={completedHabitIds.has(habit.id)}
-                habit={habit}
-                key={habit.id}
-                pending={pendingCheckins?.has(habit.id) ?? false}
-                onLongPressOrContextMenu={() => setDrawerState({ open: true, habit })}
-                onToggle={() => {
-                  if (completedHabitIds.has(habit.id)) {
-                    setResetConfirmHabit(habit)
-                    return
-                  }
-                  onToggleHabit(habit.id)
-                }}
-              />
-            ))
+                <HabitListCard
+                  completed={completedHabitIds.has(habit.id)}
+                  habit={habit}
+                  key={habit.id}
+                  onLongPressOrContextMenu={() => setDrawerState({ open: true, habit })}
+                  onToggle={() => {
+                    if (completedHabitIds.has(habit.id)) {
+                      setResetConfirmHabit(habit)
+                      return
+                    }
+                    onToggleHabit(habit.id)
+                  }}
+                  pending={pendingCheckins?.has(habit.id) ?? false}
+                />
+              ))
           )}
         </div>
 
@@ -153,19 +153,19 @@ export function HabitListView({
       <HabitActionDrawer
         habit={drawerState.habit}
         onArchiveOptimistic={
-          drawerState.habit && onArchiveOptimistic ? (() => onArchiveOptimistic(drawerState.habit.id)) : undefined
+          drawerState.habit && onArchiveOptimistic ? () => onArchiveOptimistic(drawerState.habit.id) : undefined
         }
         onDeleteOptimistic={
-          drawerState.habit && onDeleteOptimistic ? (() => onDeleteOptimistic(drawerState.habit.id)) : undefined
-        }
-        onResetOptimistic={
-          drawerState.habit && onResetOptimistic ? (() => onResetOptimistic(drawerState.habit.id)) : undefined
+          drawerState.habit && onDeleteOptimistic ? () => onDeleteOptimistic(drawerState.habit.id) : undefined
         }
         onOpenChange={(open) => {
           if (!open) {
             setDrawerState({ open: false, habit: null })
           }
         }}
+        onResetOptimistic={
+          drawerState.habit && onResetOptimistic ? () => onResetOptimistic(drawerState.habit.id) : undefined
+        }
         open={drawerState.open}
       />
       {/* リセット確認ダイアログ（達成時のみ表示） */}
@@ -173,12 +173,12 @@ export function HabitListView({
         <HabitResetDialog
           habitId={resetConfirmHabit.id}
           habitName={resetConfirmHabit.name}
-          onOptimistic={onResetOptimistic ? () => onResetOptimistic(resetConfirmHabit.id) : undefined}
           onOpenChange={(open) => {
             if (!open) {
               setResetConfirmHabit(null)
             }
           }}
+          onOptimistic={onResetOptimistic ? () => onResetOptimistic(resetConfirmHabit.id) : undefined}
           open
           trigger={null}
         />
@@ -220,8 +220,7 @@ function HabitListCard({
   const periodData = getPeriodById(habit.period)
   const IconComponent = getIconById(normalizeIconName(habit.icon)).icon
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const completedBackgroundColor = `var(--${colorData.id}-a4)`
-  const completedOverlay = 'linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08))'
+  const completedOpacity = 0.72
   const badgeBackgroundColor = `var(--${colorData.id}-a4)`
 
   const isCompleted = habit.currentProgress >= habit.frequency
@@ -247,19 +246,14 @@ function HabitListCard({
 
   return (
     <div
-      className={cn(
-        'rounded-2xl border bg-card p-4 transition-all duration-300',
-        completed ? 'border-border/50' : 'border-border'
-      )}
+      className={cn('rounded-2xl border border-border bg-card p-4 transition-all duration-300')}
       onContextMenu={handleContextMenu}
       onPointerDown={handleLongPressStart}
       onPointerLeave={handleLongPressEnd}
       onPointerUp={handleLongPressEnd}
       role="button"
       style={{
-        borderColor: completed ? colorData.color : undefined,
-        backgroundColor: completed ? completedBackgroundColor : undefined,
-        backgroundImage: completed ? completedOverlay : undefined,
+        opacity: completed ? completedOpacity : 1,
       }}
       tabIndex={0}
     >
@@ -285,14 +279,7 @@ function HabitListCard({
 
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex items-center gap-2">
-            <h3
-              className={cn(
-                'truncate font-semibold text-foreground text-lg transition-colors',
-                completed && 'text-muted-foreground line-through'
-              )}
-            >
-              {habit.name}
-            </h3>
+            <h3 className="truncate font-semibold text-foreground text-lg transition-colors">{habit.name}</h3>
             <span
               className="flex-shrink-0 rounded-full px-2 py-0.5 text-xs"
               style={{

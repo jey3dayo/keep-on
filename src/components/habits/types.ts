@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
-export type OptimisticHandler = () => void | (() => void)
+export type OptimisticRollback = () => void
+export type OptimisticHandler = () => OptimisticRollback | undefined
 
 export interface HabitDialogProps {
   habitId: string

@@ -1,20 +1,27 @@
 'use client'
 
 import { Archive, Pencil } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { IconLabelButton } from '@/components/basics/IconLabelButton'
+import { Button } from '@/components/ui/button'
 import { HabitArchiveDialog } from './HabitArchiveDialog'
 import { HabitDeleteDialog } from './HabitDeleteDialog'
+import type { OptimisticHandler } from '@/components/habits/types'
 
 interface HabitTableActionsProps {
   habitId: string
   habitName: string
   archived: boolean
   onEdit: (habitId: string) => void
-  onArchiveOptimistic?: () => void | (() => void)
+  onArchiveOptimistic?: OptimisticHandler
 }
 
-export function HabitTableActions({ habitId, habitName, archived, onEdit, onArchiveOptimistic }: HabitTableActionsProps) {
+export function HabitTableActions({
+  habitId,
+  habitName,
+  archived,
+  onEdit,
+  onArchiveOptimistic,
+}: HabitTableActionsProps) {
   return (
     <div className="flex justify-end gap-1">
       {!archived && (

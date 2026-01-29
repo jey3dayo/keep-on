@@ -31,8 +31,8 @@ export function HabitArchiveDialog({
       description={<>「{habitName}」をアーカイブすると、一覧から非表示になります。後で復元することができます。</>}
       errorMessage="アーカイブに失敗しました"
       habitId={habitId}
-      onOptimistic={onOptimistic}
       onOpenChange={onOpenChange}
+      onOptimistic={onOptimistic}
       open={open}
       successMessage="習慣をアーカイブしました"
       title="習慣をアーカイブしますか？"
