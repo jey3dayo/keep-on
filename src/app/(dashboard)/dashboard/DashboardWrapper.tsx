@@ -16,6 +16,7 @@ import {
   DEFAULT_HABIT_PERIOD,
   type Period,
 } from '@/constants/habit'
+import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
 import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
 import { formatDateKey } from '@/lib/utils/date'
 import { appToast } from '@/lib/utils/toast'
@@ -141,23 +142,31 @@ export function DashboardWrapper({
     })
   }
 
+  const waitForRetry = (delayMs: number) =>
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, delayMs)
+    })
+
   const runAddCheckinWithRetry = async (habitId: string, dateKey: string) => {
-    let lastResult: Awaited<ReturnType<typeof addCheckinAction>> | null = null
+    const maxAttempts = Math.max(1, RETRY_MAX_ATTEMPTS)
     let lastError: unknown = null
 
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       try {
         const result = await addCheckinAction(habitId, dateKey)
         if (Result.isSuccess(result)) {
           return { ok: true as const, result }
         }
-        lastResult = result
+        return { ok: false as const, result }
       } catch (error) {
         lastError = error
+        if (attempt < maxAttempts - 1 && RETRY_DELAY_MS > 0) {
+          await waitForRetry(RETRY_DELAY_MS)
+        }
       }
     }
 
-    return { ok: false as const, result: lastResult, error: lastError }
+    return { ok: false as const, error: lastError }
   }
 
   const handleCompletedCheckin = async (habitId: string, dateKey: string) => {
