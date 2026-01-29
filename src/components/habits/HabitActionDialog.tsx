@@ -28,9 +28,28 @@ interface HabitActionDialogProps {
   successMessage: string
   errorMessage: string
   action: (habitId: string) => ServerActionResultAsync<unknown, SerializableHabitError>
+  retryOnError?: boolean
   open?: boolean
   defaultOpen?: boolean
   onOpenChange?: (open: boolean) => void
+}
+
+const runActionWithRetry = async <T,>(
+  run: () => ServerActionResultAsync<T, SerializableHabitError>,
+  maxRetries: number
+): Promise<Awaited<ServerActionResultAsync<T, SerializableHabitError>>> => {
+  let attempts = 0
+
+  while (true) {
+    try {
+      return await run()
+    } catch (error) {
+      if (attempts >= maxRetries) {
+        throw error
+      }
+      attempts += 1
+    }
+  }
 }
 
 export function HabitActionDialog({
@@ -43,6 +62,7 @@ export function HabitActionDialog({
   successMessage,
   errorMessage,
   action,
+  retryOnError = false,
   open,
   defaultOpen,
   onOpenChange,
@@ -61,20 +81,33 @@ export function HabitActionDialog({
   }
 
   const handleConfirm = async () => {
-    setIsProcessing(true)
-    const result = await action(habitId)
-    setIsProcessing(false)
-
-    if (result.ok) {
-      toast.success(successMessage)
-      handleOpenChange(false)
-      router.refresh()
+    if (isProcessing) {
       return
     }
 
-    toast.error(errorMessage, {
-      description: formatSerializableError(result.error),
-    })
+    setIsProcessing(true)
+
+    try {
+      const maxRetries = retryOnError ? 1 : 0
+      const result = await runActionWithRetry(() => action(habitId), maxRetries)
+
+      if (result.ok) {
+        toast.success(successMessage)
+        handleOpenChange(false)
+        router.refresh()
+        return
+      }
+
+      toast.error(errorMessage, {
+        description: formatSerializableError(result.error),
+      })
+    } catch (error) {
+      toast.error(errorMessage, {
+        description: error instanceof Error ? error.message : '通信エラーが発生しました',
+      })
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   return (

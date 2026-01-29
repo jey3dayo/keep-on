@@ -28,6 +28,7 @@ export function HabitDeleteDialog({ habitId, habitName, trigger, open, defaultOp
       habitId={habitId}
       onOpenChange={onOpenChange}
       open={open}
+      retryOnError={false}
       successMessage="習慣を完全に削除しました"
       title="習慣を完全に削除しますか？"
       trigger={resolvedTrigger}
