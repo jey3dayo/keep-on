@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { AddHabitButton, Button } from '@/components/basics/Button'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
 import { HabitResetDialog } from '@/components/habits/HabitResetDialog'
-import type { OptimisticHandler } from '@/components/habits/types'
+import type { OptimisticRollback } from '@/components/habits/types'
 import { HabitListCard } from '@/components/streak/HabitListCard'
 import { PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
 import { cn } from '@/lib/utils'
@@ -29,9 +29,9 @@ interface HabitListViewProps {
   onPeriodChange: (filter: 'all' | Period) => void
   onToggleHabit: (habitId: string) => void
   onAddHabit: () => void
-  onArchiveOptimistic?: (habitId: string) => OptimisticHandler
-  onDeleteOptimistic?: (habitId: string) => OptimisticHandler
-  onResetOptimistic?: (habitId: string) => OptimisticHandler
+  onArchiveOptimistic?: (habitId: string) => OptimisticRollback
+  onDeleteOptimistic?: (habitId: string) => OptimisticRollback
+  onResetOptimistic?: (habitId: string) => OptimisticRollback
   pendingCheckins?: Set<string>
   todayCompleted: number
   totalDaily: number
@@ -156,17 +156,13 @@ export function HabitListView({
         onArchiveOptimistic={
           drawerHabitId && onArchiveOptimistic ? () => onArchiveOptimistic(drawerHabitId) : undefined
         }
-        onDeleteOptimistic={
-          drawerHabitId && onDeleteOptimistic ? () => onDeleteOptimistic(drawerHabitId) : undefined
-        }
+        onDeleteOptimistic={drawerHabitId && onDeleteOptimistic ? () => onDeleteOptimistic(drawerHabitId) : undefined}
         onOpenChange={(open) => {
           if (!open) {
             setDrawerState({ open: false, habit: null })
           }
         }}
-        onResetOptimistic={
-          drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined
-        }
+        onResetOptimistic={drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined}
         open={drawerState.open}
       />
       {/* リセット確認ダイアログ（達成時のみ表示） */}

@@ -2,10 +2,10 @@
 
 import { Archive, Pencil } from 'lucide-react'
 import { IconLabelButton } from '@/components/basics/IconLabelButton'
+import type { OptimisticHandler } from '@/components/habits/types'
 import { Button } from '@/components/ui/button'
 import { HabitArchiveDialog } from './HabitArchiveDialog'
 import { HabitDeleteDialog } from './HabitDeleteDialog'
-import type { OptimisticHandler } from '@/components/habits/types'
 
 interface HabitTableActionsProps {
   habitId: string

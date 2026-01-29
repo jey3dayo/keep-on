@@ -15,7 +15,7 @@ import type { HabitWithProgress } from '@/types/habit'
 import { HabitDeleteDialog } from './HabitDeleteDialog'
 import { HabitTableActions } from './HabitTableActions'
 import { HabitUnarchiveButton } from './HabitUnarchiveButton'
-import type { OptimisticHandler } from './types'
+import type { OptimisticRollback } from './types'
 
 interface HabitTableClientProps {
   habits: HabitWithProgress[]
@@ -29,7 +29,7 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
     setOptimisticHabits(habits)
   }, [habits])
 
-  const runOptimisticUpdate = (updater: (current: HabitWithProgress[]) => HabitWithProgress[]): OptimisticHandler => {
+  const runOptimisticUpdate = (updater: (current: HabitWithProgress[]) => HabitWithProgress[]): OptimisticRollback => {
     let previousState: HabitWithProgress[] | null = null
     setOptimisticHabits((current) => {
       previousState = current
