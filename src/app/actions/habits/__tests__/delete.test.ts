@@ -1,4 +1,3 @@
-import { Result } from '@praha/byethrow'
 import { describe, expect, it, vi } from 'vitest'
 import { deleteHabit, getHabitById } from '@/lib/queries/habit'
 import { deleteHabitAction } from '../delete'
@@ -40,7 +39,7 @@ describe('deleteHabitAction', () => {
 
     const result = await deleteHabitAction(habitId)
 
-    expect(Result.isSuccess(result)).toBe(true)
+    expect(result.ok).toBe(true)
     expect(getHabitById).toHaveBeenCalledWith(habitId)
     expect(deleteHabit).toHaveBeenCalledWith(habitId, userId)
   })
@@ -51,8 +50,8 @@ describe('deleteHabitAction', () => {
 
     const result = await deleteHabitAction(habitId)
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
       expect(result.error.name).toBe('UnauthorizedError')
     }
   })
@@ -65,8 +64,8 @@ describe('deleteHabitAction', () => {
 
     const result = await deleteHabitAction(habitId)
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
       expect(result.error.name).toBe('NotFoundError')
     }
   })
@@ -85,8 +84,8 @@ describe('deleteHabitAction', () => {
 
     const result = await deleteHabitAction(habitId)
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
       expect(result.error.name).toBe('AuthorizationError')
     }
   })

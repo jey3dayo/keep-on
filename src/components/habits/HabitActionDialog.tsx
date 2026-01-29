@@ -1,6 +1,5 @@
 'use client'
 
-import { Result } from '@praha/byethrow'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { type ReactNode, useState } from 'react'
@@ -17,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
+import type { ServerActionResultAsync } from '@/lib/actions/result'
 import { formatSerializableError, type SerializableHabitError } from '@/lib/errors/serializable'
 import type { OptimisticHandler } from './types'
 
@@ -30,10 +30,37 @@ interface HabitActionDialogProps {
   confirmClassName?: string
   successMessage: string
   errorMessage: string
-  action: (habitId: string) => Result.ResultAsync<unknown, SerializableHabitError>
+  action: (habitId: string) => ServerActionResultAsync<unknown, SerializableHabitError>
+  retryOnError?: boolean
   open?: boolean
   defaultOpen?: boolean
   onOpenChange?: (open: boolean) => void
+}
+
+const waitForRetry = (delayMs: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, delayMs)
+  })
+
+const runActionWithRetry = async <T,>(
+  run: () => ServerActionResultAsync<T, SerializableHabitError>,
+  retryOnError: boolean
+): Promise<Awaited<ServerActionResultAsync<T, SerializableHabitError>>> => {
+  const maxAttempts = Math.max(1, retryOnError ? RETRY_MAX_ATTEMPTS : 1)
+  let lastError: unknown = null
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      return await run()
+    } catch (error) {
+      lastError = error
+      if (attempt < maxAttempts - 1 && RETRY_DELAY_MS > 0) {
+        await waitForRetry(RETRY_DELAY_MS)
+      }
+    }
+  }
+
+  throw lastError ?? new Error('処理に失敗しました')
 }
 
 export function HabitActionDialog({
@@ -47,6 +74,7 @@ export function HabitActionDialog({
   successMessage,
   errorMessage,
   action,
+  retryOnError = true,
   open,
   defaultOpen,
   onOpenChange,
@@ -64,38 +92,18 @@ export function HabitActionDialog({
     onOpenChange?.(open)
   }
 
-  const waitForRetry = (delayMs: number) =>
-    new Promise<void>((resolve) => {
-      setTimeout(resolve, delayMs)
-    })
-
-  const runActionWithRetry = async () => {
-    const maxAttempts = Math.max(1, RETRY_MAX_ATTEMPTS)
-    let lastError: unknown = null
-
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      try {
-        const result = await action(habitId)
-        return result
-      } catch (error) {
-        lastError = error
-        if (attempt < maxAttempts - 1 && RETRY_DELAY_MS > 0) {
-          await waitForRetry(RETRY_DELAY_MS)
-        }
-      }
+  const handleConfirm = async () => {
+    if (isProcessing) {
+      return
     }
 
-    throw lastError ?? new Error('処理に失敗しました')
-  }
-
-  const handleConfirm = async () => {
     setIsProcessing(true)
     const rollback = onOptimistic?.()
 
     try {
-      const result = await runActionWithRetry()
+      const result = await runActionWithRetry(() => action(habitId), retryOnError)
 
-      if (Result.isSuccess(result)) {
+      if (result.ok) {
         toast.success(successMessage)
         handleOpenChange(false)
         router.refresh()
@@ -113,7 +121,7 @@ export function HabitActionDialog({
         rollback()
       }
       toast.error(errorMessage, {
-        description: error instanceof Error ? error.message : undefined,
+        description: error instanceof Error ? error.message : '通信エラーが発生しました',
       })
     } finally {
       setIsProcessing(false)

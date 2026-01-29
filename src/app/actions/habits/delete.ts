@@ -1,6 +1,6 @@
 'use server'
 
-import { Result } from '@praha/byethrow'
+import { actionError, actionOk } from '@/lib/actions/result'
 import { AuthorizationError, NotFoundError } from '@/lib/errors/habit'
 import { serializeHabitError } from '@/lib/errors/serializable'
 import { deleteHabit } from '@/lib/queries/habit'
@@ -10,32 +10,32 @@ import { type HabitActionResult, requireOwnedHabit, requireUserId, revalidateHab
  * 習慣を完全削除するServer Action
  *
  * @param habitId - 習慣ID
- * @returns Result<void, SerializableHabitError>
+ * @returns ServerActionResult<void, SerializableHabitError>
  */
 export async function deleteHabitAction(habitId: string): HabitActionResult {
   const userIdResult = await requireUserId()
 
-  if (!Result.isSuccess(userIdResult)) {
-    return Result.fail(userIdResult.error)
+  if (!userIdResult.ok) {
+    return userIdResult
   }
 
-  const habitResult = await requireOwnedHabit(habitId, userIdResult.value)
+  const habitResult = await requireOwnedHabit(habitId, userIdResult.data)
 
-  if (!Result.isSuccess(habitResult)) {
-    return Result.fail(habitResult.error)
+  if (!habitResult.ok) {
+    return habitResult
   }
 
-  if (!habitResult.value.archived) {
-    return Result.fail(serializeHabitError(new AuthorizationError({ detail: 'アーカイブされた習慣のみ削除できます' })))
+  if (!habitResult.data.archived) {
+    return actionError(serializeHabitError(new AuthorizationError({ detail: 'アーカイブされた習慣のみ削除できます' })))
   }
 
-  const deleted = await deleteHabit(habitId, userIdResult.value)
+  const deleted = await deleteHabit(habitId, userIdResult.data)
 
   if (!deleted) {
-    return Result.fail(serializeHabitError(new NotFoundError()))
+    return actionError(serializeHabitError(new NotFoundError()))
   }
 
   revalidateHabitPaths()
 
-  return Result.succeed(undefined)
+  return actionOk()
 }

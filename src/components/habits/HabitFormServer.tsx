@@ -1,7 +1,6 @@
 'use client'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
-import { Result } from '@praha/byethrow'
 import { Check, ChevronLeft, Clock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -86,7 +85,7 @@ export function HabitFormServer({
 
     setIsSaving(false)
 
-    if (Result.isSuccess(result)) {
+    if (result.ok) {
       toast.success(initialData ? '習慣を更新しました' : '習慣を作成しました', {
         description: initialData ? `「${data.name}」を更新しました` : `「${data.name}」が追加されました`,
       })

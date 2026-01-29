@@ -1,6 +1,6 @@
 'use server'
 
-import { Result } from '@praha/byethrow'
+import { actionError, actionOk } from '@/lib/actions/result'
 import { NotFoundError } from '@/lib/errors/habit'
 import { serializeHabitError } from '@/lib/errors/serializable'
 import { unarchiveHabit } from '@/lib/queries/habit'
@@ -10,28 +10,28 @@ import { type HabitActionResult, requireOwnedHabit, requireUserId, revalidateHab
  * 習慣を復元するServer Action
  *
  * @param habitId - 習慣ID
- * @returns Result<void, SerializableHabitError>
+ * @returns ServerActionResult<void, SerializableHabitError>
  */
 export async function unarchiveHabitAction(habitId: string): HabitActionResult {
   const userIdResult = await requireUserId()
 
-  if (!Result.isSuccess(userIdResult)) {
-    return Result.fail(userIdResult.error)
+  if (!userIdResult.ok) {
+    return userIdResult
   }
 
-  const habitResult = await requireOwnedHabit(habitId, userIdResult.value)
+  const habitResult = await requireOwnedHabit(habitId, userIdResult.data)
 
-  if (!Result.isSuccess(habitResult)) {
-    return Result.fail(habitResult.error)
+  if (!habitResult.ok) {
+    return habitResult
   }
 
-  const unarchived = await unarchiveHabit(habitId, userIdResult.value)
+  const unarchived = await unarchiveHabit(habitId, userIdResult.data)
 
   if (!unarchived) {
-    return Result.fail(serializeHabitError(new NotFoundError()))
+    return actionError(serializeHabitError(new NotFoundError()))
   }
 
   revalidateHabitPaths()
 
-  return Result.succeed(undefined)
+  return actionOk()
 }

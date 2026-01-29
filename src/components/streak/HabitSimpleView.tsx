@@ -1,6 +1,5 @@
 'use client'
 
-import { Result } from '@praha/byethrow'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -159,7 +158,7 @@ export function HabitSimpleView({
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       try {
         const result = await resetHabitProgressAction(habitId)
-        if (Result.isSuccess(result)) {
+        if (result.ok) {
           return { ok: true as const, result }
         }
         return { ok: false as const, result }

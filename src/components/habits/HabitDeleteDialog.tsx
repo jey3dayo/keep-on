@@ -37,6 +37,7 @@ export function HabitDeleteDialog({
       onOpenChange={onOpenChange}
       onOptimistic={onOptimistic}
       open={open}
+      retryOnError={false}
       successMessage="習慣を完全に削除しました"
       title="習慣を完全に削除しますか？"
       trigger={resolvedTrigger}

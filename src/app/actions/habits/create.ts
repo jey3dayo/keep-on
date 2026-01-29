@@ -2,6 +2,7 @@
 
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
+import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
 import { DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
 import { type SerializableHabitError, serializeHabitError } from '@/lib/errors/serializable'
 import { createHabit as createHabitQuery } from '@/lib/queries/habit'
@@ -24,9 +25,9 @@ const authenticateUser = async (): Result.ResultAsync<string, UnauthorizedError>
  * 習慣を作成するServer Action
  *
  * @param formData - フォームデータ
- * @returns Result<void, SerializableHabitError>
+ * @returns ServerActionResult<void, SerializableHabitError>
  */
-export async function createHabit(formData: FormData): Result.ResultAsync<void, SerializableHabitError> {
+export async function createHabit(formData: FormData): ServerActionResultAsync<void, SerializableHabitError> {
   const userIdResult = await authenticateUser()
 
   const result = await Result.pipe(
@@ -42,9 +43,9 @@ export async function createHabit(formData: FormData): Result.ResultAsync<void, 
 
   if (Result.isSuccess(result)) {
     revalidatePath('/dashboard')
-    return Result.succeed(undefined)
+    return actionOk()
   }
 
   // エラーをシリアライズ可能な形式に変換
-  return Result.fail(serializeHabitError(result.error))
+  return actionError(serializeHabitError(result.error))
 }

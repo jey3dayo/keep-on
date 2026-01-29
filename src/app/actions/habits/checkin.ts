@@ -3,6 +3,7 @@
 import { Result } from '@praha/byethrow'
 import { weekStartToDay } from '@/constants/habit'
 import { DEFAULT_REQUEST_TIMEOUT_MS } from '@/constants/request-timeout'
+import { toActionResult } from '@/lib/actions/result'
 import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
 import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
 import { createCheckin } from '@/lib/queries/checkin'
@@ -17,7 +18,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
   const logSpanWithTimeout = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) =>
     logSpan(name, fn, data, { timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS })
 
-  return await Result.try({
+  const result = await Result.try({
     try: async () => {
       return await logSpanWithTimeout(
         'action.habits.checkin',
@@ -84,4 +85,6 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
     },
     catch: (error) => serializeActionError(error, 'チェックインの切り替えに失敗しました'),
   })()
+
+  return toActionResult(result)
 }

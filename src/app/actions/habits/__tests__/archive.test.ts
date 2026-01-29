@@ -1,4 +1,3 @@
-import { Result } from '@praha/byethrow'
 import { describe, expect, it, vi } from 'vitest'
 import { archiveHabit, getHabitById } from '@/lib/queries/habit'
 import { archiveHabitAction } from '../archive'
@@ -40,7 +39,7 @@ describe('archiveHabitAction', () => {
 
     const result = await archiveHabitAction(habitId)
 
-    expect(Result.isSuccess(result)).toBe(true)
+    expect(result.ok).toBe(true)
     expect(getHabitById).toHaveBeenCalledWith(habitId)
     expect(archiveHabit).toHaveBeenCalledWith(habitId, userId)
   })
@@ -51,8 +50,8 @@ describe('archiveHabitAction', () => {
 
     const result = await archiveHabitAction(habitId)
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
       expect(result.error.name).toBe('UnauthorizedError')
     }
   })
@@ -65,8 +64,8 @@ describe('archiveHabitAction', () => {
 
     const result = await archiveHabitAction(habitId)
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
       expect(result.error.name).toBe('NotFoundError')
     }
   })
@@ -87,6 +86,6 @@ describe('archiveHabitAction', () => {
 
     const result = await archiveHabitAction(habitId)
 
-    expect(Result.isFailure(result)).toBe(true)
+    expect(result.ok).toBe(false)
   })
 })
