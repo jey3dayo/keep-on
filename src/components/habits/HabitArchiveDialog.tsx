@@ -1,27 +1,11 @@
 'use client'
 
-import type { ReactNode } from 'react'
 import { archiveHabitAction } from '@/app/actions/habits/archive'
 import { Button } from '@/components/ui/button'
 import { HabitActionDialog } from './HabitActionDialog'
+import type { HabitDialogProps } from './types'
 
-interface HabitArchiveDialogProps {
-  habitId: string
-  habitName: string
-  trigger?: ReactNode
-  open?: boolean
-  defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
-}
-
-export function HabitArchiveDialog({
-  habitId,
-  habitName,
-  trigger,
-  open,
-  defaultOpen,
-  onOpenChange,
-}: HabitArchiveDialogProps) {
+export function HabitArchiveDialog({ habitId, habitName, trigger, open, defaultOpen, onOpenChange }: HabitDialogProps) {
   const shouldUseDefaultTrigger = trigger === undefined && open === undefined
   const resolvedTrigger =
     trigger ??

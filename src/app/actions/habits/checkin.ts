@@ -1,41 +1,15 @@
 'use server'
 
 import { Result } from '@praha/byethrow'
-import { revalidatePath } from 'next/cache'
 import { weekStartToDay } from '@/constants/habit'
-import { AuthorizationError, DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
+import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
 import { createCheckin } from '@/lib/queries/checkin'
 import { getCheckinCountForPeriod, getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
 import { getCurrentUserId } from '@/lib/user'
+import { type HabitActionResult, revalidateHabitPaths, serializeActionError } from './utils'
 
-type SerializableCheckinError =
-  | { name: 'UnauthorizedError'; message: string }
-  | { name: 'AuthorizationError'; message: string }
-  | { name: 'DatabaseError'; message: string }
-
-const serializeCheckinError = (error: unknown): SerializableCheckinError => {
-  if (error instanceof UnauthorizedError) {
-    return { name: 'UnauthorizedError', message: error.message }
-  }
-
-  if (error instanceof AuthorizationError) {
-    return { name: 'AuthorizationError', message: error.message }
-  }
-
-  const databaseError =
-    error instanceof DatabaseError
-      ? error
-      : new DatabaseError({ detail: 'チェックインの切り替えに失敗しました', cause: error })
-
-  console.error('Database error:', databaseError.cause)
-  return { name: 'DatabaseError', message: databaseError.message }
-}
-
-export async function addCheckinAction(
-  habitId: string,
-  dateKey?: string
-): Result.ResultAsync<void, SerializableCheckinError> {
+export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult {
   return await Result.try({
     try: async () => {
       // 認証チェック
@@ -64,10 +38,9 @@ export async function addCheckinAction(
       }
 
       await createCheckin({ habitId, date: targetDate })
-      revalidatePath('/dashboard')
-      revalidatePath('/habits')
+      revalidateHabitPaths()
       return
     },
-    catch: (error) => serializeCheckinError(error),
+    catch: (error) => serializeActionError(error, 'チェックインの切り替えに失敗しました'),
   })()
 }

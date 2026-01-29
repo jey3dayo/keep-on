@@ -6,16 +6,9 @@ import type { Period } from '@/constants/habit'
 import type { HabitPreset } from '@/constants/habit-data'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import type { HabitWithProgress } from '@/types/habit'
+import type { User } from '@/types/user'
 import { HabitForm } from './HabitForm'
 import { HabitListView } from './HabitListView'
-
-interface User {
-  id: string
-  clerkId: string
-  email: string
-  createdAt: Date
-  updatedAt: Date
-}
 
 interface DesktopDashboardProps {
   habits: HabitWithProgress[]

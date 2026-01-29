@@ -1,9 +1,9 @@
-import { endOfDay, endOfMonth, endOfWeek, startOfDay, startOfMonth, startOfWeek } from 'date-fns'
 import { and, desc, eq, gte, lte } from 'drizzle-orm'
 import type { Period, WeekStartDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
-import { formatDateKey, normalizeDateKey, parseDateKey } from '@/lib/utils/date'
+import { getPeriodDateRange } from '@/lib/queries/period'
+import { normalizeDateKey } from '@/lib/utils/date'
 
 interface CreateCheckinInput {
   habitId: string
@@ -38,32 +38,6 @@ export async function createCheckin(input: CreateCheckinInput) {
   return checkin
 }
 
-function getPeriodStart(date: Date, period: Period, weekStartDay: WeekStartDay = 1): Date {
-  switch (period) {
-    case 'daily':
-      return startOfDay(date)
-    case 'weekly':
-      return startOfWeek(date, { weekStartsOn: weekStartDay })
-    case 'monthly':
-      return startOfMonth(date)
-    default:
-      return startOfDay(date)
-  }
-}
-
-function getPeriodEnd(date: Date, period: Period, weekStartDay: WeekStartDay = 1): Date {
-  switch (period) {
-    case 'daily':
-      return endOfDay(date)
-    case 'weekly':
-      return endOfWeek(date, { weekStartsOn: weekStartDay })
-    case 'monthly':
-      return endOfMonth(date)
-    default:
-      return endOfDay(date)
-  }
-}
-
 export async function deleteLatestCheckinByHabitAndPeriod(
   habitId: string,
   date: Date | string,
@@ -71,11 +45,7 @@ export async function deleteLatestCheckinByHabitAndPeriod(
   weekStartDay: WeekStartDay = 1
 ) {
   const db = await getDb()
-  const baseDate = typeof date === 'string' ? parseDateKey(date) : date
-  const start = getPeriodStart(baseDate, period, weekStartDay)
-  const end = getPeriodEnd(baseDate, period, weekStartDay)
-  const startKey = formatDateKey(start)
-  const endKey = formatDateKey(end)
+  const { startKey, endKey } = getPeriodDateRange(date, period, weekStartDay)
 
   const [latestCheckin] = await db
     .select()
@@ -99,11 +69,7 @@ export async function deleteAllCheckinsByHabitAndPeriod(
   weekStartDay: WeekStartDay = 1
 ) {
   const db = await getDb()
-  const baseDate = typeof date === 'string' ? parseDateKey(date) : date
-  const start = getPeriodStart(baseDate, period, weekStartDay)
-  const end = getPeriodEnd(baseDate, period, weekStartDay)
-  const startKey = formatDateKey(start)
-  const endKey = formatDateKey(end)
+  const { startKey, endKey } = getPeriodDateRange(date, period, weekStartDay)
 
   const result = await db
     .delete(checkins)

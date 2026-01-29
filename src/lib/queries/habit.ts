@@ -1,20 +1,11 @@
-import {
-  endOfDay,
-  endOfMonth,
-  endOfWeek,
-  startOfDay,
-  startOfMonth,
-  startOfWeek,
-  subDays,
-  subMonths,
-  subWeeks,
-} from 'date-fns'
+import { startOfDay, startOfMonth, subDays, subMonths, subWeeks } from 'date-fns'
 import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { COMPLETION_THRESHOLD, type Period, type WeekStartDay, weekStartToDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
+import { getPeriodDateRange } from '@/lib/queries/period'
 import { getUserWeekStart } from '@/lib/queries/user'
-import { formatDateKey, normalizeCheckinDate, parseDateKey } from '@/lib/utils/date'
+import { normalizeCheckinDate, parseDateKey } from '@/lib/utils/date'
 import type { HabitWithProgress } from '@/types/habit'
 import type { HabitInput } from '@/validators/habit'
 
@@ -157,51 +148,6 @@ export async function unarchiveHabit(id: string, userId: string) {
 }
 
 /**
- * 期間の開始日時を計算
- *
- * @param date - 基準日
- * @param period - 期間タイプ（daily: その日の00:00:00, weekly: 週の月曜日00:00:00, monthly: 月の1日00:00:00）
- * @param weekStartDay - 週の開始曜日（1 = 月曜日, 0 = 日曜日）
- * @returns 期間の開始日時
- */
-function getPeriodStart(date: Date, period: Period, weekStartDay: WeekStartDay = 1): Date {
-  switch (period) {
-    case 'daily':
-      return startOfDay(date)
-    case 'weekly': {
-      return startOfWeek(date, { weekStartsOn: weekStartDay })
-    }
-    case 'monthly':
-      return startOfMonth(date)
-    default:
-      return startOfDay(date)
-  }
-}
-
-/**
- * 期間の終了日時を計算
- *
- * @param date - 基準日
- * @param period - 期間タイプ（daily: その日の23:59:59, weekly: 週の日曜日23:59:59, monthly: 月末23:59:59）
- * @param weekStartDay - 週の開始曜日（1 = 月曜日, 0 = 日曜日）
- * @returns 期間の終了日時
- */
-function getPeriodEnd(date: Date, period: Period, weekStartDay: WeekStartDay = 1): Date {
-  switch (period) {
-    case 'daily':
-      return endOfDay(date)
-    case 'weekly': {
-      return endOfWeek(date, { weekStartsOn: weekStartDay })
-    }
-    case 'monthly': {
-      return endOfMonth(date)
-    }
-    default:
-      return endOfDay(date)
-  }
-}
-
-/**
  * 指定期間のチェックイン数を取得
  *
  * @param habitId - 習慣ID
@@ -217,11 +163,7 @@ export async function getCheckinCountForPeriod(
   weekStartDay: WeekStartDay = 1
 ): Promise<number> {
   const db = await getDb()
-  const baseDate = typeof date === 'string' ? parseDateKey(date) : date
-  const start = getPeriodStart(baseDate, period, weekStartDay)
-  const end = getPeriodEnd(baseDate, period, weekStartDay)
-  const startKey = formatDateKey(start)
-  const endKey = formatDateKey(end)
+  const { startKey, endKey } = getPeriodDateRange(date, period, weekStartDay)
 
   const result = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -299,8 +241,7 @@ export async function calculateStreak(
  * 期間のキーを生成（YYYY-MM-DD形式の期間開始日）
  */
 function getPeriodKey(date: Date, period: Period, weekStartDay: WeekStartDay = 1): string {
-  const start = getPeriodStart(date, period, weekStartDay)
-  return formatDateKey(start)
+  return getPeriodDateRange(date, period, weekStartDay).startKey
 }
 
 /**
@@ -367,8 +308,7 @@ export async function getHabitsWithProgress(
     const habitCheckins = checkinsByHabit.get(habit.id) ?? []
 
     // 現在の期間の進捗を計算
-    const start = getPeriodStart(baseDate, habit.period, weekStartDay)
-    const end = getPeriodEnd(baseDate, habit.period, weekStartDay)
+    const { start, end } = getPeriodDateRange(baseDate, habit.period, weekStartDay)
     const currentProgress = habitCheckins.filter((c) => {
       const checkinDate = normalizeCheckinDate(c.date)
       return checkinDate >= start && checkinDate <= end
