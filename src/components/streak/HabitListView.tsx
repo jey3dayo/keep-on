@@ -2,14 +2,14 @@
 
 import { Calendar } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import type { CSSProperties, ReactNode } from 'react'
-import { useRef, useState } from 'react'
-import { AddHabitButton, Button, CheckInButton } from '@/components/basics/Button'
-import { Icon, normalizeIconName } from '@/components/basics/Icon'
+import type { ReactNode } from 'react'
+import { useState } from 'react'
+import { AddHabitButton, Button } from '@/components/basics/Button'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
 import { HabitResetDialog } from '@/components/habits/HabitResetDialog'
-import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
-import { getColorById, getIconById, getPeriodById } from '@/constants/habit-data'
+import type { OptimisticRollback } from '@/components/habits/types'
+import { HabitListCard } from '@/components/streak/HabitListCard'
+import { PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
 
@@ -29,6 +29,10 @@ interface HabitListViewProps {
   onPeriodChange: (filter: 'all' | Period) => void
   onToggleHabit: (habitId: string) => void
   onAddHabit: () => void
+  onArchiveOptimistic?: (habitId: string) => OptimisticRollback
+  onDeleteOptimistic?: (habitId: string) => OptimisticRollback
+  onResetOptimistic?: (habitId: string) => OptimisticRollback
+  pendingCheckins?: Set<string>
   todayCompleted: number
   totalDaily: number
   totalStreak: number
@@ -42,6 +46,10 @@ export function HabitListView({
   onPeriodChange,
   onToggleHabit,
   onAddHabit,
+  onArchiveOptimistic,
+  onDeleteOptimistic,
+  onResetOptimistic,
+  pendingCheckins,
   todayCompleted,
   totalDaily,
   totalStreak,
@@ -51,6 +59,7 @@ export function HabitListView({
     habit: null,
   })
   const [resetConfirmHabit, setResetConfirmHabit] = useState<HabitWithProgress | null>(null)
+  const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
 
   const today = new Date()
   const dayNames = ['日', '月', '火', '水', '木', '金', '土']
@@ -102,21 +111,36 @@ export function HabitListView({
               <AddHabitButton onClick={onAddHabit}>習慣を追加</AddHabitButton>
             </div>
           ) : (
-            filteredHabits.map((habit) => (
-              <HabitListCard
-                completed={completedHabitIds.has(habit.id)}
-                habit={habit}
-                key={habit.id}
-                onLongPressOrContextMenu={() => setDrawerState({ open: true, habit })}
-                onToggle={() => {
-                  if (completedHabitIds.has(habit.id)) {
-                    setResetConfirmHabit(habit)
-                    return
-                  }
-                  onToggleHabit(habit.id)
-                }}
-              />
-            ))
+            [...filteredHabits]
+              .map((habit, index) => ({ habit, index }))
+              .sort((a, b) => {
+                const aCompleted = completedHabitIds.has(a.habit.id)
+                const bCompleted = completedHabitIds.has(b.habit.id)
+                if (aCompleted !== bCompleted) {
+                  return Number(aCompleted) - Number(bCompleted)
+                }
+                return a.index - b.index
+              })
+              .map(({ habit }) => (
+                <HabitListCard
+                  completed={completedHabitIds.has(habit.id)}
+                  dimmed={completedHabitIds.has(habit.id)}
+                  habit={habit}
+                  key={habit.id}
+                  onLongPressOrContextMenu={() => {
+                    setDrawerHabitId(habit.id)
+                    setDrawerState({ open: true, habit })
+                  }}
+                  onToggle={() => {
+                    if (completedHabitIds.has(habit.id)) {
+                      setResetConfirmHabit(habit)
+                      return
+                    }
+                    onToggleHabit(habit.id)
+                  }}
+                  pending={pendingCheckins?.has(habit.id) ?? false}
+                />
+              ))
           )}
         </div>
 
@@ -132,11 +156,16 @@ export function HabitListView({
       {/* アクションDrawer */}
       <HabitActionDrawer
         habit={drawerState.habit}
+        onArchiveOptimistic={
+          drawerHabitId && onArchiveOptimistic ? () => onArchiveOptimistic(drawerHabitId) : undefined
+        }
+        onDeleteOptimistic={drawerHabitId && onDeleteOptimistic ? () => onDeleteOptimistic(drawerHabitId) : undefined}
         onOpenChange={(open) => {
           if (!open) {
             setDrawerState({ open: false, habit: null })
           }
         }}
+        onResetOptimistic={drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined}
         open={drawerState.open}
       />
       {/* リセット確認ダイアログ（達成時のみ表示） */}
@@ -149,6 +178,7 @@ export function HabitListView({
               setResetConfirmHabit(null)
             }
           }}
+          onOptimistic={onResetOptimistic ? () => onResetOptimistic(resetConfirmHabit.id) : undefined}
           open
           trigger={null}
         />
@@ -170,137 +200,5 @@ function FilterButton({ active, children, onClick }: { active: boolean; children
     >
       {children}
     </Button>
-  )
-}
-
-function HabitListCard({
-  habit,
-  completed,
-  onToggle,
-  onLongPressOrContextMenu,
-}: {
-  habit: HabitWithProgress
-  completed: boolean
-  onToggle: () => void
-  onLongPressOrContextMenu: () => void
-}) {
-  const colorData = getColorById(habit.color ?? DEFAULT_HABIT_COLOR)
-  const periodData = getPeriodById(habit.period)
-  const IconComponent = getIconById(normalizeIconName(habit.icon)).icon
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const completedBackgroundColor = `var(--${colorData.id}-a3)`
-  const badgeBackgroundColor = `var(--${colorData.id}-a4)`
-
-  const isCompleted = habit.currentProgress >= habit.frequency
-  const progressPercent = Math.min((habit.currentProgress / habit.frequency) * 100, 100)
-
-  const handleLongPressStart = () => {
-    longPressTimerRef.current = setTimeout(() => {
-      onLongPressOrContextMenu()
-    }, 500)
-  }
-
-  const handleLongPressEnd = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-    }
-  }
-
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault()
-    onLongPressOrContextMenu()
-  }
-
-  return (
-    <div
-      className={cn(
-        'rounded-2xl border bg-card p-4 transition-all duration-300',
-        completed ? 'border-border/50' : 'border-border'
-      )}
-      onContextMenu={handleContextMenu}
-      onPointerDown={handleLongPressStart}
-      onPointerLeave={handleLongPressEnd}
-      onPointerUp={handleLongPressEnd}
-      role="button"
-      style={{
-        borderColor: completed ? colorData.color : undefined,
-        backgroundColor: completed ? completedBackgroundColor : undefined,
-      }}
-      tabIndex={0}
-    >
-      <div className="flex items-center gap-4">
-        <CheckInButton
-          completed={completed}
-          onClick={onToggle}
-          style={
-            {
-              backgroundColor: colorData.color,
-              opacity: completed ? 1 : 0.85,
-              '--tw-ring-color': colorData.color,
-            } as CSSProperties
-          }
-        >
-          {completed ? (
-            <Icon className="h-7 w-7 text-background" name="check" />
-          ) : (
-            <IconComponent className="h-7 w-7 text-background" />
-          )}
-        </CheckInButton>
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-1 flex items-center gap-2">
-            <h3
-              className={cn(
-                'truncate font-semibold text-foreground text-lg transition-colors',
-                completed && 'text-muted-foreground line-through'
-              )}
-            >
-              {habit.name}
-            </h3>
-            <span
-              className="flex-shrink-0 rounded-full px-2 py-0.5 text-xs"
-              style={{
-                backgroundColor: badgeBackgroundColor,
-                color: colorData.color,
-              }}
-            >
-              {periodData.label}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full rounded-full transition-all duration-300"
-                style={{
-                  width: `${progressPercent}%`,
-                  backgroundColor: colorData.color,
-                }}
-              />
-            </div>
-            <span className="whitespace-nowrap text-muted-foreground text-sm">
-              {habit.currentProgress} / {habit.frequency}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center">
-          <div className="flex items-center gap-1">
-            <Icon className="h-4 w-4" name="flame" style={{ color: habit.streak > 0 ? colorData.color : undefined }} />
-            <span className="font-bold text-lg" style={{ color: habit.streak > 0 ? colorData.color : undefined }}>
-              {habit.streak}
-            </span>
-          </div>
-          <span className="text-muted-foreground text-xs">日連続</span>
-        </div>
-      </div>
-
-      {!isCompleted && habit.frequency > 1 && (
-        <div className="mt-3 flex items-center justify-end gap-2 border-border border-t pt-3 text-muted-foreground text-xs">
-          次のチェックインで完了
-        </div>
-      )}
-    </div>
   )
 }

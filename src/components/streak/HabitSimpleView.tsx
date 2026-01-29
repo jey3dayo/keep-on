@@ -6,8 +6,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { resetHabitProgressAction } from '@/app/actions/habits/reset'
 import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
+import type { OptimisticRollback } from '@/components/habits/types'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
+import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
 import { cn } from '@/lib/utils'
 import { getRingColorFromBackground } from '@/lib/utils/color'
 import { appToast } from '@/lib/utils/toast'
@@ -26,6 +28,10 @@ interface HabitSimpleViewProps {
   completedHabitIds: Set<string>
   onToggleHabit: (habitId: string) => void
   onAddHabit: () => void
+  onArchiveOptimistic?: (habitId: string) => OptimisticRollback
+  onDeleteOptimistic?: (habitId: string) => OptimisticRollback
+  onResetOptimistic?: (habitId: string) => OptimisticRollback
+  pendingCheckins?: Set<string>
   onSettings?: () => void
   backgroundColor?: string
 }
@@ -71,6 +77,10 @@ export function HabitSimpleView({
   completedHabitIds,
   onToggleHabit,
   onAddHabit,
+  onArchiveOptimistic,
+  onDeleteOptimistic,
+  onResetOptimistic,
+  pendingCheckins,
   onSettings,
   backgroundColor,
 }: HabitSimpleViewProps) {
@@ -82,6 +92,7 @@ export function HabitSimpleView({
     open: false,
     habit: null,
   })
+  const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const longPressTriggeredRef = useRef(false)
 
@@ -92,9 +103,22 @@ export function HabitSimpleView({
     setCurrentPage((current) => Math.min(current, totalPages - 1))
   }, [totalPages])
 
+  const sortedHabits = useMemo(() => {
+    const indexed = habits.map((habit, index) => ({ habit, index }))
+    indexed.sort((a, b) => {
+      const aCompleted = completedHabitIds.has(a.habit.id)
+      const bCompleted = completedHabitIds.has(b.habit.id)
+      if (aCompleted !== bCompleted) {
+        return Number(aCompleted) - Number(bCompleted)
+      }
+      return a.index - b.index
+    })
+    return indexed.map((item) => item.habit)
+  }, [habits, completedHabitIds])
+
   const currentHabits = useMemo(
-    () => habits.slice(currentPage * habitsPerPage, (currentPage + 1) * habitsPerPage),
-    [currentPage, habits]
+    () => sortedHabits.slice(currentPage * habitsPerPage, (currentPage + 1) * habitsPerPage),
+    [currentPage, sortedHabits]
   )
 
   const fallbackBgColor = useMemo(() => {
@@ -127,26 +151,66 @@ export function HabitSimpleView({
     onToggleHabit(habit.id)
   }
 
+  const runResetWithRetry = async (habitId: string) => {
+    const maxAttempts = Math.max(1, RETRY_MAX_ATTEMPTS)
+    let lastError: unknown = null
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      try {
+        const result = await resetHabitProgressAction(habitId)
+        if (result.ok) {
+          return { ok: true as const, result }
+        }
+        return { ok: false as const, result }
+      } catch (error) {
+        lastError = error
+        if (attempt < maxAttempts - 1 && RETRY_DELAY_MS > 0) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, RETRY_DELAY_MS)
+          })
+        }
+      }
+    }
+
+    return { ok: false as const, error: lastError }
+  }
+
   const handleResetConfirm = async () => {
     if (!resetConfirm || isResetting) {
       return
     }
 
+    const habitId = resetConfirm.habitId
+    const rollback = onResetOptimistic?.(habitId)
+
     setIsResetting(true)
-    const result = await resetHabitProgressAction(resetConfirm.habitId)
-    setIsResetting(false)
+    try {
+      const { ok, result, error } = await runResetWithRetry(habitId)
 
-    if (result.ok) {
-      appToast.success('進捗をリセットしました')
-      setResetConfirm(null)
-      router.refresh()
-      return
+      if (ok) {
+        appToast.success('進捗をリセットしました')
+        setResetConfirm(null)
+        router.refresh()
+        return
+      }
+
+      if (rollback) {
+        rollback()
+      }
+
+      if (result) {
+        appToast.error('進捗のリセットに失敗しました', result.error)
+        return
+      }
+
+      appToast.error('進捗のリセットに失敗しました', error)
+    } finally {
+      setIsResetting(false)
     }
-
-    appToast.error('進捗のリセットに失敗しました', result.error)
   }
 
   const openDrawer = (habit: HabitWithProgress) => {
+    setDrawerHabitId(habit.id)
     setDrawerState({ open: true, habit })
   }
 
@@ -189,11 +253,13 @@ export function HabitSimpleView({
             const IconComponent = iconData.icon
             const progressPercent = Math.min((habit.currentProgress / habit.frequency) * 100, 100)
             const isCompleted = completedHabitIds.has(habit.id)
+            const isPending = pendingCheckins?.has(habit.id) ?? false
 
             return (
               <div className="flex flex-col items-center gap-3" key={habit.id}>
                 <Button
                   className="relative h-[140px] w-[140px] p-0 hover:bg-transparent"
+                  disabled={isPending}
                   onClick={(event) => handleProgressClick(event, habit, isCompleted)}
                   onContextMenu={(e) => handleContextMenu(e, habit)}
                   onPointerCancel={() => handleLongPressEnd(true)}
@@ -276,11 +342,16 @@ export function HabitSimpleView({
       {/* アクションDrawer */}
       <HabitActionDrawer
         habit={drawerState.habit}
+        onArchiveOptimistic={
+          drawerHabitId && onArchiveOptimistic ? () => onArchiveOptimistic(drawerHabitId) : undefined
+        }
+        onDeleteOptimistic={drawerHabitId && onDeleteOptimistic ? () => onDeleteOptimistic(drawerHabitId) : undefined}
         onOpenChange={(open) => {
           if (!open) {
             closeDrawer()
           }
         }}
+        onResetOptimistic={drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined}
         open={drawerState.open}
       />
 

@@ -5,7 +5,15 @@ import { Button } from '@/components/ui/button'
 import { HabitActionDialog } from './HabitActionDialog'
 import type { HabitDialogProps } from './types'
 
-export function HabitResetDialog({ habitId, habitName, trigger, open, defaultOpen, onOpenChange }: HabitDialogProps) {
+export function HabitResetDialog({
+  habitId,
+  habitName,
+  trigger,
+  open,
+  defaultOpen,
+  onOpenChange,
+  onOptimistic,
+}: HabitDialogProps) {
   const shouldUseDefaultTrigger = trigger === undefined && open === undefined
   const resolvedTrigger =
     trigger ??
@@ -25,6 +33,7 @@ export function HabitResetDialog({ habitId, habitName, trigger, open, defaultOpe
       errorMessage="進捗のリセットに失敗しました"
       habitId={habitId}
       onOpenChange={onOpenChange}
+      onOptimistic={onOptimistic}
       open={open}
       successMessage="進捗をリセットしました"
       title="進捗をリセットしますか？"

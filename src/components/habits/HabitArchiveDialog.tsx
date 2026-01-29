@@ -5,7 +5,15 @@ import { Button } from '@/components/ui/button'
 import { HabitActionDialog } from './HabitActionDialog'
 import type { HabitDialogProps } from './types'
 
-export function HabitArchiveDialog({ habitId, habitName, trigger, open, defaultOpen, onOpenChange }: HabitDialogProps) {
+export function HabitArchiveDialog({
+  habitId,
+  habitName,
+  trigger,
+  onOptimistic,
+  open,
+  defaultOpen,
+  onOpenChange,
+}: HabitDialogProps) {
   const shouldUseDefaultTrigger = trigger === undefined && open === undefined
   const resolvedTrigger =
     trigger ??
@@ -24,6 +32,7 @@ export function HabitArchiveDialog({ habitId, habitName, trigger, open, defaultO
       errorMessage="アーカイブに失敗しました"
       habitId={habitId}
       onOpenChange={onOpenChange}
+      onOptimistic={onOptimistic}
       open={open}
       successMessage="習慣をアーカイブしました"
       title="習慣をアーカイブしますか？"

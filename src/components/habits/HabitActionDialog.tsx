@@ -15,12 +15,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
 import type { ServerActionResultAsync } from '@/lib/actions/result'
 import { formatSerializableError, type SerializableHabitError } from '@/lib/errors/serializable'
+import type { OptimisticHandler } from './types'
 
 interface HabitActionDialogProps {
   habitId: string
   trigger?: ReactNode | null
+  onOptimistic?: OptimisticHandler
   title: string
   description: ReactNode
   confirmLabel: string
@@ -34,27 +37,36 @@ interface HabitActionDialogProps {
   onOpenChange?: (open: boolean) => void
 }
 
+const waitForRetry = (delayMs: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, delayMs)
+  })
+
 const runActionWithRetry = async <T,>(
   run: () => ServerActionResultAsync<T, SerializableHabitError>,
-  maxRetries: number
+  retryOnError: boolean
 ): Promise<Awaited<ServerActionResultAsync<T, SerializableHabitError>>> => {
-  let attempts = 0
+  const maxAttempts = Math.max(1, retryOnError ? RETRY_MAX_ATTEMPTS : 1)
+  let lastError: unknown = null
 
-  while (true) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
       return await run()
     } catch (error) {
-      if (attempts >= maxRetries) {
-        throw error
+      lastError = error
+      if (attempt < maxAttempts - 1 && RETRY_DELAY_MS > 0) {
+        await waitForRetry(RETRY_DELAY_MS)
       }
-      attempts += 1
     }
   }
+
+  throw lastError ?? new Error('処理に失敗しました')
 }
 
 export function HabitActionDialog({
   habitId,
   trigger,
+  onOptimistic,
   title,
   description,
   confirmLabel,
@@ -62,7 +74,7 @@ export function HabitActionDialog({
   successMessage,
   errorMessage,
   action,
-  retryOnError = false,
+  retryOnError = true,
   open,
   defaultOpen,
   onOpenChange,
@@ -86,10 +98,10 @@ export function HabitActionDialog({
     }
 
     setIsProcessing(true)
+    const rollback = onOptimistic?.()
 
     try {
-      const maxRetries = retryOnError ? 1 : 0
-      const result = await runActionWithRetry(() => action(habitId), maxRetries)
+      const result = await runActionWithRetry(() => action(habitId), retryOnError)
 
       if (result.ok) {
         toast.success(successMessage)
@@ -98,10 +110,16 @@ export function HabitActionDialog({
         return
       }
 
+      if (rollback) {
+        rollback()
+      }
       toast.error(errorMessage, {
         description: formatSerializableError(result.error),
       })
     } catch (error) {
+      if (rollback) {
+        rollback()
+      }
       toast.error(errorMessage, {
         description: error instanceof Error ? error.message : '通信エラーが発生しました',
       })
