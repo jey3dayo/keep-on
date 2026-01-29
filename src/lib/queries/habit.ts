@@ -284,16 +284,15 @@ export async function getHabitsWithProgress(
 
   const baseDate = typeof date === 'string' ? parseDateKey(date) : date
 
-  // ユーザーの週開始日設定を取得
-  const weekStartStr = await getUserWeekStart(clerkId)
-  const weekStartDay = weekStartToDay(weekStartStr)
-
-  // すべての習慣のチェックインを一括取得（N+1問題の解決）
   const habitIds = habitList.map((h) => h.id)
-  const allCheckins =
+  const allCheckinsPromise: Promise<(typeof checkins.$inferSelect)[]> =
     habitIds.length === 0
-      ? []
-      : await db.select().from(checkins).where(inArray(checkins.habitId, habitIds)).orderBy(desc(checkins.date))
+      ? Promise.resolve([])
+      : db.select().from(checkins).where(inArray(checkins.habitId, habitIds)).orderBy(desc(checkins.date))
+
+  // ユーザーの週開始日設定とチェックイン取得を並列化
+  const [weekStartStr, allCheckins] = await Promise.all([getUserWeekStart(clerkId), allCheckinsPromise])
+  const weekStartDay = weekStartToDay(weekStartStr)
 
   // 習慣ごとにチェックインをグループ化
   const checkinsByHabit = new Map<string, typeof allCheckins>()

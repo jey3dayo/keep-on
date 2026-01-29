@@ -21,17 +21,9 @@ import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
 import type { User } from '@/types/user'
 
-interface Checkin {
-  id: string
-  habitId: string
-  date: string
-  createdAt: Date
-}
-
 interface DashboardWrapperProps {
   habits: HabitWithProgress[]
   todayLabel: string
-  todayCheckins: Checkin[]
   user: User
   initialView?: 'dashboard' | 'simple'
   hasTimeZoneCookie?: boolean
@@ -40,7 +32,6 @@ interface DashboardWrapperProps {
 export function DashboardWrapper({
   habits,
   todayLabel,
-  todayCheckins,
   user,
   initialView,
   hasTimeZoneCookie = true,
@@ -49,7 +40,6 @@ export function DashboardWrapper({
   const [, startTransition] = useTransition()
   const [isTimeZoneReady, setIsTimeZoneReady] = useState(hasTimeZoneCookie)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
-  const [, setOptimisticCheckins] = useState(todayCheckins)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
   const inFlightCheckinsRef = useRef<Set<string>>(new Set())
   const hasRefreshedForTimeZone = useRef(false)
@@ -237,10 +227,6 @@ export function DashboardWrapper({
   }, [habits])
 
   useEffect(() => {
-    setOptimisticCheckins(todayCheckins)
-  }, [todayCheckins])
-
-  useEffect(() => {
     return () => {
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current)
@@ -321,14 +307,6 @@ export function DashboardWrapper({
         return
       }
 
-      const addedCheckin: Checkin = {
-        id: `optimistic-${createId()}`,
-        habitId,
-        date: dateKey,
-        createdAt: now,
-      }
-
-      setOptimisticCheckins((current) => [...current, addedCheckin])
       updateHabitProgress(habitId, 1)
       addPendingCheckin(habitId)
 
@@ -352,7 +330,6 @@ export function DashboardWrapper({
         appToast.error('チェックインの切り替えに失敗しました', error)
       } finally {
         if (shouldRollback) {
-          setOptimisticCheckins((current) => current.filter((checkin) => checkin.id !== addedCheckin.id))
           updateHabitProgress(habitId, -1)
         }
         clearPendingCheckin(habitId)

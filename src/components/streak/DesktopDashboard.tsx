@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { IconName } from '@/components/basics/Icon'
 import type { Period } from '@/constants/habit'
 import type { HabitPreset } from '@/constants/habit-data'
@@ -31,16 +31,37 @@ export function DesktopDashboard({
   const [selectedPreset, setSelectedPreset] = useState<HabitPreset | null>(null)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
 
-  const completedHabitIds = new Set(habits.filter((habit) => habit.currentProgress >= habit.frequency).map((h) => h.id))
+  const { completedHabitIds, todayCompleted, totalDaily, totalStreak } = useMemo(() => {
+    const completedIds = new Set<string>()
+    let dailyTotal = 0
+    let dailyCompleted = 0
+    let streakTotal = 0
 
-  // 期間フィルター適用
-  const filteredHabits = filterHabitsByPeriod(habits, periodFilter)
+    for (const habit of habits) {
+      const isCompleted = habit.currentProgress >= habit.frequency
+      if (isCompleted) {
+        completedIds.add(habit.id)
+      }
 
-  // 統計計算
-  const dailyHabits = habits.filter((h) => h.period === 'daily')
-  const todayCompleted = dailyHabits.filter((h) => h.currentProgress >= h.frequency).length
-  const totalDaily = dailyHabits.length
-  const totalStreak = habits.reduce((sum, h) => sum + h.streak, 0)
+      if (habit.period === 'daily') {
+        dailyTotal += 1
+        if (isCompleted) {
+          dailyCompleted += 1
+        }
+      }
+
+      streakTotal += habit.streak
+    }
+
+    return {
+      completedHabitIds: completedIds,
+      todayCompleted: dailyCompleted,
+      totalDaily: dailyTotal,
+      totalStreak: streakTotal,
+    }
+  }, [habits])
+
+  const filteredHabits = useMemo(() => filterHabitsByPeriod(habits, periodFilter), [habits, periodFilter])
 
   const handleAddHabit = async (
     name: string,

@@ -3,7 +3,7 @@
 import { Calendar } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { AddHabitButton, Button } from '@/components/basics/Button'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
 import { HabitResetDialog } from '@/components/habits/HabitResetDialog'
@@ -63,9 +63,36 @@ export function HabitListView({
   const [resetConfirmHabit, setResetConfirmHabit] = useState<HabitWithProgress | null>(null)
   const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
 
-  const dailyCount = habits.filter((h) => h.period === 'daily').length
-  const weeklyCount = habits.filter((h) => h.period === 'weekly').length
-  const monthlyCount = habits.filter((h) => h.period === 'monthly').length
+  const { dailyCount, weeklyCount, monthlyCount } = useMemo(() => {
+    return habits.reduce(
+      (acc, habit) => {
+        if (habit.period === 'daily') {
+          acc.dailyCount += 1
+        } else if (habit.period === 'weekly') {
+          acc.weeklyCount += 1
+        } else if (habit.period === 'monthly') {
+          acc.monthlyCount += 1
+        }
+        return acc
+      },
+      { dailyCount: 0, weeklyCount: 0, monthlyCount: 0 }
+    )
+  }, [habits])
+
+  const sortedHabits = useMemo(() => {
+    return filteredHabits
+      .map((habit, index) => ({
+        habit,
+        index,
+        completed: completedHabitIds.has(habit.id),
+      }))
+      .sort((a, b) => {
+        if (a.completed !== b.completed) {
+          return Number(a.completed) - Number(b.completed)
+        }
+        return a.index - b.index
+      })
+  }, [filteredHabits, completedHabitIds])
 
   return (
     <>
@@ -107,36 +134,26 @@ export function HabitListView({
               <AddHabitButton onClick={onAddHabit}>習慣を追加</AddHabitButton>
             </div>
           ) : (
-            [...filteredHabits]
-              .map((habit, index) => ({ habit, index }))
-              .sort((a, b) => {
-                const aCompleted = completedHabitIds.has(a.habit.id)
-                const bCompleted = completedHabitIds.has(b.habit.id)
-                if (aCompleted !== bCompleted) {
-                  return Number(aCompleted) - Number(bCompleted)
-                }
-                return a.index - b.index
-              })
-              .map(({ habit }) => (
-                <HabitListCard
-                  completed={completedHabitIds.has(habit.id)}
-                  dimmed={completedHabitIds.has(habit.id)}
-                  habit={habit}
-                  key={habit.id}
-                  onLongPressOrContextMenu={() => {
-                    setDrawerHabitId(habit.id)
-                    setDrawerState({ open: true, habit })
-                  }}
-                  onToggle={() => {
-                    if (completedHabitIds.has(habit.id)) {
-                      setResetConfirmHabit(habit)
-                      return
-                    }
-                    onToggleHabit(habit.id)
-                  }}
-                  pending={pendingCheckins?.has(habit.id) ?? false}
-                />
-              ))
+            sortedHabits.map(({ habit, completed }) => (
+              <HabitListCard
+                completed={completed}
+                dimmed={completed}
+                habit={habit}
+                key={habit.id}
+                onLongPressOrContextMenu={() => {
+                  setDrawerHabitId(habit.id)
+                  setDrawerState({ open: true, habit })
+                }}
+                onToggle={() => {
+                  if (completed) {
+                    setResetConfirmHabit(habit)
+                    return
+                  }
+                  onToggleHabit(habit.id)
+                }}
+                pending={pendingCheckins?.has(habit.id) ?? false}
+              />
+            ))
           )}
         </div>
 
