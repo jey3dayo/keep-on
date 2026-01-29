@@ -3,12 +3,13 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
-import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
+import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
 import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
-import { getServerDateKey } from '@/lib/server/date'
+import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { syncUser } from '@/lib/user'
+import { formatDateLabel } from '@/lib/utils/date'
 import { DashboardWrapper } from './DashboardWrapper'
 
 export const metadata: Metadata = {
@@ -29,11 +30,13 @@ export default async function DashboardPage() {
   const hasTimeZoneCookie = cookieStore.has('ko_tz')
   const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/dashboard')
-  const dateKey = await getServerDateKey()
+  const now = new Date()
+  const [dateKey, timeZone] = await Promise.all([getServerDateKey({ date: now }), getServerTimeZone()])
+  const todayLabel = formatDateLabel(now, timeZone)
 
   logInfo('request.dashboard:start', requestMeta)
 
-  const user = await logSpan('dashboard.syncUser', () => syncUser(), requestMeta, { timeoutMs })
+  const user = await logSpanOptional('dashboard.syncUser', () => syncUser(), requestMeta, { timeoutMs })
 
   if (!user) {
     logInfo('dashboard.syncUser:missing', requestMeta)
@@ -66,6 +69,7 @@ export default async function DashboardPage() {
       hasTimeZoneCookie={hasTimeZoneCookie}
       initialView={initialView}
       todayCheckins={todayCheckins}
+      todayLabel={todayLabel}
       user={user}
     />
   )

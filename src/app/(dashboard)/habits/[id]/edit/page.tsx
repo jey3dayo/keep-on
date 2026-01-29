@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { HabitFormServer } from '@/components/habits/HabitFormServer'
 import { SIGN_IN_PATH } from '@/constants/auth'
-import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
+import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
@@ -13,7 +13,9 @@ export default async function EditHabitPage({ params }: HabitIdPageProps) {
 
   logInfo('request.habits.edit.page:start', requestMeta)
 
-  const userId = await logSpan('habits.edit.page.syncUser', () => getCurrentUserId(), requestMeta, { timeoutMs })
+  const userId = await logSpanOptional('habits.edit.page.syncUser', () => getCurrentUserId(), requestMeta, {
+    timeoutMs,
+  })
 
   if (!userId) {
     logInfo('habits.edit.page.syncUser:missing', requestMeta)

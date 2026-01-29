@@ -1,10 +1,34 @@
 const DATE_KEY_REGEX = /^(\d{4})-(\d{2})-(\d{2})$/
+const DAY_NAMES_JA = ['日', '月', '火', '水', '木', '金', '土']
 
 export function formatDateKey(date: Date): string {
   const year = date.getFullYear()
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
   const day = `${date.getDate()}`.padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+export function formatDateLabel(date: Date, timeZone?: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat('ja-JP', {
+      timeZone,
+      month: 'numeric',
+      day: 'numeric',
+      weekday: 'short',
+    }).formatToParts(date)
+
+    const month = parts.find((part) => part.type === 'month')?.value
+    const day = parts.find((part) => part.type === 'day')?.value
+    const weekday = parts.find((part) => part.type === 'weekday')?.value
+
+    if (month && day && weekday) {
+      return `${month}月${day}日（${weekday}）`
+    }
+  } catch {
+    // Fallback to local date below.
+  }
+
+  return `${date.getMonth() + 1}月${date.getDate()}日（${DAY_NAMES_JA[date.getDay()]}）`
 }
 
 export function parseDateKey(dateKey: string): Date {

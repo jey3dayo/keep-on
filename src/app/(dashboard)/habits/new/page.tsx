@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { HabitFormServer } from '@/components/habits/HabitFormServer'
 import { SIGN_IN_PATH } from '@/constants/auth'
-import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
+import { createRequestMeta, logInfo, logSpanOptional } from '@/lib/logging'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 
@@ -17,7 +17,7 @@ export default async function NewHabitPage() {
 
   logInfo('request.habits.new:start', requestMeta)
 
-  const userId = await logSpan('habits.new.syncUser', () => getCurrentUserId(), requestMeta, { timeoutMs })
+  const userId = await logSpanOptional('habits.new.syncUser', () => getCurrentUserId(), requestMeta, { timeoutMs })
 
   if (!userId) {
     logInfo('habits.new.syncUser:missing', requestMeta)
