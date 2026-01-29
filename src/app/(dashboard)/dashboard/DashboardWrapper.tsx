@@ -306,6 +306,7 @@ export function DashboardWrapper({
     try {
       const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
       if (!targetHabit) {
+        clearCheckinInFlight(habitId)
         return
       }
 
@@ -314,7 +315,11 @@ export function DashboardWrapper({
       const dateKey = formatDateKey(now)
 
       if (isCompleted) {
-        await handleCompletedCheckin(habitId, dateKey)
+        try {
+          await handleCompletedCheckin(habitId, dateKey)
+        } finally {
+          clearCheckinInFlight(habitId)
+        }
         return
       }
 
