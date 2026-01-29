@@ -57,7 +57,7 @@ function ProgressRing({
     <svg aria-hidden="true" className="absolute inset-0 -rotate-90" height={size} width={size}>
       <circle cx={size / 2} cy={size / 2} fill="none" r={radius} stroke={backgroundColor} strokeWidth={strokeWidth} />
       <circle
-        className="transition-all duration-500 ease-out"
+        className="transition-all duration-500 ease-out motion-reduce:transition-none"
         cx={size / 2}
         cy={size / 2}
         fill="none"
@@ -232,8 +232,13 @@ export function HabitSimpleView({
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
 
   return (
-    <div className="flex min-h-full flex-col transition-colors duration-500" style={{ backgroundColor: bgColor }}>
-      <main className="flex flex-1 items-start justify-center px-4 pt-8 pb-24">
+    <div
+      className="relative flex min-h-full flex-col overflow-hidden transition-colors duration-500"
+      style={{ backgroundColor: bgColor }}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_50%_0%,rgba(255,255,255,0.24),transparent_60%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.06),rgba(0,0,0,0.22))]" />
+      <main className="relative flex flex-1 items-start justify-center px-4 pt-8 pb-24">
         <div className={cn('grid w-full max-w-md grid-cols-2 gap-6')}>
           {currentHabits.map((habit) => {
             const iconData = getIconById(normalizeIconName(habit.icon))
@@ -245,7 +250,8 @@ export function HabitSimpleView({
             return (
               <div className="flex flex-col items-center gap-3" key={habit.id}>
                 <Button
-                  className="relative h-[140px] w-[140px] p-0 hover:bg-transparent"
+                  aria-label={`${habit.name}をチェックイン`}
+                  className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
                   disabled={isPending}
                   onClick={(event) => handleProgressClick(event, habit, isCompleted)}
                   onContextMenu={(e) => handleContextMenu(e, habit)}
@@ -267,12 +273,12 @@ export function HabitSimpleView({
 
                   <div
                     className={cn(
-                      'flex h-[120px] w-[120px] items-center justify-center rounded-full transition-all duration-300',
+                      'flex h-[120px] w-[120px] items-center justify-center rounded-full ring-1 ring-white/15 transition-all duration-300',
                       isCompleted && 'scale-105'
                     )}
                     style={{
                       backgroundColor: bgColor,
-                      boxShadow: isCompleted ? '0 0 20px rgba(255, 255, 255, 0.3)' : 'none',
+                      boxShadow: isCompleted ? '0 0 24px rgba(255, 255, 255, 0.35)' : 'none',
                     }}
                   >
                     <IconComponent
@@ -299,7 +305,8 @@ export function HabitSimpleView({
 
           <div className="flex flex-col items-center gap-3">
             <Button
-              className="relative h-[140px] w-[140px] p-0 hover:bg-transparent"
+              aria-label="習慣を追加"
+              className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
               onClick={onAddHabit}
               scale="md"
               type="button"
@@ -314,7 +321,7 @@ export function HabitSimpleView({
               />
 
               <div
-                className="flex h-[120px] w-[120px] items-center justify-center rounded-full"
+                className="flex h-[120px] w-[120px] items-center justify-center rounded-full ring-1 ring-white/15"
                 style={{ backgroundColor: bgColor }}
               >
                 <Icon className="h-14 w-14 text-white/90" name="plus" />
@@ -383,9 +390,10 @@ export function HabitSimpleView({
         </div>
       ) : null}
 
-      <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between px-6 py-4">
+      <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between border-white/10 border-t bg-black/10 px-6 py-4 backdrop-blur-md">
         <Button
-          className="h-10 w-10 p-0 text-white/70 hover:bg-transparent hover:text-white"
+          aria-label="設定を開く"
+          className="h-10 w-10 rounded-full border border-white/20 bg-white/10 p-0 text-white/80 hover:bg-white/20 hover:text-white"
           onClick={onSettings}
           size="icon"
           type="button"
@@ -398,6 +406,7 @@ export function HabitSimpleView({
           <div className="flex items-center gap-2">
             {pages.map((page) => (
               <Button
+                aria-label={`ページ ${page + 1}`}
                 className={cn(
                   'h-2 w-2 rounded-full p-0 transition-all duration-300 hover:bg-transparent',
                   currentPage === page ? 'h-2.5 w-2.5 bg-white' : 'bg-white/40 hover:bg-white/60'

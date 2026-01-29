@@ -69,16 +69,26 @@ export function HabitListView({
 
   return (
     <>
-      <div className="flex-1 space-y-6 px-4 pt-4 pb-8">
-        <header className="sticky top-0 z-10 rounded-2xl border border-border/50 bg-background/50 px-4 py-4 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
+      <div className="flex-1 space-y-6 px-4 pt-4 pb-10">
+        <header className="sticky top-0 z-20 rounded-2xl border border-border/60 bg-background/80 px-4 py-4 shadow-black/5 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
           <div className="mb-4">
-            <p className="text-foreground text-sm">{todayLabel}</p>
-            <h1 className="font-bold text-2xl text-foreground">今日の習慣</h1>
+            <p className="text-muted-foreground text-xs tracking-wide">{todayLabel}</p>
+            <h1 className="font-semibold text-2xl text-foreground">今日の習慣</h1>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <DashboardStatsCard total={totalDaily} type="progress" value={todayCompleted} />
-            <DashboardStatsCard suffix="日" type="streak" value={totalStreak} />
+            <DashboardStatsCard
+              className="border-border/60 bg-card/90 shadow-sm"
+              total={totalDaily}
+              type="progress"
+              value={todayCompleted}
+            />
+            <DashboardStatsCard
+              className="border-border/60 bg-card/90 shadow-sm"
+              suffix="日"
+              type="streak"
+              value={totalStreak}
+            />
           </div>
         </header>
 
@@ -100,7 +110,7 @@ export function HabitListView({
         <div className="space-y-3">
           {filteredHabits.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border bg-card">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border/70 bg-card/80 shadow-sm">
                 <Calendar className="h-8 w-8 text-muted-foreground" />
               </div>
               <p className="mb-4 font-semibold text-base text-foreground">まだ習慣がありません</p>
@@ -142,11 +152,15 @@ export function HabitListView({
 
         {filteredHabits.length > 0 && (
           <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
-            <AddHabitButton onClick={onAddHabit}>習慣を追加</AddHabitButton>
+            <div className="rounded-full border border-border/60 bg-background/80 p-1 shadow-lg backdrop-blur">
+              <AddHabitButton className="shadow-none" onClick={onAddHabit}>
+                習慣を追加
+              </AddHabitButton>
+            </div>
           </div>
         )}
 
-        <div className="h-20" />
+        <div className="h-24" />
       </div>
 
       {/* アクションDrawer */}
@@ -186,9 +200,12 @@ export function HabitListView({
 function FilterButton({ active, children, onClick }: { active: boolean; children: ReactNode; onClick: () => void }) {
   return (
     <Button
+      aria-pressed={active}
       className={cn(
-        'h-auto rounded-full px-4 py-2',
-        active ? 'bg-foreground text-background' : 'border border-border bg-card text-muted-foreground hover:bg-card/80'
+        'h-auto rounded-full px-4 py-2 font-medium text-sm transition-all duration-200',
+        active
+          ? 'bg-foreground text-background shadow-sm'
+          : 'border border-border/60 bg-background/70 text-muted-foreground hover:bg-background/90 hover:text-foreground'
       )}
       onClick={onClick}
       type="button"
