@@ -1,10 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  createCheckin,
-  deleteAllCheckinsByHabitAndPeriod,
-  deleteLatestCheckinByHabitAndPeriod,
-  getCheckinsByUserAndDate,
-} from '../checkin'
+
+vi.mock('drizzle-orm', () => ({
+  and: (...conditions: unknown[]) => ({ op: 'and', conditions }),
+  eq: (left: unknown, right: unknown) => ({ op: 'eq', left, right }),
+  gte: (left: unknown, right: unknown) => ({ op: 'gte', left, right }),
+  lte: (left: unknown, right: unknown) => ({ op: 'lte', left, right }),
+  desc: (value: unknown) => ({ op: 'desc', value }),
+}))
+
+vi.mock('@/lib/utils/date', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/utils/date')>()
+  return {
+    ...actual,
+    normalizeDateKey: vi.fn(actual.normalizeDateKey),
+  }
+})
+
+vi.mock('@/lib/queries/period', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/queries/period')>()
+  return {
+    ...actual,
+    getPeriodDateRange: vi.fn(actual.getPeriodDateRange),
+  }
+})
 
 vi.mock('@/lib/db', () => ({
   getDb: vi.fn().mockResolvedValue({
@@ -22,6 +40,21 @@ vi.mock('@/lib/db', () => ({
 }))
 
 import { getDb } from '@/lib/db'
+import { getPeriodDateRange } from '@/lib/queries/period'
+import { formatDateKey, normalizeDateKey } from '@/lib/utils/date'
+import {
+  createCheckin,
+  deleteAllCheckinsByHabitAndPeriod,
+  deleteLatestCheckinByHabitAndPeriod,
+  getCheckinsByUserAndDate,
+} from '../checkin'
+
+type Condition = {
+  op: 'and' | 'eq' | 'gte' | 'lte' | 'desc'
+  left?: unknown
+  right?: unknown
+  conditions?: Condition[]
+}
 
 describe('getCheckinsByUserAndDate', () => {
   beforeEach(() => {
@@ -30,6 +63,8 @@ describe('getCheckinsByUserAndDate', () => {
 
   it('returns checkins for the user and date', async () => {
     const db = await getDb()
+    const targetDate = new Date(2024, 0, 1)
+    const normalizedDate = formatDateKey(targetDate)
     const mockCheckins = [
       {
         id: 'checkin-1',
@@ -51,9 +86,15 @@ describe('getCheckinsByUserAndDate', () => {
       }))
     )
 
-    const result = await getCheckinsByUserAndDate('user-1', new Date('2024-01-01'))
+    const result = await getCheckinsByUserAndDate('user-1', targetDate)
+    const whereArg = vi.mocked(db.where).mock.calls[0]?.[0] as Condition | undefined
+    const dateCondition = whereArg?.conditions?.find(
+      (condition) => condition.op === 'eq' && condition.right === normalizedDate
+    )
 
     expect(result).toEqual(mockCheckins)
+    expect(vi.mocked(normalizeDateKey)).toHaveBeenCalledWith(targetDate)
+    expect(dateCondition).toBeTruthy()
     expect(db.select).toHaveBeenCalledTimes(1)
     expect(db.innerJoin).toHaveBeenCalledTimes(1)
     expect(db.where).toHaveBeenCalledTimes(1)
@@ -67,6 +108,8 @@ describe('createCheckin', () => {
 
   it('creates a checkin and returns it', async () => {
     const db = await getDb()
+    const targetDate = new Date(2024, 0, 2)
+    const normalizedDate = formatDateKey(targetDate)
     const createdCheckin = {
       id: 'checkin-3',
       habitId: 'habit-3',
@@ -76,10 +119,12 @@ describe('createCheckin', () => {
 
     vi.mocked(db.returning).mockResolvedValueOnce([createdCheckin])
 
-    const result = await createCheckin({ habitId: 'habit-3', date: new Date('2024-01-02') })
+    const result = await createCheckin({ habitId: 'habit-3', date: targetDate })
 
     expect(result).toEqual(createdCheckin)
+    expect(vi.mocked(normalizeDateKey)).toHaveBeenCalledWith(targetDate)
     expect(db.insert).toHaveBeenCalledTimes(1)
+    expect(db.values).toHaveBeenCalledWith({ habitId: 'habit-3', date: normalizedDate })
     expect(db.values).toHaveBeenCalledTimes(1)
     expect(db.returning).toHaveBeenCalledTimes(1)
   })
@@ -92,13 +137,48 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
 
   it('returns false when no checkin exists in the period', async () => {
     const db = await getDb()
+    const targetDate = new Date(2024, 0, 1)
 
     vi.mocked(db.limit).mockResolvedValueOnce([])
 
-    const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', new Date('2024-01-01'), 'daily')
+    const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', targetDate, 'daily')
+    const range = vi.mocked(getPeriodDateRange).mock.results[0]?.value
+    const whereArg = vi.mocked(db.where).mock.calls[0]?.[0] as Condition | undefined
+    const startCondition = whereArg?.conditions?.find(
+      (condition) => condition.op === 'gte' && condition.right === range?.startKey
+    )
+    const endCondition = whereArg?.conditions?.find(
+      (condition) => condition.op === 'lte' && condition.right === range?.endKey
+    )
 
     expect(result).toBe(false)
+    expect(vi.mocked(getPeriodDateRange)).toHaveBeenCalledWith(targetDate, 'daily', 1)
+    expect(startCondition).toBeTruthy()
+    expect(endCondition).toBeTruthy()
     expect(db.delete).not.toHaveBeenCalled()
+  })
+
+  it('uses weekStartDay when calculating weekly range', async () => {
+    const db = await getDb()
+    const targetDate = new Date(2024, 0, 7)
+    const weekStartDay = 0
+
+    vi.mocked(db.limit).mockResolvedValueOnce([])
+
+    const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', targetDate, 'weekly', weekStartDay)
+    const range = vi.mocked(getPeriodDateRange).mock.results[0]?.value
+    const whereArg = vi.mocked(db.where).mock.calls[0]?.[0] as Condition | undefined
+    const startCondition = whereArg?.conditions?.find(
+      (condition) => condition.op === 'gte' && condition.right === range?.startKey
+    )
+    const endCondition = whereArg?.conditions?.find(
+      (condition) => condition.op === 'lte' && condition.right === range?.endKey
+    )
+
+    expect(result).toBe(false)
+    expect(vi.mocked(getPeriodDateRange)).toHaveBeenCalledWith(targetDate, 'weekly', weekStartDay)
+    expect(startCondition).toBeTruthy()
+    expect(endCondition).toBeTruthy()
   })
 
   it('deletes the latest checkin and returns true', async () => {
@@ -127,13 +207,25 @@ describe('deleteAllCheckinsByHabitAndPeriod', () => {
 
   it('deletes all checkins in the period', async () => {
     const db = await getDb()
+    const targetDate = new Date(2024, 0, 5)
     const deleteResult = { rowCount: 2 }
 
     vi.mocked(db.where).mockResolvedValueOnce(deleteResult)
 
-    const result = await deleteAllCheckinsByHabitAndPeriod('habit-2', new Date('2024-01-05'), 'weekly')
+    const result = await deleteAllCheckinsByHabitAndPeriod('habit-2', targetDate, 'weekly')
+    const range = vi.mocked(getPeriodDateRange).mock.results[0]?.value
+    const whereArg = vi.mocked(db.where).mock.calls[0]?.[0] as Condition | undefined
+    const startCondition = whereArg?.conditions?.find(
+      (condition) => condition.op === 'gte' && condition.right === range?.startKey
+    )
+    const endCondition = whereArg?.conditions?.find(
+      (condition) => condition.op === 'lte' && condition.right === range?.endKey
+    )
 
     expect(result).toEqual(deleteResult)
+    expect(vi.mocked(getPeriodDateRange)).toHaveBeenCalledWith(targetDate, 'weekly', 1)
+    expect(startCondition).toBeTruthy()
+    expect(endCondition).toBeTruthy()
     expect(db.delete).toHaveBeenCalledTimes(1)
     expect(db.where).toHaveBeenCalledTimes(1)
   })
