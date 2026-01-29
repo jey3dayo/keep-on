@@ -1,8 +1,16 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@/db/schema'
-import { env } from '@/env'
 import { logInfo } from '@/lib/logging'
+
+interface CloudflareEnvBindings {
+  HYPERDRIVE?: { connectionString: string }
+  DATABASE_URL?: string
+}
+
+function isWorkersRuntime(): boolean {
+  return typeof globalThis !== 'undefined' && 'caches' in globalThis
+}
 
 function normalizeConnectionString(raw: string): string {
   try {
@@ -39,13 +47,17 @@ function getConnectionMeta(connectionString: string): { host?: string; port?: nu
 
 async function getConnectionInfo(): Promise<ConnectionInfo> {
   // Cloudflare Workers環境でHyperdriveが利用可能な場合
-  if (typeof globalThis !== 'undefined' && 'caches' in globalThis) {
+  if (isWorkersRuntime()) {
     try {
       const { getCloudflareContext } = await import('@opennextjs/cloudflare')
       const { env } = getCloudflareContext()
-      const hyperdrive = (env as { HYPERDRIVE?: { connectionString: string } }).HYPERDRIVE
+      const bindings = env as CloudflareEnvBindings
+      const hyperdrive = bindings.HYPERDRIVE
       if (hyperdrive?.connectionString) {
         return { connectionString: hyperdrive.connectionString, source: 'hyperdrive' }
+      }
+      if (bindings.DATABASE_URL) {
+        return { connectionString: bindings.DATABASE_URL, source: 'env' }
       }
     } catch {
       // Hyperdrive未設定の場合はフォールバック
@@ -53,6 +65,7 @@ async function getConnectionInfo(): Promise<ConnectionInfo> {
   }
 
   // ローカル開発環境ではDATABASE_URLを使用
+  const { env } = await import('@/env')
   return { connectionString: env.DATABASE_URL, source: 'env' }
 }
 
