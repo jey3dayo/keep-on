@@ -6,7 +6,7 @@ import { Button } from '@/components/basics/Button'
 import { Icon } from '@/components/basics/Icon'
 import { HabitTable } from '@/components/habits/HabitTable'
 import { SIGN_IN_PATH } from '@/constants/auth'
-import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
+import { createRequestMeta, logInfo, logSpanOptional } from '@/lib/logging'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 
@@ -27,14 +27,14 @@ export default async function HabitsPage() {
 
   logInfo('request.habits:start', requestMeta)
 
-  const clerkUser = await logSpan('habits.clerkUser', () => currentUser(), requestMeta, { timeoutMs })
+  const clerkUser = await logSpanOptional('habits.clerkUser', () => currentUser(), requestMeta, { timeoutMs })
 
   if (!clerkUser) {
     logInfo('habits.clerkUser:missing', requestMeta)
     redirect(SIGN_IN_PATH)
   }
 
-  const userId = await logSpan('habits.syncUser', () => getCurrentUserId(), requestMeta, { timeoutMs })
+  const userId = await logSpanOptional('habits.syncUser', () => getCurrentUserId(), requestMeta, { timeoutMs })
 
   if (!userId) {
     logInfo('habits.syncUser:missing', requestMeta)

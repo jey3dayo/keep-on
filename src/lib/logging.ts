@@ -17,6 +17,16 @@ class TimeoutError extends Error {
   }
 }
 
+export function isTimeoutError(error: unknown): error is TimeoutError {
+  if (error instanceof TimeoutError) {
+    return true
+  }
+  if (!error || typeof error !== 'object') {
+    return false
+  }
+  return (error as { name?: string }).name === 'TimeoutError'
+}
+
 let cachedLogLevel: LogLevel | null = null
 
 function resolveLogLevel(): LogLevel {
@@ -138,5 +148,21 @@ export async function logSpan<T>(
     if (timeoutId) {
       clearTimeout(timeoutId)
     }
+  }
+}
+
+export async function logSpanOptional<T>(
+  name: string,
+  fn: () => Promise<T>,
+  data?: Record<string, unknown>,
+  options?: { timeoutMs?: number }
+): Promise<T | null> {
+  try {
+    return await logSpan(name, fn, data, options)
+  } catch (error) {
+    if (isTimeoutError(error)) {
+      return null
+    }
+    throw error
   }
 }
