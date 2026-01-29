@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
-import { getCheckinsByUserAndDate } from '@/lib/queries/checkin'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
@@ -43,16 +42,9 @@ export default async function DashboardPage() {
     redirect(SIGN_IN_PATH)
   }
 
-  // 同時リクエストの詰まりを避けるため順次実行
   const habits = await logSpan(
     'dashboard.habits',
     () => getHabitsWithProgress(user.id, user.clerkId, dateKey),
-    requestMeta,
-    { timeoutMs }
-  )
-  const todayCheckins = await logSpan(
-    'dashboard.checkins',
-    () => getCheckinsByUserAndDate(user.id, dateKey),
     requestMeta,
     { timeoutMs }
   )
@@ -60,7 +52,6 @@ export default async function DashboardPage() {
   logInfo('request.dashboard:end', {
     ...requestMeta,
     habits: habits.length,
-    checkins: todayCheckins.length,
   })
 
   return (
@@ -68,7 +59,6 @@ export default async function DashboardPage() {
       habits={habits}
       hasTimeZoneCookie={hasTimeZoneCookie}
       initialView={initialView}
-      todayCheckins={todayCheckins}
       todayLabel={todayLabel}
       user={user}
     />
