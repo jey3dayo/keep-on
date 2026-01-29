@@ -17,10 +17,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { formatSerializableError, type SerializableHabitError } from '@/lib/errors/serializable'
+import type { OptimisticHandler } from './types'
 
 interface HabitActionDialogProps {
   habitId: string
   trigger?: ReactNode | null
+  onOptimistic?: OptimisticHandler
   title: string
   description: ReactNode
   confirmLabel: string
@@ -36,6 +38,7 @@ interface HabitActionDialogProps {
 export function HabitActionDialog({
   habitId,
   trigger,
+  onOptimistic,
   title,
   description,
   confirmLabel,
@@ -60,21 +63,59 @@ export function HabitActionDialog({
     onOpenChange?.(open)
   }
 
-  const handleConfirm = async () => {
-    setIsProcessing(true)
-    const result = await action(habitId)
-    setIsProcessing(false)
+  const runActionWithRetry = async () => {
+    let lastResult: Result.Result<unknown, SerializableHabitError> | null = null
+    let lastError: unknown = null
 
-    if (Result.isSuccess(result)) {
-      toast.success(successMessage)
-      handleOpenChange(false)
-      router.refresh()
-      return
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const result = await action(habitId)
+        if (Result.isSuccess(result)) {
+          return result
+        }
+        lastResult = result
+      } catch (error) {
+        lastError = error
+      }
     }
 
-    toast.error(errorMessage, {
-      description: formatSerializableError(result.error),
-    })
+    if (lastResult) {
+      return lastResult
+    }
+
+    throw lastError ?? new Error('処理に失敗しました')
+  }
+
+  const handleConfirm = async () => {
+    const rollback = onOptimistic?.()
+
+    setIsProcessing(true)
+    try {
+      const result = await runActionWithRetry()
+
+      if (Result.isSuccess(result)) {
+        toast.success(successMessage)
+        handleOpenChange(false)
+        router.refresh()
+        return
+      }
+
+      if (rollback) {
+        rollback()
+      }
+      toast.error(errorMessage, {
+        description: formatSerializableError(result.error),
+      })
+    } catch (error) {
+      if (rollback) {
+        rollback()
+      }
+      toast.error(errorMessage, {
+        description: error instanceof Error ? error.message : undefined,
+      })
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   return (

@@ -5,7 +5,15 @@ import { Button } from '@/components/ui/button'
 import { HabitActionDialog } from './HabitActionDialog'
 import type { HabitDialogProps } from './types'
 
-export function HabitDeleteDialog({ habitId, habitName, trigger, open, defaultOpen, onOpenChange }: HabitDialogProps) {
+export function HabitDeleteDialog({
+  habitId,
+  habitName,
+  trigger,
+  onOptimistic,
+  open,
+  defaultOpen,
+  onOpenChange,
+}: HabitDialogProps) {
   const shouldUseDefaultTrigger = trigger === undefined && open === undefined
   const resolvedTrigger =
     trigger ??
@@ -26,6 +34,7 @@ export function HabitDeleteDialog({ habitId, habitName, trigger, open, defaultOp
       }
       errorMessage="削除に失敗しました"
       habitId={habitId}
+      onOptimistic={onOptimistic}
       onOpenChange={onOpenChange}
       open={open}
       successMessage="習慣を完全に削除しました"

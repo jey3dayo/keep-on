@@ -1,5 +1,3 @@
-'use server'
-
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
 import { AuthorizationError, DatabaseError, NotFoundError, UnauthorizedError } from '@/lib/errors/habit'

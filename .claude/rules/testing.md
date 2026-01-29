@@ -2,146 +2,144 @@
 
 ## 概要
 
-開発・テスト環境でのClerkログインを効率化するためのガイドです。
+開発・テスト環境での Clerk ログインを効率化するためのガイドです。
 
 ## クイックリファレンス
 
 このセクションの値を**唯一の正**として扱い、以降はプレースホルダで参照します。
 
-## 推奨テストユーザー（1件だけ使う場合）
+### 推奨テストユーザー（1件だけ使う場合）
 
 - メールアドレス: `jane+clerk_test@example.com`
 - パスワード: `dyc.PBR3pjc.cmh!fmx`
 - OTP（テストモード）: `424242`
 
-## 固定テストメール（環境別）
+### 固定テストメール（環境別）
 
 - `dev+clerk_test@example.com`
 - `staging+clerk_test@example.com`
 
-## プレースホルダ
+### プレースホルダ
 
 - `<TEST_EMAIL>` = 推奨テストユーザーのメールアドレス
 - `<TEST_PASSWORD>` = 推奨テストユーザーのパスワード
-- `<TEST_OTP>` = 推奨テストユーザーのOTP
+- `<TEST_OTP>` = 推奨テストユーザーの OTP
 
-## テストユーザーの管理
+## agent-browser スクリーンショット保存先
 
-## 推奨
+- WSL2 環境でスクリーンショットをユーザーに見てもらう場合は、必ず `~/user_home/Downloads/debug` に保存する
+- 上記は C ドライブの Downloads へのシンボリックリンク
+
+## テストユーザー運用方針
+
+### 推奨
 
 - クイックリファレンスの値を共通のテスト基準として使用
 - 環境ごとに固定のテストメールアドレスを使い分ける
 
-## 非推奨
+### 非推奨
 
 - 本番用のメールアドレスをテストに使用
 - ランダムなメールアドレスを毎回生成
 
 ## Clerk テストモード
 
-Clerkの開発インスタンスでは、デフォルトで**テストモード**が有効になっています。
+Clerk の開発インスタンスでは、デフォルトで**テストモード**が有効になっています。
 
-## 特徴
+### 特徴
 
-- メール/SMSの実際の送信が不要
+- メール/SMS の実際の送信が不要
 - 開発用の疑似識別子が使用可能
 - 固定の認証コードでログイン可能
 
-## テスト用識別子
+### テスト用識別子
 
-### メールアドレス
+#### メールアドレス
 
 **ルール**: ローカルパートの末尾に `+clerk_test` を追加
 
-## 例
+**例**:
 
 - `test+clerk_test@example.com`
 - `sample+clerk_test@example.com`
 - `user123+clerk_test@domain.org`
 
-## 形式
+**形式**:
 
 ```text
 <username>+clerk_test@<domain>
 ```
 
-### 電話番号
+#### 電話番号
 
 **ルール**: 下4桁が `0100` 〜 `0199` の範囲
 
-## 例 2
+**例**:
 
 - `+1 (201) 555-0100`
 - `+1 (973) 555-0133`
 - `+12015550199`
 
-## 形式 2
+**形式**:
 
 ```text
 +1<area code>555-01<00-99>
 ```
 
-## 認証コード
+### 認証コード
 
-すべてのOTP認証（メール・SMS）で固定値を使用します。値はクイックリファレンスを参照してください。
+すべての OTP 認証（メール・SMS）で固定値を使用します。値はクイックリファレンスを参照してください。
 
-## 適用される認証フロー
+#### 適用される認証フロー
 
 - メールアドレス認証
 - 電話番号（SMS）認証
 - パスコード認証
 
-## テスト用パスワード
+### テスト用パスワード
 
 テスト環境で使用する固定パスワードはクイックリファレンスを参照してください。
 
 ## 手動テスト手順
 
+### サインインフロー
+
+1. サインインページへアクセス
+   `http://localhost:3000/sign-in`
+2. メールアドレスに `<TEST_EMAIL>` を入力
+3. パスワードに `<TEST_PASSWORD>` を入力
+4. `Continue` を押す
+5. 認証コード（OTP）画面に遷移したら `<TEST_OTP>` を入力
+6. `Continue` を押してダッシュボードへ遷移することを確認
+
+**補足**:
+
+- パスワード送信後に `sign-in/factor-two` へ遷移する場合があります
+- 認証コード欄が表示されたら `<TEST_OTP>` を入力してください
+
 ### サインアップフロー
 
-1. **サインアップページへアクセス**
+1. サインアップページへアクセス
 
    ```text
    http://localhost:3000/sign-up
    ```
 
-2. **テストメールアドレスを入力**
+2. テストメールアドレスを入力
 
    ```text
    <TEST_EMAIL>
    ```
 
-3. **認証コード入力**
+3. 認証コードを入力
 
    ```text
    <TEST_OTP>
    ```
 
-4. **ログイン完了**
+4. ログイン完了
    - ダッシュボードへリダイレクト
    - セッションが確立されていることを確認
-
-### サインインフロー
-
-1. **サインインページへアクセス**
-
-   ```text
-   http://localhost:3000/sign-in
-   ```
-
-2. **登録済みテストメールアドレスを入力**
-
-   ```text
-   <TEST_EMAIL>
-   ```
-
-3. **認証コード入力**
-
-   ```text
-   <TEST_OTP>
-   ```
-
-4. **ログイン完了**
 
 ## E2E テスト導入ガイド
 
@@ -160,7 +158,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   use: {
-    // Clerkのテスト用ストレージ状態を保存
+    // Clerk のテスト用ストレージ状態を保存
     storageState: "e2e/storage-state.json",
   },
   // プロジェクトごとの設定
@@ -202,7 +200,7 @@ test.describe("Authentication", () => {
   });
 
   test("should sign out", async ({ page }) => {
-    // Clerkクライアントを使用してサインアウト
+    // Clerk クライアントを使用してサインアウト
     await clerkClient.signOut();
 
     // サインインページへリダイレクトされることを確認
@@ -295,7 +293,7 @@ export async function signOut(page: Page) {
 ✅ 正: test+clerk_test@example.com
 ```
 
-### E2Eテストでセッションが保持されない
+### E2E テストでセッションが保持されない
 
 **原因**: `storageState` のパスが間違っている
 
@@ -304,7 +302,7 @@ export async function signOut(page: Page) {
 ```typescript
 // playwright.config.ts
 use: {
-  storageState: 'e2e/storage-state.json', // 相対パスを確認
+  storageState: "e2e/storage-state.json", // 相対パスを確認
 }
 ```
 
@@ -312,17 +310,61 @@ use: {
 
 ### セッションの永続化
 
-ローカル開発時はブラウザのLocalStorageにセッションが保存されるため、再読み込みでもログイン状態が維持されます。
+ローカル開発時はブラウザの LocalStorage にセッションが保存されるため、再読み込みでもログイン状態が維持されます。
 
-## セッションクリア
+### セッションクリア
 
 ```typescript
-// Clerkクライアントでサインアウト
+// Clerk クライアントでサインアウト
 await clerkClient.signOut();
 
-// またはLocalStorageを直接削除
+// または LocalStorage を直接削除
 localStorage.clear();
 ```
+
+## Cloudflare Workers 確認シナリオ（ログ付き）
+
+Cloudflare 本番環境での「ログイン → ダッシュボードでチェックイン → 習慣ページ遷移」を、
+Workers のログと突き合わせて確認するための手順です。
+
+### 前提
+
+- 対象: `https://keep-on.j138cm.workers.dev`
+- Cloudflare ログは **別ターミナル** で監視する
+
+### 手順
+
+1. ログ監視を開始
+
+   ```bash
+   pnpm cf:logs
+   ```
+
+2. `/dashboard` にアクセス
+3. サインイン画面に遷移した場合は、`<TEST_EMAIL>` / `<TEST_PASSWORD>` / `<TEST_OTP>` でログイン
+4. ダッシュボードで習慣一覧が表示されることを確認
+5. 任意の習慣でチェックインを 1 回トグル
+6. `/habits` へ遷移し、習慣一覧ページが表示されることを確認
+7. ログを停止して結果を確認（Ctrl + C）
+
+### 補強チェック観点（ログ + UI）
+
+- **Cloudflare ログ**
+  - `request.dashboard:start` / `request.dashboard:end` が連続して出る
+  - `request.habits:start` / `request.habits:end` が出る
+  - `:timeout` / `TimeoutError` が出ていない
+  - `GET /dashboard` / `GET /habits` が `Ok` になっている
+  - `Clerk: Refreshing the session token resulted in an infinite redirect loop` が出ていない
+- **UI**
+  - チェックイン後に進捗表示が 1 つ増える（例: `6 / 7` → `7 / 7`）
+  - 連打時に重複反映しない（同一習慣の多重チェックインが起きない）
+  - 失敗時はトーストでエラーが見える
+
+### 失敗時の切り分けメモ
+
+- **ログに POST /dashboard が出ない**: クライアント側イベント未発火の可能性
+- **ログに :timeout / TimeoutError**: DB か Server Action のタイムアウトを疑う
+- **Clerk のリダイレクトループ警告**: Clerk キー不整合の可能性が高い
 
 ## 参考リンク
 
@@ -335,5 +377,5 @@ localStorage.clear();
 
 ## 関連ドキュメント
 
-- [dotenvx 環境変数管理](./dotenvx.md) - Clerk APIキーの設定方法
+- [dotenvx 環境変数管理](./dotenvx.md) - Clerk API キーの設定方法
 - [セキュリティガイドライン](./security.md) - 認証情報の取り扱いについて

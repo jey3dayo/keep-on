@@ -12,6 +12,7 @@ import { HabitListView } from './HabitListView'
 
 interface DesktopDashboardProps {
   habits: HabitWithProgress[]
+  pendingCheckins?: Set<string>
   user: User
   onAddHabit: (
     name: string,
@@ -19,12 +20,23 @@ interface DesktopDashboardProps {
     options?: { color?: string | null; period?: Period; frequency?: number }
   ) => Promise<void>
   onToggleCheckin: (habitId: string) => Promise<void>
+  onArchiveOptimistic?: (habitId: string) => void | (() => void)
+  onDeleteOptimistic?: (habitId: string) => void | (() => void)
+  onResetOptimistic?: (habitId: string) => void | (() => void)
 }
 
 type PeriodFilter = 'all' | Period
 type View = 'dashboard' | 'add'
 
-export function DesktopDashboard({ habits, onAddHabit, onToggleCheckin }: DesktopDashboardProps) {
+export function DesktopDashboard({
+  habits,
+  pendingCheckins,
+  onAddHabit,
+  onToggleCheckin,
+  onArchiveOptimistic,
+  onDeleteOptimistic,
+  onResetOptimistic,
+}: DesktopDashboardProps) {
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const [selectedPreset, setSelectedPreset] = useState<HabitPreset | null>(null)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
@@ -80,8 +92,12 @@ export function DesktopDashboard({ habits, onAddHabit, onToggleCheckin }: Deskto
         filteredHabits={filteredHabits}
         habits={habits}
         onAddHabit={() => setCurrentView('add')}
+        onArchiveOptimistic={onArchiveOptimistic}
+        onDeleteOptimistic={onDeleteOptimistic}
+        onResetOptimistic={onResetOptimistic}
         onPeriodChange={setPeriodFilter}
         onToggleHabit={handleToggleHabit}
+        pendingCheckins={pendingCheckins}
         periodFilter={periodFilter}
         todayCompleted={todayCompleted}
         totalDaily={totalDaily}
