@@ -13,13 +13,15 @@ export const ClerkApiResponseErrorSchema = v.object({
   errors: v.optional(v.array(v.optional(ClerkApiErrorEntrySchema))),
 })
 
+const UserDateSchema = v.pipe(v.union([v.date(), v.string()]), v.toDate())
+
 export const UserSchema = v.object({
   id: v.string(),
   clerkId: v.string(),
   email: v.string(),
   weekStart: v.picklist(['monday', 'sunday']),
-  createdAt: v.date(),
-  updatedAt: v.date(),
+  createdAt: UserDateSchema,
+  updatedAt: UserDateSchema,
 })
 
 export interface ClerkApiResponseErrorPayload extends Record<string, unknown> {
