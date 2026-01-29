@@ -25,6 +25,7 @@
     "db:migrate": "dotenvx run -- drizzle-kit migrate",
     "db:studio": "dotenvx run -- drizzle-kit studio",
     "env:encrypt": "dotenvx encrypt",
+    "env:decrypt": "dotenvx decrypt",
     "env:run": "dotenvx run --",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build"
