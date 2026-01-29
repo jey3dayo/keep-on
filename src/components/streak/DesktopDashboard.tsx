@@ -25,6 +25,7 @@ export function DesktopDashboard({
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
+  todayLabel,
 }: DesktopDashboardProps) {
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const [selectedPreset, setSelectedPreset] = useState<HabitPreset | null>(null)
@@ -89,6 +90,7 @@ export function DesktopDashboard({
         pendingCheckins={pendingCheckins}
         periodFilter={periodFilter}
         todayCompleted={todayCompleted}
+        todayLabel={todayLabel}
         totalDaily={totalDaily}
         totalStreak={totalStreak}
       />

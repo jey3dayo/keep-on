@@ -34,6 +34,7 @@ interface HabitListViewProps {
   onResetOptimistic?: (habitId: string) => OptimisticRollback
   pendingCheckins?: Set<string>
   todayCompleted: number
+  todayLabel: string
   totalDaily: number
   totalStreak: number
 }
@@ -51,6 +52,7 @@ export function HabitListView({
   onResetOptimistic,
   pendingCheckins,
   todayCompleted,
+  todayLabel,
   totalDaily,
   totalStreak,
 }: HabitListViewProps) {
@@ -60,10 +62,6 @@ export function HabitListView({
   })
   const [resetConfirmHabit, setResetConfirmHabit] = useState<HabitWithProgress | null>(null)
   const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
-
-  const today = new Date()
-  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
-  const currentDayName = dayNames[today.getDay()]
 
   const dailyCount = habits.filter((h) => h.period === 'daily').length
   const weeklyCount = habits.filter((h) => h.period === 'weekly').length
@@ -75,7 +73,7 @@ export function HabitListView({
         <header className="sticky top-0 z-10 rounded-2xl border border-border/50 bg-background/50 px-4 py-4 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
           <div className="mb-4">
             <p className="text-foreground text-sm">
-              {today.getMonth() + 1}月{today.getDate()}日（{currentDayName}）
+              {todayLabel}
             </p>
             <h1 className="font-bold text-2xl text-foreground">今日の習慣</h1>
           </div>

@@ -104,6 +104,7 @@ export const Default: Story = {
       storybookToast.success('習慣を追加', 'Storybookでのデモです')
     },
     todayCompleted: 1,
+    todayLabel: '1月29日（木）',
     totalDaily: 3,
     totalStreak: 30,
   },
@@ -121,6 +122,7 @@ export const Empty: Story = {
       storybookToast.success('習慣を追加', 'Storybookでのデモです')
     },
     todayCompleted: 0,
+    todayLabel: '1月29日（木）',
     totalDaily: 0,
     totalStreak: 0,
   },

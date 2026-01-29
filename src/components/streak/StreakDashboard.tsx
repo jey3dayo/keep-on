@@ -43,6 +43,7 @@ export function StreakDashboard({
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
+  todayLabel,
   initialView = DEFAULT_DASHBOARD_VIEW,
 }: StreakDashboardProps) {
   const [currentView, setCurrentView] = useState<View>(initialView)
@@ -168,6 +169,7 @@ export function StreakDashboard({
             pendingCheckins={pendingCheckins}
             periodFilter={periodFilter}
             todayCompleted={todayCompleted}
+            todayLabel={todayLabel}
             totalDaily={totalDaily}
             totalStreak={totalStreak}
           />

@@ -76,6 +76,7 @@ export const Default: Story = {
   args: {
     habits,
     user,
+    todayLabel: '1月29日（木）',
     onAddHabit: (name, icon, options) => {
       storybookToast.success('習慣を追加', `${name} (${icon})`)
       if (options?.period) {
@@ -94,6 +95,7 @@ export const Empty: Story = {
   args: {
     habits: [],
     user,
+    todayLabel: '1月29日（木）',
     onAddHabit: (name) => {
       storybookToast.success('習慣を追加', name)
       return Promise.resolve()
