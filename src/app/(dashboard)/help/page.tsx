@@ -78,7 +78,7 @@ export default function HelpPage() {
             <a
               className="font-medium text-foreground underline-offset-4 transition hover:underline"
               href="https://github.com/jey3dayo/keep-on/issues"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               target="_blank"
             >
               GitHub Issue を開く
