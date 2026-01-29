@@ -16,7 +16,6 @@ import {
   DEFAULT_HABIT_PERIOD,
   type Period,
 } from '@/constants/habit'
-import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
 import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
 import { formatDateKey } from '@/lib/utils/date'
 import { appToast } from '@/lib/utils/toast'
@@ -142,38 +141,23 @@ export function DashboardWrapper({
     })
   }
 
-  const waitForRetry = (delayMs: number) =>
-    new Promise<void>((resolve) => {
-      setTimeout(resolve, delayMs)
-    })
-
-  const runAddCheckinWithRetry = async (habitId: string, dateKey: string) => {
-    const maxAttempts = Math.max(1, RETRY_MAX_ATTEMPTS)
-    let lastError: unknown = null
-
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      try {
-        const result = await addCheckinAction(habitId, dateKey)
-        if (Result.isSuccess(result)) {
-          return { ok: true as const, result }
-        }
-        return { ok: false as const, result }
-      } catch (error) {
-        lastError = error
-        if (attempt < maxAttempts - 1 && RETRY_DELAY_MS > 0) {
-          await waitForRetry(RETRY_DELAY_MS)
-        }
+  const runAddCheckin = async (habitId: string, dateKey: string) => {
+    try {
+      const result = await addCheckinAction(habitId, dateKey)
+      if (Result.isSuccess(result)) {
+        return { ok: true as const, result }
       }
+      return { ok: false as const, result }
+    } catch (error) {
+      return { ok: false as const, error }
     }
-
-    return { ok: false as const, error: lastError }
   }
 
   const handleCompletedCheckin = async (habitId: string, dateKey: string) => {
     addPendingCheckin(habitId)
 
     try {
-      const { ok, result, error } = await runAddCheckinWithRetry(habitId, dateKey)
+      const { ok, result, error } = await runAddCheckin(habitId, dateKey)
 
       if (ok) {
         scheduleRefresh()
@@ -312,7 +296,7 @@ export function DashboardWrapper({
     let shouldRollback = true
 
     try {
-      const { ok, result, error } = await runAddCheckinWithRetry(habitId, dateKey)
+      const { ok, result, error } = await runAddCheckin(habitId, dateKey)
 
       if (ok) {
         shouldRollback = false

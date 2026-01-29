@@ -89,9 +89,9 @@ export function HabitActionDialog({
   }
 
   const handleConfirm = async () => {
+    setIsProcessing(true)
     const rollback = onOptimistic?.()
 
-    setIsProcessing(true)
     try {
       const result = await runActionWithRetry()
 
