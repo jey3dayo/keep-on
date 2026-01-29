@@ -10,14 +10,14 @@ interface ColorPaletteProps {
 }
 
 const colors: { name: ColorThemeName; bg: string }[] = [
-  { name: 'lime', bg: 'var(--lime-9)' },
-  { name: 'orange', bg: 'var(--orange-9)' },
-  { name: 'red', bg: 'var(--red-9)' },
-  { name: 'pink', bg: 'var(--pink-9)' },
-  { name: 'purple', bg: 'var(--purple-9)' },
-  { name: 'blue', bg: 'var(--blue-9)' },
-  { name: 'cyan', bg: 'var(--cyan-9)' },
-  { name: 'yellow', bg: 'var(--yellow-9)' },
+  { name: 'lime', bg: 'var(--lime-10)' },
+  { name: 'orange', bg: 'var(--orange-10)' },
+  { name: 'red', bg: 'var(--red-10)' },
+  { name: 'pink', bg: 'var(--pink-10)' },
+  { name: 'purple', bg: 'var(--purple-10)' },
+  { name: 'blue', bg: 'var(--blue-10)' },
+  { name: 'cyan', bg: 'var(--cyan-10)' },
+  { name: 'yellow', bg: 'var(--yellow-10)' },
 ]
 
 export function ColorPalette({ currentTheme, onThemeChange }: ColorPaletteProps) {
