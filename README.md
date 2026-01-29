@@ -2,7 +2,7 @@
 
 [![Deploy to Cloudflare Workers](https://github.com/jey3dayo/keep-on/actions/workflows/deploy.yml/badge.svg)](https://github.com/jey3dayo/keep-on/actions/workflows/deploy.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
-[![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma)](https://www.prisma.io/)
+[![Drizzle ORM](https://img.shields.io/badge/Drizzle-ORM-0E0E0E)](https://orm.drizzle.team/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare)](https://workers.cloudflare.com/)
 
 ストリーク/習慣トラッキングの PWA アプリ（MVP）
@@ -25,7 +25,7 @@ KeepOn は、習慣形成をサポートするモダンな Web アプリケー�
 - **デプロイ**: Cloudflare Workers (OpenNext)
 - **認証**: Clerk
 - **DB**: Supabase (PostgreSQL)
-- **ORM**: Prisma 7 (no-engine mode)
+- **ORM**: Drizzle ORM + drizzle-kit
 - **環境変数**: dotenvx
 - **テスト**: Vitest + React Testing Library
 - **PWA**: manifest.json
@@ -37,12 +37,19 @@ KeepOn は、習慣形成をサポートするモダンな Web アプリケー�
 
 ## 最近のアップデート
 
+### 2026-01-25 - Prisma → Drizzle 移行完了
+
+**主な変更:**
+
+- 🔁 **Prisma → Drizzle**: ORM を Drizzle ORM + drizzle-kit に移行
+- 🧹 **Prisma 関連削除**: 依存/スキーマ/生成物を削除
+- 🧩 **DB コマンド更新**: db:* を Drizzle ベースに整理
+
 ### v0.2.0 (2026-01-24) - メジャーアップグレード & IaC完全自動化
 
 **主要な変更:**
 
 - ⬆️ **Next.js 15 → 16**: Turbopack デフォルト化、Async Request APIs 対応
-- ⬆️ **Prisma 6 → 7**: no-engine モード最適化、prisma.config.ts 導入
 - ⬆️ **Wrangler 3 → 4**: Cloudflare Workers 最新ツール対応
 - 🤖 **CI/CD 完全自動化**: GitHub Actions でゼロタッチデプロイ実現
 - 📦 **Infrastructure as Code**: 設定ファイル・Secrets・デプロイスクリプト全てコード化
@@ -93,10 +100,13 @@ pnpm install
 - **Clerk**: https://dashboard.clerk.com/
 - **Supabase**: https://supabase.com/dashboard
 
-### 3. Prisma Client の生成
+### 3. DB スキーマの同期（Drizzle）
 
 ```bash
-pnpm db:generate
+pnpm db:generate   # マイグレーション生成
+pnpm db:push       # dev用に同期
+# 既存マイグレーションを適用する場合:
+pnpm db:migrate
 ```
 
 ### 4. 開発サーバー起動
@@ -152,15 +162,17 @@ pnpm test:run         # テスト実行（1回のみ）
 pnpm test:coverage    # カバレッジ付きテスト実行
 
 # データベース
-pnpm db:generate      # Prisma Client 生成
+pnpm db:generate      # Drizzle マイグレーション生成
 pnpm db:push          # スキーマ同期（dev用）
-pnpm db:migrate       # マイグレーション作成
-pnpm db:migrate:deploy # マイグレーション適用（本番）
+pnpm db:migrate       # マイグレーション適用
+pnpm db:studio        # Drizzle Studio起動
 
 # Cloudflare
-pnpm build:cf         # OpenNext ビルド
-pnpm deploy           # Cloudflare デプロイ
-pnpm preview          # ローカルプレビュー
+pnpm cf:build         # OpenNext ビルド
+pnpm cf:deploy        # Cloudflare デプロイ
+pnpm cf:preview       # ローカルプレビュー
+pnpm cf:logs          # ログ確認
+pnpm deploy           # cf:build + cf:deploy
 
 # mise タスク
 mise run format       # Prettier 整形
@@ -176,13 +188,13 @@ mise run deploy:preview # ローカルプレビュー
 ```text
 keep-on/
 ├── .claude/          # Claude Code 設定
-├── prisma/           # Prisma スキーマ
+├── drizzle.config.ts # Drizzle Kit 設定
 ├── public/           # 静的アセット・PWA
 ├── src/
 │   ├── app/          # Next.js App Router
+│   ├── db/           # Drizzle スキーマ/接続
 │   ├── lib/          # ユーティリティ
 │   ├── components/   # 共有コンポーネント
-│   └── generated/    # Prisma Client（自動生成）
 ├── mise.toml         # mise タスク定義
 ├── open-next.config.ts  # OpenNext 設定
 ├── wrangler.jsonc    # Cloudflare Workers 設定
@@ -230,7 +242,7 @@ GitHub Secrets に以下を設定後、`main` ブランチへのプッシュで�
 
 ## 注意事項
 
-- **Prisma 7 no-engine mode**: Driver Adapter で Edge Runtime に最適化
+- **Drizzle ORM**: drizzle-kit でマイグレーション管理
 - **Supabase 接続**: Transaction Mode (port 6543) + `?pgbouncer=true` を使用
 - **Cloudflare Workers**: バンドルサイズ 25MB gzipped 制限に注意
 - **dotenvx**: 本番運用時は `.env` を暗号化してコミット
@@ -240,10 +252,10 @@ GitHub Secrets に以下を設定後、`main` ブランチへのプッシュで�
 ### ✅ 完了
 
 - [x] プロジェクト初期セットアップ
-- [x] Next.js 16 + Prisma 7 + Wrangler 4 へのアップグレード
+- [x] Next.js 16 + Drizzle + Wrangler 4 へのアップグレード
 - [x] Clerk 認証統合（開発環境）
 - [x] Supabase データベース接続
-- [x] Prisma マイグレーション（開発環境）
+- [x] Drizzle マイグレーション（開発環境）
 - [x] Infrastructure as Code 完全自動化
   - wrangler.jsonc: Workers 設定
   - GitHub Actions: CI/CD パイプライン
@@ -258,7 +270,7 @@ GitHub Secrets に以下を設定後、`main` ブランチへのプッシュで�
 ### 🔄 次のステップ
 
 1. **本番環境セットアップ**
-   - [ ] Prisma マイグレーション実行（本番DB）
+   - [ ] Drizzle マイグレーション実行（本番DB）
    - [ ] 本番環境動作確認
    - [ ] エラーモニタリング設定（Sentry/Cloudflare Analytics）
 

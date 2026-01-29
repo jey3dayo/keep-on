@@ -12,6 +12,7 @@ import {
   COLOR_THEME_COOKIE_KEY,
   DEFAULT_THEME_MODE,
   isColorTheme,
+  THEME_COLOR_DARK,
   THEME_COLOR_LIGHT,
   THEME_MODE_COOKIE_KEY,
 } from '@/constants/theme'
@@ -41,7 +42,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
 }
 
 export default async function RootLayout({
@@ -63,12 +63,21 @@ export default async function RootLayout({
         <head>
           <meta content="light dark" name="color-scheme" />
           <meta content={THEME_COLOR_LIGHT} name="theme-color" />
+          <meta content={THEME_COLOR_DARK} media="(prefers-color-scheme: dark)" name="theme-color" />
           <ThemeModeScript />
           <ColorThemeScript />
         </head>
         <body>
+          <a
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-foreground focus:shadow focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            href="#main-content"
+          >
+            本文へスキップ
+          </a>
           <ThemeProvider defaultTheme={themeMode}>
-            {children}
+            <div id="main-content" tabIndex={-1}>
+              {children}
+            </div>
             <Toaster position="bottom-right" richColors />
           </ThemeProvider>
           <ServiceWorkerRegistration />

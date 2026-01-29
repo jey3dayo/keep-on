@@ -18,7 +18,7 @@ export default function OfflinePage() {
           接続を確認してもう一度お試しください。
         </p>
         <Link
-          className="inline-block rounded-md bg-primary px-6 py-3 text-primary-foreground transition hover:bg-primary/90"
+          className="inline-block rounded-md bg-primary px-6 py-3 text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           href="/"
         >
           再試行

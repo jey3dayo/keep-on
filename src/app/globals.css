@@ -85,6 +85,7 @@
 }
 
 :root {
+  color-scheme: light;
   --radius: 0.625rem;
 
   /* shadcn/ui 互換マッピング */
@@ -122,6 +123,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --primary-foreground: var(--lime-12);
   --destructive-foreground: var(--red-12);
   --success-foreground: var(--lime-12);
@@ -196,6 +198,20 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+  a,
+  button,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-wrap: balance;
   }
   body {
     @apply bg-background text-foreground;
