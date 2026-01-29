@@ -72,9 +72,7 @@ export function HabitListView({
       <div className="flex-1 space-y-6 px-4 pt-4 pb-8">
         <header className="sticky top-0 z-10 rounded-2xl border border-border/50 bg-background/50 px-4 py-4 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
           <div className="mb-4">
-            <p className="text-foreground text-sm">
-              {todayLabel}
-            </p>
+            <p className="text-foreground text-sm">{todayLabel}</p>
             <h1 className="font-bold text-2xl text-foreground">今日の習慣</h1>
           </div>
 

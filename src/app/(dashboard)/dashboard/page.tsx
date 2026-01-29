@@ -31,10 +31,7 @@ export default async function DashboardPage() {
   const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/dashboard')
   const now = new Date()
-  const [dateKey, timeZone] = await Promise.all([
-    getServerDateKey({ date: now }),
-    getServerTimeZone(),
-  ])
+  const [dateKey, timeZone] = await Promise.all([getServerDateKey({ date: now }), getServerTimeZone()])
   const todayLabel = formatDateLabel(now, timeZone)
 
   logInfo('request.dashboard:start', requestMeta)
@@ -71,8 +68,8 @@ export default async function DashboardPage() {
       habits={habits}
       hasTimeZoneCookie={hasTimeZoneCookie}
       initialView={initialView}
-      todayLabel={todayLabel}
       todayCheckins={todayCheckins}
+      todayLabel={todayLabel}
       user={user}
     />
   )
