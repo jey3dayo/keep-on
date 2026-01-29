@@ -30,7 +30,7 @@
     "storybook:build": "storybook build"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.36.10",
+    "@clerk/nextjs": "^6.37.0",
     "@hookform/resolvers": "^5.2.2",
     "@opennextjs/cloudflare": "^1.16.1",
     "@paralleldrive/cuid2": "^3.3.0",
@@ -78,7 +78,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^25.0.10",
+    "@types/node": "^25.1.0",
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
