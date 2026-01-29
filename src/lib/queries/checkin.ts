@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte } from 'drizzle-orm'
+import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
 import type { Period, WeekStartDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
@@ -76,4 +76,28 @@ export async function deleteAllCheckinsByHabitAndPeriod(
     .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
   return result
+}
+
+export async function getTotalCheckinsByUserId(userId: string): Promise<number> {
+  const db = await getDb()
+  const result = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(checkins)
+    .innerJoin(habits, eq(checkins.habitId, habits.id))
+    .where(eq(habits.userId, userId))
+
+  return result[0]?.count ?? 0
+}
+
+export async function getCheckinCountsByDateRange(userId: string, startDateKey: string, endDateKey: string) {
+  const db = await getDb()
+  const results = await db
+    .select({ date: checkins.date, count: sql<number>`count(*)::int` })
+    .from(checkins)
+    .innerJoin(habits, eq(checkins.habitId, habits.id))
+    .where(and(eq(habits.userId, userId), gte(checkins.date, startDateKey), lte(checkins.date, endDateKey)))
+    .groupBy(checkins.date)
+    .orderBy(checkins.date)
+
+  return results
 }
