@@ -3,7 +3,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import { Result } from '@praha/byethrow'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { addCheckinAction } from '@/app/actions/habits/checkin'
 import { createHabit } from '@/app/actions/habits/create'
 import type { IconName } from '@/components/basics/Icon'
@@ -45,11 +45,87 @@ export function DashboardWrapper({
   hasTimeZoneCookie = true,
 }: DashboardWrapperProps) {
   const router = useRouter()
+  const [, startTransition] = useTransition()
   const [isTimeZoneReady, setIsTimeZoneReady] = useState(hasTimeZoneCookie)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [, setOptimisticCheckins] = useState(todayCheckins)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
   const hasRefreshedForTimeZone = useRef(false)
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const runOptimisticUpdateForHabit = (
+    habitId: string,
+    updater: (current: HabitWithProgress[]) => HabitWithProgress[]
+  ) => {
+    let previousHabit: HabitWithProgress | null = null
+    let previousIndex = -1
+    setOptimisticHabits((current) => {
+      previousIndex = current.findIndex((habit) => habit.id === habitId)
+      previousHabit = previousIndex >= 0 ? current[previousIndex] : null
+      return updater(current)
+    })
+    return () => {
+      if (!previousHabit) {
+        return
+      }
+      const rollbackHabit = previousHabit
+      setOptimisticHabits((current) => {
+        const existingIndex = current.findIndex((habit) => habit.id === habitId)
+        if (existingIndex >= 0) {
+          const next = [...current]
+          next[existingIndex] = rollbackHabit
+          return next
+        }
+        const next = [...current]
+        const insertIndex = previousIndex >= 0 && previousIndex <= next.length ? previousIndex : next.length
+        next.splice(insertIndex, 0, rollbackHabit)
+        return next
+      })
+    }
+  }
+
+  const archiveOptimistically = (habitId: string) =>
+    runOptimisticUpdateForHabit(habitId, (current) =>
+      current.map((habit) =>
+        habit.id === habitId
+          ? {
+              ...habit,
+              archived: true,
+              archivedAt: habit.archivedAt ?? new Date(),
+            }
+          : habit
+      )
+    )
+
+  const deleteOptimistically = (habitId: string) =>
+    runOptimisticUpdateForHabit(habitId, (current) => current.filter((habit) => habit.id !== habitId))
+
+  const resetOptimistically = (habitId: string) =>
+    runOptimisticUpdateForHabit(habitId, (current) =>
+      current.map((habit) => {
+        if (habit.id !== habitId) {
+          return habit
+        }
+        const wasCompleted = habit.currentProgress >= habit.frequency
+        return {
+          ...habit,
+          currentProgress: 0,
+          completionRate: 0,
+          streak: wasCompleted ? Math.max(0, habit.streak - 1) : habit.streak,
+        }
+      })
+    )
+
+  const scheduleRefresh = () => {
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current)
+    }
+    refreshTimeoutRef.current = setTimeout(() => {
+      startTransition(() => {
+        router.refresh()
+      })
+    }, 300)
+  }
 
   const updateHabitProgress = (habitId: string, delta: number) => {
     setOptimisticHabits((current) =>
@@ -83,18 +159,33 @@ export function DashboardWrapper({
     })
   }
 
+  const runAddCheckin = async (habitId: string, dateKey: string) => {
+    try {
+      const result = await addCheckinAction(habitId, dateKey)
+      if (Result.isSuccess(result)) {
+        return { ok: true as const, result }
+      }
+      return { ok: false as const, result }
+    } catch (error) {
+      return { ok: false as const, error }
+    }
+  }
   const handleCompletedCheckin = async (habitId: string, dateKey: string) => {
     addPendingCheckin(habitId)
 
     try {
-      const result = await addCheckinAction(habitId, dateKey)
+      const { ok, result, error } = await runAddCheckin(habitId, dateKey)
 
-      if (Result.isSuccess(result)) {
-        router.refresh()
+      if (ok) {
+        scheduleRefresh()
         return
       }
 
-      appToast.error('チェックインの切り替えに失敗しました', result.error)
+      if (result) {
+        appToast.error('チェックインの切り替えに失敗しました', result.error)
+        return
+      }
+      appToast.error('チェックインの切り替えに失敗しました', error)
     } catch (error) {
       appToast.error('チェックインの切り替えに失敗しました', error)
     } finally {
@@ -133,6 +224,14 @@ export function DashboardWrapper({
   useEffect(() => {
     setOptimisticCheckins(todayCheckins)
   }, [todayCheckins])
+
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleAddHabit = async (
     name: string,
@@ -214,15 +313,19 @@ export function DashboardWrapper({
     let shouldRollback = true
 
     try {
-      const result = await addCheckinAction(habitId, dateKey)
+      const { ok, result, error } = await runAddCheckin(habitId, dateKey)
 
-      if (Result.isSuccess(result)) {
+      if (ok) {
         shouldRollback = false
-        router.refresh()
+        scheduleRefresh()
         return
       }
 
-      appToast.error('チェックインの切り替えに失敗しました', result.error)
+      if (result) {
+        appToast.error('チェックインの切り替えに失敗しました', result.error)
+        return
+      }
+      appToast.error('チェックインの切り替えに失敗しました', error)
     } catch (error) {
       appToast.error('チェックインの切り替えに失敗しました', error)
     } finally {
@@ -248,7 +351,11 @@ export function DashboardWrapper({
           habits={activeHabits}
           initialView={initialView}
           onAddHabit={handleAddHabit}
+          onArchiveOptimistic={archiveOptimistically}
+          onDeleteOptimistic={deleteOptimistically}
+          onResetOptimistic={resetOptimistically}
           onToggleCheckin={handleToggleCheckin}
+          pendingCheckins={pendingCheckins}
         />
       </div>
 
@@ -257,7 +364,11 @@ export function DashboardWrapper({
         <DesktopDashboard
           habits={activeHabits}
           onAddHabit={handleAddHabit}
+          onArchiveOptimistic={archiveOptimistically}
+          onDeleteOptimistic={deleteOptimistically}
+          onResetOptimistic={resetOptimistically}
           onToggleCheckin={handleToggleCheckin}
+          pendingCheckins={pendingCheckins}
           user={user}
         />
       </div>

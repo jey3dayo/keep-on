@@ -28,6 +28,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--normal-bg': 'var(--popover)',
           '--normal-text': 'var(--popover-foreground)',
           '--normal-border': 'var(--border)',
+          '--success-bg': 'var(--accent)',
+          '--success-border': 'var(--ring)',
+          '--success-text': 'var(--primary)',
+          '--info-bg': 'var(--accent)',
+          '--info-border': 'var(--ring)',
+          '--info-text': 'var(--primary)',
         } as React.CSSProperties
       }
       theme={theme as ToasterProps['theme']}

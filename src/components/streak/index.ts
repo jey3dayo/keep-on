@@ -1,6 +1,7 @@
 export { ColorPalette } from './ColorPalette'
 export { DesktopDashboard } from './DesktopDashboard'
 export { HabitCard } from './HabitCard'
+export { HabitListCard } from './HabitListCard'
 export { IconPicker } from './IconPicker'
 export { StreakDashboard } from './StreakDashboard'
 export { StreakToolbar } from './StreakToolbar'

@@ -16,11 +16,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
 import { formatSerializableError, type SerializableHabitError } from '@/lib/errors/serializable'
+import type { OptimisticHandler } from './types'
 
 interface HabitActionDialogProps {
   habitId: string
   trigger?: ReactNode | null
+  onOptimistic?: OptimisticHandler
   title: string
   description: ReactNode
   confirmLabel: string
@@ -36,6 +39,7 @@ interface HabitActionDialogProps {
 export function HabitActionDialog({
   habitId,
   trigger,
+  onOptimistic,
   title,
   description,
   confirmLabel,
@@ -60,21 +64,60 @@ export function HabitActionDialog({
     onOpenChange?.(open)
   }
 
-  const handleConfirm = async () => {
-    setIsProcessing(true)
-    const result = await action(habitId)
-    setIsProcessing(false)
+  const waitForRetry = (delayMs: number) =>
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, delayMs)
+    })
 
-    if (Result.isSuccess(result)) {
-      toast.success(successMessage)
-      handleOpenChange(false)
-      router.refresh()
-      return
+  const runActionWithRetry = async () => {
+    const maxAttempts = Math.max(1, RETRY_MAX_ATTEMPTS)
+    let lastError: unknown = null
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      try {
+        const result = await action(habitId)
+        return result
+      } catch (error) {
+        lastError = error
+        if (attempt < maxAttempts - 1 && RETRY_DELAY_MS > 0) {
+          await waitForRetry(RETRY_DELAY_MS)
+        }
+      }
     }
 
-    toast.error(errorMessage, {
-      description: formatSerializableError(result.error),
-    })
+    throw lastError ?? new Error('処理に失敗しました')
+  }
+
+  const handleConfirm = async () => {
+    setIsProcessing(true)
+    const rollback = onOptimistic?.()
+
+    try {
+      const result = await runActionWithRetry()
+
+      if (Result.isSuccess(result)) {
+        toast.success(successMessage)
+        handleOpenChange(false)
+        router.refresh()
+        return
+      }
+
+      if (rollback) {
+        rollback()
+      }
+      toast.error(errorMessage, {
+        description: formatSerializableError(result.error),
+      })
+    } catch (error) {
+      if (rollback) {
+        rollback()
+      }
+      toast.error(errorMessage, {
+        description: error instanceof Error ? error.message : undefined,
+      })
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   return (

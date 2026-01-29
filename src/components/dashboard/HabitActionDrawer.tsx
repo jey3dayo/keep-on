@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { HabitArchiveDialog } from '@/components/habits/HabitArchiveDialog'
 import { HabitDeleteDialog } from '@/components/habits/HabitDeleteDialog'
 import { HabitResetDialog } from '@/components/habits/HabitResetDialog'
+import type { OptimisticHandler } from '@/components/habits/types'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import type { HabitWithProgress } from '@/types/habit'
@@ -13,9 +14,19 @@ interface HabitActionDrawerProps {
   open: boolean
   habit: HabitWithProgress | null
   onOpenChange: (open: boolean) => void
+  onArchiveOptimistic?: OptimisticHandler
+  onDeleteOptimistic?: OptimisticHandler
+  onResetOptimistic?: OptimisticHandler
 }
 
-export function HabitActionDrawer({ open, habit, onOpenChange }: HabitActionDrawerProps) {
+export function HabitActionDrawer({
+  open,
+  habit,
+  onOpenChange,
+  onArchiveOptimistic,
+  onDeleteOptimistic,
+  onResetOptimistic,
+}: HabitActionDrawerProps) {
   const router = useRouter()
   const [dialogType, setDialogType] = useState<'reset' | 'archive' | 'delete' | null>(null)
   const [activeHabit, setActiveHabit] = useState<HabitWithProgress | null>(habit)
@@ -105,6 +116,7 @@ export function HabitActionDrawer({ open, habit, onOpenChange }: HabitActionDraw
           habitId={activeHabit.id}
           habitName={activeHabit.name}
           onOpenChange={handleDialogOpenChange}
+          onOptimistic={onResetOptimistic}
           open
         />
       ) : null}
@@ -113,6 +125,7 @@ export function HabitActionDrawer({ open, habit, onOpenChange }: HabitActionDraw
           habitId={activeHabit.id}
           habitName={activeHabit.name}
           onOpenChange={handleDialogOpenChange}
+          onOptimistic={onArchiveOptimistic}
           open
         />
       ) : null}
@@ -121,6 +134,7 @@ export function HabitActionDrawer({ open, habit, onOpenChange }: HabitActionDraw
           habitId={activeHabit.id}
           habitName={activeHabit.name}
           onOpenChange={handleDialogOpenChange}
+          onOptimistic={onDeleteOptimistic}
           open
         />
       ) : null}

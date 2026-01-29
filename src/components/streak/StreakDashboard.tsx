@@ -4,6 +4,7 @@ import { Circle, LayoutGrid } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import type { IconName } from '@/components/basics/Icon'
+import type { OptimisticRollback } from '@/components/habits/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import type { Period } from '@/constants/habit'
@@ -19,12 +20,16 @@ import { HabitSimpleView } from './HabitSimpleView'
 
 interface StreakDashboardProps {
   habits: HabitWithProgress[]
+  pendingCheckins?: Set<string>
   onAddHabit: (
     name: string,
     icon: IconName,
     options?: { color?: string | null; period?: Period; frequency?: number }
   ) => Promise<void>
   onToggleCheckin: (habitId: string) => Promise<void>
+  onArchiveOptimistic?: (habitId: string) => OptimisticRollback
+  onDeleteOptimistic?: (habitId: string) => OptimisticRollback
+  onResetOptimistic?: (habitId: string) => OptimisticRollback
   initialView?: MainView
 }
 
@@ -44,8 +49,12 @@ const persistMainView = (view: MainView) => {
 
 export function StreakDashboard({
   habits,
+  pendingCheckins,
   onAddHabit,
   onToggleCheckin,
+  onArchiveOptimistic,
+  onDeleteOptimistic,
+  onResetOptimistic,
   initialView = DEFAULT_DASHBOARD_VIEW,
 }: StreakDashboardProps) {
   const [currentView, setCurrentView] = useState<View>(initialView)
@@ -149,8 +158,12 @@ export function StreakDashboard({
           completedHabitIds={completedHabitIds}
           habits={habits}
           onAddHabit={openPresetSelector}
+          onArchiveOptimistic={onArchiveOptimistic}
+          onDeleteOptimistic={onDeleteOptimistic}
+          onResetOptimistic={onResetOptimistic}
           onSettings={() => handleViewChange('dashboard')}
           onToggleHabit={handleToggleHabit}
+          pendingCheckins={pendingCheckins}
         />
       ) : (
         <div className="streak-bg flex min-h-full flex-col" style={{ backgroundColor: 'var(--primary)' }}>
@@ -159,8 +172,12 @@ export function StreakDashboard({
             filteredHabits={filteredHabits}
             habits={habits}
             onAddHabit={openPresetSelector}
+            onArchiveOptimistic={onArchiveOptimistic}
+            onDeleteOptimistic={onDeleteOptimistic}
             onPeriodChange={setPeriodFilter}
+            onResetOptimistic={onResetOptimistic}
             onToggleHabit={handleToggleHabit}
+            pendingCheckins={pendingCheckins}
             periodFilter={periodFilter}
             todayCompleted={todayCompleted}
             totalDaily={totalDaily}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { IconName } from '@/components/basics/Icon'
+import type { OptimisticRollback } from '@/components/habits/types'
 import type { Period } from '@/constants/habit'
 import type { HabitPreset } from '@/constants/habit-data'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
@@ -12,6 +13,7 @@ import { HabitListView } from './HabitListView'
 
 interface DesktopDashboardProps {
   habits: HabitWithProgress[]
+  pendingCheckins?: Set<string>
   user: User
   onAddHabit: (
     name: string,
@@ -19,12 +21,23 @@ interface DesktopDashboardProps {
     options?: { color?: string | null; period?: Period; frequency?: number }
   ) => Promise<void>
   onToggleCheckin: (habitId: string) => Promise<void>
+  onArchiveOptimistic?: (habitId: string) => OptimisticRollback
+  onDeleteOptimistic?: (habitId: string) => OptimisticRollback
+  onResetOptimistic?: (habitId: string) => OptimisticRollback
 }
 
 type PeriodFilter = 'all' | Period
 type View = 'dashboard' | 'add'
 
-export function DesktopDashboard({ habits, onAddHabit, onToggleCheckin }: DesktopDashboardProps) {
+export function DesktopDashboard({
+  habits,
+  pendingCheckins,
+  onAddHabit,
+  onToggleCheckin,
+  onArchiveOptimistic,
+  onDeleteOptimistic,
+  onResetOptimistic,
+}: DesktopDashboardProps) {
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const [selectedPreset, setSelectedPreset] = useState<HabitPreset | null>(null)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
@@ -80,8 +93,12 @@ export function DesktopDashboard({ habits, onAddHabit, onToggleCheckin }: Deskto
         filteredHabits={filteredHabits}
         habits={habits}
         onAddHabit={() => setCurrentView('add')}
+        onArchiveOptimistic={onArchiveOptimistic}
+        onDeleteOptimistic={onDeleteOptimistic}
         onPeriodChange={setPeriodFilter}
+        onResetOptimistic={onResetOptimistic}
         onToggleHabit={handleToggleHabit}
+        pendingCheckins={pendingCheckins}
         periodFilter={periodFilter}
         todayCompleted={todayCompleted}
         totalDaily={totalDaily}
