@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
 import { formatSerializableError, type SerializableHabitError } from '@/lib/errors/serializable'
 import type { OptimisticHandler } from './types'
 
@@ -63,24 +64,25 @@ export function HabitActionDialog({
     onOpenChange?.(open)
   }
 
+  const waitForRetry = (delayMs: number) =>
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, delayMs)
+    })
+
   const runActionWithRetry = async () => {
-    let lastResult: Result.Result<unknown, SerializableHabitError> | null = null
+    const maxAttempts = Math.max(1, RETRY_MAX_ATTEMPTS)
     let lastError: unknown = null
 
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       try {
         const result = await action(habitId)
-        if (Result.isSuccess(result)) {
-          return result
-        }
-        lastResult = result
+        return result
       } catch (error) {
         lastError = error
+        if (attempt < maxAttempts - 1 && RETRY_DELAY_MS > 0) {
+          await waitForRetry(RETRY_DELAY_MS)
+        }
       }
-    }
-
-    if (lastResult) {
-      return lastResult
     }
 
     throw lastError ?? new Error('処理に失敗しました')

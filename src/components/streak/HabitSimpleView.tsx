@@ -10,6 +10,7 @@ import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import type { OptimisticRollback } from '@/components/habits/types'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
+import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
 import { cn } from '@/lib/utils'
 import { getRingColorFromBackground } from '@/lib/utils/color'
 import { appToast } from '@/lib/utils/toast'
@@ -151,6 +152,30 @@ export function HabitSimpleView({
     onToggleHabit(habit.id)
   }
 
+  const runResetWithRetry = async (habitId: string) => {
+    const maxAttempts = Math.max(1, RETRY_MAX_ATTEMPTS)
+    let lastError: unknown = null
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      try {
+        const result = await resetHabitProgressAction(habitId)
+        if (Result.isSuccess(result)) {
+          return { ok: true as const, result }
+        }
+        return { ok: false as const, result }
+      } catch (error) {
+        lastError = error
+        if (attempt < maxAttempts - 1 && RETRY_DELAY_MS > 0) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, RETRY_DELAY_MS)
+          })
+        }
+      }
+    }
+
+    return { ok: false as const, error: lastError }
+  }
+
   const handleResetConfirm = async () => {
     if (!resetConfirm || isResetting) {
       return
@@ -158,36 +183,28 @@ export function HabitSimpleView({
 
     const habitId = resetConfirm.habitId
     const rollback = onResetOptimistic?.(habitId)
-    let lastResult: Awaited<ReturnType<typeof resetHabitProgressAction>> | null = null
-    let lastError: unknown = null
 
     setIsResetting(true)
     try {
-      for (let attempt = 0; attempt < 2; attempt += 1) {
-        try {
-          const result = await resetHabitProgressAction(habitId)
-          if (Result.isSuccess(result)) {
-            appToast.success('進捗をリセットしました')
-            setResetConfirm(null)
-            router.refresh()
-            return
-          }
-          lastResult = result
-        } catch (error) {
-          lastError = error
-        }
+      const { ok, result, error } = await runResetWithRetry(habitId)
+
+      if (ok) {
+        appToast.success('進捗をリセットしました')
+        setResetConfirm(null)
+        router.refresh()
+        return
       }
 
       if (rollback) {
         rollback()
       }
 
-      if (lastResult) {
-        appToast.error('進捗のリセットに失敗しました', lastResult.error)
+      if (result) {
+        appToast.error('進捗のリセットに失敗しました', result.error)
         return
       }
 
-      appToast.error('進捗のリセットに失敗しました', lastError)
+      appToast.error('進捗のリセットに失敗しました', error)
     } finally {
       setIsResetting(false)
     }
