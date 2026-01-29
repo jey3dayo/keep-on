@@ -1,8 +1,19 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@/db/schema'
-import { env } from '@/env'
-import { logInfo } from '@/lib/logging'
+import { logError, logInfo } from '@/lib/logging'
+import { safeParseCloudflareEnvBindings } from '@/schemas/cloudflare'
+
+function isWorkersRuntime(): boolean {
+  return typeof globalThis !== 'undefined' && 'caches' in globalThis
+}
+
+function formatError(error: unknown): { name: string; message: string } {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message }
+  }
+  return { name: 'UnknownError', message: String(error) }
+}
 
 function normalizeConnectionString(raw: string): string {
   try {
@@ -39,20 +50,32 @@ function getConnectionMeta(connectionString: string): { host?: string; port?: nu
 
 async function getConnectionInfo(): Promise<ConnectionInfo> {
   // Cloudflare Workers環境でHyperdriveが利用可能な場合
-  if (typeof globalThis !== 'undefined' && 'caches' in globalThis) {
+  if (isWorkersRuntime()) {
     try {
       const { getCloudflareContext } = await import('@opennextjs/cloudflare')
       const { env } = getCloudflareContext()
-      const hyperdrive = (env as { HYPERDRIVE?: { connectionString: string } }).HYPERDRIVE
-      if (hyperdrive?.connectionString) {
-        return { connectionString: hyperdrive.connectionString, source: 'hyperdrive' }
+      const parsedBindings = safeParseCloudflareEnvBindings(env)
+      if (parsedBindings.success) {
+        const { HYPERDRIVE, DATABASE_URL } = parsedBindings.output
+        if (HYPERDRIVE?.connectionString) {
+          return { connectionString: HYPERDRIVE.connectionString, source: 'hyperdrive' }
+        }
+        if (DATABASE_URL) {
+          return { connectionString: DATABASE_URL, source: 'env' }
+        }
+      } else {
+        logError('db.connection:invalid-bindings', { issues: parsedBindings.issues })
       }
-    } catch {
-      // Hyperdrive未設定の場合はフォールバック
+    } catch (error) {
+      logError('db.connection:context-error', { error: formatError(error) })
     }
+
+    logError('db.connection:missing-binding', { bindings: ['HYPERDRIVE', 'DATABASE_URL'] })
+    throw new Error('Database connection is not configured. Set HYPERDRIVE or DATABASE_URL in Workers bindings.')
   }
 
   // ローカル開発環境ではDATABASE_URLを使用
+  const { env } = await import('@/env')
   return { connectionString: env.DATABASE_URL, source: 'env' }
 }
 

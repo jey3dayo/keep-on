@@ -75,3 +75,11 @@ run = "pnpm wrangler deploy"
 [tasks."deploy:preview"]
 description = "ローカルでCloudflare環境をプレビュー"
 run = "pnpm preview"
+
+[tasks."cf:clerk:sync"]
+description = "ClerkキーをCloudflareへ再投入しビルド+デプロイ"
+run = [
+  "DOTENVX_PRIVATE_KEY=$(rg -N '^DOTENV_PRIVATE_KEY=' .env.keys | cut -d= -f2-) dotenvx run -- pnpm cf:build",
+  "DOTENVX_PRIVATE_KEY=$(rg -N '^DOTENV_PRIVATE_KEY=' .env.keys | cut -d= -f2-) dotenvx run -- sh -lc 'printf \"%s\\n\" \"$CLERK_SECRET_KEY\" | wrangler secret put CLERK_SECRET_KEY'",
+  "DOTENVX_PRIVATE_KEY=$(rg -N '^DOTENV_PRIVATE_KEY=' .env.keys | cut -d= -f2-) dotenvx run -- sh -lc 'wrangler deploy --var NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=\"$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY\" --keep-vars'",
+]
