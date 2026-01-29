@@ -2,11 +2,7 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@/db/schema'
 import { logInfo } from '@/lib/logging'
-
-interface CloudflareEnvBindings {
-  HYPERDRIVE?: { connectionString: string }
-  DATABASE_URL?: string
-}
+import { safeParseCloudflareEnvBindings } from '@/schemas/cloudflare'
 
 function isWorkersRuntime(): boolean {
   return typeof globalThis !== 'undefined' && 'caches' in globalThis
@@ -51,13 +47,15 @@ async function getConnectionInfo(): Promise<ConnectionInfo> {
     try {
       const { getCloudflareContext } = await import('@opennextjs/cloudflare')
       const { env } = getCloudflareContext()
-      const bindings = env as CloudflareEnvBindings
-      const hyperdrive = bindings.HYPERDRIVE
-      if (hyperdrive?.connectionString) {
-        return { connectionString: hyperdrive.connectionString, source: 'hyperdrive' }
-      }
-      if (bindings.DATABASE_URL) {
-        return { connectionString: bindings.DATABASE_URL, source: 'env' }
+      const parsedBindings = safeParseCloudflareEnvBindings(env)
+      if (parsedBindings.success) {
+        const { HYPERDRIVE, DATABASE_URL } = parsedBindings.output
+        if (HYPERDRIVE?.connectionString) {
+          return { connectionString: HYPERDRIVE.connectionString, source: 'hyperdrive' }
+        }
+        if (DATABASE_URL) {
+          return { connectionString: DATABASE_URL, source: 'env' }
+        }
       }
     } catch {
       // Hyperdrive未設定の場合はフォールバック
