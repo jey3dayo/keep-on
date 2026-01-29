@@ -70,6 +70,7 @@ const habits = [
 export const DashboardView: Story = {
   args: {
     habits,
+    todayLabel: '1月29日（木）',
     onAddHabit: (name) => {
       storybookToast.success('習慣を追加', name)
       return Promise.resolve()
@@ -85,6 +86,7 @@ export const DashboardView: Story = {
 export const SimpleView: Story = {
   args: {
     habits,
+    todayLabel: '1月29日（木）',
     onAddHabit: (name) => {
       storybookToast.success('習慣を追加', name)
       return Promise.resolve()

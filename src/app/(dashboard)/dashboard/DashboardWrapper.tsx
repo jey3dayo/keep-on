@@ -30,6 +30,7 @@ interface Checkin {
 
 interface DashboardWrapperProps {
   habits: HabitWithProgress[]
+  todayLabel: string
   todayCheckins: Checkin[]
   user: User
   initialView?: 'dashboard' | 'simple'
@@ -38,6 +39,7 @@ interface DashboardWrapperProps {
 
 export function DashboardWrapper({
   habits,
+  todayLabel,
   todayCheckins,
   user,
   initialView,
@@ -355,6 +357,7 @@ export function DashboardWrapper({
           onResetOptimistic={resetOptimistically}
           onToggleCheckin={handleToggleCheckin}
           pendingCheckins={pendingCheckins}
+          todayLabel={todayLabel}
         />
       </div>
 
@@ -368,6 +371,7 @@ export function DashboardWrapper({
           onResetOptimistic={resetOptimistically}
           onToggleCheckin={handleToggleCheckin}
           pendingCheckins={pendingCheckins}
+          todayLabel={todayLabel}
           user={user}
         />
       </div>
