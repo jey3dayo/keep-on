@@ -53,31 +53,20 @@ export default async function AnalyticsPage() {
   const numberFormatter = new Intl.NumberFormat('ja-JP')
   const averageFormatter = new Intl.NumberFormat('ja-JP', { maximumFractionDigits: 1, minimumFractionDigits: 1 })
 
-  // 同時リクエストの詰まりを避けるため順次実行
-  const habits = await logSpan(
-    'analytics.habits',
-    () => getHabitsWithProgress(user.id, user.clerkId, dateKey),
-    requestMeta,
-    { timeoutMs }
-  )
-  const todayCheckins = await logSpan(
-    'analytics.checkins.today',
-    () => getCheckinsByUserAndDate(user.id, dateKey),
-    requestMeta,
-    { timeoutMs }
-  )
-  const totalCheckins = await logSpan(
-    'analytics.checkins.total',
-    () => getTotalCheckinsByUserId(user.id),
-    requestMeta,
-    { timeoutMs }
-  )
-  const checkinsByDate = await logSpan(
-    'analytics.checkins.range',
-    () => getCheckinCountsByDateRange(user.id, startDateKey, endDateKey),
-    requestMeta,
-    { timeoutMs }
-  )
+  // 待ち時間短縮のため集計クエリを並列実行
+  const [habits, todayCheckins, totalCheckins, checkinsByDate] = await Promise.all([
+    logSpan('analytics.habits', () => getHabitsWithProgress(user.id, user.clerkId, dateKey), requestMeta, {
+      timeoutMs,
+    }),
+    logSpan('analytics.checkins.today', () => getCheckinsByUserAndDate(user.id, dateKey), requestMeta, { timeoutMs }),
+    logSpan('analytics.checkins.total', () => getTotalCheckinsByUserId(user.id), requestMeta, { timeoutMs }),
+    logSpan(
+      'analytics.checkins.range',
+      () => getCheckinCountsByDateRange(user.id, startDateKey, endDateKey),
+      requestMeta,
+      { timeoutMs }
+    ),
+  ])
 
   logInfo('request.analytics:end', {
     ...requestMeta,
