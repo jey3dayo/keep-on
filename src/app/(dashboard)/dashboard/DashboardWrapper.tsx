@@ -3,7 +3,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import { Result } from '@praha/byethrow'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { addCheckinAction } from '@/app/actions/habits/checkin'
 import { createHabit } from '@/app/actions/habits/create'
 import type { IconName } from '@/components/basics/Icon'
@@ -45,11 +45,69 @@ export function DashboardWrapper({
   hasTimeZoneCookie = true,
 }: DashboardWrapperProps) {
   const router = useRouter()
+  const [, startTransition] = useTransition()
   const [isTimeZoneReady, setIsTimeZoneReady] = useState(hasTimeZoneCookie)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [, setOptimisticCheckins] = useState(todayCheckins)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
   const hasRefreshedForTimeZone = useRef(false)
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const runOptimisticUpdate = (updater: (current: HabitWithProgress[]) => HabitWithProgress[]) => {
+    let previousState: HabitWithProgress[] | null = null
+    setOptimisticHabits((current) => {
+      previousState = current
+      return updater(current)
+    })
+    return () => {
+      if (previousState) {
+        setOptimisticHabits(previousState)
+      }
+    }
+  }
+
+  const archiveOptimistically = (habitId: string) =>
+    runOptimisticUpdate((current) =>
+      current.map((habit) =>
+        habit.id === habitId
+          ? {
+              ...habit,
+              archived: true,
+              archivedAt: habit.archivedAt ?? new Date(),
+            }
+          : habit
+      )
+    )
+
+  const deleteOptimistically = (habitId: string) =>
+    runOptimisticUpdate((current) => current.filter((habit) => habit.id !== habitId))
+
+  const resetOptimistically = (habitId: string) =>
+    runOptimisticUpdate((current) =>
+      current.map((habit) => {
+        if (habit.id !== habitId) {
+          return habit
+        }
+        const wasCompleted = habit.currentProgress >= habit.frequency
+        return {
+          ...habit,
+          currentProgress: 0,
+          completionRate: 0,
+          streak: wasCompleted ? Math.max(0, habit.streak - 1) : habit.streak,
+        }
+      })
+    )
+
+  const scheduleRefresh = () => {
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current)
+    }
+    refreshTimeoutRef.current = setTimeout(() => {
+      startTransition(() => {
+        router.refresh()
+      })
+    }, 300)
+  }
 
   const updateHabitProgress = (habitId: string, delta: number) => {
     setOptimisticHabits((current) =>
@@ -83,18 +141,41 @@ export function DashboardWrapper({
     })
   }
 
+  const runAddCheckinWithRetry = async (habitId: string, dateKey: string) => {
+    let lastResult: Awaited<ReturnType<typeof addCheckinAction>> | null = null
+    let lastError: unknown = null
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const result = await addCheckinAction(habitId, dateKey)
+        if (Result.isSuccess(result)) {
+          return { ok: true as const, result }
+        }
+        lastResult = result
+      } catch (error) {
+        lastError = error
+      }
+    }
+
+    return { ok: false as const, result: lastResult, error: lastError }
+  }
+
   const handleCompletedCheckin = async (habitId: string, dateKey: string) => {
     addPendingCheckin(habitId)
 
     try {
-      const result = await addCheckinAction(habitId, dateKey)
+      const { ok, result, error } = await runAddCheckinWithRetry(habitId, dateKey)
 
-      if (Result.isSuccess(result)) {
-        router.refresh()
+      if (ok) {
+        scheduleRefresh()
         return
       }
 
-      appToast.error('チェックインの切り替えに失敗しました', result.error)
+      if (result) {
+        appToast.error('チェックインの切り替えに失敗しました', result.error)
+        return
+      }
+      appToast.error('チェックインの切り替えに失敗しました', error)
     } catch (error) {
       appToast.error('チェックインの切り替えに失敗しました', error)
     } finally {
@@ -133,6 +214,14 @@ export function DashboardWrapper({
   useEffect(() => {
     setOptimisticCheckins(todayCheckins)
   }, [todayCheckins])
+
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleAddHabit = async (
     name: string,
@@ -214,15 +303,19 @@ export function DashboardWrapper({
     let shouldRollback = true
 
     try {
-      const result = await addCheckinAction(habitId, dateKey)
+      const { ok, result, error } = await runAddCheckinWithRetry(habitId, dateKey)
 
-      if (Result.isSuccess(result)) {
+      if (ok) {
         shouldRollback = false
-        router.refresh()
+        scheduleRefresh()
         return
       }
 
-      appToast.error('チェックインの切り替えに失敗しました', result.error)
+      if (result) {
+        appToast.error('チェックインの切り替えに失敗しました', result.error)
+        return
+      }
+      appToast.error('チェックインの切り替えに失敗しました', error)
     } catch (error) {
       appToast.error('チェックインの切り替えに失敗しました', error)
     } finally {
@@ -248,7 +341,11 @@ export function DashboardWrapper({
           habits={activeHabits}
           initialView={initialView}
           onAddHabit={handleAddHabit}
+          onArchiveOptimistic={archiveOptimistically}
+          onDeleteOptimistic={deleteOptimistically}
+          onResetOptimistic={resetOptimistically}
           onToggleCheckin={handleToggleCheckin}
+          pendingCheckins={pendingCheckins}
         />
       </div>
 
@@ -257,7 +354,11 @@ export function DashboardWrapper({
         <DesktopDashboard
           habits={activeHabits}
           onAddHabit={handleAddHabit}
+          onArchiveOptimistic={archiveOptimistically}
+          onDeleteOptimistic={deleteOptimistically}
+          onResetOptimistic={resetOptimistically}
           onToggleCheckin={handleToggleCheckin}
+          pendingCheckins={pendingCheckins}
           user={user}
         />
       </div>

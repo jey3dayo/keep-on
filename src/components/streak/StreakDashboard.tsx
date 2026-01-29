@@ -19,12 +19,16 @@ import { HabitSimpleView } from './HabitSimpleView'
 
 interface StreakDashboardProps {
   habits: HabitWithProgress[]
+  pendingCheckins?: Set<string>
   onAddHabit: (
     name: string,
     icon: IconName,
     options?: { color?: string | null; period?: Period; frequency?: number }
   ) => Promise<void>
   onToggleCheckin: (habitId: string) => Promise<void>
+  onArchiveOptimistic?: (habitId: string) => void | (() => void)
+  onDeleteOptimistic?: (habitId: string) => void | (() => void)
+  onResetOptimistic?: (habitId: string) => void | (() => void)
   initialView?: MainView
 }
 
@@ -44,8 +48,12 @@ const persistMainView = (view: MainView) => {
 
 export function StreakDashboard({
   habits,
+  pendingCheckins,
   onAddHabit,
   onToggleCheckin,
+  onArchiveOptimistic,
+  onDeleteOptimistic,
+  onResetOptimistic,
   initialView = DEFAULT_DASHBOARD_VIEW,
 }: StreakDashboardProps) {
   const [currentView, setCurrentView] = useState<View>(initialView)
@@ -148,7 +156,11 @@ export function StreakDashboard({
           backgroundColor="var(--primary)"
           completedHabitIds={completedHabitIds}
           habits={habits}
+          pendingCheckins={pendingCheckins}
           onAddHabit={openPresetSelector}
+          onArchiveOptimistic={onArchiveOptimistic}
+          onDeleteOptimistic={onDeleteOptimistic}
+          onResetOptimistic={onResetOptimistic}
           onSettings={() => handleViewChange('dashboard')}
           onToggleHabit={handleToggleHabit}
         />
@@ -159,8 +171,12 @@ export function StreakDashboard({
             filteredHabits={filteredHabits}
             habits={habits}
             onAddHabit={openPresetSelector}
+            onArchiveOptimistic={onArchiveOptimistic}
+            onDeleteOptimistic={onDeleteOptimistic}
+            onResetOptimistic={onResetOptimistic}
             onPeriodChange={setPeriodFilter}
             onToggleHabit={handleToggleHabit}
+            pendingCheckins={pendingCheckins}
             periodFilter={periodFilter}
             todayCompleted={todayCompleted}
             totalDaily={totalDaily}
