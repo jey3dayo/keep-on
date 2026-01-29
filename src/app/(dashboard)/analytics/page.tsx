@@ -117,7 +117,7 @@ export default async function AnalyticsPage() {
   })
   const rangeLabel =
     activityDays.length > 0
-      ? `${dayFormatter.format(activityDays[0])}〜${dayFormatter.format(activityDays[activityDays.length - 1])}`
+      ? `${dayFormatter.format(activityDays[0])}〜${dayFormatter.format(activityDays.at(-1) ?? activityDays[0])}`
       : '-'
   const activityMax = Math.max(1, ...activityData.map((entry) => entry.count))
   const activityTotal = activityData.reduce((sum, entry) => sum + entry.count, 0)
