@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
-import { boolean, date, integer, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, date, index, integer, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
@@ -24,34 +24,46 @@ export const users = pgTable('User', {
     .notNull(),
 })
 
-export const habits = pgTable('Habit', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => createId()),
-  userId: text('userId')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  icon: text('icon').default(DEFAULT_HABIT_ICON),
-  color: text('color').default(DEFAULT_HABIT_COLOR),
-  period: taskPeriodEnum('period').default(DEFAULT_HABIT_PERIOD).notNull(),
-  frequency: integer('frequency').default(DEFAULT_HABIT_FREQUENCY).notNull(),
-  archived: boolean('archived').default(false).notNull(),
-  archivedAt: timestamp('archivedAt', { mode: 'date' }),
-  createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' })
-    .$onUpdate(() => new Date())
-    .defaultNow()
-    .notNull(),
-})
+export const habits = pgTable(
+  'Habit',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    icon: text('icon').default(DEFAULT_HABIT_ICON),
+    color: text('color').default(DEFAULT_HABIT_COLOR),
+    period: taskPeriodEnum('period').default(DEFAULT_HABIT_PERIOD).notNull(),
+    frequency: integer('frequency').default(DEFAULT_HABIT_FREQUENCY).notNull(),
+    archived: boolean('archived').default(false).notNull(),
+    archivedAt: timestamp('archivedAt', { mode: 'date' }),
+    createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' })
+      .$onUpdate(() => new Date())
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    userIdIndex: index('Habit_userId_idx').on(table.userId),
+  })
+)
 
-export const checkins = pgTable('Checkin', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => createId()),
-  habitId: text('habitId')
-    .notNull()
-    .references(() => habits.id, { onDelete: 'cascade' }),
-  date: date('date', { mode: 'string' }).notNull(),
-  createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
-})
+export const checkins = pgTable(
+  'Checkin',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    habitId: text('habitId')
+      .notNull()
+      .references(() => habits.id, { onDelete: 'cascade' }),
+    date: date('date', { mode: 'string' }).notNull(),
+    createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    habitDateIndex: index('Checkin_habitId_date_idx').on(table.habitId, table.date),
+  })
+)
