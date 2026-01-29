@@ -136,6 +136,12 @@
   --ring: var(--orange-9);
   --accent: var(--orange-3);
 }
+[data-theme="lime"] {
+  --primary: var(--lime-10);
+  --primary-foreground: var(--lime-1);
+  --ring: var(--lime-9);
+  --accent: var(--lime-3);
+}
 [data-theme="red"] {
   --primary: var(--red-10);
   --primary-foreground: var(--red-1);
@@ -181,6 +187,9 @@
 
 .dark[data-theme="orange"] {
   --primary-foreground: var(--orange-12);
+}
+.dark[data-theme="lime"] {
+  --primary-foreground: var(--lime-12);
 }
 .dark[data-theme="red"] {
   --primary-foreground: var(--red-12);
