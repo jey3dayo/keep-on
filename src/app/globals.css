@@ -85,6 +85,7 @@
 }
 
 :root {
+  color-scheme: light;
   --radius: 0.625rem;
 
   /* shadcn/ui 互換マッピング */
@@ -122,6 +123,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --primary-foreground: var(--lime-12);
   --destructive-foreground: var(--red-12);
   --success-foreground: var(--lime-12);

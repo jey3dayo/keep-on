@@ -339,7 +339,7 @@ export function DashboardWrapper({
   const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
 
   if (!isTimeZoneReady) {
-    return <div className="flex h-screen items-center justify-center text-muted-foreground text-sm">読み込み中...</div>
+    return <div className="flex h-screen items-center justify-center text-muted-foreground text-sm">読み込み中…</div>
   }
 
   return (
