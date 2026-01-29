@@ -10,6 +10,7 @@ interface ColorPaletteProps {
 }
 
 const colors: { name: ColorThemeName; bg: string }[] = [
+  { name: 'teal', bg: 'var(--teal-10)' },
   { name: 'lime', bg: 'var(--lime-10)' },
   { name: 'orange', bg: 'var(--orange-10)' },
   { name: 'red', bg: 'var(--red-10)' },
