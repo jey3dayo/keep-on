@@ -1,11 +1,18 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@/db/schema'
-import { logInfo } from '@/lib/logging'
+import { logError, logInfo } from '@/lib/logging'
 import { safeParseCloudflareEnvBindings } from '@/schemas/cloudflare'
 
 function isWorkersRuntime(): boolean {
   return typeof globalThis !== 'undefined' && 'caches' in globalThis
+}
+
+function formatError(error: unknown): { name: string; message: string } {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message }
+  }
+  return { name: 'UnknownError', message: String(error) }
 }
 
 function normalizeConnectionString(raw: string): string {
@@ -56,10 +63,15 @@ async function getConnectionInfo(): Promise<ConnectionInfo> {
         if (DATABASE_URL) {
           return { connectionString: DATABASE_URL, source: 'env' }
         }
+      } else {
+        logError('db.connection:invalid-bindings', { issues: parsedBindings.issues })
       }
-    } catch {
-      // Hyperdrive未設定の場合はフォールバック
+    } catch (error) {
+      logError('db.connection:context-error', { error: formatError(error) })
     }
+
+    logError('db.connection:missing-binding', { bindings: ['HYPERDRIVE', 'DATABASE_URL'] })
+    throw new Error('Database connection is not configured. Set HYPERDRIVE or DATABASE_URL in Workers bindings.')
   }
 
   // ローカル開発環境ではDATABASE_URLを使用
