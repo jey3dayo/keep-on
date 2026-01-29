@@ -55,7 +55,7 @@ function nowMs(): number {
   return Date.now()
 }
 
-function formatError(error: unknown): { name: string; message: string } {
+export function formatError(error: unknown): { name: string; message: string } {
   if (error instanceof Error) {
     return { name: error.name, message: error.message }
   }

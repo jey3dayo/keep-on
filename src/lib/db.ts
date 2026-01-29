@@ -1,18 +1,11 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@/db/schema'
-import { logError, logInfo } from '@/lib/logging'
+import { formatError, logError, logInfo } from '@/lib/logging'
 import { safeParseCloudflareEnvBindings } from '@/schemas/cloudflare'
 
 function isWorkersRuntime(): boolean {
   return typeof globalThis !== 'undefined' && 'caches' in globalThis
-}
-
-function formatError(error: unknown): { name: string; message: string } {
-  if (error instanceof Error) {
-    return { name: error.name, message: error.message }
-  }
-  return { name: 'UnknownError', message: String(error) }
 }
 
 function normalizeConnectionString(raw: string): string {
