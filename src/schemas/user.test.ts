@@ -19,6 +19,19 @@ describe('safeParseUser', () => {
     }
   })
 
+  it('不正な日時文字列はエラーになる', () => {
+    const result = safeParseUser({
+      id: 'user-789',
+      clerkId: 'clerk-789',
+      email: 'invalid@example.com',
+      weekStart: 'monday',
+      createdAt: 'invalid-date',
+      updatedAt: '2024-01-02T00:00:00.000Z',
+    })
+
+    expect(result.success).toBe(false)
+  })
+
   it('Date型の日時も許可する', () => {
     const now = new Date()
     const result = safeParseUser({
