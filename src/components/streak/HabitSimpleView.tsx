@@ -92,6 +92,7 @@ export function HabitSimpleView({
     open: false,
     habit: null,
   })
+  const drawerHabitId = drawerState.habit?.id
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const longPressTriggeredRef = useRef(false)
 
@@ -325,10 +326,10 @@ export function HabitSimpleView({
       <HabitActionDrawer
         habit={drawerState.habit}
         onArchiveOptimistic={
-          drawerState.habit && onArchiveOptimistic ? () => onArchiveOptimistic(drawerState.habit.id) : undefined
+          drawerHabitId && onArchiveOptimistic ? () => onArchiveOptimistic(drawerHabitId) : undefined
         }
         onDeleteOptimistic={
-          drawerState.habit && onDeleteOptimistic ? () => onDeleteOptimistic(drawerState.habit.id) : undefined
+          drawerHabitId && onDeleteOptimistic ? () => onDeleteOptimistic(drawerHabitId) : undefined
         }
         onOpenChange={(open) => {
           if (!open) {
@@ -336,7 +337,7 @@ export function HabitSimpleView({
           }
         }}
         onResetOptimistic={
-          drawerState.habit && onResetOptimistic ? () => onResetOptimistic(drawerState.habit.id) : undefined
+          drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined
         }
         open={drawerState.open}
       />
