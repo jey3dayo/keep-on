@@ -288,7 +288,11 @@ export async function getHabitsWithProgress(
   const allCheckinsPromise: Promise<(typeof checkins.$inferSelect)[]> =
     habitIds.length === 0
       ? Promise.resolve([])
-      : db.select().from(checkins).where(inArray(checkins.habitId, habitIds)).orderBy(desc(checkins.date))
+      : db
+          .selectDistinctOn([checkins.habitId])
+          .from(checkins)
+          .where(inArray(checkins.habitId, habitIds))
+          .orderBy(checkins.habitId, desc(checkins.date), desc(checkins.createdAt))
 
   // ユーザーの週開始日設定とチェックイン取得を並列化
   const [weekStartStr, allCheckins] = await Promise.all([getUserWeekStart(clerkId), allCheckinsPromise])

@@ -35,7 +35,7 @@ export async function createCheckin(input: CreateCheckinInput) {
     })
     .returning()
 
-  return checkin
+  return checkin ?? null
 }
 
 export async function deleteLatestCheckinByHabitAndPeriod(
