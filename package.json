@@ -28,6 +28,8 @@
     "env:decrypt": "dotenvx decrypt",
     "env:run": "dotenvx run --",
     "test:supabase": "dotenvx run -- tsx scripts/test-supabase-api.ts",
+    "test:db-permissions": "dotenvx run -- tsx scripts/check-db-permissions.ts",
+    "fix:db-permissions": "dotenvx run -- tsx scripts/fix-db-permissions.ts",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build"
   },
