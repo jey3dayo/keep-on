@@ -374,6 +374,79 @@ Workers のログと突き合わせて確認するための手順です。
 - **ログに :timeout / TimeoutError**: DB か Server Action のタイムアウトを疑う
 - **Clerk のリダイレクトループ警告**: Clerk キー不整合の可能性が高い
 
+## Supabase Logs を使ったデバッグ手順
+
+Cloudflare のログだけでは原因が特定できない場合に、
+Supabase の Postgres Logs を確認して DB 側のエラーを切り分けます。
+
+### 前提（環境変数）
+
+`.env` に以下が入っていればログ取得は可能です（dotenvx 管理）:
+
+- `SUPABASE_PROJECT_REF`
+- `SUPABASE_ACCESS_TOKEN`（Supabase Dashboard → Account → Access Tokens）
+
+※ REST API を直接叩く検証を行う場合のみ `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` を追加します。
+
+### クエリの実行（直近の DB エラーを見る）
+
+```bash
+DOTENV_PRIVATE_KEY=$(rg -N '^DOTENV_PRIVATE_KEY=' .env.keys | cut -d= -f2-) \
+dotenvx run -- python3 - <<'PY'
+import os, urllib.parse, datetime, json
+
+ref=os.environ['SUPABASE_PROJECT_REF']
+token=os.environ['SUPABASE_ACCESS_TOKEN']
+base=f"https://api.supabase.com/v1/projects/{ref}/analytics/endpoints/logs.all"
+end=datetime.datetime.utcnow().replace(second=0, microsecond=0)
+start=end-datetime.timedelta(minutes=90)
+sql="""
+select
+  cast(postgres_logs.timestamp as datetime) as timestamp,
+  parsed.error_severity,
+  event_message
+from
+  postgres_logs
+  cross join unnest(metadata) as metadata
+  cross join unnest(metadata.parsed) as parsed
+where
+  regexp_contains(parsed.error_severity, 'ERROR|FATAL|PANIC')
+order by timestamp desc
+limit 50;
+""".strip()
+params={
+  "iso_timestamp_start": start.isoformat()+"Z",
+  "iso_timestamp_end": end.isoformat()+"Z",
+  "sql": sql,
+}
+url=base+"?"+urllib.parse.urlencode(params)
+print(url)
+PY
+```
+
+上記で出力された URL を `curl` で叩く:
+
+```bash
+curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "<URL>" | jq '.result'
+```
+
+### 典型的なエラーパターン
+
+- `there is no unique or exclusion constraint matching the ON CONFLICT specification`
+  - `ON CONFLICT` に指定した列に **ユニーク制約が存在しない**
+  - マイグレーションで UNIQUE が落とされていないか確認
+- `canceling statement due to statement timeout`
+  - `statement_timeout` の発火。クエリが長いか接続待ち
+- `too many connections`
+  - DB 側の接続上限。Hyperdrive / Workers の同時接続設定を再確認
+- `lock not available`
+  - ロック競合。insert/update の同時実行が多い場合
+
+### 失敗時の注意
+
+- `JWT could not be decoded` が出る場合は **Access Token ではなく service_role 等を入れている**
+- `SUPABASE_ACCESS_TOKEN` は Dashboard の **Account → Access Tokens** で作成した値を使用する
+
 ## 参考リンク
 
 - [Clerk Testing ドキュメント](https://clerk.com/docs/testing/overview)
