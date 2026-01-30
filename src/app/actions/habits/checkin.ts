@@ -2,21 +2,53 @@
 
 import { Result } from '@praha/byethrow'
 import { weekStartToDay } from '@/constants/habit'
-import { DEFAULT_REQUEST_TIMEOUT_MS } from '@/constants/request-timeout'
 import { toActionResult } from '@/lib/actions/result'
 import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
-import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
+import { createRequestMeta, formatError, logError, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
 import { createCheckin } from '@/lib/queries/checkin'
 import { getCheckinCountForPeriod, getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
+import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 import { type HabitActionResult, revalidateHabitPaths, serializeActionError } from './utils'
+
+function extractDbErrorInfo(error: unknown): { message: string; code?: string; causeCode?: string } {
+  const formatted = formatError(error)
+  let code: string | undefined
+  let causeCode: string | undefined
+  let causeMessage: string | undefined
+
+  if (error && typeof error === 'object') {
+    const errorCode = (error as { code?: unknown }).code
+    if (typeof errorCode === 'string') {
+      code = errorCode
+    }
+    const cause = (error as { cause?: unknown }).cause
+    if (cause) {
+      const causeFormatted = formatError(cause)
+      if (causeFormatted.message && causeFormatted.message !== formatted.message) {
+        causeMessage = causeFormatted.message
+      }
+      const nestedCode = (cause as { code?: unknown }).code
+      if (typeof nestedCode === 'string') {
+        causeCode = nestedCode
+        if (!code) {
+          code = nestedCode
+        }
+      }
+    }
+  }
+
+  const message = causeMessage ? `${formatted.message} | ${causeMessage}` : formatted.message
+  return { message, code, causeCode }
+}
 
 export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult {
   const requestMeta = createRequestMeta('action.habits.checkin')
   const baseMeta = { ...requestMeta, habitId, dateKey }
+  const timeoutMs = getRequestTimeoutMs()
   const logSpanWithTimeout = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) =>
-    logSpan(name, fn, data, { timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS })
+    logSpan(name, fn, data, { timeoutMs })
 
   const result = await Result.try({
     try: async () => {
@@ -28,7 +60,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
             'action.habits.checkin.getCurrentUserId',
             () => getCurrentUserId(),
             baseMeta,
-            { timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS }
+            { timeoutMs }
           )
           if (!userId) {
             throw new UnauthorizedError({ detail: '認証されていません' })
@@ -73,11 +105,25 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
             return
           }
 
-          await logSpanWithTimeout(
-            'action.habits.checkin.createCheckin',
-            () => createCheckin({ habitId, date: targetDate }),
-            countMeta
-          )
+          try {
+            await logSpanWithTimeout(
+              'action.habits.checkin.createCheckin',
+              () => createCheckin({ habitId, date: targetDate }),
+              countMeta
+            )
+          } catch (error) {
+            const { message, code, causeCode } = extractDbErrorInfo(error)
+            const normalized = message.toLowerCase()
+            if (code || causeCode || normalized.includes('failed query')) {
+              logError('action.habits.checkin.createCheckin:db-error', {
+                ...countMeta,
+                code,
+                causeCode,
+                error: formatError(error),
+              })
+            }
+            throw error
+          }
           revalidateHabitPaths()
           return
         },

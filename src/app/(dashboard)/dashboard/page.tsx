@@ -3,7 +3,8 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
-import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
+import { resetDb } from '@/lib/db'
+import { createRequestMeta, formatError, logInfo, logSpan, logSpanOptional, logWarn } from '@/lib/logging'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
@@ -44,7 +45,15 @@ export default async function DashboardPage() {
 
   const habits = await logSpan(
     'dashboard.habits',
-    () => getHabitsWithProgress(user.id, user.clerkId, dateKey),
+    async () => {
+      try {
+        return await getHabitsWithProgress(user.id, user.clerkId, dateKey)
+      } catch (error) {
+        logWarn('dashboard.habits:retry', { ...requestMeta, error: formatError(error) })
+        await resetDb('dashboard.habits retry')
+        return await getHabitsWithProgress(user.id, user.clerkId, dateKey)
+      }
+    },
     requestMeta,
     { timeoutMs }
   )

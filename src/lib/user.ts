@@ -1,8 +1,10 @@
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { StatusCodes } from 'http-status-codes'
+import { resetDb } from '@/lib/db'
 import { parseClerkApiResponseErrorPayload, safeParseUser } from '@/schemas/user'
-import { logError, logWarn } from './logging'
+import { getRequestTimeoutMs } from './server/timeout'
+import { formatError, isTimeoutError, logError, logSpan, logWarn } from './logging'
 import { getUserByClerkId, upsertUser } from './queries/user'
 
 function getEmailFromSessionClaims(claims: unknown): string | null {
@@ -54,6 +56,62 @@ function parseClerkApiResponseError(error: unknown) {
   return parseClerkApiResponseErrorPayload(error)
 }
 
+function extractDbErrorInfo(error: unknown): { message: string; code?: string } {
+  const formatted = formatError(error)
+  let code: string | undefined
+  let causeMessage: string | undefined
+
+  if (error && typeof error === 'object') {
+    const errorCode = (error as { code?: unknown }).code
+    if (typeof errorCode === 'string') {
+      code = errorCode
+    }
+    const cause = (error as { cause?: unknown }).cause
+    if (cause) {
+      const causeFormatted = formatError(cause)
+      if (causeFormatted.message && causeFormatted.message !== formatted.message) {
+        causeMessage = causeFormatted.message
+      }
+      const causeCode = (cause as { code?: unknown }).code
+      if (!code && typeof causeCode === 'string') {
+        code = causeCode
+      }
+    }
+  }
+
+  const message = causeMessage ? `${formatted.message} | ${causeMessage}` : formatted.message
+  return { message, code }
+}
+
+function getRetryableDbReason(error: unknown): string | null {
+  if (isTimeoutError(error)) {
+    return 'timeout'
+  }
+  const { message, code } = extractDbErrorInfo(error)
+  const normalized = message.toLowerCase()
+
+  if (code === 'ECONNRESET' || normalized.includes('econnreset')) {
+    return 'econnreset'
+  }
+  if (code === '57P01' || normalized.includes('connection terminated')) {
+    return 'connection-terminated'
+  }
+  if (
+    code === '57014' ||
+    normalized.includes('statement timeout') ||
+    normalized.includes('query canceled')
+  ) {
+    return 'timeout'
+  }
+  if (code === '53300' || normalized.includes('too many connections')) {
+    return 'too_many_connections'
+  }
+  if (code === '55P03' || normalized.includes('lock_not_available')) {
+    return 'lock_not_available'
+  }
+  return null
+}
+
 /**
  * Clerk認証されたユーザーをPrismaのUserテーブルに同期
  * 存在しない場合は新規作成、存在する場合は更新
@@ -76,7 +134,23 @@ export async function syncUser() {
     return parsed.output
   }
 
-  const existing = await getUserByClerkId(clerkId)
+  const requestTimeoutMs = getRequestTimeoutMs()
+  const dbTimeoutMs = Math.max(3000, Math.min(12000, requestTimeoutMs - 2000))
+  const fetchExisting = (label: string) =>
+    logSpan(label, () => getUserByClerkId(clerkId), { clerkId }, { timeoutMs: dbTimeoutMs })
+
+  let existing = null as Awaited<ReturnType<typeof getUserByClerkId>> | null
+  try {
+    existing = await fetchExisting('syncUser.getUserByClerkId')
+  } catch (error) {
+    const retryReason = getRetryableDbReason(error)
+    if (!retryReason) {
+      throw error
+    }
+    logWarn('syncUser.getUserByClerkId:reset', { clerkId, timeoutMs: dbTimeoutMs, reason: retryReason })
+    await resetDb(`syncUser.getUserByClerkId ${retryReason}`)
+    existing = await fetchExisting('syncUser.getUserByClerkId.retry')
+  }
   const parsedExisting = parseUser(existing, 'existing', clerkId)
   const emailFromClaims = getEmailFromSessionClaims(sessionClaims)
   if (parsedExisting) {
@@ -85,27 +159,37 @@ export async function syncUser() {
       return parsedExisting
     }
     if (parsedExisting.email !== emailFromClaims) {
-      const updated = await upsertUser({
-        clerkId,
-        email: emailFromClaims,
-      })
+      const updated = await logSpan(
+        'syncUser.upsertUser',
+        () =>
+          upsertUser({
+            clerkId,
+            email: emailFromClaims,
+          }),
+        { clerkId, source: 'email-mismatch' }
+      )
       return parseUser(updated, 'upsert', clerkId)
     }
     return parsedExisting
   }
 
   if (emailFromClaims) {
-    const created = await upsertUser({
-      clerkId,
-      email: emailFromClaims,
-    })
+    const created = await logSpan(
+      'syncUser.upsertUser',
+      () =>
+        upsertUser({
+          clerkId,
+          email: emailFromClaims,
+        }),
+      { clerkId, source: 'claim-email' }
+    )
     return parseUser(created, 'upsert', clerkId)
   }
 
   let clerkUser: Awaited<ReturnType<typeof currentUser>> = null
 
   try {
-    clerkUser = await currentUser()
+    clerkUser = await logSpan('syncUser.currentUser', () => currentUser(), { clerkId })
   } catch (error) {
     const parsed = parseClerkApiResponseError(error)
     if (parsed) {

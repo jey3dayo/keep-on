@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@/db/schema'
-import { formatError, logError, logInfo } from '@/lib/logging'
+import { formatError, logError, logInfo, logWarn } from '@/lib/logging'
 import { safeParseCloudflareEnvBindings } from '@/schemas/cloudflare'
 
 function isWorkersRuntime(): boolean {
@@ -82,21 +82,24 @@ async function createDb() {
   const client = postgres(connectionString, {
     prepare: false, // PgBouncer互換モード
     fetch_types: false, // 型フェッチを無効化（Workers環境では不要）
-    max: 2, // Workers環境では最小限の接続数に抑える
+    max: 2, // Workers側の同時接続を抑制してHyperdriveに任せる
     idle_timeout: 20, // アイドルタイムアウト（秒）
     connect_timeout: 5, // 接続タイムアウト（秒） - Workersの30秒制限内に収めるため短縮
     connection: {
-      statement_timeout: 8000, // クエリのハングを防ぐ（ミリ秒）
+      statement_timeout: 12000, // クエリのハングを防ぐ（ミリ秒）
     },
   })
 
+  globalForDb.__dbClient = client
   return drizzle(client, { schema })
 }
 
 type DbPromise = ReturnType<typeof createDb>
+type DbClient = ReturnType<typeof postgres>
 
 const globalForDb = globalThis as typeof globalThis & {
   __dbPromise?: DbPromise
+  __dbClient?: DbClient
 }
 
 export async function getDb() {
@@ -105,4 +108,20 @@ export async function getDb() {
   }
 
   return await globalForDb.__dbPromise
+}
+
+export async function resetDb(reason?: string) {
+  const client = globalForDb.__dbClient
+  globalForDb.__dbClient = undefined
+  globalForDb.__dbPromise = undefined
+
+  if (!client) {
+    return
+  }
+
+  try {
+    await client.end({ timeout: 1 })
+  } catch (error) {
+    logWarn('db.connection:reset-error', { reason, error: formatError(error) })
+  }
 }
