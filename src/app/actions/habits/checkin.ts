@@ -49,24 +49,26 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
   const baseMeta = { ...requestMeta, habitId, dateKey }
   const timeoutMs = getRequestTimeoutMs()
   const dbTimeoutMs = Math.max(3000, Math.min(8000, timeoutMs - 2000))
-  const logSpanWithTimeout = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) =>
+  const logSpanWithDbTimeout = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) =>
     logSpan(name, fn, data, { timeoutMs: dbTimeoutMs })
   const logSpanWithRetry = async <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) => {
     try {
-      return await logSpanWithTimeout(name, fn, data)
+      return await logSpanWithDbTimeout(name, fn, data)
     } catch (error) {
       if (!isTimeoutError(error)) {
         throw error
       }
       logWarn(`${name}:reset`, data ? { ...data, timeoutMs: dbTimeoutMs } : { timeoutMs: dbTimeoutMs })
       await resetDb(`${name} timeout`)
-      return await logSpanWithTimeout(`${name}.retry`, fn, data)
+      return await logSpanWithDbTimeout(`${name}.retry`, fn, data)
     }
   }
+  const logSpanWithRequestTimeout = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) =>
+    logSpan(name, fn, data, { timeoutMs })
 
   const result = await Result.try({
     try: async () => {
-      return await logSpanWithTimeout(
+      return await logSpanWithRequestTimeout(
         'action.habits.checkin',
         async () => {
           // 認証チェック
@@ -120,7 +122,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
           }
 
           try {
-            await logSpanWithTimeout(
+            await logSpanWithDbTimeout(
               'action.habits.checkin.createCheckin',
               () => createCheckin({ habitId, date: targetDate }),
               countMeta
