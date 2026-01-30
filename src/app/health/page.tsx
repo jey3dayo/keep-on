@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import type { Metadata } from 'next'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 
@@ -80,8 +80,7 @@ async function getEnvSnapshot(): Promise<EnvSnapshot> {
     return {
       runtime,
       nextjsEnv: getString(envRecord, 'NEXTJS_ENV'),
-      clerkPublishableKey:
-        getString(envRecord, 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'),
+      clerkPublishableKey: getString(envRecord, 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'),
       clerkSecretKey: getString(envRecord, 'CLERK_SECRET_KEY'),
       signInUrl: getString(envRecord, 'NEXT_PUBLIC_CLERK_SIGN_IN_URL'),
       signUpUrl: getString(envRecord, 'NEXT_PUBLIC_CLERK_SIGN_UP_URL'),
@@ -113,7 +112,7 @@ function StatusBadge({ status }: { status: Status }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${styles}`}
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 font-semibold text-xs uppercase tracking-[0.2em] ${styles}`}
     >
       <Icon aria-hidden="true" className="h-4 w-4" />
       <span>{label}</span>
@@ -129,20 +128,20 @@ function StatusPill({ label, count, tone }: { label: string; count: number; tone
         ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
         : 'bg-red-500/10 text-red-700 dark:text-red-300'
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${styles}`}>
+    <span className={`rounded-full px-3 py-1 font-semibold text-xs ${styles}`}>
       {label} {count}
     </span>
   )
 }
 
 function CheckRow({ check }: { check: HealthCheck }) {
-  const meta = check.meta ? <span className="text-xs text-muted-foreground">{check.meta}</span> : null
+  const meta = check.meta ? <span className="text-muted-foreground text-xs">{check.meta}</span> : null
 
   return (
     <div className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-border/60 bg-background/70 px-4 py-3">
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground">{check.label}</p>
-        <p className="text-xs text-muted-foreground">{check.description}</p>
+        <p className="font-semibold text-foreground text-sm">{check.label}</p>
+        <p className="text-muted-foreground text-xs">{check.description}</p>
         {meta}
       </div>
       <StatusBadge status={check.status} />
@@ -160,8 +159,7 @@ export default async function HealthPage() {
   const secretMode = getKeyMode(envSnapshot.clerkSecretKey)
   const publishableTail = tailKey(envSnapshot.clerkPublishableKey)
   const secretTail = tailKey(envSnapshot.clerkSecretKey)
-  const keyMismatch =
-    publishableMode !== 'unknown' && secretMode !== 'unknown' && publishableMode !== secretMode
+  const keyMismatch = publishableMode !== 'unknown' && secretMode !== 'unknown' && publishableMode !== secretMode
 
   const dbBinding = envSnapshot.hyperdriveConnection
     ? 'hyperdrive'
@@ -193,9 +191,7 @@ export default async function HealthPage() {
       status: envSnapshot.clerkSecretKey ? 'ok' : 'error',
       description: envSnapshot.clerkSecretKey ? '設定済み' : '未設定',
       meta:
-        secretMode !== 'unknown'
-          ? `mode: ${secretMode} / tail: ${secretTail}`
-          : `mode: unknown / tail: ${secretTail}`,
+        secretMode !== 'unknown' ? `mode: ${secretMode} / tail: ${secretTail}` : `mode: unknown / tail: ${secretTail}`,
     },
     {
       id: 'clerk-urls',
@@ -244,36 +240,34 @@ export default async function HealthPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/40">
       <main className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-12">
         <header className="space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">KeepOn Health</p>
+          <p className="font-semibold text-muted-foreground text-xs uppercase tracking-[0.35em]">KeepOn Health</p>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="space-y-2">
-              <h1 className="text-3xl font-semibold text-foreground">ヘルスチェック</h1>
-              <p className="text-sm text-muted-foreground">
-                Clerk と DB の設定状態を確認します。値は公開しません。
-              </p>
+              <h1 className="font-semibold text-3xl text-foreground">ヘルスチェック</h1>
+              <p className="text-muted-foreground text-sm">Clerk と DB の設定状態を確認します。値は公開しません。</p>
             </div>
             <a
-              className="inline-flex items-center justify-center rounded-full border border-border/60 bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:border-primary/60 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex items-center justify-center rounded-full border border-border/60 bg-background px-4 py-2 font-semibold text-foreground text-sm transition hover:border-primary/60 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               href="/health"
             >
               再読み込み
             </a>
           </div>
           <div className="flex flex-wrap gap-2">
-            <StatusPill label="OK" count={summary.ok} tone="ok" />
-            <StatusPill label="WARN" count={summary.warn} tone="warn" />
-            <StatusPill label="ERROR" count={summary.error} tone="error" />
-            <span className="text-xs text-muted-foreground">Checked: {checkedAtLabel}</span>
+            <StatusPill count={summary.ok} label="OK" tone="ok" />
+            <StatusPill count={summary.warn} label="WARN" tone="warn" />
+            <StatusPill count={summary.error} label="ERROR" tone="error" />
+            <span className="text-muted-foreground text-xs">Checked: {checkedAtLabel}</span>
           </div>
         </header>
 
         <section className="grid gap-4">
           {checks.map((check) => (
-            <CheckRow key={check.id} check={check} />
+            <CheckRow check={check} key={check.id} />
           ))}
         </section>
 
-        <footer className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+        <footer className="flex flex-wrap items-center justify-between gap-3 text-muted-foreground text-xs">
           <span>Request timeout: {requestTimeoutMs}ms</span>
           <span>Runtime: {envSnapshot.runtime}</span>
         </footer>

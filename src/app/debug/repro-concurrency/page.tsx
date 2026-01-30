@@ -1,7 +1,7 @@
-import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import type { Metadata } from 'next'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
-import { runConcurrencyChecks, type ConcurrencyResult } from './actions'
+import { type ConcurrencyResult, runConcurrencyChecks } from './actions'
 import { CONCURRENCY_LIMITS, ITERATION_LIMITS } from './constants'
 
 export const metadata: Metadata = {
@@ -41,7 +41,7 @@ function StatusBadge({ status }: { status: Status }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${styles}`}
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 font-semibold text-xs uppercase tracking-[0.2em] ${styles}`}
     >
       <Icon aria-hidden="true" className="h-4 w-4" />
       <span>{label}</span>
@@ -57,7 +57,7 @@ function StatusPill({ label, count, tone }: { label: string; count: number; tone
         ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
         : 'bg-red-500/10 text-red-700 dark:text-red-300'
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${styles}`}>
+    <span className={`rounded-full px-3 py-1 font-semibold text-xs ${styles}`}>
       {label} {count}
     </span>
   )
@@ -68,15 +68,17 @@ function BatchRow({ batch }: { batch: ConcurrencyResult['batches'][number] }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-border/60 bg-background/70 px-4 py-3">
       <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
+        <div className="flex flex-wrap items-center gap-2 font-semibold text-foreground text-sm">
           <span>Batch {batch.index}</span>
-          <span className="text-xs text-muted-foreground">OK {batch.ok} / ERROR {batch.error}</span>
+          <span className="text-muted-foreground text-xs">
+            OK {batch.ok} / ERROR {batch.error}
+          </span>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           min {batch.minMs}ms / max {batch.maxMs}ms / avg {batch.avgMs}ms
         </p>
         {batch.errors.length > 0 ? (
-          <ul className="space-y-1 text-xs text-red-500/80 dark:text-red-300">
+          <ul className="space-y-1 text-red-500/80 text-xs dark:text-red-300">
             {batch.errors.map((error) => (
               <li key={error}>{error}</li>
             ))}
@@ -88,11 +90,7 @@ function BatchRow({ batch }: { batch: ConcurrencyResult['batches'][number] }) {
   )
 }
 
-export default async function ReproConcurrencyPage({
-  searchParams,
-}: {
-  searchParams?: SearchParams
-}) {
+export default async function ReproConcurrencyPage({ searchParams }: { searchParams?: SearchParams }) {
   const requestTimeoutMs = getRequestTimeoutMs()
   const params = searchParams ? await searchParams : {}
   const concurrency = clampNumber(
@@ -110,9 +108,7 @@ export default async function ReproConcurrencyPage({
   const shouldRun = getParamValue(params.run) === '1'
   const result = shouldRun ? await runConcurrencyChecks({ concurrency, iterations }) : null
   const checkedAtLabel = result
-    ? new Intl.DateTimeFormat('ja-JP', { dateStyle: 'medium', timeStyle: 'medium' }).format(
-        new Date(result.finishedAt)
-      )
+    ? new Intl.DateTimeFormat('ja-JP', { dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(result.finishedAt))
     : null
 
   const summary = result
@@ -130,16 +126,16 @@ export default async function ReproConcurrencyPage({
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/40">
       <main className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-12">
         <header className="space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">Debug</p>
+          <p className="font-semibold text-muted-foreground text-xs uppercase tracking-[0.35em]">Debug</p>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="space-y-2">
-              <h1 className="text-3xl font-semibold text-foreground">並列実行再現</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="font-semibold text-3xl text-foreground">並列実行再現</h1>
+              <p className="text-muted-foreground text-sm">
                 Clerk API と DB クエリを並列実行し、タイムアウトや失敗率を確認します。
               </p>
             </div>
             <a
-              className="inline-flex items-center justify-center rounded-full border border-border/60 bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:border-primary/60 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex items-center justify-center rounded-full border border-border/60 bg-background px-4 py-2 font-semibold text-foreground text-sm transition hover:border-primary/60 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               href="/debug/repro-concurrency"
             >
               リセット
@@ -150,11 +146,11 @@ export default async function ReproConcurrencyPage({
         <section className="rounded-2xl border border-border/60 bg-background/70 p-5">
           <form className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]" method="get">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground" htmlFor="concurrency">
+              <label className="font-semibold text-muted-foreground text-xs" htmlFor="concurrency">
                 並列数
               </label>
               <input
-                className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 defaultValue={concurrency}
                 id="concurrency"
                 max={CONCURRENCY_LIMITS.max}
@@ -164,11 +160,11 @@ export default async function ReproConcurrencyPage({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground" htmlFor="iterations">
+              <label className="font-semibold text-muted-foreground text-xs" htmlFor="iterations">
                 バッチ回数
               </label>
               <input
-                className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 defaultValue={iterations}
                 id="iterations"
                 max={ITERATION_LIMITS.max}
@@ -180,14 +176,14 @@ export default async function ReproConcurrencyPage({
             <input name="run" type="hidden" value="1" />
             <div className="flex items-end">
               <button
-                className="inline-flex w-full items-center justify-center rounded-full border border-primary/40 bg-primary/10 px-5 py-2 text-sm font-semibold text-primary transition hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex w-full items-center justify-center rounded-full border border-primary/40 bg-primary/10 px-5 py-2 font-semibold text-primary text-sm transition hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 type="submit"
               >
                 実行
               </button>
             </div>
           </form>
-          <p className="mt-4 text-xs text-muted-foreground">
+          <p className="mt-4 text-muted-foreground text-xs">
             上限: 並列 {CONCURRENCY_LIMITS.max} / バッチ {ITERATION_LIMITS.max}。実行には認証が必要です。
           </p>
         </section>
@@ -195,25 +191,23 @@ export default async function ReproConcurrencyPage({
         {result ? (
           <section className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
-              <StatusPill label="OK" count={summary.ok} tone="ok" />
-              <StatusPill label="ERROR" count={summary.error} tone="error" />
-              {checkedAtLabel ? (
-                <span className="text-xs text-muted-foreground">Checked: {checkedAtLabel}</span>
-              ) : null}
+              <StatusPill count={summary.ok} label="OK" tone="ok" />
+              <StatusPill count={summary.error} label="ERROR" tone="error" />
+              {checkedAtLabel ? <span className="text-muted-foreground text-xs">Checked: {checkedAtLabel}</span> : null}
             </div>
             <div className="grid gap-4">
               {result.batches.map((batch) => (
-                <BatchRow key={batch.index} batch={batch} />
+                <BatchRow batch={batch} key={batch.index} />
               ))}
             </div>
           </section>
         ) : (
-          <section className="rounded-xl border border-border/60 bg-background/70 px-4 py-6 text-sm text-muted-foreground">
+          <section className="rounded-xl border border-border/60 bg-background/70 px-4 py-6 text-muted-foreground text-sm">
             パラメータを設定して「実行」を押すと結果が表示されます。
           </section>
         )}
 
-        <footer className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+        <footer className="flex flex-wrap items-center justify-between gap-3 text-muted-foreground text-xs">
           <span>Request timeout: {requestTimeoutMs}ms</span>
           <span>Endpoint: /debug/repro-concurrency</span>
         </footer>

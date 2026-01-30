@@ -3,9 +3,9 @@ import { auth, currentUser } from '@clerk/nextjs/server'
 import { StatusCodes } from 'http-status-codes'
 import { resetDb } from '@/lib/db'
 import { parseClerkApiResponseErrorPayload, safeParseUser } from '@/schemas/user'
-import { getRequestTimeoutMs } from './server/timeout'
 import { formatError, isTimeoutError, logError, logSpan, logWarn } from './logging'
 import { getUserByClerkId, upsertUser } from './queries/user'
+import { getRequestTimeoutMs } from './server/timeout'
 
 function getEmailFromSessionClaims(claims: unknown): string | null {
   if (!claims || typeof claims !== 'object') {
@@ -96,11 +96,7 @@ function getRetryableDbReason(error: unknown): string | null {
   if (code === '57P01' || normalized.includes('connection terminated')) {
     return 'connection-terminated'
   }
-  if (
-    code === '57014' ||
-    normalized.includes('statement timeout') ||
-    normalized.includes('query canceled')
-  ) {
+  if (code === '57014' || normalized.includes('statement timeout') || normalized.includes('query canceled')) {
     return 'timeout'
   }
   if (code === '53300' || normalized.includes('too many connections')) {
@@ -135,7 +131,7 @@ export async function syncUser() {
   }
 
   const requestTimeoutMs = getRequestTimeoutMs()
-  const dbTimeoutMs = Math.max(3000, Math.min(12000, requestTimeoutMs - 2000))
+  const dbTimeoutMs = Math.max(3000, Math.min(8000, requestTimeoutMs - 2000))
   const fetchExisting = (label: string) =>
     logSpan(label, () => getUserByClerkId(clerkId), { clerkId }, { timeoutMs: dbTimeoutMs })
 
