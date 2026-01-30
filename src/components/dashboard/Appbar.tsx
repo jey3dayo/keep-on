@@ -26,7 +26,7 @@ export function Appbar({ showUserButton = false }: AppbarProps) {
       <div className="mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo + App Name */}
         <div className="flex items-center gap-6 lg:gap-10">
-          <Link className="flex items-center gap-2" href="/">
+          <Link className="flex items-center gap-2" href="/" prefetch={false}>
             <Image alt="" className="h-6 w-auto" height={24} priority src="/logo.svg" width={36} />
             <span className="font-bold text-lg">KeepOn</span>
           </Link>
@@ -38,6 +38,7 @@ export function Appbar({ showUserButton = false }: AppbarProps) {
                 className="font-medium text-foreground/60 text-sm transition-colors hover:text-foreground"
                 href={link.href}
                 key={link.href}
+                prefetch={false}
               >
                 {link.label}
               </Link>
@@ -68,6 +69,7 @@ export function Appbar({ showUserButton = false }: AppbarProps) {
                     href={link.href}
                     key={link.href}
                     onClick={() => setIsOpen(false)}
+                    prefetch={false}
                   >
                     <Icon name={link.icon} size={20} />
                     <span>{link.label}</span>

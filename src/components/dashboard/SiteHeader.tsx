@@ -20,6 +20,7 @@ export function SiteHeader() {
         <Link
           className="flex items-center gap-2 rounded-md px-1.5 py-1 text-foreground/90 hover:text-foreground"
           href="/dashboard"
+          prefetch={false}
         >
           <Image alt="" className="h-5 w-auto" height={20} priority src="/logo.svg" width={30} />
           <span className="font-semibold text-base">KeepOn</span>
