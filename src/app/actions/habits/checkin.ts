@@ -4,7 +4,8 @@ import { Result } from '@praha/byethrow'
 import { weekStartToDay } from '@/constants/habit'
 import { toActionResult } from '@/lib/actions/result'
 import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
-import { createRequestMeta, formatError, logError, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
+import { createRequestMeta, formatError, isTimeoutError, logError, logInfo, logSpan, logSpanOptional, logWarn } from '@/lib/logging'
+import { resetDb } from '@/lib/db'
 import { createCheckin } from '@/lib/queries/checkin'
 import { getCheckinCountForPeriod, getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
@@ -49,6 +50,18 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
   const timeoutMs = getRequestTimeoutMs()
   const logSpanWithTimeout = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) =>
     logSpan(name, fn, data, { timeoutMs })
+  const logSpanWithRetry = async <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) => {
+    try {
+      return await logSpanWithTimeout(name, fn, data)
+    } catch (error) {
+      if (!isTimeoutError(error)) {
+        throw error
+      }
+      logWarn(`${name}:reset`, data ? { ...data, timeoutMs } : { timeoutMs })
+      await resetDb(`${name} timeout`)
+      return await logSpanWithTimeout(`${name}.retry`, fn, data)
+    }
+  }
 
   const result = await Result.try({
     try: async () => {
@@ -69,7 +82,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
           const metaWithUser = { ...baseMeta, userId }
 
           // habit所有権チェック
-          const habit = await logSpanWithTimeout(
+          const habit = await logSpanWithRetry(
             'action.habits.checkin.getHabitById',
             () => getHabitById(habitId),
             metaWithUser
@@ -82,7 +95,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
           }
 
           const targetDate = dateKey ?? new Date()
-          const weekStart = await logSpanWithTimeout(
+          const weekStart = await logSpanWithRetry(
             'action.habits.checkin.getUserWeekStartById',
             () => getUserWeekStartById(userId),
             metaWithUser
@@ -93,7 +106,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
             period: habit.period,
             frequency: habit.frequency,
           }
-          const currentCount = await logSpanWithTimeout(
+          const currentCount = await logSpanWithRetry(
             'action.habits.checkin.getCheckinCountForPeriod',
             () => getCheckinCountForPeriod(habitId, targetDate, habit.period, weekStartDay),
             countMeta
@@ -112,6 +125,10 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
               countMeta
             )
           } catch (error) {
+            if (isTimeoutError(error)) {
+              logWarn('action.habits.checkin.createCheckin:reset', { ...countMeta, timeoutMs })
+              await resetDb('action.habits.checkin.createCheckin timeout')
+            }
             const { message, code, causeCode } = extractDbErrorInfo(error)
             const normalized = message.toLowerCase()
             if (code || causeCode || normalized.includes('failed query')) {
