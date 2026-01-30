@@ -2,7 +2,7 @@
 
 import type { CSSProperties, KeyboardEvent } from 'react'
 import { useRef } from 'react'
-import { CheckInButton } from '@/components/basics/Button'
+import { Button, CheckInButton } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById } from '@/constants/habit-data'
@@ -68,7 +68,7 @@ export function HabitListCard({
     <div
       aria-label={`${habit.name}のメニューを開く`}
       className={cn(
-        'group cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-4 shadow-sm transition-all duration-200 hover:border-border/80 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none'
+        'group relative cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-4 pr-12 shadow-sm transition-all duration-200 hover:border-border/80 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none'
       )}
       onContextMenu={handleContextMenu}
       onKeyDown={handleKeyDown}
@@ -81,6 +81,23 @@ export function HabitListCard({
       }}
       tabIndex={0}
     >
+      <Button
+        aria-haspopup="dialog"
+        aria-label={`${habit.name}の操作を開く`}
+        className="absolute top-3 right-3 h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+        onClick={(event) => {
+          event.stopPropagation()
+          onLongPressOrContextMenu()
+        }}
+        onPointerDown={(event) => {
+          event.stopPropagation()
+        }}
+        size="icon"
+        type="button"
+        variant="ghost"
+      >
+        <Icon className="h-4 w-4" name="more-horizontal" />
+      </Button>
       <div className="flex items-center gap-4">
         <CheckInButton
           aria-label={`${habit.name}をチェックイン`}
