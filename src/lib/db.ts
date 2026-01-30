@@ -41,6 +41,13 @@ function getConnectionMeta(connectionString: string): { host?: string; port?: nu
   }
 }
 
+function nowMs(): number {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    return performance.now()
+  }
+  return Date.now()
+}
+
 async function getConnectionInfo(): Promise<ConnectionInfo> {
   // Cloudflare Workers環境でHyperdriveが利用可能な場合
   if (isWorkersRuntime()) {
@@ -89,6 +96,19 @@ async function createDb() {
       statement_timeout: 12000, // クエリのハングを防ぐ（ミリ秒）
     },
   })
+
+  const probeStart = nowMs()
+  logInfo('db.connection.probe:start', { source, ...meta })
+  client
+    .unsafe('select 1')
+    .then(() => {
+      const ms = Math.round(nowMs() - probeStart)
+      logInfo('db.connection.probe:end', { source, ...meta, ms })
+    })
+    .catch((error) => {
+      const ms = Math.round(nowMs() - probeStart)
+      logWarn('db.connection.probe:error', { source, ...meta, ms, error: formatError(error) })
+    })
 
   globalForDb.__dbClient = client
   return drizzle(client, { schema })
