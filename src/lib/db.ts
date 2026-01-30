@@ -4,6 +4,8 @@ import * as schema from '@/db/schema'
 import { formatError, logError, logInfo, logWarn } from '@/lib/logging'
 import { safeParseCloudflareEnvBindings } from '@/schemas/cloudflare'
 
+const TRACE_QUERY_RE = /from "User"|from "Habit"|from "Checkin"/
+
 function isWorkersRuntime(): boolean {
   return typeof globalThis !== 'undefined' && 'caches' in globalThis
 }
@@ -92,6 +94,14 @@ async function createDb() {
     max: 2, // Workers側の同時接続を抑制してHyperdriveに任せる
     idle_timeout: 20, // アイドルタイムアウト（秒）
     connect_timeout: 5, // 接続タイムアウト（秒） - Workersの30秒制限内に収めるため短縮
+    debug: (connectionId, query, parameters) => {
+      if (!TRACE_QUERY_RE.test(query)) {
+        return
+      }
+      const trimmed = query.replace(/\s+/g, ' ').slice(0, 200)
+      const paramsCount = Array.isArray(parameters) ? parameters.length : 0
+      logInfo('db.query.dispatch', { connectionId, query: trimmed, paramsCount })
+    },
     connection: {
       statement_timeout: 12000, // クエリのハングを防ぐ（ミリ秒）
     },
