@@ -1,6 +1,6 @@
 'use client'
 
-import type { CSSProperties } from 'react'
+import type { CSSProperties, KeyboardEvent } from 'react'
 import { useRef } from 'react'
 import { Button, CheckInButton } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
@@ -54,18 +54,32 @@ export function HabitListCard({
     onLongPressOrContextMenu()
   }
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) {
+      return
+    }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onLongPressOrContextMenu()
+    }
+  }
+
   return (
     <div
+      aria-label={`${habit.name}のメニューを開く`}
       className={cn(
-        'group relative rounded-2xl border border-border/60 bg-card/95 p-4 pr-12 shadow-sm transition-all duration-200 hover:border-border/80 hover:shadow-md motion-reduce:transition-none'
+        'group relative cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-4 pr-12 shadow-sm transition-all duration-200 hover:border-border/80 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none'
       )}
       onContextMenu={handleContextMenu}
+      onKeyDown={handleKeyDown}
       onPointerDown={handleLongPressStart}
       onPointerLeave={handleLongPressEnd}
       onPointerUp={handleLongPressEnd}
+      role="button"
       style={{
         opacity: dimmed ? dimmedOpacity : 1,
       }}
+      tabIndex={0}
     >
       <Button
         aria-haspopup="dialog"
