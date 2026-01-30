@@ -48,8 +48,9 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
   const requestMeta = createRequestMeta('action.habits.checkin')
   const baseMeta = { ...requestMeta, habitId, dateKey }
   const timeoutMs = getRequestTimeoutMs()
+  const dbTimeoutMs = Math.max(3000, Math.min(8000, timeoutMs - 2000))
   const logSpanWithTimeout = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) =>
-    logSpan(name, fn, data, { timeoutMs })
+    logSpan(name, fn, data, { timeoutMs: dbTimeoutMs })
   const logSpanWithRetry = async <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) => {
     try {
       return await logSpanWithTimeout(name, fn, data)
@@ -57,7 +58,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
       if (!isTimeoutError(error)) {
         throw error
       }
-      logWarn(`${name}:reset`, data ? { ...data, timeoutMs } : { timeoutMs })
+      logWarn(`${name}:reset`, data ? { ...data, timeoutMs: dbTimeoutMs } : { timeoutMs: dbTimeoutMs })
       await resetDb(`${name} timeout`)
       return await logSpanWithTimeout(`${name}.retry`, fn, data)
     }
@@ -126,7 +127,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
             )
           } catch (error) {
             if (isTimeoutError(error)) {
-              logWarn('action.habits.checkin.createCheckin:reset', { ...countMeta, timeoutMs })
+              logWarn('action.habits.checkin.createCheckin:reset', { ...countMeta, timeoutMs: dbTimeoutMs })
               await resetDb('action.habits.checkin.createCheckin timeout')
             }
             const { message, code, causeCode } = extractDbErrorInfo(error)
