@@ -47,11 +47,11 @@ export default async function DashboardPage() {
     'dashboard.habits',
     async () => {
       try {
-        return await getHabitsWithProgress(user.id, user.clerkId, dateKey)
+        return await getHabitsWithProgress(user.id, user.clerkId, dateKey, user.weekStart)
       } catch (error) {
         logWarn('dashboard.habits:retry', { ...requestMeta, error: formatError(error) })
         await resetDb('dashboard.habits retry')
-        return await getHabitsWithProgress(user.id, user.clerkId, dateKey)
+        return await getHabitsWithProgress(user.id, user.clerkId, dateKey, user.weekStart)
       }
     },
     requestMeta,
