@@ -1,6 +1,7 @@
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { StatusCodes } from 'http-status-codes'
+import { getUserFromCache, setUserCache } from '@/lib/cache/user-cache'
 import { resetDb } from '@/lib/db'
 import { parseClerkApiResponseErrorPayload, safeParseUser } from '@/schemas/user'
 import { formatError, isTimeoutError, logError, logSpan, logWarn } from './logging'
@@ -118,6 +119,12 @@ export async function syncUser() {
     return null
   }
 
+  // キャッシュチェック
+  const cached = await getUserFromCache(clerkId)
+  if (cached) {
+    return cached
+  }
+
   const parseUser = (user: unknown, source: 'existing' | 'upsert', logClerkId: string) => {
     if (!user) {
       return null
@@ -150,6 +157,9 @@ export async function syncUser() {
   const parsedExisting = parseUser(existing, 'existing', clerkId)
   const emailFromClaims = getEmailFromSessionClaims(sessionClaims)
   if (parsedExisting) {
+    // キャッシュに保存
+    await setUserCache(clerkId, parsedExisting)
+
     if (!emailFromClaims) {
       logMissingSessionEmail(clerkId, sessionClaims)
       return parsedExisting
@@ -164,7 +174,11 @@ export async function syncUser() {
           }),
         { clerkId, source: 'email-mismatch' }
       )
-      return parseUser(updated, 'upsert', clerkId)
+      const parsedUpdated = parseUser(updated, 'upsert', clerkId)
+      if (parsedUpdated) {
+        await setUserCache(clerkId, parsedUpdated)
+      }
+      return parsedUpdated
     }
     return parsedExisting
   }
@@ -179,7 +193,11 @@ export async function syncUser() {
         }),
       { clerkId, source: 'claim-email' }
     )
-    return parseUser(created, 'upsert', clerkId)
+    const parsedCreated = parseUser(created, 'upsert', clerkId)
+    if (parsedCreated) {
+      await setUserCache(clerkId, parsedCreated)
+    }
+    return parsedCreated
   }
 
   let clerkUser: Awaited<ReturnType<typeof currentUser>> = null
@@ -208,7 +226,11 @@ export async function syncUser() {
   }
 
   const created = await upsertUser({ clerkId: clerkUser.id, email })
-  return parseUser(created, 'upsert', clerkUser.id)
+  const parsedClerkCreated = parseUser(created, 'upsert', clerkUser.id)
+  if (parsedClerkCreated) {
+    await setUserCache(clerkUser.id, parsedClerkCreated)
+  }
+  return parsedClerkCreated
 }
 
 /**
