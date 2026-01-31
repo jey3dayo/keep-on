@@ -25,6 +25,33 @@ interface GrantInfo {
   table_name: string
 }
 
+interface RlsStatus {
+  tablename: string
+  rowsecurity: boolean
+}
+
+type GrantsByTable = Record<string, Record<string, string[]>>
+type SqlClient = ReturnType<typeof postgres>
+
+const divider = '='.repeat(60)
+
+function logHeader(title: string): void {
+  console.log(divider)
+  console.log(title)
+  console.log(divider)
+}
+
+function logSection(title: string): void {
+  console.log(`\n${title}`)
+  console.log(divider)
+}
+
+function logDividerTitle(title: string): void {
+  console.log(`\n${divider}`)
+  console.log(title)
+  console.log(divider)
+}
+
 /**
  * 環境変数をチェック
  */
@@ -39,148 +66,135 @@ function checkEnv(): string {
   return url
 }
 
-/**
- * メイン処理
- */
-async function main() {
-  console.log('='.repeat(60))
-  console.log('Supabase DB 権限確認スクリプト')
-  console.log('='.repeat(60))
+async function fetchTables(sql: SqlClient): Promise<TableInfo[]> {
+  return await sql<TableInfo[]>`
+    SELECT schemaname, tablename, tableowner
+    FROM pg_tables
+    WHERE tablename IN ('User', 'Habit', 'Checkin')
+    ORDER BY tablename
+  `
+}
 
-  const databaseUrl = checkEnv()
+function printTables(tables: TableInfo[]): void {
+  if (tables.length === 0) {
+    console.log('❌ テーブルが見つかりませんでした')
+    return
+  }
 
-  // postgres-js クライアントを作成
-  const sql = postgres(databaseUrl, {
-    max: 1,
-    idle_timeout: 20,
-    connect_timeout: 10,
-  })
+  console.log(`✅ テーブル: ${tables.length}件`)
+  for (const table of tables) {
+    console.log(`   - ${table.schemaname}.${table.tablename} (owner: ${table.tableowner})`)
+  }
+}
 
-  try {
-    // 1. テーブルの存在とスキーマを確認
-    console.log('\n1. テーブル情報')
-    console.log('='.repeat(60))
+async function fetchRoles(sql: SqlClient): Promise<RoleInfo[]> {
+  return await sql<RoleInfo[]>`
+    SELECT rolname, rolbypassrls
+    FROM pg_roles
+    WHERE rolname IN ('service_role', 'authenticator', 'postgres')
+    ORDER BY rolname
+  `
+}
 
-    const tables = await sql<TableInfo[]>`
-      SELECT schemaname, tablename, tableowner
-      FROM pg_tables
-      WHERE tablename IN ('User', 'Habit', 'Checkin')
-      ORDER BY tablename
-    `
+function printRoles(roles: RoleInfo[]): void {
+  for (const role of roles) {
+    const bypass = role.rolbypassrls ? '✅ YES' : '❌ NO'
+    console.log(`   ${role.rolname}: RLS Bypass = ${bypass}`)
+  }
+}
 
-    if (tables.length === 0) {
-      console.log('❌ テーブルが見つかりませんでした')
-    } else {
-      console.log(`✅ テーブル: ${tables.length}件`)
-      for (const table of tables) {
-        console.log(`   - ${table.schemaname}.${table.tablename} (owner: ${table.tableowner})`)
-      }
+async function fetchGrants(sql: SqlClient): Promise<GrantInfo[]> {
+  return await sql<GrantInfo[]>`
+    SELECT grantee, privilege_type, table_name
+    FROM information_schema.role_table_grants
+    WHERE table_schema = 'public'
+    AND table_name IN ('User', 'Habit', 'Checkin')
+    AND grantee IN ('service_role', 'authenticator', 'postgres')
+    ORDER BY table_name, grantee, privilege_type
+  `
+}
+
+function groupGrants(grants: GrantInfo[]): GrantsByTable {
+  const byTable: GrantsByTable = {}
+
+  for (const grant of grants) {
+    if (!byTable[grant.table_name]) {
+      byTable[grant.table_name] = {}
     }
-
-    // 2. service_role の権限を確認
-    console.log('\n2. service_role の情報')
-    console.log('='.repeat(60))
-
-    const roles = await sql<RoleInfo[]>`
-      SELECT rolname, rolbypassrls
-      FROM pg_roles
-      WHERE rolname IN ('service_role', 'authenticator', 'postgres')
-      ORDER BY rolname
-    `
-
-    for (const role of roles) {
-      const bypass = role.rolbypassrls ? '✅ YES' : '❌ NO'
-      console.log(`   ${role.rolname}: RLS Bypass = ${bypass}`)
+    if (!byTable[grant.table_name][grant.grantee]) {
+      byTable[grant.table_name][grant.grantee] = []
     }
+    byTable[grant.table_name][grant.grantee].push(grant.privilege_type)
+  }
 
-    // 3. テーブルごとの権限を確認
-    console.log('\n3. テーブル権限')
-    console.log('='.repeat(60))
+  return byTable
+}
 
-    const grants = await sql<GrantInfo[]>`
-      SELECT grantee, privilege_type, table_name
-      FROM information_schema.role_table_grants
-      WHERE table_schema = 'public'
-      AND table_name IN ('User', 'Habit', 'Checkin')
-      AND grantee IN ('service_role', 'authenticator', 'postgres')
-      ORDER BY table_name, grantee, privilege_type
-    `
+function printGrants(grants: GrantInfo[]): void {
+  if (grants.length === 0) {
+    console.log('❌ 権限が見つかりませんでした')
+    return
+  }
 
-    if (grants.length === 0) {
-      console.log('❌ 権限が見つかりませんでした')
-    } else {
-      // テーブルごとにグループ化
-      const byTable = grants.reduce(
-        (acc, grant) => {
-          if (!acc[grant.table_name]) {
-            acc[grant.table_name] = {}
-          }
-          if (!acc[grant.table_name][grant.grantee]) {
-            acc[grant.table_name][grant.grantee] = []
-          }
-          acc[grant.table_name][grant.grantee].push(grant.privilege_type)
-          return acc
-        },
-        {} as Record<string, Record<string, string[]>>
-      )
-
-      for (const [tableName, roleGrants] of Object.entries(byTable)) {
-        console.log(`\n   ${tableName}:`)
-        for (const [role, privileges] of Object.entries(roleGrants)) {
-          console.log(`     ${role}: ${privileges.join(', ')}`)
-        }
-      }
+  const byTable = groupGrants(grants)
+  for (const [tableName, roleGrants] of Object.entries(byTable)) {
+    console.log(`\n   ${tableName}:`)
+    for (const [role, privileges] of Object.entries(roleGrants)) {
+      console.log(`     ${role}: ${privileges.join(', ')}`)
     }
+  }
+}
 
-    // 4. RLS の状態を確認
-    console.log('\n4. Row Level Security (RLS) の状態')
-    console.log('='.repeat(60))
+async function fetchRlsStatus(sql: SqlClient): Promise<RlsStatus[]> {
+  return await sql<RlsStatus[]>`
+    SELECT tablename, rowsecurity
+    FROM pg_tables
+    WHERE schemaname = 'public'
+    AND tablename IN ('User', 'Habit', 'Checkin')
+    ORDER BY tablename
+  `
+}
 
-    const rlsStatus = await sql<Array<{ tablename: string; rowsecurity: boolean }>>`
-      SELECT tablename, rowsecurity
-      FROM pg_tables
-      WHERE schemaname = 'public'
-      AND tablename IN ('User', 'Habit', 'Checkin')
-      ORDER BY tablename
-    `
+function printRlsStatus(rlsStatus: RlsStatus[]): void {
+  for (const table of rlsStatus) {
+    const status = table.rowsecurity ? '🔒 有効' : '🔓 無効'
+    console.log(`   ${table.tablename}: ${status}`)
+  }
+}
 
-    for (const table of rlsStatus) {
-      const status = table.rowsecurity ? '🔒 有効' : '🔓 無効'
-      console.log(`   ${table.tablename}: ${status}`)
-    }
+function printDiagnosis(roles: RoleInfo[], grants: GrantInfo[]): void {
+  const serviceRoleInfo = roles.find((role) => role.rolname === 'service_role')
+  const hasServiceRoleGrants = grants.some((grant) => grant.grantee === 'service_role')
 
-    // 5. 診断結果
-    console.log('\n' + '='.repeat(60))
-    console.log('診断結果')
-    console.log('='.repeat(60))
+  if (!serviceRoleInfo) {
+    console.log('❌ service_role が見つかりません')
+    return
+  }
 
-    const serviceRoleInfo = roles.find((r) => r.rolname === 'service_role')
-    const hasServiceRoleGrants = grants.some((g) => g.grantee === 'service_role')
+  if (!serviceRoleInfo.rolbypassrls) {
+    console.log('⚠️  service_role が RLS をバイパスしていません')
+    console.log('   → 以下の SQL を実行して修正してください:')
+    console.log('')
+    console.log('   ALTER ROLE service_role BYPASSRLS;')
+    return
+  }
 
-    if (!serviceRoleInfo) {
-      console.log('❌ service_role が見つかりません')
-    } else if (!serviceRoleInfo.rolbypassrls) {
-      console.log('⚠️  service_role が RLS をバイパスしていません')
-      console.log('   → 以下の SQL を実行して修正してください:')
-      console.log('')
-      console.log('   ALTER ROLE service_role BYPASSRLS;')
-    } else if (hasServiceRoleGrants) {
-      console.log('✅ service_role の設定は正常です')
-    } else {
-      console.log('⚠️  service_role にテーブルへの権限がありません')
-      console.log('   → 以下の SQL を実行して修正してください:')
-      console.log('')
-      console.log('   GRANT USAGE ON SCHEMA public TO service_role;')
-      console.log('   GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;')
-      console.log('   GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;')
-      console.log('   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;')
-    }
+  if (hasServiceRoleGrants) {
+    console.log('✅ service_role の設定は正常です')
+    return
+  }
 
-    // 6. 推奨される修正SQL
-    console.log('\n' + '='.repeat(60))
-    console.log('推奨される修正 SQL（必要な場合のみ実行）')
-    console.log('='.repeat(60))
-    console.log(`
+  console.log('⚠️  service_role にテーブルへの権限がありません')
+  console.log('   → 以下の SQL を実行して修正してください:')
+  console.log('')
+  console.log('   GRANT USAGE ON SCHEMA public TO service_role;')
+  console.log('   GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;')
+  console.log('   GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;')
+  console.log('   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;')
+}
+
+function printRecommendedSql(): void {
+  console.log(`
 -- service_role に RLS バイパス権限を付与
 ALTER ROLE service_role BYPASSRLS;
 
@@ -193,6 +207,45 @@ GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
 `)
+}
+
+/**
+ * メイン処理
+ */
+async function main() {
+  logHeader('Supabase DB 権限確認スクリプト')
+
+  const databaseUrl = checkEnv()
+
+  // postgres-js クライアントを作成
+  const sql = postgres(databaseUrl, {
+    max: 1,
+    idle_timeout: 20,
+    connect_timeout: 10,
+  })
+
+  try {
+    logSection('1. テーブル情報')
+    const tables = await fetchTables(sql)
+    printTables(tables)
+
+    logSection('2. service_role の情報')
+    const roles = await fetchRoles(sql)
+    printRoles(roles)
+
+    logSection('3. テーブル権限')
+    const grants = await fetchGrants(sql)
+    printGrants(grants)
+
+    logSection('4. Row Level Security (RLS) の状態')
+    const rlsStatus = await fetchRlsStatus(sql)
+    printRlsStatus(rlsStatus)
+
+    logDividerTitle('診断結果')
+    printDiagnosis(roles, grants)
+
+    logDividerTitle('推奨される修正 SQL（必要な場合のみ実行）')
+    printRecommendedSql()
   } catch (error) {
     console.error('❌ エラーが発生しました:', error)
     process.exit(1)

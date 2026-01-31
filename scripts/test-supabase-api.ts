@@ -35,11 +35,19 @@ function checkEnv(): {
   const url = process.env.SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  const missing = []
-  if (!token) missing.push('SUPABASE_ACCESS_TOKEN')
-  if (!ref) missing.push('SUPABASE_PROJECT_REF')
-  if (!url) missing.push('SUPABASE_URL')
-  if (!key) missing.push('SUPABASE_SERVICE_ROLE_KEY')
+  const missing: string[] = []
+  if (!token) {
+    missing.push('SUPABASE_ACCESS_TOKEN')
+  }
+  if (!ref) {
+    missing.push('SUPABASE_PROJECT_REF')
+  }
+  if (!url) {
+    missing.push('SUPABASE_URL')
+  }
+  if (!key) {
+    missing.push('SUPABASE_SERVICE_ROLE_KEY')
+  }
 
   if (missing.length > 0) {
     console.error('❌ 必要な環境変数が不足しています:')
@@ -49,7 +57,11 @@ function checkEnv(): {
     process.exit(1)
   }
 
-  return { token: token!, ref: ref!, url: url!, key: key! }
+  if (!(token && ref && url && key)) {
+    process.exit(1)
+  }
+
+  return { token, ref, url, key }
 }
 
 /**
@@ -161,7 +173,7 @@ async function testTableAccess(url: string, key: string, table: string): Promise
     }
 
     const count = response.headers.get('Content-Range') || 'unknown'
-    const data = (await response.json()) as Array<Record<string, unknown>>
+    const data = (await response.json()) as Record<string, unknown>[]
     console.log(`✅ 成功 (Status: ${response.status})`)
     console.log(`   Total count: ${count}`)
     console.log(`   Sample records: ${data.length}`)
@@ -251,7 +263,7 @@ async function main() {
   })
 
   // 結果サマリー
-  console.log('\n' + '='.repeat(60))
+  console.log(`\n${'='.repeat(60)}`)
   console.log('テスト結果サマリー')
   console.log('='.repeat(60))
   for (const { name, success } of results) {

@@ -66,7 +66,7 @@ async function main() {
     await sql`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role`
     console.log('✅ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role')
 
-    console.log('\n' + '='.repeat(60))
+    console.log(`\n${'='.repeat(60)}`)
     console.log('✅ すべての権限修正が完了しました')
     console.log('='.repeat(60))
 
