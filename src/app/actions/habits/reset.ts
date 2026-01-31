@@ -39,7 +39,7 @@ export async function resetHabitProgressAction(habitId: string, dateKey?: string
           // 期間内の全チェックインを削除
           await deleteAllCheckinsByHabitAndPeriod(input.habitId, targetDate, habit.period, weekStartDay)
 
-          revalidateHabitPaths()
+          await revalidateHabitPaths(userId)
           return
         },
         catch: (error) => error,

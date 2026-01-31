@@ -2,10 +2,11 @@ import { startOfDay, startOfMonth, subDays, subMonths, subWeeks } from 'date-fns
 import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { COMPLETION_THRESHOLD, type Period, type WeekStart, type WeekStartDay, weekStartToDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
+import { getHabitsFromCache, setHabitsCache } from '@/lib/cache/habit-cache'
 import { getDb } from '@/lib/db'
 import { getPeriodDateRange } from '@/lib/queries/period'
 import { getUserWeekStart } from '@/lib/queries/user'
-import { normalizeCheckinDate, parseDateKey } from '@/lib/utils/date'
+import { formatDateKey, normalizeCheckinDate, parseDateKey } from '@/lib/utils/date'
 import type { HabitWithProgress } from '@/types/habit'
 import type { HabitInput } from '@/validators/habit'
 
@@ -217,7 +218,7 @@ export async function calculateStreak(
 
   // 現在の期間が未達成の場合、前の期間から開始
   if (currentCount < habit.frequency) {
-    currentDate = getPreviousPeriod(currentDate, period)
+    currentDate = getPreviousPeriod(currentDate, habit.period)
   }
 
   // 過去に向かってストリークをカウント
@@ -276,14 +277,25 @@ export async function getHabitsWithProgress(
   date: Date | string = new Date(),
   weekStart?: WeekStart
 ): Promise<HabitWithProgress[]> {
+  // dateKey を計算
+  const baseDate = typeof date === 'string' ? parseDateKey(date) : date
+  const dateKey = formatDateKey(baseDate)
+
+  // 1. キャッシュから取得を試行
+  const cached = await getHabitsFromCache(userId, dateKey)
+  if (cached) {
+    return cached
+  }
+
+  // 2. キャッシュミス - DB クエリ実行
   const db = await getDb()
   const habitList = await getHabitsByUserId(userId)
 
   if (habitList.length === 0) {
+    // キャッシュに空の結果を保存
+    await setHabitsCache(userId, dateKey, [])
     return []
   }
-
-  const baseDate = typeof date === 'string' ? parseDateKey(date) : date
 
   const habitIds = habitList.map((h) => h.id)
   const allCheckinsPromise: Promise<(typeof checkins.$inferSelect)[]> =
@@ -334,6 +346,9 @@ export async function getHabitsWithProgress(
       completionRate,
     }
   })
+
+  // 3. キャッシュに保存
+  await setHabitsCache(userId, dateKey, habitsWithProgress)
 
   return habitsWithProgress
 }

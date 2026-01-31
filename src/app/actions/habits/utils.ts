@@ -1,6 +1,7 @@
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
 import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
+import { invalidateHabitsCache } from '@/lib/cache/habit-cache'
 import {
   AuthorizationError,
   DatabaseError,
@@ -79,7 +80,7 @@ export async function runHabitMutation(
     return actionError(serializeHabitError(new NotFoundError()))
   }
 
-  revalidateHabitPaths()
+  await revalidateHabitPaths(userIdResult.data)
 
   return actionOk()
 }
@@ -99,7 +100,8 @@ export function serializeActionError(error: unknown, detail: string): Serializab
   return serializeHabitError(databaseError)
 }
 
-export function revalidateHabitPaths() {
+export async function revalidateHabitPaths(userId: string) {
   revalidatePath('/habits')
   revalidatePath('/dashboard')
+  await invalidateHabitsCache(userId)
 }

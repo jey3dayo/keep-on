@@ -1,13 +1,13 @@
 'use server'
 
 import { Result } from '@praha/byethrow'
-import { revalidatePath } from 'next/cache'
 import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
 import { NotFoundError, UnauthorizedError } from '@/lib/errors/habit'
 import { serializeHabitError } from '@/lib/errors/serializable'
 import { updateHabit } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
 import { validateHabitUpdate } from '@/validators/habit'
+import { revalidateHabitPaths } from './utils'
 
 /**
  * 認証チェック
@@ -51,8 +51,7 @@ export async function updateHabitAction(
     return actionError(serializeHabitError(new NotFoundError()))
   }
 
-  revalidatePath('/habits')
-  revalidatePath('/dashboard')
+  await revalidateHabitPaths(userId)
 
   return actionOk()
 }

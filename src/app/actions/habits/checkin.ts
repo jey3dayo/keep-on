@@ -186,7 +186,7 @@ async function performCheckin(params: {
     return
   }
 
-  revalidateHabitPaths()
+  await revalidateHabitPaths(userId)
 }
 
 export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult {

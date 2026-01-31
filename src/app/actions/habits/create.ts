@@ -1,13 +1,13 @@
 'use server'
 
 import { Result } from '@praha/byethrow'
-import { revalidatePath } from 'next/cache'
 import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
 import { DatabaseError, UnauthorizedError } from '@/lib/errors/habit'
 import { type SerializableHabitError, serializeHabitError } from '@/lib/errors/serializable'
 import { createHabit as createHabitQuery } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
 import { validateHabitInput } from '@/validators/habit'
+import { revalidateHabitPaths } from './utils'
 
 /**
  * 認証チェック
@@ -30,9 +30,14 @@ const authenticateUser = async (): Result.ResultAsync<string, UnauthorizedError>
 export async function createHabit(formData: FormData): ServerActionResultAsync<void, SerializableHabitError> {
   const userIdResult = await authenticateUser()
 
+  if (!Result.isSuccess(userIdResult)) {
+    return actionError(serializeHabitError(userIdResult.error))
+  }
+
+  const userId = userIdResult.value
+
   const result = await Result.pipe(
-    userIdResult,
-    Result.andThen((userId) => validateHabitInput(userId, formData)),
+    validateHabitInput(userId, formData),
     Result.andThen(async (validInput) => {
       return await Result.try({
         try: async () => await createHabitQuery(validInput),
@@ -42,7 +47,7 @@ export async function createHabit(formData: FormData): ServerActionResultAsync<v
   )
 
   if (Result.isSuccess(result)) {
-    revalidatePath('/dashboard')
+    await revalidateHabitPaths(userId)
     return actionOk()
   }
 
