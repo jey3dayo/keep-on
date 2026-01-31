@@ -21,6 +21,7 @@ import { getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
+import { validateHabitActionInput } from '@/validators/habit-action'
 import { type HabitActionResult, revalidateHabitPaths, serializeActionError } from './utils'
 
 type SpanRunner = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) => Promise<T>
@@ -190,20 +191,26 @@ async function performCheckin(params: {
 
 export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult {
   const requestMeta = createRequestMeta('action.habits.checkin')
-  const baseMeta = { ...requestMeta, habitId, dateKey }
   const timeoutMs = getRequestTimeoutMs()
   const spans = createCheckinSpans(timeoutMs)
 
-  const result = await Result.try({
-    try: async () => {
-      return await spans.runWithRequestTimeout(
-        'action.habits.checkin',
-        () => performCheckin({ habitId, dateKey, baseMeta, spans }),
-        baseMeta
-      )
-    },
-    catch: (error) => serializeActionError(error, 'チェックインの切り替えに失敗しました'),
-  })()
+  const result = await Result.pipe(
+    validateHabitActionInput({ habitId, dateKey }),
+    Result.andThen(async (input) => {
+      const baseMeta = { ...requestMeta, habitId: input.habitId, dateKey: input.dateKey }
+      return await Result.try({
+        try: async () => {
+          return await spans.runWithRequestTimeout(
+            'action.habits.checkin',
+            () => performCheckin({ habitId: input.habitId, dateKey: input.dateKey, baseMeta, spans }),
+            baseMeta
+          )
+        },
+        catch: (error) => error,
+      })()
+    }),
+    Result.mapError((error) => serializeActionError(error, 'チェックインの切り替えに失敗しました'))
+  )
 
   return toActionResult(result)
 }
