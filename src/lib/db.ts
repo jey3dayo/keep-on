@@ -74,7 +74,7 @@ async function probeConnection(
   logInfo('db.connection.probe:start', { source, ...meta })
 
   try {
-    // 接続状態のクリーンアップ（再利用時の状態をリセット）
+    // 接続状態のクリーンアップ（新規接続の初期化）
     await client.unsafe('DISCARD ALL')
     logInfo('db.connection:cleanup', { source, ...meta })
 
@@ -187,6 +187,7 @@ type DbClient = ReturnType<typeof postgres>
 const globalForDb = globalThis as typeof globalThis & {
   __dbPromise?: DbPromise
   __dbClient?: DbClient
+  __retryLock?: Promise<void>
 }
 
 export async function getDb() {
@@ -201,42 +202,52 @@ export async function getDb() {
     const errorType = classifyConnectionError(error)
     logWarn('db.connection:initial-failure', { errorType, error: formatError(error) })
 
-    // 競合状態を回避: 別のリクエストが既にリトライを開始している可能性があるため、
-    // __dbPromise を再度チェック
-    if (globalForDb.__dbPromise) {
+    // リトライ対象エラーでない場合は即座に投げる
+    if (errorType !== 'connection' && errorType !== 'network' && errorType !== 'timeout') {
+      throw error
+    }
+
+    // ミューテックスパターン: 既に別のリクエストがリトライ中の場合は待機
+    if (globalForDb.__retryLock) {
       try {
-        logInfo('db.connection:await-concurrent-retry', { errorType })
-        return await globalForDb.__dbPromise
-      } catch (concurrentError) {
-        // 同時リトライも失敗した場合は続行
-        logWarn('db.connection:concurrent-retry-failed', { error: formatError(concurrentError) })
+        logInfo('db.connection:await-retry-lock', { errorType })
+        await globalForDb.__retryLock
+        // ロック解放後、新しい接続が利用可能か確認
+        if (globalForDb.__dbPromise) {
+          return await globalForDb.__dbPromise
+        }
+      } catch (lockError) {
+        // ロック中のリトライが失敗した場合も続行
+        logWarn('db.connection:lock-retry-failed', { error: formatError(lockError) })
       }
     }
 
-    // プールをクリア
-    globalForDb.__dbClient = undefined
-    globalForDb.__dbPromise = undefined
+    // リトライロックを作成（他のリクエストはこれを待機する）
+    let releaseLock: (() => void) | undefined
+    globalForDb.__retryLock = new Promise<void>((resolve) => {
+      releaseLock = resolve
+    })
 
-    // リトライ（接続エラーのみ）
-    if (errorType === 'connection' || errorType === 'network' || errorType === 'timeout') {
+    try {
+      // プールをクリア
+      globalForDb.__dbClient = undefined
+      globalForDb.__dbPromise = undefined
+
       logInfo('db.connection:retry', { errorType })
+      globalForDb.__dbPromise = createDb()
 
-      // 競合状態を回避: 他のリクエストが既にリトライを開始していないか再度チェック
-      if (!globalForDb.__dbPromise) {
-        globalForDb.__dbPromise = createDb()
-      }
-
-      try {
-        return await globalForDb.__dbPromise
-      } catch (retryError) {
-        logError('db.connection:retry-failed', { error: formatError(retryError) })
-        globalForDb.__dbClient = undefined
-        globalForDb.__dbPromise = undefined
-        throw retryError
-      }
+      const result = await globalForDb.__dbPromise
+      return result
+    } catch (retryError) {
+      logError('db.connection:retry-failed', { error: formatError(retryError) })
+      globalForDb.__dbClient = undefined
+      globalForDb.__dbPromise = undefined
+      throw retryError
+    } finally {
+      // ロックを解放
+      globalForDb.__retryLock = undefined
+      releaseLock?.()
     }
-
-    throw error
   }
 }
 
