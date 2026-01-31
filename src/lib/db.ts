@@ -220,8 +220,13 @@ export async function getDb() {
     // リトライ（接続エラーのみ）
     if (errorType === 'connection' || errorType === 'network' || errorType === 'timeout') {
       logInfo('db.connection:retry', { errorType })
-      try {
+
+      // 競合状態を回避: 他のリクエストが既にリトライを開始していないか再度チェック
+      if (!globalForDb.__dbPromise) {
         globalForDb.__dbPromise = createDb()
+      }
+
+      try {
         return await globalForDb.__dbPromise
       } catch (retryError) {
         logError('db.connection:retry-failed', { error: formatError(retryError) })
