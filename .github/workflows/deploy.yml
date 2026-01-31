@@ -36,7 +36,7 @@ jobs:
       - name: Build for Cloudflare
         env:
           DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
-        run: pnpm cf:build
+        run: pnpm build:cf
 
       - name: Deploy to Cloudflare Workers
         env:
