@@ -3,8 +3,9 @@ import { auth, currentUser } from '@clerk/nextjs/server'
 import { StatusCodes } from 'http-status-codes'
 import { getUserFromCache, setUserCache } from '@/lib/cache/user-cache'
 import { resetDb } from '@/lib/db'
+import { extractDbErrorInfo } from '@/lib/errors/db'
 import { parseClerkApiResponseErrorPayload, safeParseUser } from '@/schemas/user'
-import { formatError, isTimeoutError, logError, logSpan, logWarn } from './logging'
+import { isTimeoutError, logError, logSpan, logWarn } from './logging'
 import { getUserByClerkId, upsertUser } from './queries/user'
 import { getRequestTimeoutMs } from './server/timeout'
 
@@ -55,33 +56,6 @@ function parseClerkApiResponseError(error: unknown) {
   }
 
   return parseClerkApiResponseErrorPayload(error)
-}
-
-function extractDbErrorInfo(error: unknown): { message: string; code?: string } {
-  const formatted = formatError(error)
-  let code: string | undefined
-  let causeMessage: string | undefined
-
-  if (error && typeof error === 'object') {
-    const errorCode = (error as { code?: unknown }).code
-    if (typeof errorCode === 'string') {
-      code = errorCode
-    }
-    const cause = (error as { cause?: unknown }).cause
-    if (cause) {
-      const causeFormatted = formatError(cause)
-      if (causeFormatted.message && causeFormatted.message !== formatted.message) {
-        causeMessage = causeFormatted.message
-      }
-      const causeCode = (cause as { code?: unknown }).code
-      if (!code && typeof causeCode === 'string') {
-        code = causeCode
-      }
-    }
-  }
-
-  const message = causeMessage ? `${formatted.message} | ${causeMessage}` : formatted.message
-  return { message, code }
 }
 
 function getRetryableDbReason(error: unknown): string | null {

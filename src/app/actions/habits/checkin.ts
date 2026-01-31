@@ -4,6 +4,7 @@ import { Result } from '@praha/byethrow'
 import { weekStartToDay } from '@/constants/habit'
 import { toActionResult } from '@/lib/actions/result'
 import { resetDb } from '@/lib/db'
+import { extractDbErrorInfo } from '@/lib/errors/db'
 import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
 import {
   createRequestMeta,
@@ -35,37 +36,6 @@ interface CheckinSpans {
 type HabitRecord = NonNullable<Awaited<ReturnType<typeof getHabitById>>>
 
 type WeekStartDay = ReturnType<typeof weekStartToDay>
-
-function extractDbErrorInfo(error: unknown): { message: string; code?: string; causeCode?: string } {
-  const formatted = formatError(error)
-  let code: string | undefined
-  let causeCode: string | undefined
-  let causeMessage: string | undefined
-
-  if (error && typeof error === 'object') {
-    const errorCode = (error as { code?: unknown }).code
-    if (typeof errorCode === 'string') {
-      code = errorCode
-    }
-    const cause = (error as { cause?: unknown }).cause
-    if (cause) {
-      const causeFormatted = formatError(cause)
-      if (causeFormatted.message && causeFormatted.message !== formatted.message) {
-        causeMessage = causeFormatted.message
-      }
-      const nestedCode = (cause as { code?: unknown }).code
-      if (typeof nestedCode === 'string') {
-        causeCode = nestedCode
-        if (!code) {
-          code = nestedCode
-        }
-      }
-    }
-  }
-
-  const message = causeMessage ? `${formatted.message} | ${causeMessage}` : formatted.message
-  return { message, code, causeCode }
-}
 
 function createCheckinSpans(timeoutMs: number): CheckinSpans {
   const dbTimeoutMs = Math.max(3000, Math.min(8000, timeoutMs - 2000))
