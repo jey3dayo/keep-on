@@ -3,15 +3,38 @@
 import { Result } from '@praha/byethrow'
 import { weekStartToDay } from '@/constants/habit'
 import { toActionResult } from '@/lib/actions/result'
-import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
-import { createRequestMeta, formatError, isTimeoutError, logError, logInfo, logSpan, logSpanOptional, logWarn } from '@/lib/logging'
 import { resetDb } from '@/lib/db'
-import { createCheckin } from '@/lib/queries/checkin'
-import { getCheckinCountForPeriod, getHabitById } from '@/lib/queries/habit'
+import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
+import {
+  createRequestMeta,
+  formatError,
+  isTimeoutError,
+  logError,
+  logInfo,
+  logSpan,
+  logSpanOptional,
+  logWarn,
+} from '@/lib/logging'
+import { createCheckinWithLimit } from '@/lib/queries/checkin'
+import { getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 import { type HabitActionResult, revalidateHabitPaths, serializeActionError } from './utils'
+
+type SpanRunner = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) => Promise<T>
+
+interface CheckinSpans {
+  timeoutMs: number
+  dbTimeoutMs: number
+  runWithDbTimeout: SpanRunner
+  runWithRetry: SpanRunner
+  runWithRequestTimeout: SpanRunner
+}
+
+type HabitRecord = NonNullable<Awaited<ReturnType<typeof getHabitById>>>
+
+type WeekStartDay = ReturnType<typeof weekStartToDay>
 
 function extractDbErrorInfo(error: unknown): { message: string; code?: string; causeCode?: string } {
   const formatted = formatError(error)
@@ -44,109 +67,168 @@ function extractDbErrorInfo(error: unknown): { message: string; code?: string; c
   return { message, code, causeCode }
 }
 
-export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult {
-  const requestMeta = createRequestMeta('action.habits.checkin')
-  const baseMeta = { ...requestMeta, habitId, dateKey }
-  const timeoutMs = getRequestTimeoutMs()
+function createCheckinSpans(timeoutMs: number): CheckinSpans {
   const dbTimeoutMs = Math.max(3000, Math.min(8000, timeoutMs - 2000))
-  const logSpanWithDbTimeout = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) =>
-    logSpan(name, fn, data, { timeoutMs: dbTimeoutMs })
-  const logSpanWithRetry = async <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) => {
+  const runWithDbTimeout: SpanRunner = (name, fn, data) => logSpan(name, fn, data, { timeoutMs: dbTimeoutMs })
+  const runWithRequestTimeout: SpanRunner = (name, fn, data) => logSpan(name, fn, data, { timeoutMs })
+  const runWithRetry: SpanRunner = async (name, fn, data) => {
     try {
-      return await logSpanWithDbTimeout(name, fn, data)
+      return await runWithDbTimeout(name, fn, data)
     } catch (error) {
       if (!isTimeoutError(error)) {
         throw error
       }
       logWarn(`${name}:reset`, data ? { ...data, timeoutMs: dbTimeoutMs } : { timeoutMs: dbTimeoutMs })
       await resetDb(`${name} timeout`)
-      return await logSpanWithDbTimeout(`${name}.retry`, fn, data)
+      return await runWithDbTimeout(`${name}.retry`, fn, data)
     }
   }
-  const logSpanWithRequestTimeout = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) =>
-    logSpan(name, fn, data, { timeoutMs })
+
+  return {
+    timeoutMs,
+    dbTimeoutMs,
+    runWithDbTimeout,
+    runWithRequestTimeout,
+    runWithRetry,
+  }
+}
+
+async function requireUserId(baseMeta: Record<string, unknown>, timeoutMs: number): Promise<string> {
+  const userId = await logSpanOptional('action.habits.checkin.getCurrentUserId', () => getCurrentUserId(), baseMeta, {
+    timeoutMs,
+  })
+
+  if (!userId) {
+    throw new UnauthorizedError({ detail: '認証されていません' })
+  }
+
+  return userId
+}
+
+async function requireHabitForUser(
+  habitId: string,
+  userId: string,
+  meta: Record<string, unknown>,
+  runWithRetry: SpanRunner
+): Promise<HabitRecord> {
+  const habit = await runWithRetry('action.habits.checkin.getHabitById', () => getHabitById(habitId), meta)
+  if (!habit) {
+    throw new AuthorizationError({ detail: '習慣が見つかりません' })
+  }
+  if (habit.userId !== userId) {
+    throw new AuthorizationError({ detail: 'この習慣にアクセスする権限がありません' })
+  }
+  return habit
+}
+
+async function resolveWeekStartDay(
+  userId: string,
+  meta: Record<string, unknown>,
+  runWithRetry: SpanRunner
+): Promise<WeekStartDay> {
+  const weekStart = await runWithRetry(
+    'action.habits.checkin.getUserWeekStartById',
+    () => getUserWeekStartById(userId),
+    meta
+  )
+  return weekStartToDay(weekStart)
+}
+
+async function createCheckinWithLogging(params: {
+  habitId: string
+  targetDate: Date | string
+  habit: HabitRecord
+  weekStartDay: WeekStartDay
+  countMeta: Record<string, unknown>
+  spans: CheckinSpans
+}): Promise<boolean> {
+  const { habitId, targetDate, habit, weekStartDay, countMeta, spans } = params
+
+  try {
+    const result = await spans.runWithDbTimeout(
+      'action.habits.checkin.createCheckin',
+      () =>
+        createCheckinWithLimit({
+          habitId,
+          date: targetDate,
+          period: habit.period,
+          frequency: habit.frequency,
+          weekStartDay,
+        }),
+      countMeta
+    )
+
+    if (!result.created) {
+      logInfo('action.habits.checkin.skip', { ...countMeta, currentCount: result.currentCount })
+      return false
+    }
+  } catch (error) {
+    if (isTimeoutError(error)) {
+      logWarn('action.habits.checkin.createCheckin:reset', { ...countMeta, timeoutMs: spans.dbTimeoutMs })
+      await resetDb('action.habits.checkin.createCheckin timeout')
+    }
+    const { message, code, causeCode } = extractDbErrorInfo(error)
+    const normalized = message.toLowerCase()
+    if (code || causeCode || normalized.includes('failed query')) {
+      logError('action.habits.checkin.createCheckin:db-error', {
+        ...countMeta,
+        code,
+        causeCode,
+        error: formatError(error),
+      })
+    }
+    throw error
+  }
+
+  return true
+}
+
+async function performCheckin(params: {
+  habitId: string
+  dateKey?: string
+  baseMeta: Record<string, unknown>
+  spans: CheckinSpans
+}): Promise<void> {
+  const { habitId, dateKey, baseMeta, spans } = params
+  const userId = await requireUserId(baseMeta, spans.timeoutMs)
+  const metaWithUser = { ...baseMeta, userId }
+
+  const habit = await requireHabitForUser(habitId, userId, metaWithUser, spans.runWithRetry)
+  const targetDate = dateKey ?? new Date()
+  const weekStartDay = await resolveWeekStartDay(userId, metaWithUser, spans.runWithRetry)
+  const countMeta = {
+    ...metaWithUser,
+    period: habit.period,
+    frequency: habit.frequency,
+  }
+
+  const created = await createCheckinWithLogging({
+    habitId,
+    targetDate,
+    habit,
+    weekStartDay,
+    countMeta,
+    spans,
+  })
+
+  if (!created) {
+    return
+  }
+
+  revalidateHabitPaths()
+}
+
+export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult {
+  const requestMeta = createRequestMeta('action.habits.checkin')
+  const baseMeta = { ...requestMeta, habitId, dateKey }
+  const timeoutMs = getRequestTimeoutMs()
+  const spans = createCheckinSpans(timeoutMs)
 
   const result = await Result.try({
     try: async () => {
-      return await logSpanWithRequestTimeout(
+      return await spans.runWithRequestTimeout(
         'action.habits.checkin',
-        async () => {
-          // 認証チェック
-          const userId = await logSpanOptional(
-            'action.habits.checkin.getCurrentUserId',
-            () => getCurrentUserId(),
-            baseMeta,
-            { timeoutMs }
-          )
-          if (!userId) {
-            throw new UnauthorizedError({ detail: '認証されていません' })
-          }
-
-          const metaWithUser = { ...baseMeta, userId }
-
-          // habit所有権チェック
-          const habit = await logSpanWithRetry(
-            'action.habits.checkin.getHabitById',
-            () => getHabitById(habitId),
-            metaWithUser
-          )
-          if (!habit) {
-            throw new AuthorizationError({ detail: '習慣が見つかりません' })
-          }
-          if (habit.userId !== userId) {
-            throw new AuthorizationError({ detail: 'この習慣にアクセスする権限がありません' })
-          }
-
-          const targetDate = dateKey ?? new Date()
-          const weekStart = await logSpanWithRetry(
-            'action.habits.checkin.getUserWeekStartById',
-            () => getUserWeekStartById(userId),
-            metaWithUser
-          )
-          const weekStartDay = weekStartToDay(weekStart)
-          const countMeta = {
-            ...metaWithUser,
-            period: habit.period,
-            frequency: habit.frequency,
-          }
-          const currentCount = await logSpanWithRetry(
-            'action.habits.checkin.getCheckinCountForPeriod',
-            () => getCheckinCountForPeriod(habitId, targetDate, habit.period, weekStartDay),
-            countMeta
-          )
-
-          // 達成済みの場合は追加せずに終了
-          if (currentCount >= habit.frequency) {
-            logInfo('action.habits.checkin.skip', { ...countMeta, currentCount })
-            return
-          }
-
-          try {
-            await logSpanWithDbTimeout(
-              'action.habits.checkin.createCheckin',
-              () => createCheckin({ habitId, date: targetDate }),
-              countMeta
-            )
-          } catch (error) {
-            if (isTimeoutError(error)) {
-              logWarn('action.habits.checkin.createCheckin:reset', { ...countMeta, timeoutMs: dbTimeoutMs })
-              await resetDb('action.habits.checkin.createCheckin timeout')
-            }
-            const { message, code, causeCode } = extractDbErrorInfo(error)
-            const normalized = message.toLowerCase()
-            if (code || causeCode || normalized.includes('failed query')) {
-              logError('action.habits.checkin.createCheckin:db-error', {
-                ...countMeta,
-                code,
-                causeCode,
-                error: formatError(error),
-              })
-            }
-            throw error
-          }
-          revalidateHabitPaths()
-          return
-        },
+        () => performCheckin({ habitId, dateKey, baseMeta, spans }),
         baseMeta
       )
     },
