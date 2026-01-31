@@ -109,16 +109,20 @@ async function createDb() {
 
   const probeStart = nowMs()
   logInfo('db.connection.probe:start', { source, ...meta })
-  client
-    .unsafe('select 1')
-    .then(() => {
-      const ms = Math.round(nowMs() - probeStart)
-      logInfo('db.connection.probe:end', { source, ...meta, ms })
-    })
-    .catch((error) => {
-      const ms = Math.round(nowMs() - probeStart)
-      logWarn('db.connection.probe:error', { source, ...meta, ms, error: formatError(error) })
-    })
+  try {
+    await client.unsafe('select 1')
+    const ms = Math.round(nowMs() - probeStart)
+    logInfo('db.connection.probe:end', { source, ...meta, ms })
+  } catch (error) {
+    const ms = Math.round(nowMs() - probeStart)
+    logWarn('db.connection.probe:error', { source, ...meta, ms, error: formatError(error) })
+    try {
+      await client.end({ timeout: 1 })
+    } catch (closeError) {
+      logWarn('db.connection.probe:cleanup-error', { source, ...meta, error: formatError(closeError) })
+    }
+    throw error
+  }
 
   globalForDb.__dbClient = client
   return drizzle(client, { schema })
@@ -137,7 +141,13 @@ export async function getDb() {
     globalForDb.__dbPromise = createDb()
   }
 
-  return await globalForDb.__dbPromise
+  try {
+    return await globalForDb.__dbPromise
+  } catch (error) {
+    globalForDb.__dbClient = undefined
+    globalForDb.__dbPromise = undefined
+    throw error
+  }
 }
 
 export async function resetDb(reason?: string) {
@@ -150,7 +160,8 @@ export async function resetDb(reason?: string) {
   }
 
   try {
-    await client.end({ timeout: 1 })
+    const timeout = isWorkersRuntime() ? 1 : 5
+    await client.end({ timeout })
   } catch (error) {
     logWarn('db.connection:reset-error', { reason, error: formatError(error) })
   }
