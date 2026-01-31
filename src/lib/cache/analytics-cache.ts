@@ -1,17 +1,8 @@
+import * as v from 'valibot'
+import { ANALYTICS_CACHE_KEY_PREFIX, ANALYTICS_CACHE_TTL_SECONDS } from '@/constants/cache'
 import { formatError, logInfo, logWarn } from '@/lib/logging'
-
-interface KVNamespace {
-  get(key: string, type: 'json'): Promise<{ total: number; timestamp: number } | null>
-  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>
-  delete(key: string): Promise<void>
-}
-
-interface CloudflareEnv {
-  NEXT_INC_CACHE_KV?: KVNamespace
-}
-
-const CACHE_TTL_SECONDS = 300 // 5分
-const CACHE_KEY_PREFIX = 'analytics:total-checkins:'
+import { TotalCheckinsSchema } from '@/schemas/cache'
+import type { CloudflareEnv, KVNamespace } from '@/types/cloudflare'
 
 async function getKV(): Promise<KVNamespace | null> {
   if (typeof globalThis === 'undefined' || !('caches' in globalThis)) {
@@ -40,7 +31,7 @@ export async function getTotalCheckinsFromCache(userId: string): Promise<number 
   }
 
   try {
-    const key = `${CACHE_KEY_PREFIX}${userId}`
+    const key = `${ANALYTICS_CACHE_KEY_PREFIX}${userId}`
     const cached = await kv.get(key, 'json')
 
     if (cached === null) {
@@ -48,8 +39,20 @@ export async function getTotalCheckinsFromCache(userId: string): Promise<number 
       return null
     }
 
-    logInfo('analytics-cache:hit', { userId, totalCheckins: (cached as { total: number }).total })
-    return (cached as { total: number }).total
+    // KVから取得したデータをバリデーション
+    const parseResult = v.safeParse(TotalCheckinsSchema, cached)
+
+    if (!parseResult.success) {
+      logWarn('analytics-cache:invalid-data', {
+        userId,
+        error: 'Schema validation failed',
+        issues: parseResult.issues,
+      })
+      return null
+    }
+
+    logInfo('analytics-cache:hit', { userId, totalCheckins: parseResult.output.total })
+    return parseResult.output.total
   } catch (error) {
     logWarn('analytics-cache:error:read', {
       userId,
@@ -72,11 +75,11 @@ export async function setTotalCheckinsCache(userId: string, total: number): Prom
   }
 
   try {
-    const key = `${CACHE_KEY_PREFIX}${userId}`
+    const key = `${ANALYTICS_CACHE_KEY_PREFIX}${userId}`
     await kv.put(key, JSON.stringify({ total, timestamp: Date.now() }), {
-      expirationTtl: CACHE_TTL_SECONDS,
+      expirationTtl: ANALYTICS_CACHE_TTL_SECONDS,
     })
-    logInfo('analytics-cache:set', { userId, total, ttl: CACHE_TTL_SECONDS })
+    logInfo('analytics-cache:set', { userId, total, ttl: ANALYTICS_CACHE_TTL_SECONDS })
   } catch (error) {
     logWarn('analytics-cache:error:write', {
       userId,
@@ -97,7 +100,7 @@ export async function invalidateAnalyticsCache(userId: string): Promise<void> {
   }
 
   try {
-    const key = `${CACHE_KEY_PREFIX}${userId}`
+    const key = `${ANALYTICS_CACHE_KEY_PREFIX}${userId}`
     await kv.delete(key)
     logInfo('analytics-cache:invalidate', { userId })
   } catch (error) {

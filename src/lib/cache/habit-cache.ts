@@ -1,15 +1,8 @@
+import * as v from 'valibot'
 import { formatError, logInfo, logWarn } from '@/lib/logging'
+import { HabitsCacheDataSchema } from '@/schemas/cache'
+import type { CloudflareEnv, KVNamespace } from '@/types/cloudflare'
 import type { HabitWithProgress } from '@/types/habit'
-
-interface KVNamespace {
-  get(key: string, type: 'json'): Promise<HabitsCacheData | null>
-  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>
-  delete(key: string): Promise<void>
-}
-
-interface CloudflareEnv {
-  NEXT_INC_CACHE_KV?: KVNamespace
-}
 
 interface HabitsCacheData {
   habits: HabitWithProgress[]
@@ -54,15 +47,29 @@ export async function getHabitsFromCache(userId: string, dateKey: string): Promi
       return null
     }
 
+    // KVから取得したデータをバリデーション
+    const parseResult = v.safeParse(HabitsCacheDataSchema, cached)
+
+    if (!parseResult.success) {
+      logWarn('habit-cache:invalid-data', {
+        userId,
+        error: 'Schema validation failed',
+        issues: parseResult.issues,
+      })
+      return null
+    }
+
+    const validated = parseResult.output
+
     // dateKey 検証（現在の期間と一致するか）
-    if (cached.dateKey !== dateKey) {
-      logInfo('habit-cache:stale', { userId, cachedDateKey: cached.dateKey, requestedDateKey: dateKey })
+    if (validated.dateKey !== dateKey) {
+      logInfo('habit-cache:stale', { userId, cachedDateKey: validated.dateKey, requestedDateKey: dateKey })
       await kv.delete(key)
       return null
     }
 
-    logInfo('habit-cache:hit', { userId, habitCount: cached.habits.length })
-    return cached.habits
+    logInfo('habit-cache:hit', { userId, habitCount: validated.habits.length })
+    return validated.habits as HabitWithProgress[]
   } catch (error) {
     logWarn('habit-cache:error:read', { userId, error: formatError(error) })
     return null
