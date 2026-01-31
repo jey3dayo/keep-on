@@ -4,7 +4,15 @@ import { redirect } from 'next/navigation'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import { resetDb } from '@/lib/db'
-import { createRequestMeta, formatError, isTimeoutError, logInfo, logSpan, logSpanOptional, logWarn } from '@/lib/logging'
+import {
+  createRequestMeta,
+  formatError,
+  isTimeoutError,
+  logInfo,
+  logSpan,
+  logSpanOptional,
+  logWarn,
+} from '@/lib/logging'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
