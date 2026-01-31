@@ -2,7 +2,7 @@ import { formatError, logInfo, logWarn } from '@/lib/logging'
 import type { User } from '@/types/user'
 
 // Cloudflare Workers KVNamespace型（グローバル型として存在）
-type KVNamespace = {
+interface KVNamespace {
   get(key: string, type: 'text'): Promise<string | null>
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>
   delete(key: string): Promise<void>
