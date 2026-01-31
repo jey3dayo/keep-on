@@ -48,7 +48,7 @@ function shouldLog(level: LogLevel): boolean {
   return LOG_LEVEL_ORDER[level] >= LOG_LEVEL_ORDER[resolveLogLevel()]
 }
 
-function nowMs(): number {
+export function nowMs(): number {
   if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
     return performance.now()
   }

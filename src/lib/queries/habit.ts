@@ -4,6 +4,7 @@ import { COMPLETION_THRESHOLD, type Period, type WeekStart, type WeekStartDay, w
 import { checkins, habits } from '@/db/schema'
 import { getHabitsFromCache, setHabitsCache } from '@/lib/cache/habit-cache'
 import { getDb } from '@/lib/db'
+import { logInfo, nowMs } from '@/lib/logging'
 import { getPeriodDateRange } from '@/lib/queries/period'
 import { getUserWeekStart } from '@/lib/queries/user'
 import { formatDateKey, normalizeCheckinDate, parseDateKey } from '@/lib/utils/date'
@@ -277,6 +278,8 @@ export async function getHabitsWithProgress(
   date: Date | string = new Date(),
   weekStart?: WeekStart
 ): Promise<HabitWithProgress[]> {
+  const totalStart = nowMs()
+
   // dateKey を計算
   const baseDate = typeof date === 'string' ? parseDateKey(date) : date
   const dateKey = formatDateKey(baseDate)
@@ -284,11 +287,17 @@ export async function getHabitsWithProgress(
   // 1. キャッシュから取得を試行
   const cached = await getHabitsFromCache(userId, dateKey)
   if (cached) {
+    logInfo('getHabitsWithProgress:cache-hit', { userId, dateKey })
     return cached
   }
 
   // 2. キャッシュミス - DB クエリ実行
+  const dbStart = nowMs()
   const db = await getDb()
+  const dbMs = Math.round(nowMs() - dbStart)
+  logInfo('getHabitsWithProgress:db-acquisition', { userId, ms: dbMs })
+
+  const queryStart = nowMs()
   const habitList = await getHabitsByUserId(userId)
 
   if (habitList.length === 0) {
@@ -349,6 +358,17 @@ export async function getHabitsWithProgress(
 
   // 3. キャッシュに保存
   await setHabitsCache(userId, dateKey, habitsWithProgress)
+
+  const queryMs = Math.round(nowMs() - queryStart)
+  const totalMs = Math.round(nowMs() - totalStart)
+  logInfo('getHabitsWithProgress:complete', {
+    userId,
+    dateKey,
+    dbMs,
+    queryMs,
+    totalMs,
+    habits: habitsWithProgress.length,
+  })
 
   return habitsWithProgress
 }
