@@ -15,6 +15,30 @@ type Status = 'ok' | 'warn' | 'error'
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
 
+const STATUS_BADGE_STYLES: Record<Status, string> = {
+  ok: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  warn: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  error: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300',
+}
+
+const STATUS_BADGE_ICONS: Record<Status, typeof CheckCircle2> = {
+  ok: CheckCircle2,
+  warn: AlertTriangle,
+  error: XCircle,
+}
+
+const STATUS_BADGE_LABELS: Record<Status, string> = {
+  ok: 'OK',
+  warn: 'WARN',
+  error: 'ERROR',
+}
+
+const STATUS_PILL_STYLES: Record<Status, string> = {
+  ok: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  warn: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  error: 'bg-red-500/10 text-red-700 dark:text-red-300',
+}
+
 function getParamValue(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) {
     return value[0]
@@ -30,14 +54,9 @@ function clampNumber(value: number, min: number, max: number, fallback: number):
 }
 
 function StatusBadge({ status }: { status: Status }) {
-  const styles =
-    status === 'ok'
-      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-      : status === 'warn'
-        ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
-        : 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300'
-  const Icon = status === 'ok' ? CheckCircle2 : status === 'warn' ? AlertTriangle : XCircle
-  const label = status === 'ok' ? 'OK' : status === 'warn' ? 'WARN' : 'ERROR'
+  const styles = STATUS_BADGE_STYLES[status]
+  const Icon = STATUS_BADGE_ICONS[status]
+  const label = STATUS_BADGE_LABELS[status]
 
   return (
     <span
@@ -50,12 +69,7 @@ function StatusBadge({ status }: { status: Status }) {
 }
 
 function StatusPill({ label, count, tone }: { label: string; count: number; tone: Status }) {
-  const styles =
-    tone === 'ok'
-      ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-      : tone === 'warn'
-        ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
-        : 'bg-red-500/10 text-red-700 dark:text-red-300'
+  const styles = STATUS_PILL_STYLES[tone]
   return (
     <span className={`rounded-full px-3 py-1 font-semibold text-xs ${styles}`}>
       {label} {count}

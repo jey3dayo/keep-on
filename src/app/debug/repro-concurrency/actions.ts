@@ -7,12 +7,12 @@ import { getDb } from '@/lib/db'
 import { formatError } from '@/lib/logging'
 import { CONCURRENCY_LIMITS, ITERATION_LIMITS } from './constants'
 
-export type ConcurrencyParams = {
+export interface ConcurrencyParams {
   concurrency: number
   iterations: number
 }
 
-export type ConcurrencyResult = {
+export interface ConcurrencyResult {
   concurrency: number
   iterations: number
   startedAt: string
@@ -28,13 +28,13 @@ export type ConcurrencyResult = {
   }>
 }
 
-type TaskResult = {
+interface TaskResult {
   ok: boolean
   durationMs: number
   errors: string[]
 }
 
-type TimedCheck = {
+interface TimedCheck {
   ok: boolean
   durationMs: number
   error?: string
@@ -94,7 +94,7 @@ async function runTask(
     errors.push(clerkError)
   }
 
-  const checks: Array<Promise<TimedCheck>> = []
+  const checks: Promise<TimedCheck>[] = []
   if (clerk) {
     checks.push(
       runTimed(async () => {
