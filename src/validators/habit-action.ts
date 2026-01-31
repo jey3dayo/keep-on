@@ -5,14 +5,19 @@ import { safeParseHabitId } from '@/schemas/habit'
 
 type ValidationTarget = 'habitId' | 'dateKey'
 
-function toValidationError(
-  issue: { message?: string; path?: Array<{ key: string | number }> } | undefined,
-  fallback: ValidationTarget
-) {
-  const field = issue?.path?.map((part) => part.key).join('.') || fallback
+function toValidationError(issue: unknown, fallback: ValidationTarget) {
+  const record = issue && typeof issue === 'object' ? (issue as Record<string, unknown>) : {}
+  const message = typeof record.message === 'string' ? record.message : 'Validation failed'
+  const path = Array.isArray(record.path) ? record.path : []
+  const field =
+    path
+      .map((part) => (part && typeof part === 'object' ? (part as { key?: unknown }).key : undefined))
+      .filter((key): key is string | number => typeof key === 'string' || typeof key === 'number')
+      .join('.') || fallback
+
   return new ValidationError({
     field,
-    reason: issue?.message || 'Validation failed',
+    reason: message,
   })
 }
 
