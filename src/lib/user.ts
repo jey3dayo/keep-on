@@ -109,6 +109,113 @@ function getRetryableDbReason(error: unknown): string | null {
   return null
 }
 
+type ExistingUserRecord = Awaited<ReturnType<typeof getUserByClerkId>> | null
+
+function parseUserRecord(user: unknown, source: 'existing' | 'upsert', logClerkId: string) {
+  if (!user) {
+    return null
+  }
+  const parsed = safeParseUser(user)
+  if (!parsed.success) {
+    logError('user.schema:invalid', { clerkId: logClerkId, source, issues: parsed.issues })
+    return null
+  }
+  return parsed.output
+}
+
+async function fetchExistingUserWithRetry(clerkId: string, dbTimeoutMs: number): Promise<ExistingUserRecord> {
+  const fetchExisting = (label: string) =>
+    logSpan(label, () => getUserByClerkId(clerkId), { clerkId }, { timeoutMs: dbTimeoutMs })
+
+  try {
+    return await fetchExisting('syncUser.getUserByClerkId')
+  } catch (error) {
+    const retryReason = getRetryableDbReason(error)
+    if (!retryReason) {
+      throw error
+    }
+    logWarn('syncUser.getUserByClerkId:reset', { clerkId, timeoutMs: dbTimeoutMs, reason: retryReason })
+    await resetDb(`syncUser.getUserByClerkId ${retryReason}`)
+    return await fetchExisting('syncUser.getUserByClerkId.retry')
+  }
+}
+
+async function handleExistingUser(params: {
+  clerkId: string
+  existing: ReturnType<typeof parseUserRecord>
+  emailFromClaims: string | null
+  sessionClaims: unknown
+}): Promise<ReturnType<typeof parseUserRecord>> {
+  const { clerkId, existing, emailFromClaims, sessionClaims } = params
+
+  if (!existing) {
+    return null
+  }
+
+  await setUserCache(clerkId, existing)
+
+  if (!emailFromClaims) {
+    logMissingSessionEmail(clerkId, sessionClaims)
+    return existing
+  }
+
+  if (existing.email === emailFromClaims) {
+    return existing
+  }
+
+  const updated = await logSpan(
+    'syncUser.upsertUser',
+    () =>
+      upsertUser({
+        clerkId,
+        email: emailFromClaims,
+      }),
+    { clerkId, source: 'email-mismatch' }
+  )
+  const parsedUpdated = parseUserRecord(updated, 'upsert', clerkId)
+  if (parsedUpdated) {
+    await setUserCache(clerkId, parsedUpdated)
+  }
+  return parsedUpdated
+}
+
+async function upsertUserFromClaims(clerkId: string, emailFromClaims: string | null) {
+  if (!emailFromClaims) {
+    return null
+  }
+
+  const created = await logSpan(
+    'syncUser.upsertUser',
+    () =>
+      upsertUser({
+        clerkId,
+        email: emailFromClaims,
+      }),
+    { clerkId, source: 'claim-email' }
+  )
+  const parsedCreated = parseUserRecord(created, 'upsert', clerkId)
+  if (parsedCreated) {
+    await setUserCache(clerkId, parsedCreated)
+  }
+  return parsedCreated
+}
+
+async function fetchClerkUserSafe(clerkId: string): Promise<Awaited<ReturnType<typeof currentUser>> | null> {
+  try {
+    return await logSpan('syncUser.currentUser', () => currentUser(), { clerkId })
+  } catch (error) {
+    const parsed = parseClerkApiResponseError(error)
+    if (parsed) {
+      if (parsed.status === StatusCodes.UNAUTHORIZED || parsed.status === StatusCodes.FORBIDDEN) {
+        return null
+      }
+      logError('clerk.currentUser:api-error', parsed)
+      return null
+    }
+    throw error
+  }
+}
+
 /**
  * Clerk認証されたユーザーをPrismaのUserテーブルに同期
  * 存在しない場合は新規作成、存在する場合は更新
@@ -125,96 +232,27 @@ export async function syncUser() {
     return cached
   }
 
-  const parseUser = (user: unknown, source: 'existing' | 'upsert', logClerkId: string) => {
-    if (!user) {
-      return null
-    }
-    const parsed = safeParseUser(user)
-    if (!parsed.success) {
-      logError('user.schema:invalid', { clerkId: logClerkId, source, issues: parsed.issues })
-      return null
-    }
-    return parsed.output
-  }
-
   const requestTimeoutMs = getRequestTimeoutMs()
   const dbTimeoutMs = Math.max(3000, Math.min(8000, requestTimeoutMs - 2000))
-  const fetchExisting = (label: string) =>
-    logSpan(label, () => getUserByClerkId(clerkId), { clerkId }, { timeoutMs: dbTimeoutMs })
-
-  let existing = null as Awaited<ReturnType<typeof getUserByClerkId>> | null
-  try {
-    existing = await fetchExisting('syncUser.getUserByClerkId')
-  } catch (error) {
-    const retryReason = getRetryableDbReason(error)
-    if (!retryReason) {
-      throw error
-    }
-    logWarn('syncUser.getUserByClerkId:reset', { clerkId, timeoutMs: dbTimeoutMs, reason: retryReason })
-    await resetDb(`syncUser.getUserByClerkId ${retryReason}`)
-    existing = await fetchExisting('syncUser.getUserByClerkId.retry')
-  }
-  const parsedExisting = parseUser(existing, 'existing', clerkId)
+  const existing = await fetchExistingUserWithRetry(clerkId, dbTimeoutMs)
+  const parsedExisting = parseUserRecord(existing, 'existing', clerkId)
   const emailFromClaims = getEmailFromSessionClaims(sessionClaims)
-  if (parsedExisting) {
-    // キャッシュに保存
-    await setUserCache(clerkId, parsedExisting)
-
-    if (!emailFromClaims) {
-      logMissingSessionEmail(clerkId, sessionClaims)
-      return parsedExisting
-    }
-    if (parsedExisting.email !== emailFromClaims) {
-      const updated = await logSpan(
-        'syncUser.upsertUser',
-        () =>
-          upsertUser({
-            clerkId,
-            email: emailFromClaims,
-          }),
-        { clerkId, source: 'email-mismatch' }
-      )
-      const parsedUpdated = parseUser(updated, 'upsert', clerkId)
-      if (parsedUpdated) {
-        await setUserCache(clerkId, parsedUpdated)
-      }
-      return parsedUpdated
-    }
-    return parsedExisting
+  const handledExisting = await handleExistingUser({
+    clerkId,
+    existing: parsedExisting,
+    emailFromClaims,
+    sessionClaims,
+  })
+  if (handledExisting) {
+    return handledExisting
   }
 
-  if (emailFromClaims) {
-    const created = await logSpan(
-      'syncUser.upsertUser',
-      () =>
-        upsertUser({
-          clerkId,
-          email: emailFromClaims,
-        }),
-      { clerkId, source: 'claim-email' }
-    )
-    const parsedCreated = parseUser(created, 'upsert', clerkId)
-    if (parsedCreated) {
-      await setUserCache(clerkId, parsedCreated)
-    }
-    return parsedCreated
+  const createdFromClaims = await upsertUserFromClaims(clerkId, emailFromClaims)
+  if (createdFromClaims) {
+    return createdFromClaims
   }
 
-  let clerkUser: Awaited<ReturnType<typeof currentUser>> = null
-
-  try {
-    clerkUser = await logSpan('syncUser.currentUser', () => currentUser(), { clerkId })
-  } catch (error) {
-    const parsed = parseClerkApiResponseError(error)
-    if (parsed) {
-      if (parsed.status === StatusCodes.UNAUTHORIZED || parsed.status === StatusCodes.FORBIDDEN) {
-        return null
-      }
-      logError('clerk.currentUser:api-error', parsed)
-      return null
-    }
-    throw error
-  }
+  const clerkUser = await fetchClerkUserSafe(clerkId)
 
   if (!clerkUser) {
     return null
@@ -226,7 +264,7 @@ export async function syncUser() {
   }
 
   const created = await upsertUser({ clerkId: clerkUser.id, email })
-  const parsedClerkCreated = parseUser(created, 'upsert', clerkUser.id)
+  const parsedClerkCreated = parseUserRecord(created, 'upsert', clerkUser.id)
   if (parsedClerkCreated) {
     await setUserCache(clerkUser.id, parsedClerkCreated)
   }
