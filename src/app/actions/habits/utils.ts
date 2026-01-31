@@ -106,6 +106,11 @@ export async function revalidateHabitPaths(userId: string) {
     revalidatePath('/habits')
     revalidatePath('/dashboard')
     await invalidateHabitsCache(userId)
+
+    // Phase 6.2: アナリティクスキャッシュも無効化
+    // 習慣削除時はチェックイン数が変わるため
+    const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
+    await invalidateAnalyticsCache(userId)
   } catch (error) {
     // キャッシュ無効化の失敗は致命的ではないため、ログを記録して継続
     logWarn('revalidateHabitPaths:error', { userId, error: formatError(error) })
