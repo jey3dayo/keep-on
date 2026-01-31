@@ -91,9 +91,9 @@ async function createDb() {
   const client = postgres(connectionString, {
     prepare: false, // PgBouncer互換モード
     fetch_types: false, // 型フェッチを無効化（Workers環境では不要）
-    max: 1, // Hyperdrive経由なのでWorkers側は1接続で十分（Supabase無料枠対策）
+    max: 2, // 並行RSCリクエストを吸収（フェーズ2: 接続プール最適化）
     idle_timeout: 10, // アイドルタイムアウト（秒） - 早めに解放
-    connect_timeout: 5, // 接続タイムアウト（秒） - Workersの30秒制限内に収めるため短縮
+    connect_timeout: 3, // 接続タイムアウト（秒） - 失敗を速く（5→3秒に短縮）
     debug: (connectionId, query, parameters) => {
       if (!TRACE_QUERY_RE.test(query)) {
         return
@@ -103,7 +103,7 @@ async function createDb() {
       logInfo('db.query.dispatch', { connectionId, query: trimmed, paramsCount })
     },
     connection: {
-      statement_timeout: 8000, // クエリのハングを防ぐ（ミリ秒） - 早期失敗
+      statement_timeout: 5000, // クエリのハングを防ぐ（ミリ秒） - 失敗を速く（8000→5000msに短縮）
     },
   })
 
