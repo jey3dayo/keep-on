@@ -4,7 +4,7 @@ import { formatError, logError, logInfo, logWarn, nowMs } from '@/lib/logging'
  * プロファイリング付きクエリ実行
  *
  * クエリ関数をラップして実行時間を計測し、ログに記録します。
- * スローク��リ（100ms以上）は警告ログとして出力します。
+ * スロークエリ（100ms以上）は警告ログとして出力します。
  *
  * @param name - クエリ名（例: "query.getHabitById"）
  * @param queryFn - 実行するクエリ関数
