@@ -27,6 +27,57 @@ export function isTimeoutError(error: unknown): error is TimeoutError {
   return (error as { name?: string }).name === 'TimeoutError'
 }
 
+/**
+ * データベースエラーかどうかを判定
+ *
+ * タイムアウトエラー、接続エラー、ネットワークエラー、
+ * クエリエラーなど、リトライ可能なDB関連エラーを検出します。
+ */
+export function isDatabaseError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false
+  }
+
+  const message = 'message' in error && typeof error.message === 'string' ? error.message.toLowerCase() : ''
+  const code = 'code' in error && typeof error.code === 'string' ? error.code.toUpperCase() : ''
+
+  // タイムアウトエラー
+  if (isTimeoutError(error)) {
+    return true
+  }
+
+  // エラーコードによる判定
+  if (
+    code === 'ETIMEDOUT' ||
+    code === 'ESOCKETTIMEDOUT' ||
+    code === 'ECONNREFUSED' ||
+    code === 'ENOTFOUND' ||
+    code === 'EHOSTUNREACH' ||
+    code === 'ECONNRESET' ||
+    code === 'EPIPE' ||
+    code === 'ECONNABORTED'
+  ) {
+    return true
+  }
+
+  // メッセージによる判定
+  if (
+    message.includes('connection') ||
+    message.includes('timeout') ||
+    message.includes('statement_timeout') ||
+    message.includes('terminated') ||
+    message.includes('closed') ||
+    message.includes('reset') ||
+    message.includes('connect') ||
+    message.includes('postgres') ||
+    message.includes('database')
+  ) {
+    return true
+  }
+
+  return false
+}
+
 let cachedLogLevel: LogLevel | null = null
 
 function resolveLogLevel(): LogLevel {
