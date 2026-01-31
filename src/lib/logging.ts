@@ -32,50 +32,23 @@ export function isTimeoutError(error: unknown): error is TimeoutError {
  *
  * タイムアウトエラー、接続エラー、ネットワークエラー、
  * クエリエラーなど、リトライ可能なDB関連エラーを検出します。
+ *
+ * schemas/db.ts の classifyConnectionError() を使用して
+ * 型安全にエラーを分類します。
  */
 export function isDatabaseError(error: unknown): boolean {
-  if (!error || typeof error !== 'object') {
-    return false
-  }
+  // classifyConnectionError() を遅延インポートして使用
+  // これにより循環依存を回避しつつ、型安全なエラー分類を利用
+  const { classifyConnectionError } = require('@/schemas/db')
+  const errorType = classifyConnectionError(error)
 
-  const message = 'message' in error && typeof error.message === 'string' ? error.message.toLowerCase() : ''
-  const code = 'code' in error && typeof error.code === 'string' ? error.code.toUpperCase() : ''
-
-  // タイムアウトエラー
-  if (isTimeoutError(error)) {
-    return true
-  }
-
-  // エラーコードによる判定
-  if (
-    code === 'ETIMEDOUT' ||
-    code === 'ESOCKETTIMEDOUT' ||
-    code === 'ECONNREFUSED' ||
-    code === 'ENOTFOUND' ||
-    code === 'EHOSTUNREACH' ||
-    code === 'ECONNRESET' ||
-    code === 'EPIPE' ||
-    code === 'ECONNABORTED'
-  ) {
-    return true
-  }
-
-  // メッセージによる判定
-  if (
-    message.includes('connection') ||
-    message.includes('timeout') ||
-    message.includes('statement_timeout') ||
-    message.includes('terminated') ||
-    message.includes('closed') ||
-    message.includes('reset') ||
-    message.includes('connect') ||
-    message.includes('postgres') ||
-    message.includes('database')
-  ) {
-    return true
-  }
-
-  return false
+  // 'unknown' と 'auth' 以外はリトライ対象のDB関連エラー
+  // - 'timeout': タイムアウトエラー（リトライ可能）
+  // - 'network': ネットワークエラー（リトライ可能）
+  // - 'connection': 接続エラー（リトライ可能）
+  // - 'auth': 認証エラー（リトライ不可 - 設定の問題）
+  // - 'unknown': 不明なエラー（リトライ不可 - 予期しないエラー）
+  return errorType === 'timeout' || errorType === 'network' || errorType === 'connection'
 }
 
 let cachedLogLevel: LogLevel | null = null
