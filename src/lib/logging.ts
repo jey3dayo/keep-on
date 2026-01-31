@@ -1,4 +1,5 @@
-type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+import type { LogLevel } from '@/schemas/logging'
+import { formatErrorObject, parseLogLevel } from '@/schemas/logging'
 
 const LOG_LEVEL_ORDER: Record<LogLevel, number> = {
   debug: 10,
@@ -59,11 +60,7 @@ function resolveLogLevel(): LogLevel {
   }
 
   const rawLevel = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.LOG_LEVEL
-  const normalized = typeof rawLevel === 'string' ? rawLevel.toLowerCase() : ''
-  cachedLogLevel =
-    normalized === 'debug' || normalized === 'info' || normalized === 'warn' || normalized === 'error'
-      ? (normalized as LogLevel)
-      : 'info'
+  cachedLogLevel = parseLogLevel(rawLevel)
 
   return cachedLogLevel
 }
@@ -80,10 +77,7 @@ export function nowMs(): number {
 }
 
 export function formatError(error: unknown): { name: string; message: string } {
-  if (error instanceof Error) {
-    return { name: error.name, message: error.message }
-  }
-  return { name: 'UnknownError', message: String(error) }
+  return formatErrorObject(error)
 }
 
 function formatLine(message: string, data?: Record<string, unknown>): string {
