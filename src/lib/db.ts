@@ -55,11 +55,58 @@ function classifyConnectionError(error: unknown): string {
     return 'unknown'
   }
   const message = 'message' in error && typeof error.message === 'string' ? error.message : ''
-  if (message.includes('timeout')) return 'timeout'
-  if (message.includes('ECONNREFUSED') || message.includes('ENOTFOUND')) return 'network'
-  if (message.includes('authentication') || message.includes('password')) return 'auth'
-  if (message.includes('ECONNRESET') || message.includes('connection')) return 'connection'
+  if (message.includes('timeout')) {
+    return 'timeout'
+  }
+  if (message.includes('ECONNREFUSED') || message.includes('ENOTFOUND')) {
+    return 'network'
+  }
+  if (message.includes('authentication') || message.includes('password')) {
+    return 'auth'
+  }
+  if (message.includes('ECONNRESET') || message.includes('connection')) {
+    return 'connection'
+  }
   return 'unknown'
+}
+
+// Phase 4: 接続プローブ強化 + 接続クリーンアップ
+async function probeConnection(
+  client: DbClient,
+  source: ConnectionSource,
+  meta: Record<string, unknown>
+): Promise<{ pid: number | null; db: string | null }> {
+  const probeStart = nowMs()
+  logInfo('db.connection.probe:start', { source, ...meta })
+
+  try {
+    // Phase 4.1: 接続状態のクリーンアップ
+    await client.unsafe('DISCARD ALL')
+    logInfo('db.connection:cleanup', { source, ...meta })
+
+    // Phase 4.2: 接続情報取得
+    const result = await client.unsafe<{ pid: number; db: string }[]>(
+      'SELECT pg_backend_pid() as pid, current_database() as db'
+    )
+    const pid = result[0]?.pid ?? null
+    const db = result[0]?.db ?? null
+
+    const ms = Math.round(nowMs() - probeStart)
+    logInfo('db.connection.probe:end', { source, ...meta, ms, pid, db })
+
+    return { pid, db }
+  } catch (error) {
+    const ms = Math.round(nowMs() - probeStart)
+    const errorType = classifyConnectionError(error)
+    logWarn('db.connection.probe:error', {
+      source,
+      ...meta,
+      ms,
+      errorType,
+      error: formatError(error),
+    })
+    throw error
+  }
 }
 
 async function getConnectionInfo(): Promise<ConnectionInfo> {
@@ -120,16 +167,9 @@ async function createDb() {
     },
   })
 
-  const probeStart = nowMs()
-  logInfo('db.connection.probe:start', { source, ...meta })
   try {
-    await client.unsafe('select 1')
-    const ms = Math.round(nowMs() - probeStart)
-    logInfo('db.connection.probe:end', { source, ...meta, ms })
+    await probeConnection(client, source, meta)
   } catch (error) {
-    const ms = Math.round(nowMs() - probeStart)
-    const errorType = classifyConnectionError(error)
-    logWarn('db.connection.probe:error', { source, ...meta, ms, errorType, error: formatError(error) })
     try {
       await client.end({ timeout: 1 })
     } catch (closeError) {

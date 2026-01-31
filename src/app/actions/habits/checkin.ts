@@ -186,6 +186,10 @@ async function performCheckin(params: {
     return
   }
 
+  // Phase 6.2: キャッシュ無効化
+  const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
+  await invalidateAnalyticsCache(userId)
+
   await revalidateHabitPaths(userId)
 }
 

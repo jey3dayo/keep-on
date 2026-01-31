@@ -3,16 +3,8 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
-import { resetDb } from '@/lib/db'
-import {
-  createRequestMeta,
-  formatError,
-  isTimeoutError,
-  logInfo,
-  logSpan,
-  logSpanOptional,
-  logWarn,
-} from '@/lib/logging'
+import { withDbRetry } from '@/lib/db-retry'
+import { createRequestMeta, logInfo, logSpanOptional } from '@/lib/logging'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
@@ -51,29 +43,11 @@ export default async function DashboardPage() {
     redirect(SIGN_IN_PATH)
   }
 
-  let habits: Awaited<ReturnType<typeof getHabitsWithProgress>>
-  try {
-    habits = await logSpan(
-      'dashboard.habits',
-      async () => {
-        try {
-          return await getHabitsWithProgress(user.id, user.clerkId, dateKey, user.weekStart)
-        } catch (error) {
-          logWarn('dashboard.habits:retry', { ...requestMeta, error: formatError(error) })
-          await resetDb('dashboard.habits retry')
-          return await getHabitsWithProgress(user.id, user.clerkId, dateKey, user.weekStart)
-        }
-      },
-      requestMeta,
-      { timeoutMs }
-    )
-  } catch (error) {
-    if (isTimeoutError(error)) {
-      logWarn('dashboard.habits:reset', { ...requestMeta, timeoutMs })
-      await resetDb('dashboard.habits timeout')
-    }
-    throw error
-  }
+  const habits = await withDbRetry(
+    'dashboard.habits',
+    () => getHabitsWithProgress(user.id, user.clerkId, dateKey, user.weekStart),
+    { timeoutMs }
+  )
 
   logInfo('request.dashboard:end', {
     ...requestMeta,

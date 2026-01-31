@@ -1,0 +1,63 @@
+import { formatError, isTimeoutError, logSpan, logWarn } from '@/lib/logging'
+import { resetDb } from './db'
+
+interface RetryOptions {
+  maxRetries?: number
+  retryOn?: (error: unknown) => boolean
+  onRetry?: (attempt: number, error: unknown) => Promise<void>
+  timeoutMs?: number
+}
+
+/**
+ * データベースクエリをリトライ付きで実行
+ *
+ * @param name - クエリ名（ログ用）
+ * @param fn - 実行する関数
+ * @param options - リトライオプション
+ * @returns クエリ結果
+ *
+ * @example
+ * ```typescript
+ * const habits = await withDbRetry(
+ *   'dashboard.habits',
+ *   () => getHabitsWithProgress(userId, clerkId, dateKey, weekStart),
+ *   { timeoutMs: 8000 }
+ * )
+ * ```
+ */
+export async function withDbRetry<T>(name: string, fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
+  const {
+    maxRetries = 1,
+    retryOn = isTimeoutError,
+    onRetry = async () => {
+      await resetDb(`${name} retry`)
+    },
+    timeoutMs,
+  } = options
+
+  let lastError: unknown
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      if (timeoutMs) {
+        return await logSpan(name, fn, {}, { timeoutMs })
+      }
+      return await fn()
+    } catch (error) {
+      lastError = error
+
+      if (attempt < maxRetries && retryOn(error)) {
+        logWarn(`${name}:retry`, {
+          attempt: attempt + 1,
+          maxRetries,
+          error: formatError(error),
+        })
+        await onRetry(attempt + 1, error)
+      } else {
+        throw error
+      }
+    }
+  }
+
+  throw lastError
+}

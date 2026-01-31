@@ -3,6 +3,7 @@ import { DEFAULT_WEEK_START, type WeekStart } from '@/constants/habit'
 import { users } from '@/db/schema'
 import { invalidateUserCache } from '@/lib/cache/user-cache'
 import { getDb } from '@/lib/db'
+import { profileQuery } from '@/lib/queries/profiler'
 
 /**
  * ユーザーのupsert入力データ
@@ -19,22 +20,28 @@ export interface UpsertUserInput {
  * @returns upsertされたユーザー
  */
 export async function upsertUser(input: UpsertUserInput) {
-  const db = await getDb()
-  const [user] = await db
-    .insert(users)
-    .values({
-      clerkId: input.clerkId,
-      email: input.email,
-    })
-    .onConflictDoUpdate({
-      target: users.clerkId,
-      set: {
-        email: input.email,
-        updatedAt: new Date(),
-      },
-    })
-    .returning()
-  return user
+  return await profileQuery(
+    'query.upsertUser',
+    async () => {
+      const db = await getDb()
+      const [user] = await db
+        .insert(users)
+        .values({
+          clerkId: input.clerkId,
+          email: input.email,
+        })
+        .onConflictDoUpdate({
+          target: users.clerkId,
+          set: {
+            email: input.email,
+            updatedAt: new Date(),
+          },
+        })
+        .returning()
+      return user
+    },
+    { clerkId: input.clerkId }
+  )
 }
 
 /**
@@ -44,9 +51,15 @@ export async function upsertUser(input: UpsertUserInput) {
  * @returns ユーザーまたは null
  */
 export async function getUserByClerkId(clerkId: string) {
-  const db = await getDb()
-  const [user] = await db.select().from(users).where(eq(users.clerkId, clerkId))
-  return user ?? null
+  return await profileQuery(
+    'query.getUserByClerkId',
+    async () => {
+      const db = await getDb()
+      const [user] = await db.select().from(users).where(eq(users.clerkId, clerkId))
+      return user ?? null
+    },
+    { clerkId }
+  )
 }
 
 /**
@@ -56,9 +69,15 @@ export async function getUserByClerkId(clerkId: string) {
  * @returns 週開始日設定 ('monday' | 'sunday')
  */
 export async function getUserWeekStart(clerkId: string): Promise<WeekStart> {
-  const db = await getDb()
-  const [user] = await db.select({ weekStart: users.weekStart }).from(users).where(eq(users.clerkId, clerkId))
-  return (user?.weekStart as WeekStart) ?? DEFAULT_WEEK_START
+  return await profileQuery(
+    'query.getUserWeekStart',
+    async () => {
+      const db = await getDb()
+      const [user] = await db.select({ weekStart: users.weekStart }).from(users).where(eq(users.clerkId, clerkId))
+      return (user?.weekStart as WeekStart) ?? DEFAULT_WEEK_START
+    },
+    { clerkId }
+  )
 }
 
 /**
@@ -68,9 +87,15 @@ export async function getUserWeekStart(clerkId: string): Promise<WeekStart> {
  * @returns 週開始日設定 ('monday' | 'sunday')
  */
 export async function getUserWeekStartById(userId: string): Promise<WeekStart> {
-  const db = await getDb()
-  const [user] = await db.select({ weekStart: users.weekStart }).from(users).where(eq(users.id, userId))
-  return (user?.weekStart as WeekStart) ?? DEFAULT_WEEK_START
+  return await profileQuery(
+    'query.getUserWeekStartById',
+    async () => {
+      const db = await getDb()
+      const [user] = await db.select({ weekStart: users.weekStart }).from(users).where(eq(users.id, userId))
+      return (user?.weekStart as WeekStart) ?? DEFAULT_WEEK_START
+    },
+    { userId }
+  )
 }
 
 /**
@@ -81,11 +106,17 @@ export async function getUserWeekStartById(userId: string): Promise<WeekStart> {
  * @returns 更新されたユーザー
  */
 export async function updateUserWeekStart(clerkId: string, weekStart: WeekStart) {
-  const db = await getDb()
-  const [user] = await db.update(users).set({ weekStart }).where(eq(users.clerkId, clerkId)).returning()
+  return await profileQuery(
+    'query.updateUserWeekStart',
+    async () => {
+      const db = await getDb()
+      const [user] = await db.update(users).set({ weekStart }).where(eq(users.clerkId, clerkId)).returning()
 
-  // キャッシュ無効化
-  await invalidateUserCache(clerkId)
+      // キャッシュ無効化
+      await invalidateUserCache(clerkId)
 
-  return user
+      return user
+    },
+    { clerkId, weekStart }
+  )
 }
