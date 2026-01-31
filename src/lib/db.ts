@@ -1,8 +1,16 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
+import {
+  DB_CONNECT_TIMEOUT,
+  DB_CONNECTION_POOL_MAX,
+  DB_IDLE_TIMEOUT,
+  DB_MAX_LIFETIME,
+  DB_STATEMENT_TIMEOUT,
+} from '@/constants/db'
 import * as schema from '@/db/schema'
 import { formatError, logError, logInfo, logWarn } from '@/lib/logging'
 import { safeParseCloudflareEnvBindings } from '@/schemas/cloudflare'
+import { classifyConnectionError } from '@/schemas/db'
 
 const TRACE_QUERY_RE = /from "User"|from "Habit"|from "Checkin"/
 
@@ -24,8 +32,6 @@ function normalizeConnectionString(raw: string): string {
 }
 
 type ConnectionSource = 'hyperdrive' | 'env'
-
-type ConnectionErrorType = 'timeout' | 'network' | 'auth' | 'connection' | 'unknown'
 
 interface ConnectionInfo {
   connectionString: string
@@ -50,26 +56,6 @@ function nowMs(): number {
     return performance.now()
   }
   return Date.now()
-}
-
-function classifyConnectionError(error: unknown): ConnectionErrorType {
-  if (!error || typeof error !== 'object') {
-    return 'unknown'
-  }
-  const message = 'message' in error && typeof error.message === 'string' ? error.message : ''
-  if (message.includes('timeout')) {
-    return 'timeout'
-  }
-  if (message.includes('ECONNREFUSED') || message.includes('ENOTFOUND')) {
-    return 'network'
-  }
-  if (message.includes('authentication') || message.includes('password')) {
-    return 'auth'
-  }
-  if (message.includes('ECONNRESET') || message.includes('connection')) {
-    return 'connection'
-  }
-  return 'unknown'
 }
 
 /**
@@ -157,10 +143,10 @@ async function createDb() {
   const client = postgres(connectionString, {
     prepare: false, // PgBouncer互換モード
     fetch_types: false, // 型フェッチを無効化（Workers環境では不要）
-    max: 2, // 並行RSCリクエストを吸収（フェーズ2: 接続プール最適化）
-    idle_timeout: 5, // アイドルタイムアウト（秒） - 早めに解放（10→5秒に短縮、フェーズ3）
-    connect_timeout: 3, // 接続タイムアウト（秒） - 失敗を速く（5→3秒に短縮）
-    max_lifetime: 30, // 接続の最大生存時間（秒） - 定期的にリフレッシュ（フェーズ3）
+    max: DB_CONNECTION_POOL_MAX, // 並行RSCリクエストを吸収
+    idle_timeout: DB_IDLE_TIMEOUT, // アイドルタイムアウト（秒） - 早めに解放
+    connect_timeout: DB_CONNECT_TIMEOUT, // 接続タイムアウト（秒） - 失敗を速く検出
+    max_lifetime: DB_MAX_LIFETIME, // 接続の最大生存時間（秒） - 定期的にリフレッシュ
     debug: (connectionId, query, parameters) => {
       if (!TRACE_QUERY_RE.test(query)) {
         return
@@ -170,7 +156,7 @@ async function createDb() {
       logInfo('db.query.dispatch', { connectionId, query: trimmed, paramsCount })
     },
     connection: {
-      statement_timeout: 5000, // クエリのハングを防ぐ（ミリ秒） - 失敗を速く（8000→5000msに短縮）
+      statement_timeout: DB_STATEMENT_TIMEOUT, // クエリのハングを防ぐ（ミリ秒）
     },
   })
 
