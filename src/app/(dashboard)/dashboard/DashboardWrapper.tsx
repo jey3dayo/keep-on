@@ -8,6 +8,7 @@ import { createHabit } from '@/app/actions/habits/create'
 import type { IconName } from '@/components/basics/Icon'
 import { DesktopDashboard } from '@/components/streak/DesktopDashboard'
 import { StreakDashboard } from '@/components/streak/StreakDashboard'
+import { MAX_CONCURRENT_CHECKINS } from '@/constants/dashboard'
 import {
   COMPLETION_THRESHOLD,
   DEFAULT_HABIT_COLOR,
@@ -42,6 +43,7 @@ export function DashboardWrapper({
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
   const inFlightCheckinsRef = useRef<Set<string>>(new Set())
+  const activeRequestCountRef = useRef(0)
   const hasRefreshedForTimeZone = useRef(false)
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -281,6 +283,36 @@ export function DashboardWrapper({
     appToast.error('習慣の作成に失敗しました', result.error)
   }
 
+  const processIncompleteCheckin = async (habitId: string, dateKey: string) => {
+    updateHabitProgress(habitId, 1)
+    addPendingCheckin(habitId)
+
+    let shouldRollback = true
+
+    try {
+      const { ok, result, error } = await runAddCheckin(habitId, dateKey)
+
+      if (ok) {
+        shouldRollback = false
+        scheduleRefresh()
+        return
+      }
+
+      if (result) {
+        appToast.error('チェックインの切り替えに失敗しました', result.error)
+        return
+      }
+      appToast.error('チェックインの切り替えに失敗しました', error)
+    } catch (error) {
+      appToast.error('チェックインの切り替えに失敗しました', error)
+    } finally {
+      if (shouldRollback) {
+        updateHabitProgress(habitId, -1)
+      }
+      clearPendingCheckin(habitId)
+    }
+  }
+
   const handleToggleCheckin = async (habitId: string) => {
     if (pendingCheckins.has(habitId)) {
       return
@@ -293,48 +325,26 @@ export function DashboardWrapper({
       return
     }
 
+    // グローバル同時リクエスト制限
+    if (activeRequestCountRef.current >= MAX_CONCURRENT_CHECKINS) {
+      clearCheckinInFlight(habitId)
+      return
+    }
+
+    activeRequestCountRef.current++
     try {
       const isCompleted = targetHabit.currentProgress >= targetHabit.frequency
       const now = new Date()
       const dateKey = formatDateKey(now)
 
       if (isCompleted) {
-        try {
-          await handleCompletedCheckin(habitId, dateKey)
-        } finally {
-          clearCheckinInFlight(habitId)
-        }
+        await handleCompletedCheckin(habitId, dateKey)
         return
       }
 
-      updateHabitProgress(habitId, 1)
-      addPendingCheckin(habitId)
-
-      let shouldRollback = true
-
-      try {
-        const { ok, result, error } = await runAddCheckin(habitId, dateKey)
-
-        if (ok) {
-          shouldRollback = false
-          scheduleRefresh()
-          return
-        }
-
-        if (result) {
-          appToast.error('チェックインの切り替えに失敗しました', result.error)
-          return
-        }
-        appToast.error('チェックインの切り替えに失敗しました', error)
-      } catch (error) {
-        appToast.error('チェックインの切り替えに失敗しました', error)
-      } finally {
-        if (shouldRollback) {
-          updateHabitProgress(habitId, -1)
-        }
-        clearPendingCheckin(habitId)
-      }
+      await processIncompleteCheckin(habitId, dateKey)
     } finally {
+      activeRequestCountRef.current--
       clearCheckinInFlight(habitId)
     }
   }

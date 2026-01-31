@@ -43,7 +43,7 @@ KeepOn は、習慣形成をサポートするモダンな Web アプリケー�
 
 - 🔁 **Prisma → Drizzle**: ORM を Drizzle ORM + drizzle-kit に移行
 - 🧹 **Prisma 関連削除**: 依存/スキーマ/生成物を削除
-- 🧩 **DB コマンド更新**: db:* を Drizzle ベースに整理
+- 🧩 **DB コマンド更新**: db:\* を Drizzle ベースに整理
 
 ### v0.2.0 (2026-01-24) - メジャーアップグレード & IaC完全自動化
 
@@ -139,12 +139,12 @@ pnpm test:coverage     # カバレッジ付きテスト実行
 
 ```typescript
 // src/lib/utils.test.ts
-import { describe, it, expect } from 'vitest';
-import { myFunction } from './utils';
+import { describe, it, expect } from "vitest";
+import { myFunction } from "./utils";
 
-describe('myFunction', () => {
-  it('正しく動作する', () => {
-    expect(myFunction()).toBe('expected');
+describe("myFunction", () => {
+  it("正しく動作する", () => {
+    expect(myFunction()).toBe("expected");
   });
 });
 ```
@@ -173,6 +173,11 @@ pnpm cf:deploy        # Cloudflare デプロイ
 pnpm cf:preview       # ローカルプレビュー
 pnpm cf:logs          # ログ確認
 pnpm deploy           # cf:build + cf:deploy
+
+## デバッグ
+pnpm test:supabase           # Supabase API 動作確認
+pnpm test:db-permissions     # DB 権限確認
+pnpm fix:db-permissions      # DB 権限自動修正
 
 # mise タスク
 mise run format       # Prettier 整形
@@ -246,6 +251,10 @@ GitHub Secrets に以下を設定後、`main` ブランチへのプッシュで�
 - **Supabase 接続**: Transaction Mode (port 6543) + `?pgbouncer=true` を使用
 - **Cloudflare Workers**: バンドルサイズ 25MB gzipped 制限に注意
 - **dotenvx**: 本番運用時は `.env` を暗号化してコミット
+
+## トラブルシューティング
+
+トラブルシューティングは `.claude/rules/troubleshooting.md` に移動しました。
 
 ## 開発の進捗
 

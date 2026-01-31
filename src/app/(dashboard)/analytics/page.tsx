@@ -67,9 +67,14 @@ export default async function AnalyticsPage() {
 
   // 待ち時間短縮のため集計クエリを並列実行
   const [habits, todayCheckins, totalCheckins, checkinsByDate] = await Promise.all([
-    logSpan('analytics.habits', () => getHabitsWithProgress(user.id, user.clerkId, dateKey), requestMeta, {
-      timeoutMs,
-    }),
+    logSpan(
+      'analytics.habits',
+      () => getHabitsWithProgress(user.id, user.clerkId, dateKey, user.weekStart),
+      requestMeta,
+      {
+        timeoutMs,
+      }
+    ),
     logSpan('analytics.checkins.today', () => getCheckinsByUserAndDate(user.id, dateKey), requestMeta, { timeoutMs }),
     logSpan('analytics.checkins.total', () => getTotalCheckinsByUserId(user.id), requestMeta, { timeoutMs }),
     logSpan(

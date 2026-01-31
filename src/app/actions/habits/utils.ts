@@ -1,9 +1,17 @@
+import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
 import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
-import { AuthorizationError, DatabaseError, NotFoundError, UnauthorizedError } from '@/lib/errors/habit'
+import {
+  AuthorizationError,
+  DatabaseError,
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from '@/lib/errors/habit'
 import { type SerializableHabitError, serializeHabitError } from '@/lib/errors/serializable'
 import { getHabitById } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
+import { validateHabitId } from '@/validators/habit-action'
 
 export type HabitActionResult<T = void> = ServerActionResultAsync<T, SerializableHabitError>
 
@@ -39,13 +47,19 @@ export async function runHabitMutation(
   mutation: HabitMutation,
   options: { precondition?: HabitPrecondition } = {}
 ): HabitActionResult {
+  const validation = validateHabitId(habitId)
+  if (!Result.isSuccess(validation)) {
+    return actionError(serializeHabitError(validation.error))
+  }
+
+  const validatedHabitId = validation.value
   const userIdResult = await requireUserId()
 
   if (!userIdResult.ok) {
     return userIdResult
   }
 
-  const habitResult = await requireOwnedHabit(habitId, userIdResult.data)
+  const habitResult = await requireOwnedHabit(validatedHabitId, userIdResult.data)
 
   if (!habitResult.ok) {
     return habitResult
@@ -59,7 +73,7 @@ export async function runHabitMutation(
     }
   }
 
-  const mutated = await mutation(habitId, userIdResult.data)
+  const mutated = await mutation(validatedHabitId, userIdResult.data)
 
   if (!mutated) {
     return actionError(serializeHabitError(new NotFoundError()))
@@ -71,7 +85,12 @@ export async function runHabitMutation(
 }
 
 export function serializeActionError(error: unknown, detail: string): SerializableHabitError {
-  if (error instanceof UnauthorizedError || error instanceof AuthorizationError || error instanceof NotFoundError) {
+  if (
+    error instanceof UnauthorizedError ||
+    error instanceof AuthorizationError ||
+    error instanceof NotFoundError ||
+    error instanceof ValidationError
+  ) {
     return serializeHabitError(error)
   }
 

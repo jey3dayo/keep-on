@@ -8,6 +8,7 @@ type Habit = InferSelectModel<typeof import('@/db/schema').habits>
 vi.mock('@/lib/db', () => ({
   getDb: vi.fn().mockResolvedValue({
     select: vi.fn().mockReturnThis(),
+    selectDistinctOn: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     orderBy: vi.fn().mockResolvedValue([]),
@@ -197,9 +198,6 @@ describe('getHabitsWithProgress', () => {
       .mockResolvedValueOnce(habits)
       .mockResolvedValueOnce([
         { id: 'checkin-1', habitId: 'habit-daily', date: new Date(2024, 0, 17), createdAt: baseDate },
-        { id: 'checkin-2', habitId: 'habit-daily', date: new Date(2024, 0, 16), createdAt: baseDate },
-        { id: 'checkin-3', habitId: 'habit-weekly', date: new Date(2024, 0, 15), createdAt: baseDate },
-        { id: 'checkin-4', habitId: 'habit-weekly', date: new Date(2024, 0, 16), createdAt: baseDate },
         { id: 'checkin-5', habitId: 'habit-weekly', date: new Date(2024, 0, 17), createdAt: baseDate },
       ])
 
@@ -211,12 +209,12 @@ describe('getHabitsWithProgress', () => {
     const weekly = result.find((habit) => habit.id === 'habit-weekly')
 
     expect(daily?.currentProgress).toBe(1)
-    expect(daily?.streak).toBe(2)
+    expect(daily?.streak).toBe(1)
     expect(daily?.completionRate).toBe(100)
 
-    expect(weekly?.currentProgress).toBe(3)
-    expect(weekly?.streak).toBe(1)
-    expect(weekly?.completionRate).toBe(100)
+    expect(weekly?.currentProgress).toBe(1)
+    expect(weekly?.streak).toBe(0)
+    expect(weekly?.completionRate).toBe(33)
   })
 
   it('日曜開始週でも当週のみを進捗に含める', async () => {
@@ -240,15 +238,13 @@ describe('getHabitsWithProgress', () => {
     vi.mocked(db.orderBy)
       .mockResolvedValueOnce(sundayHabits)
       .mockResolvedValueOnce([
-        { id: 'checkin-prev', habitId: 'habit-weekly-sun', date: new Date(2024, 0, 2), createdAt: sundayBaseDate },
-        { id: 'checkin-sun', habitId: 'habit-weekly-sun', date: new Date(2024, 0, 7), createdAt: sundayBaseDate },
         { id: 'checkin-mon', habitId: 'habit-weekly-sun', date: new Date(2024, 0, 8), createdAt: sundayBaseDate },
       ])
 
     const result = await getHabitsWithProgress('user-123', 'clerk-123', sundayBaseDate)
 
     expect(result).toHaveLength(1)
-    expect(result[0]?.currentProgress).toBe(2)
+    expect(result[0]?.currentProgress).toBe(1)
   })
 })
 

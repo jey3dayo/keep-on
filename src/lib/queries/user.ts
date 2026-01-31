@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { DEFAULT_WEEK_START, type WeekStart } from '@/constants/habit'
 import { users } from '@/db/schema'
+import { invalidateUserCache } from '@/lib/cache/user-cache'
 import { getDb } from '@/lib/db'
 
 /**
@@ -82,5 +83,9 @@ export async function getUserWeekStartById(userId: string): Promise<WeekStart> {
 export async function updateUserWeekStart(clerkId: string, weekStart: WeekStart) {
   const db = await getDb()
   const [user] = await db.update(users).set({ weekStart }).where(eq(users.clerkId, clerkId)).returning()
+
+  // キャッシュ無効化
+  await invalidateUserCache(clerkId)
+
   return user
 }

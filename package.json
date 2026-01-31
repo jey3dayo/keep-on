@@ -27,6 +27,9 @@
     "env:encrypt": "dotenvx encrypt",
     "env:decrypt": "dotenvx decrypt",
     "env:run": "dotenvx run --",
+    "test:supabase": "dotenvx run -- tsx scripts/test-supabase-api.ts",
+    "test:db-permissions": "dotenvx run -- tsx scripts/check-db-permissions.ts",
+    "fix:db-permissions": "dotenvx run -- tsx scripts/fix-db-permissions.ts",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build"
   },
@@ -96,6 +99,7 @@
     "sharp": "^0.34.5",
     "storybook": "^10.2.1",
     "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "ultracite": "7.1.1",
     "vitest": "^4.0.18",

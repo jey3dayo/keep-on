@@ -10,6 +10,20 @@ interface CreateCheckinInput {
   date: Date | string
 }
 
+interface CreateCheckinWithLimitInput {
+  habitId: string
+  date: Date | string
+  period: Period
+  frequency: number
+  weekStartDay?: WeekStartDay
+}
+
+interface CreateCheckinWithLimitResult {
+  created: boolean
+  currentCount: number
+  checkin: typeof checkins.$inferSelect | null
+}
+
 export async function getCheckinsByUserAndDate(userId: string, date: Date | string) {
   const db = await getDb()
   const dateKey = normalizeDateKey(date)
@@ -35,7 +49,40 @@ export async function createCheckin(input: CreateCheckinInput) {
     })
     .returning()
 
-  return checkin
+  return checkin ?? null
+}
+
+export async function createCheckinWithLimit(
+  input: CreateCheckinWithLimitInput
+): Promise<CreateCheckinWithLimitResult> {
+  const db = await getDb()
+  const dateKey = normalizeDateKey(input.date)
+  const { startKey, endKey } = getPeriodDateRange(dateKey, input.period, input.weekStartDay ?? 1)
+
+  return await db.transaction(async (tx) => {
+    // Serialize per-habit checkins to avoid exceeding frequency under concurrency.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${input.habitId}))`)
+
+    const result = await tx
+      .select({ count: sql<number>`count(*)::int` })
+      .from(checkins)
+      .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+
+    const currentCount = result[0]?.count ?? 0
+    if (currentCount >= input.frequency) {
+      return { created: false, currentCount, checkin: null }
+    }
+
+    const [checkin] = await tx
+      .insert(checkins)
+      .values({
+        habitId: input.habitId,
+        date: dateKey,
+      })
+      .returning()
+
+    return { created: true, currentCount: currentCount + 1, checkin: checkin ?? null }
+  })
 }
 
 export async function deleteLatestCheckinByHabitAndPeriod(

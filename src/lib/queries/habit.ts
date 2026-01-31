@@ -1,6 +1,6 @@
 import { startOfDay, startOfMonth, subDays, subMonths, subWeeks } from 'date-fns'
 import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
-import { COMPLETION_THRESHOLD, type Period, type WeekStartDay, weekStartToDay } from '@/constants/habit'
+import { COMPLETION_THRESHOLD, type Period, type WeekStart, type WeekStartDay, weekStartToDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
 import { getPeriodDateRange } from '@/lib/queries/period'
@@ -273,7 +273,8 @@ function getPreviousPeriod(date: Date, period: Period): Date {
 export async function getHabitsWithProgress(
   userId: string,
   clerkId: string,
-  date: Date | string = new Date()
+  date: Date | string = new Date(),
+  weekStart?: WeekStart
 ): Promise<HabitWithProgress[]> {
   const db = await getDb()
   const habitList = await getHabitsByUserId(userId)
@@ -288,10 +289,15 @@ export async function getHabitsWithProgress(
   const allCheckinsPromise: Promise<(typeof checkins.$inferSelect)[]> =
     habitIds.length === 0
       ? Promise.resolve([])
-      : db.select().from(checkins).where(inArray(checkins.habitId, habitIds)).orderBy(desc(checkins.date))
+      : db
+          .select()
+          .from(checkins)
+          .where(inArray(checkins.habitId, habitIds))
+          .orderBy(checkins.habitId, desc(checkins.date), desc(checkins.createdAt))
 
   // ユーザーの週開始日設定とチェックイン取得を並列化
-  const [weekStartStr, allCheckins] = await Promise.all([getUserWeekStart(clerkId), allCheckinsPromise])
+  const weekStartPromise = weekStart ? Promise.resolve(weekStart) : getUserWeekStart(clerkId)
+  const [weekStartStr, allCheckins] = await Promise.all([weekStartPromise, allCheckinsPromise])
   const weekStartDay = weekStartToDay(weekStartStr)
 
   // 習慣ごとにチェックインをグループ化

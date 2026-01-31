@@ -1,8 +1,10 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@/db/schema'
-import { formatError, logError, logInfo } from '@/lib/logging'
+import { formatError, logError, logInfo, logWarn } from '@/lib/logging'
 import { safeParseCloudflareEnvBindings } from '@/schemas/cloudflare'
+
+const TRACE_QUERY_RE = /from "User"|from "Habit"|from "Checkin"/
 
 function isWorkersRuntime(): boolean {
   return typeof globalThis !== 'undefined' && 'caches' in globalThis
@@ -39,6 +41,13 @@ function getConnectionMeta(connectionString: string): { host?: string; port?: nu
   } catch {
     return {}
   }
+}
+
+function nowMs(): number {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    return performance.now()
+  }
+  return Date.now()
 }
 
 async function getConnectionInfo(): Promise<ConnectionInfo> {
@@ -82,21 +91,49 @@ async function createDb() {
   const client = postgres(connectionString, {
     prepare: false, // PgBouncer互換モード
     fetch_types: false, // 型フェッチを無効化（Workers環境では不要）
-    max: 2, // Workers環境では最小限の接続数に抑える
-    idle_timeout: 20, // アイドルタイムアウト（秒）
+    max: 1, // Hyperdrive経由なのでWorkers側は1接続で十分（Supabase無料枠対策）
+    idle_timeout: 10, // アイドルタイムアウト（秒） - 早めに解放
     connect_timeout: 5, // 接続タイムアウト（秒） - Workersの30秒制限内に収めるため短縮
+    debug: (connectionId, query, parameters) => {
+      if (!TRACE_QUERY_RE.test(query)) {
+        return
+      }
+      const trimmed = query.replace(/\s+/g, ' ').slice(0, 200)
+      const paramsCount = Array.isArray(parameters) ? parameters.length : 0
+      logInfo('db.query.dispatch', { connectionId, query: trimmed, paramsCount })
+    },
     connection: {
-      statement_timeout: 8000, // クエリのハングを防ぐ（ミリ秒）
+      statement_timeout: 8000, // クエリのハングを防ぐ（ミリ秒） - 早期失敗
     },
   })
 
+  const probeStart = nowMs()
+  logInfo('db.connection.probe:start', { source, ...meta })
+  try {
+    await client.unsafe('select 1')
+    const ms = Math.round(nowMs() - probeStart)
+    logInfo('db.connection.probe:end', { source, ...meta, ms })
+  } catch (error) {
+    const ms = Math.round(nowMs() - probeStart)
+    logWarn('db.connection.probe:error', { source, ...meta, ms, error: formatError(error) })
+    try {
+      await client.end({ timeout: 1 })
+    } catch (closeError) {
+      logWarn('db.connection.probe:cleanup-error', { source, ...meta, error: formatError(closeError) })
+    }
+    throw error
+  }
+
+  globalForDb.__dbClient = client
   return drizzle(client, { schema })
 }
 
 type DbPromise = ReturnType<typeof createDb>
+type DbClient = ReturnType<typeof postgres>
 
 const globalForDb = globalThis as typeof globalThis & {
   __dbPromise?: DbPromise
+  __dbClient?: DbClient
 }
 
 export async function getDb() {
@@ -104,5 +141,28 @@ export async function getDb() {
     globalForDb.__dbPromise = createDb()
   }
 
-  return await globalForDb.__dbPromise
+  try {
+    return await globalForDb.__dbPromise
+  } catch (error) {
+    globalForDb.__dbClient = undefined
+    globalForDb.__dbPromise = undefined
+    throw error
+  }
+}
+
+export async function resetDb(reason?: string) {
+  const client = globalForDb.__dbClient
+  globalForDb.__dbClient = undefined
+  globalForDb.__dbPromise = undefined
+
+  if (!client) {
+    return
+  }
+
+  try {
+    const timeout = isWorkersRuntime() ? 1 : 5
+    await client.end({ timeout })
+  } catch (error) {
+    logWarn('db.connection:reset-error', { reason, error: formatError(error) })
+  }
 }
