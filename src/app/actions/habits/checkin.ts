@@ -186,7 +186,7 @@ async function performCheckin(params: {
     return
   }
 
-  // Phase 6.2: キャッシュ無効化
+  // チェックイン追加により総チェックイン数が変わるため、アナリティクスキャッシュを無効化
   const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
   await invalidateAnalyticsCache(userId)
 

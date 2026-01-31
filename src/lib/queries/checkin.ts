@@ -157,7 +157,7 @@ export async function deleteAllCheckinsByHabitAndPeriod(
 }
 
 export async function getTotalCheckinsByUserId(userId: string): Promise<number> {
-  // Phase 6.2: キャッシュから取得を試行
+  // KVキャッシュから取得を試行（TTL: 5分）
   const { getTotalCheckinsFromCache, setTotalCheckinsCache } = await import('@/lib/cache/analytics-cache')
   const cached = await getTotalCheckinsFromCache(userId)
   if (cached !== null) {

@@ -107,8 +107,8 @@ export async function revalidateHabitPaths(userId: string) {
     revalidatePath('/dashboard')
     await invalidateHabitsCache(userId)
 
-    // Phase 6.2: アナリティクスキャッシュも無効化
-    // 習慣削除時はチェックイン数が変わるため
+    // 習慣の変更（削除・アーカイブ等）によりチェックイン数が変わる可能性があるため、
+    // アナリティクスキャッシュも無効化
     const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
     await invalidateAnalyticsCache(userId)
   } catch (error) {
