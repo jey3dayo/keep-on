@@ -1,4 +1,5 @@
-type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+import type { LogLevel } from '@/schemas/logging'
+import { formatErrorObject, parseLogLevel } from '@/schemas/logging'
 
 const LOG_LEVEL_ORDER: Record<LogLevel, number> = {
   debug: 10,
@@ -27,6 +28,30 @@ export function isTimeoutError(error: unknown): error is TimeoutError {
   return (error as { name?: string }).name === 'TimeoutError'
 }
 
+/**
+ * データベースエラーかどうかを判定
+ *
+ * タイムアウトエラー、接続エラー、ネットワークエラー、
+ * クエリエラーなど、リトライ可能なDB関連エラーを検出します。
+ *
+ * schemas/db.ts の classifyConnectionError() を使用して
+ * 型安全にエラーを分類します。
+ */
+export function isDatabaseError(error: unknown): boolean {
+  // classifyConnectionError() を遅延インポートして使用
+  // これにより循環依存を回避しつつ、型安全なエラー分類を利用
+  const { classifyConnectionError } = require('@/schemas/db')
+  const errorType = classifyConnectionError(error)
+
+  // 'unknown' と 'auth' 以外はリトライ対象のDB関連エラー
+  // - 'timeout': タイムアウトエラー（リトライ可能）
+  // - 'network': ネットワークエラー（リトライ可能）
+  // - 'connection': 接続エラー（リトライ可能）
+  // - 'auth': 認証エラー（リトライ不可 - 設定の問題）
+  // - 'unknown': 不明なエラー（リトライ不可 - 予期しないエラー）
+  return errorType === 'timeout' || errorType === 'network' || errorType === 'connection'
+}
+
 let cachedLogLevel: LogLevel | null = null
 
 function resolveLogLevel(): LogLevel {
@@ -35,11 +60,7 @@ function resolveLogLevel(): LogLevel {
   }
 
   const rawLevel = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.LOG_LEVEL
-  const normalized = typeof rawLevel === 'string' ? rawLevel.toLowerCase() : ''
-  cachedLogLevel =
-    normalized === 'debug' || normalized === 'info' || normalized === 'warn' || normalized === 'error'
-      ? (normalized as LogLevel)
-      : 'info'
+  cachedLogLevel = parseLogLevel(rawLevel)
 
   return cachedLogLevel
 }
@@ -56,10 +77,7 @@ export function nowMs(): number {
 }
 
 export function formatError(error: unknown): { name: string; message: string } {
-  if (error instanceof Error) {
-    return { name: error.name, message: error.message }
-  }
-  return { name: 'UnknownError', message: String(error) }
+  return formatErrorObject(error)
 }
 
 function formatLine(message: string, data?: Record<string, unknown>): string {

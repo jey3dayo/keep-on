@@ -1,4 +1,4 @@
-import { formatError, isTimeoutError, logSpan, logWarn } from '@/lib/logging'
+import { formatError, isDatabaseError, logSpan, logWarn } from '@/lib/logging'
 import { resetDb } from './db'
 
 interface RetryOptions {
@@ -13,6 +13,9 @@ interface RetryOptions {
  *
  * リトライループ全体に対してタイムアウトを適用します。
  * 各リトライごとにタイムアウトがリセットされることはありません。
+ *
+ * デフォルトでは、タイムアウト、接続エラー、statement_timeout など、
+ * 一時的なDB関連エラー全般に対してリトライを実行します。
  *
  * @param name - クエリ名（ログ用）
  * @param fn - 実行する関数
@@ -31,7 +34,7 @@ interface RetryOptions {
 export async function withDbRetry<T>(name: string, fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const {
     maxRetries = 1,
-    retryOn = isTimeoutError,
+    retryOn = isDatabaseError,
     onRetry = async () => {
       await resetDb(`${name} retry`)
     },
