@@ -290,7 +290,7 @@ export async function getHabitsWithProgress(
     habitIds.length === 0
       ? Promise.resolve([])
       : db
-          .selectDistinctOn([checkins.habitId])
+          .select()
           .from(checkins)
           .where(inArray(checkins.habitId, habitIds))
           .orderBy(checkins.habitId, desc(checkins.date), desc(checkins.createdAt))
