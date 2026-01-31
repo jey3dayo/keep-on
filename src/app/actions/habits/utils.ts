@@ -10,6 +10,7 @@ import {
   ValidationError,
 } from '@/lib/errors/habit'
 import { type SerializableHabitError, serializeHabitError } from '@/lib/errors/serializable'
+import { formatError, logWarn } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
 import { validateHabitId } from '@/validators/habit-action'
@@ -101,7 +102,13 @@ export function serializeActionError(error: unknown, detail: string): Serializab
 }
 
 export async function revalidateHabitPaths(userId: string) {
-  revalidatePath('/habits')
-  revalidatePath('/dashboard')
-  await invalidateHabitsCache(userId)
+  try {
+    revalidatePath('/habits')
+    revalidatePath('/dashboard')
+    await invalidateHabitsCache(userId)
+  } catch (error) {
+    // キャッシュ無効化の失敗は致命的ではないため、ログを記録して継続
+    logWarn('revalidateHabitPaths:error', { userId, error: formatError(error) })
+    // エラーを上位に伝播させない
+  }
 }

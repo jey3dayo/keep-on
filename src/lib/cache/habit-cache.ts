@@ -101,9 +101,12 @@ export async function invalidateHabitsCache(userId: string): Promise<void> {
 
   try {
     const key = getCacheKey(userId)
+    // KV delete は冪等で、存在しないキーに対しても安全に実行可能
     await kv.delete(key)
     logInfo('habit-cache:invalidate', { userId })
   } catch (error) {
+    // KV delete のエラーは通常発生しないが、念のためログに記録
     logWarn('habit-cache:error:invalidate', { userId, error: formatError(error) })
+    // エラーを上位に伝播させない（キャッシュ無効化の失敗は致命的ではない）
   }
 }
