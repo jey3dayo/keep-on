@@ -25,6 +25,8 @@ function normalizeConnectionString(raw: string): string {
 
 type ConnectionSource = 'hyperdrive' | 'env'
 
+type ConnectionErrorType = 'timeout' | 'network' | 'auth' | 'connection' | 'unknown'
+
 interface ConnectionInfo {
   connectionString: string
   source: ConnectionSource
@@ -50,7 +52,7 @@ function nowMs(): number {
   return Date.now()
 }
 
-function classifyConnectionError(error: unknown): string {
+function classifyConnectionError(error: unknown): ConnectionErrorType {
   if (!error || typeof error !== 'object') {
     return 'unknown'
   }
@@ -70,7 +72,12 @@ function classifyConnectionError(error: unknown): string {
   return 'unknown'
 }
 
-// Phase 4: 接続プローブ強化 + 接続クリーンアップ
+/**
+ * 接続プローブ: 接続の健全性確認と状態クリーンアップ
+ *
+ * - DISCARD ALL で接続状態をリセット
+ * - pg_backend_pid() で接続ID・DB名を取得してログに記録
+ */
 async function probeConnection(
   client: DbClient,
   source: ConnectionSource,
@@ -80,11 +87,11 @@ async function probeConnection(
   logInfo('db.connection.probe:start', { source, ...meta })
 
   try {
-    // Phase 4.1: 接続状態のクリーンアップ
+    // 接続状態のクリーンアップ（再利用時の状態をリセット）
     await client.unsafe('DISCARD ALL')
     logInfo('db.connection:cleanup', { source, ...meta })
 
-    // Phase 4.2: 接続情報取得
+    // 接続情報取得（デバッグ用）
     const result = await client.unsafe<{ pid: number; db: string }[]>(
       'SELECT pg_backend_pid() as pid, current_database() as db'
     )
