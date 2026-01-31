@@ -8,6 +8,7 @@ import { createHabit } from '@/app/actions/habits/create'
 import type { IconName } from '@/components/basics/Icon'
 import { DesktopDashboard } from '@/components/streak/DesktopDashboard'
 import { StreakDashboard } from '@/components/streak/StreakDashboard'
+import { MAX_CONCURRENT_CHECKINS } from '@/constants/dashboard'
 import {
   COMPLETION_THRESHOLD,
   DEFAULT_HABIT_COLOR,
@@ -45,8 +46,6 @@ export function DashboardWrapper({
   const activeRequestCountRef = useRef(0)
   const hasRefreshedForTimeZone = useRef(false)
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  const MAX_CONCURRENT_CHECKINS = 2
 
   const runOptimisticUpdateForHabit = (
     habitId: string,
