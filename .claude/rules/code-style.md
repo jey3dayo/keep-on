@@ -97,6 +97,35 @@ import { drizzle } from "drizzle-orm/postgres-js";
 const db = drizzle(...);
 ```
 
+#### データベース接続のベストプラクティス
+
+**接続プールの管理:**
+
+- `getDb()` は内部で接続プールを管理し、自動的にリトライを実行
+- グローバルシングルトンパターンで接続を共有
+- Cloudflare Workers環境では最大2接続（並行RSCリクエスト対応）
+
+**エラーハンドリング:**
+
+```tsx
+// ✅ getDb() が自動的にリトライとエラー分類を処理
+try {
+  const db = await getDb();
+  const result = await db.select().from(users);
+} catch (error) {
+  // 接続エラーは既にリトライ済み
+  // ここでは最終的な失敗のみ処理
+}
+```
+
+**タイムアウト制御:**
+
+- クエリタイムアウト: 5秒（`DB_STATEMENT_TIMEOUT`）
+- 接続タイムアウト: 3秒（`DB_CONNECT_TIMEOUT`）
+- アイドルタイムアウト: 5秒（`DB_IDLE_TIMEOUT`）
+
+設定変更は `src/constants/db.ts` で一元管理されています。
+
 ### 4. 環境変数の機密情報は dotenvx で暗号化
 
 機密情報を含む環境変数は `.env` ファイルに平文で保存せず、dotenvx で暗号化してください。
@@ -113,7 +142,45 @@ pnpm env:encrypt
 pnpm env:run -- pnpm dev
 ```
 
-### 5. Edge Runtime の制約を考慮
+### 5. 定数は `src/constants/` で一元管理
+
+マジックナンバーや設定値は定数として抽出し、`src/constants/` で管理してください。
+
+**定数ファイルの配置:**
+
+- `src/constants/db.ts` - データベース接続設定
+- `src/constants/cache.ts` - キャッシュ設定
+- `src/constants/habit.ts` - 習慣関連の定数
+- `src/constants/habit-data.ts` - 習慣関連の静的データ
+
+**良い例:**
+
+```tsx
+// src/constants/db.ts
+export const DB_CONNECTION_POOL_MAX = 2;
+export const DB_IDLE_TIMEOUT = 5;
+export const DB_STATEMENT_TIMEOUT = 5000;
+
+// src/lib/db.ts
+import { DB_CONNECTION_POOL_MAX, DB_IDLE_TIMEOUT } from "@/constants/db";
+
+const client = postgres(connectionString, {
+  max: DB_CONNECTION_POOL_MAX,
+  idle_timeout: DB_IDLE_TIMEOUT,
+});
+```
+
+**悪い例:**
+
+```tsx
+// ❌ ハードコードされた値
+const client = postgres(connectionString, {
+  max: 2, // この2は何を意味する？
+  idle_timeout: 5, // なぜ5秒？
+});
+```
+
+### 6. Edge Runtime の制約を考慮
 
 Cloudflare Workers 環境では Node.js 固有 API が使用できません。
 Edge Runtime 互換のコードのみを使用してください。

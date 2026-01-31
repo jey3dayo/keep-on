@@ -1,8 +1,16 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
+import {
+  DB_CONNECT_TIMEOUT,
+  DB_CONNECTION_POOL_MAX,
+  DB_IDLE_TIMEOUT,
+  DB_MAX_LIFETIME,
+  DB_STATEMENT_TIMEOUT,
+} from '@/constants/db'
 import * as schema from '@/db/schema'
 import { formatError, logError, logInfo, logWarn } from '@/lib/logging'
 import { safeParseCloudflareEnvBindings } from '@/schemas/cloudflare'
+import { classifyConnectionError } from '@/schemas/db'
 
 const TRACE_QUERY_RE = /from "User"|from "Habit"|from "Checkin"/
 
@@ -50,6 +58,56 @@ function nowMs(): number {
   return Date.now()
 }
 
+/**
+ * 接続プローブ: 接続の健全性確認と状態クリーンアップ
+ *
+ * - DISCARD ALL で接続状態をリセット
+ * - statement_timeout を再設定（DISCARD ALL でリセットされるため）
+ * - pg_backend_pid() で接続ID・DB名を取得してログに記録
+ */
+async function probeConnection(
+  client: DbClient,
+  source: ConnectionSource,
+  meta: Record<string, unknown>
+): Promise<{ pid: number | null; db: string | null }> {
+  const probeStart = nowMs()
+  logInfo('db.connection.probe:start', { source, ...meta })
+
+  try {
+    // 接続状態のクリーンアップ（新規接続の初期化）
+    await client.unsafe('DISCARD ALL')
+    logInfo('db.connection:cleanup', { source, ...meta })
+
+    // DISCARD ALL により statement_timeout がリセットされるため再設定
+    // これがないとクエリタイムアウトが無効化され、ハングしたクエリが無制限に実行される
+    await client.unsafe(`SET statement_timeout = ${DB_STATEMENT_TIMEOUT}`)
+    logInfo('db.connection:reapply-timeout', { source, ...meta, timeoutMs: DB_STATEMENT_TIMEOUT })
+
+    // 接続情報取得（デバッグ用）
+    const result = await client.unsafe<{ pid: number; db: string }[]>(
+      'SELECT pg_backend_pid() as pid, current_database() as db'
+    )
+    const pid = result[0]?.pid ?? null
+    const db = result[0]?.db ?? null
+
+    const ms = Math.round(nowMs() - probeStart)
+    logInfo('db.connection.probe:end', { source, ...meta, ms, pid, db })
+
+    return { pid, db }
+  } catch (error) {
+    const ms = Math.round(nowMs() - probeStart)
+    const errorType = classifyConnectionError(error)
+    logWarn('db.connection.probe:error', {
+      source,
+      ...meta,
+      ms,
+      errorType,
+      error: formatError(error),
+    })
+    throw error
+  }
+}
+
 async function getConnectionInfo(): Promise<ConnectionInfo> {
   // Cloudflare Workers環境でHyperdriveが利用可能な場合
   if (isWorkersRuntime()) {
@@ -91,9 +149,10 @@ async function createDb() {
   const client = postgres(connectionString, {
     prepare: false, // PgBouncer互換モード
     fetch_types: false, // 型フェッチを無効化（Workers環境では不要）
-    max: 1, // Hyperdrive経由なのでWorkers側は1接続で十分（Supabase無料枠対策）
-    idle_timeout: 10, // アイドルタイムアウト（秒） - 早めに解放
-    connect_timeout: 5, // 接続タイムアウト（秒） - Workersの30秒制限内に収めるため短縮
+    max: DB_CONNECTION_POOL_MAX, // 並行RSCリクエストを吸収
+    idle_timeout: DB_IDLE_TIMEOUT, // アイドルタイムアウト（秒） - 早めに解放
+    connect_timeout: DB_CONNECT_TIMEOUT, // 接続タイムアウト（秒） - 失敗を速く検出
+    max_lifetime: DB_MAX_LIFETIME, // 接続の最大生存時間（秒） - 定期的にリフレッシュ
     debug: (connectionId, query, parameters) => {
       if (!TRACE_QUERY_RE.test(query)) {
         return
@@ -103,19 +162,13 @@ async function createDb() {
       logInfo('db.query.dispatch', { connectionId, query: trimmed, paramsCount })
     },
     connection: {
-      statement_timeout: 8000, // クエリのハングを防ぐ（ミリ秒） - 早期失敗
+      statement_timeout: DB_STATEMENT_TIMEOUT, // クエリのハングを防ぐ（ミリ秒）
     },
   })
 
-  const probeStart = nowMs()
-  logInfo('db.connection.probe:start', { source, ...meta })
   try {
-    await client.unsafe('select 1')
-    const ms = Math.round(nowMs() - probeStart)
-    logInfo('db.connection.probe:end', { source, ...meta, ms })
+    await probeConnection(client, source, meta)
   } catch (error) {
-    const ms = Math.round(nowMs() - probeStart)
-    logWarn('db.connection.probe:error', { source, ...meta, ms, error: formatError(error) })
     try {
       await client.end({ timeout: 1 })
     } catch (closeError) {
@@ -134,6 +187,7 @@ type DbClient = ReturnType<typeof postgres>
 const globalForDb = globalThis as typeof globalThis & {
   __dbPromise?: DbPromise
   __dbClient?: DbClient
+  __retryLock?: Promise<void>
 }
 
 export async function getDb() {
@@ -144,9 +198,56 @@ export async function getDb() {
   try {
     return await globalForDb.__dbPromise
   } catch (error) {
-    globalForDb.__dbClient = undefined
-    globalForDb.__dbPromise = undefined
-    throw error
+    // 接続失敗時はプールをクリアして1回だけリトライ
+    const errorType = classifyConnectionError(error)
+    logWarn('db.connection:initial-failure', { errorType, error: formatError(error) })
+
+    // リトライ対象エラーでない場合は即座に投げる
+    if (errorType !== 'connection' && errorType !== 'network' && errorType !== 'timeout') {
+      throw error
+    }
+
+    // ミューテックスパターン: 既に別のリクエストがリトライ中の場合は待機
+    if (globalForDb.__retryLock) {
+      try {
+        logInfo('db.connection:await-retry-lock', { errorType })
+        await globalForDb.__retryLock
+        // ロック解放後、新しい接続が利用可能か確認
+        if (globalForDb.__dbPromise) {
+          return await globalForDb.__dbPromise
+        }
+      } catch (lockError) {
+        // ロック中のリトライが失敗した場合も続行
+        logWarn('db.connection:lock-retry-failed', { error: formatError(lockError) })
+      }
+    }
+
+    // リトライロックを作成（他のリクエストはこれを待機する）
+    let releaseLock: (() => void) | undefined
+    globalForDb.__retryLock = new Promise<void>((resolve) => {
+      releaseLock = resolve
+    })
+
+    try {
+      // プールをクリア
+      globalForDb.__dbClient = undefined
+      globalForDb.__dbPromise = undefined
+
+      logInfo('db.connection:retry', { errorType })
+      globalForDb.__dbPromise = createDb()
+
+      const result = await globalForDb.__dbPromise
+      return result
+    } catch (retryError) {
+      logError('db.connection:retry-failed', { error: formatError(retryError) })
+      globalForDb.__dbClient = undefined
+      globalForDb.__dbPromise = undefined
+      throw retryError
+    } finally {
+      // ロックを解放
+      globalForDb.__retryLock = undefined
+      releaseLock?.()
+    }
   }
 }
 

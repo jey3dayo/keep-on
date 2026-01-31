@@ -4,7 +4,9 @@ import { COMPLETION_THRESHOLD, type Period, type WeekStart, type WeekStartDay, w
 import { checkins, habits } from '@/db/schema'
 import { getHabitsFromCache, setHabitsCache } from '@/lib/cache/habit-cache'
 import { getDb } from '@/lib/db'
+import { logInfo, nowMs } from '@/lib/logging'
 import { getPeriodDateRange } from '@/lib/queries/period'
+import { profileQuery } from '@/lib/queries/profiler'
 import { getUserWeekStart } from '@/lib/queries/user'
 import { formatDateKey, normalizeCheckinDate, parseDateKey } from '@/lib/utils/date'
 import type { HabitWithProgress } from '@/types/habit'
@@ -17,12 +19,18 @@ import type { HabitInput } from '@/validators/habit'
  * @returns 習慣の配列（作成日降順）
  */
 export async function getHabitsByUserId(userId: string) {
-  const db = await getDb()
-  return await db
-    .select()
-    .from(habits)
-    .where(and(eq(habits.userId, userId), eq(habits.archived, false)))
-    .orderBy(desc(habits.createdAt))
+  return await profileQuery(
+    'query.getHabitsByUserId',
+    async () => {
+      const db = await getDb()
+      return await db
+        .select()
+        .from(habits)
+        .where(and(eq(habits.userId, userId), eq(habits.archived, false)))
+        .orderBy(desc(habits.createdAt))
+    },
+    { userId }
+  )
 }
 
 /**
@@ -32,9 +40,15 @@ export async function getHabitsByUserId(userId: string) {
  * @returns 習慣または null
  */
 export async function getHabitById(id: string) {
-  const db = await getDb()
-  const [habit] = await db.select().from(habits).where(eq(habits.id, id))
-  return habit ?? null
+  return await profileQuery(
+    'query.getHabitById',
+    async () => {
+      const db = await getDb()
+      const [habit] = await db.select().from(habits).where(eq(habits.id, id))
+      return habit ?? null
+    },
+    { habitId: id }
+  )
 }
 
 /**
@@ -44,19 +58,25 @@ export async function getHabitById(id: string) {
  * @returns 作成された習慣
  */
 export async function createHabit(input: HabitInput) {
-  const db = await getDb()
-  const [habit] = await db
-    .insert(habits)
-    .values({
-      userId: input.userId,
-      name: input.name,
-      icon: input.icon,
-      color: input.color,
-      period: input.period,
-      frequency: input.frequency,
-    })
-    .returning()
-  return habit
+  return await profileQuery(
+    'query.createHabit',
+    async () => {
+      const db = await getDb()
+      const [habit] = await db
+        .insert(habits)
+        .values({
+          userId: input.userId,
+          name: input.name,
+          icon: input.icon,
+          color: input.color,
+          period: input.period,
+          frequency: input.frequency,
+        })
+        .returning()
+      return habit
+    },
+    { userId: input.userId, name: input.name }
+  )
 }
 
 /**
@@ -69,13 +89,19 @@ export async function createHabit(input: HabitInput) {
  * @returns 更新された習慣または null
  */
 export async function updateHabit(id: string, userId: string, input: Partial<HabitInput>) {
-  const db = await getDb()
-  const [habit] = await db
-    .update(habits)
-    .set(input)
-    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
-    .returning()
-  return habit ?? null
+  return await profileQuery(
+    'query.updateHabit',
+    async () => {
+      const db = await getDb()
+      const [habit] = await db
+        .update(habits)
+        .set(input)
+        .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+        .returning()
+      return habit ?? null
+    },
+    { habitId: id, userId }
+  )
 }
 
 /**
@@ -86,16 +112,22 @@ export async function updateHabit(id: string, userId: string, input: Partial<Hab
  * @returns アーカイブ成功フラグ
  */
 export async function archiveHabit(id: string, userId: string) {
-  const db = await getDb()
-  const result = await db
-    .update(habits)
-    .set({
-      archived: true,
-      archivedAt: new Date(),
-    })
-    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
-    .returning()
-  return result.length > 0
+  return await profileQuery(
+    'query.archiveHabit',
+    async () => {
+      const db = await getDb()
+      const result = await db
+        .update(habits)
+        .set({
+          archived: true,
+          archivedAt: new Date(),
+        })
+        .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+        .returning()
+      return result.length > 0
+    },
+    { habitId: id, userId }
+  )
 }
 
 /**
@@ -106,12 +138,18 @@ export async function archiveHabit(id: string, userId: string) {
  * @returns 削除成功フラグ
  */
 export async function deleteHabit(id: string, userId: string) {
-  const db = await getDb()
-  const result = await db
-    .delete(habits)
-    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
-    .returning()
-  return result.length > 0
+  return await profileQuery(
+    'query.deleteHabit',
+    async () => {
+      const db = await getDb()
+      const result = await db
+        .delete(habits)
+        .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+        .returning()
+      return result.length > 0
+    },
+    { habitId: id, userId }
+  )
 }
 
 /**
@@ -121,11 +159,17 @@ export async function deleteHabit(id: string, userId: string) {
  * @returns アーカイブ済み習慣の配列
  */
 export async function getArchivedHabits(userId: string) {
-  const db = await getDb()
-  return await db
-    .select()
-    .from(habits)
-    .where(and(eq(habits.userId, userId), eq(habits.archived, true)))
+  return await profileQuery(
+    'query.getArchivedHabits',
+    async () => {
+      const db = await getDb()
+      return await db
+        .select()
+        .from(habits)
+        .where(and(eq(habits.userId, userId), eq(habits.archived, true)))
+    },
+    { userId }
+  )
 }
 
 /**
@@ -136,16 +180,22 @@ export async function getArchivedHabits(userId: string) {
  * @returns 復元成功フラグ
  */
 export async function unarchiveHabit(id: string, userId: string) {
-  const db = await getDb()
-  const result = await db
-    .update(habits)
-    .set({
-      archived: false,
-      archivedAt: null,
-    })
-    .where(and(eq(habits.id, id), eq(habits.userId, userId)))
-    .returning()
-  return result.length > 0
+  return await profileQuery(
+    'query.unarchiveHabit',
+    async () => {
+      const db = await getDb()
+      const result = await db
+        .update(habits)
+        .set({
+          archived: false,
+          archivedAt: null,
+        })
+        .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+        .returning()
+      return result.length > 0
+    },
+    { habitId: id, userId }
+  )
 }
 
 /**
@@ -163,15 +213,21 @@ export async function getCheckinCountForPeriod(
   period: Period,
   weekStartDay: WeekStartDay = 1
 ): Promise<number> {
-  const db = await getDb()
-  const { startKey, endKey } = getPeriodDateRange(date, period, weekStartDay)
+  return await profileQuery(
+    'query.getCheckinCountForPeriod',
+    async () => {
+      const db = await getDb()
+      const { startKey, endKey } = getPeriodDateRange(date, period, weekStartDay)
 
-  const result = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(checkins)
-    .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+      const result = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(checkins)
+        .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
-  return result[0]?.count ?? 0
+      return result[0]?.count ?? 0
+    },
+    { habitId, period }
+  )
 }
 
 /**
@@ -187,55 +243,65 @@ export async function calculateStreak(
   period: Period,
   weekStartDay: WeekStartDay = 1
 ): Promise<number> {
-  const db = await getDb()
+  return await profileQuery(
+    'query.calculateStreak',
+    async () => {
+      const db = await getDb()
 
-  // 習慣情報を取得
-  const habit = await getHabitById(habitId)
-  if (!habit) {
-    return 0
-  }
+      // 習慣情報を取得
+      const habit = await getHabitById(habitId)
+      if (!habit) {
+        return 0
+      }
 
-  // 全チェックイン履歴を取得（降順）
-  const allCheckins = await db.select().from(checkins).where(eq(checkins.habitId, habitId)).orderBy(desc(checkins.date))
+      // 全チェックイン履歴を取得（降順）
+      const allCheckins = await db
+        .select()
+        .from(checkins)
+        .where(eq(checkins.habitId, habitId))
+        .orderBy(desc(checkins.date))
 
-  if (allCheckins.length === 0) {
-    return 0
-  }
+      if (allCheckins.length === 0) {
+        return 0
+      }
 
-  let streak = 0
-  let currentDate = startOfDay(new Date())
+      let streak = 0
+      let currentDate = startOfDay(new Date())
 
-  // 期間ごとにチェックインをグループ化
-  const checkinsByPeriod = new Map<string, number>()
-  for (const checkin of allCheckins) {
-    const periodKey = getPeriodKey(normalizeCheckinDate(checkin.date), period, weekStartDay)
-    checkinsByPeriod.set(periodKey, (checkinsByPeriod.get(periodKey) ?? 0) + 1)
-  }
+      // 期間ごとにチェックインをグループ化
+      const checkinsByPeriod = new Map<string, number>()
+      for (const checkin of allCheckins) {
+        const periodKey = getPeriodKey(normalizeCheckinDate(checkin.date), period, weekStartDay)
+        checkinsByPeriod.set(periodKey, (checkinsByPeriod.get(periodKey) ?? 0) + 1)
+      }
 
-  // 現在の期間の達成状況を確認
-  const currentPeriodKey = getPeriodKey(currentDate, period, weekStartDay)
-  const currentCount = checkinsByPeriod.get(currentPeriodKey) ?? 0
+      // 現在の期間の達成状況を確認
+      const currentPeriodKey = getPeriodKey(currentDate, period, weekStartDay)
+      const currentCount = checkinsByPeriod.get(currentPeriodKey) ?? 0
 
-  // 現在の期間が未達成の場合、前の期間から開始
-  if (currentCount < habit.frequency) {
-    currentDate = getPreviousPeriod(currentDate, habit.period)
-  }
+      // 現在の期間が未達成の場合、前の期間から開始
+      if (currentCount < habit.frequency) {
+        currentDate = getPreviousPeriod(currentDate, habit.period)
+      }
 
-  // 過去に向かってストリークをカウント
-  while (true) {
-    const periodKey = getPeriodKey(currentDate, period, weekStartDay)
-    const count = checkinsByPeriod.get(periodKey) ?? 0
+      // 過去に向かってストリークをカウント
+      while (true) {
+        const periodKey = getPeriodKey(currentDate, period, weekStartDay)
+        const count = checkinsByPeriod.get(periodKey) ?? 0
 
-    if (count >= habit.frequency) {
-      streak++
-      // 次の期間に移動
-      currentDate = getPreviousPeriod(currentDate, period)
-    } else {
-      break
-    }
-  }
+        if (count >= habit.frequency) {
+          streak++
+          // 次の期間に移動
+          currentDate = getPreviousPeriod(currentDate, period)
+        } else {
+          break
+        }
+      }
 
-  return streak
+      return streak
+    },
+    { habitId, period }
+  )
 }
 
 /**
@@ -277,6 +343,8 @@ export async function getHabitsWithProgress(
   date: Date | string = new Date(),
   weekStart?: WeekStart
 ): Promise<HabitWithProgress[]> {
+  const totalStart = nowMs()
+
   // dateKey を計算
   const baseDate = typeof date === 'string' ? parseDateKey(date) : date
   const dateKey = formatDateKey(baseDate)
@@ -284,11 +352,17 @@ export async function getHabitsWithProgress(
   // 1. キャッシュから取得を試行
   const cached = await getHabitsFromCache(userId, dateKey)
   if (cached) {
+    logInfo('getHabitsWithProgress:cache-hit', { userId, dateKey })
     return cached
   }
 
   // 2. キャッシュミス - DB クエリ実行
+  const dbStart = nowMs()
   const db = await getDb()
+  const dbMs = Math.round(nowMs() - dbStart)
+  logInfo('getHabitsWithProgress:db-acquisition', { userId, ms: dbMs })
+
+  const queryStart = nowMs()
   const habitList = await getHabitsByUserId(userId)
 
   if (habitList.length === 0) {
@@ -349,6 +423,17 @@ export async function getHabitsWithProgress(
 
   // 3. キャッシュに保存
   await setHabitsCache(userId, dateKey, habitsWithProgress)
+
+  const queryMs = Math.round(nowMs() - queryStart)
+  const totalMs = Math.round(nowMs() - totalStart)
+  logInfo('getHabitsWithProgress:complete', {
+    userId,
+    dateKey,
+    dbMs,
+    queryMs,
+    totalMs,
+    habits: habitsWithProgress.length,
+  })
 
   return habitsWithProgress
 }

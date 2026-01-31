@@ -1,16 +1,6 @@
 import { formatError, logInfo, logWarn } from '@/lib/logging'
+import type { CloudflareEnv, KVNamespace } from '@/types/cloudflare'
 import type { User } from '@/types/user'
-
-// Cloudflare Workers KVNamespace型（グローバル型として存在）
-interface KVNamespace {
-  get(key: string, type: 'text'): Promise<string | null>
-  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>
-  delete(key: string): Promise<void>
-}
-
-interface CloudflareEnv {
-  NEXT_INC_CACHE_KV?: KVNamespace
-}
 
 const CACHE_TTL_SECONDS = 300 // 5分
 const CACHE_KEY_PREFIX = 'user:clerk:'
