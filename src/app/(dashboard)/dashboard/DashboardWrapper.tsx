@@ -46,6 +46,7 @@ export function DashboardWrapper({
   const activeRequestCountRef = useRef(0)
   const hasRefreshedForTimeZone = useRef(false)
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isRefreshing = useRef(false)
 
   const runOptimisticUpdateForHabit = (
     habitId: string,
@@ -115,8 +116,17 @@ export function DashboardWrapper({
       clearTimeout(refreshTimeoutRef.current)
     }
     refreshTimeoutRef.current = setTimeout(() => {
+      // 既にリフレッシュ中の場合はスキップ
+      if (isRefreshing.current) {
+        return
+      }
+      isRefreshing.current = true
       startTransition(() => {
         router.refresh()
+        // リフレッシュ完了後、少し待ってからフラグをリセット
+        setTimeout(() => {
+          isRefreshing.current = false
+        }, 1000)
       })
     }, 300)
   }
