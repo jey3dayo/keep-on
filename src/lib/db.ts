@@ -50,6 +50,18 @@ function nowMs(): number {
   return Date.now()
 }
 
+function classifyConnectionError(error: unknown): string {
+  if (!error || typeof error !== 'object') {
+    return 'unknown'
+  }
+  const message = 'message' in error && typeof error.message === 'string' ? error.message : ''
+  if (message.includes('timeout')) return 'timeout'
+  if (message.includes('ECONNREFUSED') || message.includes('ENOTFOUND')) return 'network'
+  if (message.includes('authentication') || message.includes('password')) return 'auth'
+  if (message.includes('ECONNRESET') || message.includes('connection')) return 'connection'
+  return 'unknown'
+}
+
 async function getConnectionInfo(): Promise<ConnectionInfo> {
   // Cloudflare Workers環境でHyperdriveが利用可能な場合
   if (isWorkersRuntime()) {
@@ -92,8 +104,9 @@ async function createDb() {
     prepare: false, // PgBouncer互換モード
     fetch_types: false, // 型フェッチを無効化（Workers環境では不要）
     max: 2, // 並行RSCリクエストを吸収（フェーズ2: 接続プール最適化）
-    idle_timeout: 10, // アイドルタイムアウト（秒） - 早めに解放
+    idle_timeout: 5, // アイドルタイムアウト（秒） - 早めに解放（10→5秒に短縮、フェーズ3）
     connect_timeout: 3, // 接続タイムアウト（秒） - 失敗を速く（5→3秒に短縮）
+    max_lifetime: 30, // 接続の最大生存時間（秒） - 定期的にリフレッシュ（フェーズ3）
     debug: (connectionId, query, parameters) => {
       if (!TRACE_QUERY_RE.test(query)) {
         return
@@ -115,7 +128,8 @@ async function createDb() {
     logInfo('db.connection.probe:end', { source, ...meta, ms })
   } catch (error) {
     const ms = Math.round(nowMs() - probeStart)
-    logWarn('db.connection.probe:error', { source, ...meta, ms, error: formatError(error) })
+    const errorType = classifyConnectionError(error)
+    logWarn('db.connection.probe:error', { source, ...meta, ms, errorType, error: formatError(error) })
     try {
       await client.end({ timeout: 1 })
     } catch (closeError) {
@@ -144,8 +158,28 @@ export async function getDb() {
   try {
     return await globalForDb.__dbPromise
   } catch (error) {
+    // 接続失敗時はプールをクリアして1回だけリトライ（フェーズ3）
+    const errorType = classifyConnectionError(error)
+    logWarn('db.connection:initial-failure', { errorType, error: formatError(error) })
+
+    // プールをクリア
     globalForDb.__dbClient = undefined
     globalForDb.__dbPromise = undefined
+
+    // リトライ（接続エラーのみ）
+    if (errorType === 'connection' || errorType === 'network' || errorType === 'timeout') {
+      logInfo('db.connection:retry', { errorType })
+      try {
+        globalForDb.__dbPromise = createDb()
+        return await globalForDb.__dbPromise
+      } catch (retryError) {
+        logError('db.connection:retry-failed', { error: formatError(retryError) })
+        globalForDb.__dbClient = undefined
+        globalForDb.__dbPromise = undefined
+        throw retryError
+      }
+    }
+
     throw error
   }
 }
