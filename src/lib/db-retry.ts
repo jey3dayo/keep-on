@@ -46,14 +46,28 @@ export async function withDbRetry<T>(name: string, fn: () => Promise<T>, options
     } catch (error) {
       lastError = error
 
-      if (attempt < maxRetries && retryOn(error)) {
-        logWarn(`${name}:retry`, {
-          attempt: attempt + 1,
-          maxRetries,
-          error: formatError(error),
-        })
-        await onRetry(attempt + 1, error)
+      // リトライ対象エラーの場合
+      if (retryOn(error)) {
+        // 最終試行でない場合は通常のリトライ
+        if (attempt < maxRetries) {
+          logWarn(`${name}:retry`, {
+            attempt: attempt + 1,
+            maxRetries,
+            error: formatError(error),
+          })
+          await onRetry(attempt + 1, error)
+        } else {
+          // 最終試行でも失敗した場合、DBをリセットしてからエラーを投げる
+          logWarn(`${name}:final-failure`, {
+            attempt: attempt + 1,
+            maxRetries,
+            error: formatError(error),
+          })
+          await onRetry(attempt + 1, error)
+          throw error
+        }
       } else {
+        // リトライ対象外エラーは即座に投げる
         throw error
       }
     }

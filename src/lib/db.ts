@@ -62,6 +62,7 @@ function nowMs(): number {
  * 接続プローブ: 接続の健全性確認と状態クリーンアップ
  *
  * - DISCARD ALL で接続状態をリセット
+ * - statement_timeout を再設定（DISCARD ALL でリセットされるため）
  * - pg_backend_pid() で接続ID・DB名を取得してログに記録
  */
 async function probeConnection(
@@ -76,6 +77,11 @@ async function probeConnection(
     // 接続状態のクリーンアップ（再利用時の状態をリセット）
     await client.unsafe('DISCARD ALL')
     logInfo('db.connection:cleanup', { source, ...meta })
+
+    // DISCARD ALL により statement_timeout がリセットされるため再設定
+    // これがないとクエリタイムアウトが無効化され、ハングしたクエリが無制限に実行される
+    await client.unsafe(`SET statement_timeout = ${DB_STATEMENT_TIMEOUT}`)
+    logInfo('db.connection:reapply-timeout', { source, ...meta, timeoutMs: DB_STATEMENT_TIMEOUT })
 
     // 接続情報取得（デバッグ用）
     const result = await client.unsafe<{ pid: number; db: string }[]>(
@@ -191,9 +197,21 @@ export async function getDb() {
   try {
     return await globalForDb.__dbPromise
   } catch (error) {
-    // 接続失敗時はプールをクリアして1回だけリトライ（フェーズ3）
+    // 接続失敗時はプールをクリアして1回だけリトライ
     const errorType = classifyConnectionError(error)
     logWarn('db.connection:initial-failure', { errorType, error: formatError(error) })
+
+    // 競合状態を回避: 別のリクエストが既にリトライを開始している可能性があるため、
+    // __dbPromise を再度チェック
+    if (globalForDb.__dbPromise) {
+      try {
+        logInfo('db.connection:await-concurrent-retry', { errorType })
+        return await globalForDb.__dbPromise
+      } catch (concurrentError) {
+        // 同時リトライも失敗した場合は続行
+        logWarn('db.connection:concurrent-retry-failed', { error: formatError(concurrentError) })
+      }
+    }
 
     // プールをクリア
     globalForDb.__dbClient = undefined
