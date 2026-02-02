@@ -1,5 +1,6 @@
-const CACHE_NAME = 'keepon-v1'
+const CACHE_NAME = 'keepon-v2'
 const OFFLINE_URL = '/offline'
+const NEXT_ASSET_PREFIX = '/_next/'
 
 const PRECACHE_FILES = ['/', '/offline', '/manifest.json', '/icon-192.png', '/icon-512.png']
 
@@ -20,6 +21,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
+
+  // Next.js ビルド成果物は常にネットワーク優先（Server ActionsのID不一致を回避）
+  if (url.pathname.startsWith(NEXT_ASSET_PREFIX)) {
+    return
+  }
 
   // API・認証: network-only (SWスルー)
   if (
