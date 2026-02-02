@@ -190,8 +190,8 @@ async function performCheckin(params: {
     return
   }
 
-  // キャッシュ無効化をバックグラウンドで実行（レスポンスをブロックしない）
-  await revalidateHabitPaths(userId)
+  // チェックイン直後: 同期的にキャッシュ無効化（router.refresh が古いデータを拾わないようにする）
+  await revalidateHabitPaths(userId, { sync: true })
 }
 
 export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult {

@@ -120,7 +120,7 @@ export function DashboardWrapper({
       if (isRefreshing.current) {
         return
       }
-      // 保留中のチェックインがある場合はリフレッシュをスキップ（Optimistic UIを信頼）
+      // 保留中のチェックインがある場合はスキップ（clearPendingCheckin で再スケジュールされる）
       if (pendingCheckins.size > 0) {
         return
       }
@@ -163,6 +163,10 @@ export function DashboardWrapper({
     setPendingCheckins((current) => {
       const next = new Set(current)
       next.delete(habitId)
+      // pendingセットが空になった場合、保留されていたリフレッシュを再スケジュール
+      if (next.size === 0 && refreshTimeoutRef.current) {
+        scheduleRefresh()
+      }
       return next
     })
   }

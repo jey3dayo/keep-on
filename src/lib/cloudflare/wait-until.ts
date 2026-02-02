@@ -7,9 +7,12 @@
 
 /**
  * Workers ランタイムかどうかを判定
+ *
+ * Next.js の Edge Runtime 環境（Cloudflare Workers含む）を検出する。
+ * ブラウザ環境でも caches が存在するため、NEXT_RUNTIME で判定。
  */
 function isWorkersRuntime(): boolean {
-  return typeof globalThis !== 'undefined' && 'caches' in globalThis
+  return typeof process !== 'undefined' && process.env?.NEXT_RUNTIME === 'edge'
 }
 
 /**

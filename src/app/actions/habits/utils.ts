@@ -101,13 +101,15 @@ export function serializeActionError(error: unknown, detail: string): Serializab
   return serializeHabitError(databaseError)
 }
 
-export async function revalidateHabitPaths(userId: string) {
+export async function revalidateHabitPaths(userId: string, options: { sync?: boolean } = {}) {
+  const { sync = false } = options
+
   // revalidatePath は即座に実行（Server Actions の場合のみ有効）
   revalidatePath('/dashboard')
+  revalidatePath('/habits')
 
-  // キャッシュ無効化はバックグラウンドで実行（レスポンスをブロックしない）
-  const { runWithWaitUntil } = await import('@/lib/cloudflare/wait-until')
-  await runWithWaitUntil(async () => {
+  // キャッシュ無効化処理
+  const invalidateCaches = async () => {
     try {
       await invalidateHabitsCache(userId)
 
@@ -119,5 +121,16 @@ export async function revalidateHabitPaths(userId: string) {
       // キャッシュ無効化の失敗は致命的ではないため、ログを記録して継続
       logWarn('revalidateHabitPaths:error', { userId, error: formatError(error) })
     }
-  })
+  }
+
+  if (sync) {
+    // チェックイン直後: 同期的にキャッシュ無効化（router.refresh が古いデータを拾わないようにする）
+    // これにより、ユーザーが即座にリロードしても最新のキャッシュが返される
+    await invalidateCaches()
+  } else {
+    // create/update/delete: バックグラウンドで実行（レスポンスをブロックしない）
+    // これらの操作は即座のリロードが少ないため、レスポンス速度を優先
+    const { runWithWaitUntil } = await import('@/lib/cloudflare/wait-until')
+    await runWithWaitUntil(invalidateCaches)
+  }
 }
