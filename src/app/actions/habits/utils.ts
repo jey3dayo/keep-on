@@ -47,7 +47,7 @@ export async function requireOwnedHabit(habitId: string, userId: string): HabitA
 export async function runHabitMutation(
   habitId: string,
   mutation: HabitMutation,
-  options: { precondition?: HabitPrecondition } = {}
+  options: { precondition?: HabitPrecondition; sync?: boolean } = {}
 ): HabitActionResult {
   const validation = validateHabitId(habitId)
   if (!Result.isSuccess(validation)) {
@@ -81,7 +81,8 @@ export async function runHabitMutation(
     return actionError(serializeHabitError(new NotFoundError()))
   }
 
-  await revalidateHabitPaths(userIdResult.data)
+  // デフォルトは sync: true（アーカイブ・削除などはユーザーが即座に結果を確認する）
+  await revalidateHabitPaths(userIdResult.data, { sync: options.sync ?? true })
 
   return actionOk()
 }
@@ -106,7 +107,6 @@ export async function revalidateHabitPaths(userId: string, options: { sync?: boo
 
   // revalidatePath は即座に実行（Server Actions の場合のみ有効）
   revalidatePath('/dashboard')
-  revalidatePath('/habits')
 
   // キャッシュ無効化処理
   const invalidateCaches = async () => {

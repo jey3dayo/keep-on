@@ -8,7 +8,8 @@ _.path = ["./node_modules/.bin"]
 
 # Markdown lint/format用の変数
 MD_GLOB = "**/*.md"
-MD_EXCLUDES = "#**/node_modules/** #**/.worktrees/**"
+MD_EXCLUDE_NODE_MODULES = "#**/node_modules/**"
+MD_EXCLUDE_WORKTREES = "#**/.worktrees/**"
 
 # ========================================
 # ツール
@@ -29,7 +30,7 @@ description = "Ultracite(Biome)でソース全体を整形 + Taplo + Markdownlin
 run = [
   "pnpm run format",
   "taplo fmt mise.toml",
-  "pnpm markdownlint-cli2 '${MD_GLOB}' ${MD_EXCLUDES} --fix",
+  "pnpm markdownlint-cli2 '${MD_GLOB}' ${MD_EXCLUDE_NODE_MODULES} ${MD_EXCLUDE_WORKTREES} --fix",
 ]
 
 [tasks."lint:types"]
@@ -42,7 +43,7 @@ run = "pnpm run lint"
 
 [tasks."lint:md"]
 description = "Markdownのチェック"
-run = "pnpm markdownlint-cli2 '${MD_GLOB}' ${MD_EXCLUDES}"
+run = "pnpm markdownlint-cli2 '${MD_GLOB}' ${MD_EXCLUDE_NODE_MODULES} ${MD_EXCLUDE_WORKTREES}"
 
 [tasks."lint:yaml"]
 description = "YAMLのチェック"
