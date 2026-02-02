@@ -9,5 +9,12 @@
     }
   },
   "globs": ["**/*.md"],
-  "ignores": ["node_modules", ".next", ".open-next", "out", "src/generated"]
+  "ignores": [
+    "node_modules",
+    ".next",
+    ".open-next",
+    "out",
+    "src/generated",
+    ".worktrees"
+  ]
 }
