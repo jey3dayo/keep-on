@@ -47,7 +47,7 @@ export async function requireOwnedHabit(habitId: string, userId: string): HabitA
 export async function runHabitMutation(
   habitId: string,
   mutation: HabitMutation,
-  options: { precondition?: HabitPrecondition } = {}
+  options: { precondition?: HabitPrecondition; sync?: boolean } = {}
 ): HabitActionResult {
   const validation = validateHabitId(habitId)
   if (!Result.isSuccess(validation)) {
@@ -81,7 +81,8 @@ export async function runHabitMutation(
     return actionError(serializeHabitError(new NotFoundError()))
   }
 
-  await revalidateHabitPaths(userIdResult.data)
+  // デフォルトは sync: true（アーカイブ・削除などはユーザーが即座に結果を確認する）
+  await revalidateHabitPaths(userIdResult.data, { sync: options.sync ?? true })
 
   return actionOk()
 }
@@ -101,19 +102,35 @@ export function serializeActionError(error: unknown, detail: string): Serializab
   return serializeHabitError(databaseError)
 }
 
-export async function revalidateHabitPaths(userId: string) {
-  try {
-    revalidatePath('/habits')
-    revalidatePath('/dashboard')
-    await invalidateHabitsCache(userId)
+export async function revalidateHabitPaths(userId: string, options: { sync?: boolean } = {}) {
+  const { sync = false } = options
 
-    // 習慣の変更（削除・アーカイブ等）によりチェックイン数が変わる可能性があるため、
-    // アナリティクスキャッシュも無効化
-    const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
-    await invalidateAnalyticsCache(userId)
-  } catch (error) {
-    // キャッシュ無効化の失敗は致命的ではないため、ログを記録して継続
-    logWarn('revalidateHabitPaths:error', { userId, error: formatError(error) })
-    // エラーを上位に伝播させない
+  // revalidatePath は即座に実行（Server Actions の場合のみ有効）
+  revalidatePath('/dashboard')
+
+  // キャッシュ無効化処理
+  const invalidateCaches = async () => {
+    try {
+      await invalidateHabitsCache(userId)
+
+      // 習慣の変更（削除・アーカイブ等）によりチェックイン数が変わる可能性があるため、
+      // アナリティクスキャッシュも無効化
+      const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
+      await invalidateAnalyticsCache(userId)
+    } catch (error) {
+      // キャッシュ無効化の失敗は致命的ではないため、ログを記録して継続
+      logWarn('revalidateHabitPaths:error', { userId, error: formatError(error) })
+    }
+  }
+
+  if (sync) {
+    // チェックイン直後: 同期的にキャッシュ無効化（router.refresh が古いデータを拾わないようにする）
+    // これにより、ユーザーが即座にリロードしても最新のキャッシュが返される
+    await invalidateCaches()
+  } else {
+    // create/update/delete: バックグラウンドで実行（レスポンスをブロックしない）
+    // これらの操作は即座のリロードが少ないため、レスポンス速度を優先
+    const { runWithWaitUntil } = await import('@/lib/cloudflare/wait-until')
+    await runWithWaitUntil(invalidateCaches)
   }
 }

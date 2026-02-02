@@ -42,6 +42,7 @@ export function DashboardWrapper({
   const [isTimeZoneReady, setIsTimeZoneReady] = useState(hasTimeZoneCookie)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
+  const pendingCheckinsRef = useRef<Set<string>>(new Set())
   const inFlightCheckinsRef = useRef<Set<string>>(new Set())
   const activeRequestCountRef = useRef(0)
   const hasRefreshedForTimeZone = useRef(false)
@@ -120,6 +121,11 @@ export function DashboardWrapper({
       if (isRefreshing.current) {
         return
       }
+      // 保留中のチェックインがある場合はスキップ（clearPendingCheckin で再スケジュールされる）
+      // useRef で最新の pending 状態を参照（クロージャの stale を回避）
+      if (pendingCheckinsRef.current.size > 0) {
+        return
+      }
       isRefreshing.current = true
       startTransition(() => {
         router.refresh()
@@ -128,7 +134,7 @@ export function DashboardWrapper({
           isRefreshing.current = false
         }, 1000)
       })
-    }, 300)
+    }, 500)
   }
 
   const updateHabitProgress = (habitId: string, delta: number) => {
@@ -152,13 +158,22 @@ export function DashboardWrapper({
   }
 
   const addPendingCheckin = (habitId: string) => {
-    setPendingCheckins((current) => new Set(current).add(habitId))
+    setPendingCheckins((current) => {
+      const next = new Set(current).add(habitId)
+      pendingCheckinsRef.current = next
+      return next
+    })
   }
 
   const clearPendingCheckin = (habitId: string) => {
     setPendingCheckins((current) => {
       const next = new Set(current)
       next.delete(habitId)
+      pendingCheckinsRef.current = next
+      // pendingセットが空になった場合、保留されていたリフレッシュを再スケジュール
+      if (next.size === 0 && refreshTimeoutRef.current) {
+        scheduleRefresh()
+      }
       return next
     })
   }
