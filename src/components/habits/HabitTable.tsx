@@ -1,5 +1,7 @@
-import { createRequestMeta, logInfo, logSpan } from '@/lib/logging'
+import { getHabitsCacheSnapshot } from '@/lib/cache/habit-cache'
+import { createRequestMeta, formatError, isDatabaseError, isTimeoutError, logInfo, logSpan, logWarn } from '@/lib/logging'
 import { getArchivedHabits, getHabitsWithProgress } from '@/lib/queries/habit'
+import { getServerDateKey } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import type { HabitWithProgress } from '@/types/habit'
 import { HabitTableClient } from './HabitTableClient'
@@ -13,16 +15,47 @@ interface HabitTableProps {
 export async function HabitTable({ userId, clerkId, requestMeta }: HabitTableProps) {
   const timeoutMs = getRequestTimeoutMs()
   const meta = requestMeta ?? createRequestMeta('/habits')
+  const dateKey = await getServerDateKey()
+  const cacheSnapshot = await getHabitsCacheSnapshot(userId)
+  const staleHabits =
+    cacheSnapshot && (cacheSnapshot.staleAt || cacheSnapshot.dateKey !== dateKey) ? cacheSnapshot.habits : null
 
   logInfo('habits.table:start', meta)
 
   // アクティブな習慣（進捗付き）
-  const activeHabits = await logSpan('habits.table.query', () => getHabitsWithProgress(userId, clerkId), meta, {
-    timeoutMs,
-  })
+  let activeHabits: HabitWithProgress[]
+  try {
+    activeHabits = await logSpan(
+      'habits.table.query',
+      () => getHabitsWithProgress(userId, clerkId, dateKey),
+      meta,
+      { timeoutMs }
+    )
+  } catch (error) {
+    if (staleHabits && (isTimeoutError(error) || isDatabaseError(error))) {
+      logWarn('habits.table.query:stale-fallback', {
+        ...meta,
+        cachedDateKey: cacheSnapshot?.dateKey,
+        requestedDateKey: dateKey,
+        error: formatError(error),
+      })
+      activeHabits = staleHabits
+    } else {
+      throw error
+    }
+  }
 
   // アーカイブ済み習慣
-  const archivedHabits = await logSpan('habits.table.archived', () => getArchivedHabits(userId), meta, { timeoutMs })
+  let archivedHabits: Awaited<ReturnType<typeof getArchivedHabits>> = []
+  try {
+    archivedHabits = await logSpan('habits.table.archived', () => getArchivedHabits(userId), meta, { timeoutMs })
+  } catch (error) {
+    if (isTimeoutError(error) || isDatabaseError(error)) {
+      logWarn('habits.table.archived:skip', { ...meta, error: formatError(error) })
+    } else {
+      throw error
+    }
+  }
 
   // アーカイブ済み習慣に進捗情報を付与（ダミー値）
   const archivedHabitsWithProgress: HabitWithProgress[] = archivedHabits.map((habit) => ({
