@@ -164,9 +164,13 @@ async function performCheckin(params: {
   const userId = await requireUserId(baseMeta, spans.timeoutMs)
   const metaWithUser = { ...baseMeta, userId }
 
-  const habit = await requireHabitForUser(habitId, userId, metaWithUser, spans.runWithRetry)
+  // クエリを並列実行してレイテンシを削減
+  const [habit, weekStartDay] = await Promise.all([
+    requireHabitForUser(habitId, userId, metaWithUser, spans.runWithRetry),
+    resolveWeekStartDay(userId, metaWithUser, spans.runWithRetry),
+  ])
+
   const targetDate = dateKey ?? new Date()
-  const weekStartDay = await resolveWeekStartDay(userId, metaWithUser, spans.runWithRetry)
   const countMeta = {
     ...metaWithUser,
     period: habit.period,
@@ -186,10 +190,7 @@ async function performCheckin(params: {
     return
   }
 
-  // チェックイン追加により総チェックイン数が変わるため、アナリティクスキャッシュを無効化
-  const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
-  await invalidateAnalyticsCache(userId)
-
+  // キャッシュ無効化をバックグラウンドで実行（レスポンスをブロックしない）
   await revalidateHabitPaths(userId)
 }
 

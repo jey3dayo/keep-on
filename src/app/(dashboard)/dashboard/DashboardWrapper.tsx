@@ -120,6 +120,10 @@ export function DashboardWrapper({
       if (isRefreshing.current) {
         return
       }
+      // 保留中のチェックインがある場合はリフレッシュをスキップ（Optimistic UIを信頼）
+      if (pendingCheckins.size > 0) {
+        return
+      }
       isRefreshing.current = true
       startTransition(() => {
         router.refresh()
@@ -128,7 +132,7 @@ export function DashboardWrapper({
           isRefreshing.current = false
         }, 1000)
       })
-    }, 300)
+    }, 500)
   }
 
   const updateHabitProgress = (habitId: string, delta: number) => {

@@ -102,18 +102,22 @@ export function serializeActionError(error: unknown, detail: string): Serializab
 }
 
 export async function revalidateHabitPaths(userId: string) {
-  try {
-    revalidatePath('/habits')
-    revalidatePath('/dashboard')
-    await invalidateHabitsCache(userId)
+  // revalidatePath は即座に実行（Server Actions の場合のみ有効）
+  revalidatePath('/dashboard')
 
-    // 習慣の変更（削除・アーカイブ等）によりチェックイン数が変わる可能性があるため、
-    // アナリティクスキャッシュも無効化
-    const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
-    await invalidateAnalyticsCache(userId)
-  } catch (error) {
-    // キャッシュ無効化の失敗は致命的ではないため、ログを記録して継続
-    logWarn('revalidateHabitPaths:error', { userId, error: formatError(error) })
-    // エラーを上位に伝播させない
-  }
+  // キャッシュ無効化はバックグラウンドで実行（レスポンスをブロックしない）
+  const { runWithWaitUntil } = await import('@/lib/cloudflare/wait-until')
+  await runWithWaitUntil(async () => {
+    try {
+      await invalidateHabitsCache(userId)
+
+      // 習慣の変更（削除・アーカイブ等）によりチェックイン数が変わる可能性があるため、
+      // アナリティクスキャッシュも無効化
+      const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
+      await invalidateAnalyticsCache(userId)
+    } catch (error) {
+      // キャッシュ無効化の失敗は致命的ではないため、ログを記録して継続
+      logWarn('revalidateHabitPaths:error', { userId, error: formatError(error) })
+    }
+  })
 }
