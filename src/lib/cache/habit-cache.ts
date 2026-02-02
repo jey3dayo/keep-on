@@ -8,6 +8,7 @@ export interface HabitsCacheData {
   habits: HabitWithProgress[]
   dateKey: string
   timestamp: number
+  staleAt?: number
 }
 
 const CACHE_TTL_SECONDS = 180 // 3分（チェックイン更新頻度を考慮）
@@ -76,9 +77,23 @@ export async function getHabitsFromCache(userId: string, dateKey: string): Promi
     return null
   }
 
+  if (snapshot.staleAt) {
+    logInfo('habit-cache:stale', {
+      userId,
+      cachedDateKey: snapshot.dateKey,
+      requestedDateKey: dateKey,
+      reason: 'invalidated',
+    })
+    return null
+  }
+
   if (snapshot.dateKey !== dateKey) {
-    logInfo('habit-cache:stale', { userId, cachedDateKey: snapshot.dateKey, requestedDateKey: dateKey })
-    await kv.delete(getCacheKey(userId))
+    logInfo('habit-cache:stale', {
+      userId,
+      cachedDateKey: snapshot.dateKey,
+      requestedDateKey: dateKey,
+      reason: 'date-key',
+    })
     return null
   }
 
@@ -118,9 +133,34 @@ export async function invalidateHabitsCache(userId: string): Promise<void> {
 
   try {
     const key = getCacheKey(userId)
-    // KV delete は冪等で、存在しないキーに対しても安全に実行可能
-    await kv.delete(key)
-    logInfo('habit-cache:invalidate', { userId })
+    const cached = await kv.get(key, 'json')
+    if (!cached) {
+      logInfo('habit-cache:invalidate:miss', { userId })
+      return
+    }
+
+    const parseResult = v.safeParse(HabitsCacheDataSchema, cached)
+    if (!parseResult.success) {
+      await kv.delete(key)
+      logWarn('habit-cache:invalidate:drop', {
+        userId,
+        error: 'Schema validation failed',
+        issues: parseResult.issues,
+      })
+      return
+    }
+
+    const data = parseResult.output as HabitsCacheData
+    const staleData: HabitsCacheData = {
+      ...data,
+      staleAt: Date.now(),
+    }
+
+    await kv.put(key, JSON.stringify(staleData), {
+      expirationTtl: CACHE_TTL_SECONDS,
+    })
+
+    logInfo('habit-cache:invalidate', { userId, mode: 'stale' })
   } catch (error) {
     // KV delete のエラーは通常発生しないが、念のためログに記録
     logWarn('habit-cache:error:invalidate', { userId, error: formatError(error) })

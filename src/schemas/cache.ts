@@ -17,6 +17,7 @@ export const HabitsCacheDataSchema = v.object({
   habits: v.array(v.any()), // HabitWithProgress は複雑な型なので any で許容
   dateKey: v.string(),
   timestamp: v.pipe(v.number(), v.integer(), v.minValue(0)),
+  staleAt: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
 })
 
 export type HabitsCacheDataSchemaType = v.InferOutput<typeof HabitsCacheDataSchema>

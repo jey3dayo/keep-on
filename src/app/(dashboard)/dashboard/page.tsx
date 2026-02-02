@@ -46,7 +46,9 @@ export default async function DashboardPage() {
   }
 
   const cacheSnapshot = await getHabitsCacheSnapshot(user.id)
-  const staleHabits = cacheSnapshot && cacheSnapshot.dateKey !== dateKey ? cacheSnapshot.habits : null
+  const isStale =
+    cacheSnapshot && (cacheSnapshot.staleAt || cacheSnapshot.dateKey !== dateKey)
+  const staleHabits = isStale ? cacheSnapshot.habits : null
 
   let habits: HabitWithProgress[]
   try {

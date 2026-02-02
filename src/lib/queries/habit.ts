@@ -354,12 +354,17 @@ export async function getHabitsWithProgress(
   let staleSnapshot: typeof cacheSnapshot | null = null
 
   if (cacheSnapshot) {
-    if (cacheSnapshot.dateKey === dateKey) {
+    if (!cacheSnapshot.staleAt && cacheSnapshot.dateKey === dateKey) {
       logInfo('getHabitsWithProgress:cache-hit', { userId, dateKey })
       return cacheSnapshot.habits
     }
     staleSnapshot = cacheSnapshot
-    logInfo('habit-cache:stale', { userId, cachedDateKey: cacheSnapshot.dateKey, requestedDateKey: dateKey })
+    logInfo('habit-cache:stale', {
+      userId,
+      cachedDateKey: cacheSnapshot.dateKey,
+      requestedDateKey: dateKey,
+      reason: cacheSnapshot.staleAt ? 'invalidated' : 'date-key',
+    })
   } else {
     logInfo('habit-cache:miss', { userId })
   }
