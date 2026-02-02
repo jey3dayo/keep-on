@@ -2,9 +2,9 @@ import { startOfDay, startOfMonth, subDays, subMonths, subWeeks } from 'date-fns
 import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { COMPLETION_THRESHOLD, type Period, type WeekStart, type WeekStartDay, weekStartToDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
-import { getHabitsFromCache, setHabitsCache } from '@/lib/cache/habit-cache'
+import { getHabitsCacheSnapshot, setHabitsCache } from '@/lib/cache/habit-cache'
 import { getDb } from '@/lib/db'
-import { logInfo, nowMs } from '@/lib/logging'
+import { formatError, isDatabaseError, logInfo, logWarn, nowMs } from '@/lib/logging'
 import { getPeriodDateRange } from '@/lib/queries/period'
 import { profileQuery } from '@/lib/queries/profiler'
 import { getUserWeekStart } from '@/lib/queries/user'
@@ -349,93 +349,114 @@ export async function getHabitsWithProgress(
   const baseDate = typeof date === 'string' ? parseDateKey(date) : date
   const dateKey = formatDateKey(baseDate)
 
-  // 1. キャッシュから取得を試行
-  const cached = await getHabitsFromCache(userId, dateKey)
-  if (cached) {
-    logInfo('getHabitsWithProgress:cache-hit', { userId, dateKey })
-    return cached
+  // 1. キャッシュから取得を試行（期限切れの場合はフォールバック候補として保持）
+  const cacheSnapshot = await getHabitsCacheSnapshot(userId)
+  let staleSnapshot: typeof cacheSnapshot | null = null
+
+  if (cacheSnapshot) {
+    if (cacheSnapshot.dateKey === dateKey) {
+      logInfo('getHabitsWithProgress:cache-hit', { userId, dateKey })
+      return cacheSnapshot.habits
+    }
+    staleSnapshot = cacheSnapshot
+    logInfo('habit-cache:stale', { userId, cachedDateKey: cacheSnapshot.dateKey, requestedDateKey: dateKey })
+  } else {
+    logInfo('habit-cache:miss', { userId })
   }
 
   // 2. キャッシュミス - DB クエリ実行
-  const dbStart = nowMs()
-  const db = await getDb()
-  const dbMs = Math.round(nowMs() - dbStart)
-  logInfo('getHabitsWithProgress:db-acquisition', { userId, ms: dbMs })
+  try {
+    const dbStart = nowMs()
+    const db = await getDb()
+    const dbMs = Math.round(nowMs() - dbStart)
+    logInfo('getHabitsWithProgress:db-acquisition', { userId, ms: dbMs })
 
-  const queryStart = nowMs()
-  const habitList = await getHabitsByUserId(userId)
+    const queryStart = nowMs()
+    const habitList = await getHabitsByUserId(userId)
 
-  if (habitList.length === 0) {
-    // キャッシュに空の結果を保存
-    await setHabitsCache(userId, dateKey, [])
-    return []
-  }
-
-  const habitIds = habitList.map((h) => h.id)
-  const allCheckinsPromise: Promise<(typeof checkins.$inferSelect)[]> =
-    habitIds.length === 0
-      ? Promise.resolve([])
-      : db
-          .select()
-          .from(checkins)
-          .where(inArray(checkins.habitId, habitIds))
-          .orderBy(checkins.habitId, desc(checkins.date), desc(checkins.createdAt))
-
-  // ユーザーの週開始日設定とチェックイン取得を並列化
-  const weekStartPromise = weekStart ? Promise.resolve(weekStart) : getUserWeekStart(clerkId)
-  const [weekStartStr, allCheckins] = await Promise.all([weekStartPromise, allCheckinsPromise])
-  const weekStartDay = weekStartToDay(weekStartStr)
-
-  // 習慣ごとにチェックインをグループ化
-  const checkinsByHabit = new Map<string, typeof allCheckins>()
-  for (const checkin of allCheckins) {
-    const existing = checkinsByHabit.get(checkin.habitId) ?? []
-    existing.push(checkin)
-    checkinsByHabit.set(checkin.habitId, existing)
-  }
-
-  // 各習慣の進捗とストリークを計算
-  const habitsWithProgress = habitList.map((habit) => {
-    const habitCheckins = checkinsByHabit.get(habit.id) ?? []
-
-    // 現在の期間の進捗を計算
-    const { start, end } = getPeriodDateRange(baseDate, habit.period, weekStartDay)
-    const currentProgress = habitCheckins.filter((c) => {
-      const checkinDate = normalizeCheckinDate(c.date)
-      return checkinDate >= start && checkinDate <= end
-    }).length
-
-    // ストリークを計算
-    const streak = calculateStreakFromCheckins(habit, habitCheckins, weekStartDay, baseDate)
-
-    const completionRate = Math.min(
-      COMPLETION_THRESHOLD,
-      Math.round((currentProgress / habit.frequency) * COMPLETION_THRESHOLD)
-    )
-
-    return {
-      ...habit,
-      currentProgress,
-      streak,
-      completionRate,
+    if (habitList.length === 0) {
+      // キャッシュに空の結果を保存
+      await setHabitsCache(userId, dateKey, [])
+      return []
     }
-  })
 
-  // 3. キャッシュに保存
-  await setHabitsCache(userId, dateKey, habitsWithProgress)
+    const habitIds = habitList.map((h) => h.id)
+    const allCheckinsPromise: Promise<(typeof checkins.$inferSelect)[]> =
+      habitIds.length === 0
+        ? Promise.resolve([])
+        : db
+            .select()
+            .from(checkins)
+            .where(inArray(checkins.habitId, habitIds))
+            .orderBy(checkins.habitId, desc(checkins.date), desc(checkins.createdAt))
 
-  const queryMs = Math.round(nowMs() - queryStart)
-  const totalMs = Math.round(nowMs() - totalStart)
-  logInfo('getHabitsWithProgress:complete', {
-    userId,
-    dateKey,
-    dbMs,
-    queryMs,
-    totalMs,
-    habits: habitsWithProgress.length,
-  })
+    // ユーザーの週開始日設定とチェックイン取得を並列化
+    const weekStartPromise = weekStart ? Promise.resolve(weekStart) : getUserWeekStart(clerkId)
+    const [weekStartStr, allCheckins] = await Promise.all([weekStartPromise, allCheckinsPromise])
+    const weekStartDay = weekStartToDay(weekStartStr)
 
-  return habitsWithProgress
+    // 習慣ごとにチェックインをグループ化
+    const checkinsByHabit = new Map<string, typeof allCheckins>()
+    for (const checkin of allCheckins) {
+      const existing = checkinsByHabit.get(checkin.habitId) ?? []
+      existing.push(checkin)
+      checkinsByHabit.set(checkin.habitId, existing)
+    }
+
+    // 各習慣の進捗とストリークを計算
+    const habitsWithProgress = habitList.map((habit) => {
+      const habitCheckins = checkinsByHabit.get(habit.id) ?? []
+
+      // 現在の期間の進捗を計算
+      const { start, end } = getPeriodDateRange(baseDate, habit.period, weekStartDay)
+      const currentProgress = habitCheckins.filter((c) => {
+        const checkinDate = normalizeCheckinDate(c.date)
+        return checkinDate >= start && checkinDate <= end
+      }).length
+
+      // ストリークを計算
+      const streak = calculateStreakFromCheckins(habit, habitCheckins, weekStartDay, baseDate)
+
+      const completionRate = Math.min(
+        COMPLETION_THRESHOLD,
+        Math.round((currentProgress / habit.frequency) * COMPLETION_THRESHOLD)
+      )
+
+      return {
+        ...habit,
+        currentProgress,
+        streak,
+        completionRate,
+      }
+    })
+
+    // 3. キャッシュに保存
+    await setHabitsCache(userId, dateKey, habitsWithProgress)
+
+    const queryMs = Math.round(nowMs() - queryStart)
+    const totalMs = Math.round(nowMs() - totalStart)
+    logInfo('getHabitsWithProgress:complete', {
+      userId,
+      dateKey,
+      dbMs,
+      queryMs,
+      totalMs,
+      habits: habitsWithProgress.length,
+    })
+
+    return habitsWithProgress
+  } catch (error) {
+    if (staleSnapshot && isDatabaseError(error)) {
+      logWarn('getHabitsWithProgress:stale-fallback', {
+        userId,
+        cachedDateKey: staleSnapshot.dateKey,
+        requestedDateKey: dateKey,
+        error: formatError(error),
+      })
+      return staleSnapshot.habits
+    }
+    throw error
+  }
 }
 
 /**

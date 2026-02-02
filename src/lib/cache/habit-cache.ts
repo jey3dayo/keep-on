@@ -4,7 +4,7 @@ import { HabitsCacheDataSchema } from '@/schemas/cache'
 import type { CloudflareEnv, KVNamespace } from '@/types/cloudflare'
 import type { HabitWithProgress } from '@/types/habit'
 
-interface HabitsCacheData {
+export interface HabitsCacheData {
   habits: HabitWithProgress[]
   dateKey: string
   timestamp: number
@@ -32,7 +32,7 @@ async function getKV(): Promise<KVNamespace | null> {
   }
 }
 
-export async function getHabitsFromCache(userId: string, dateKey: string): Promise<HabitWithProgress[] | null> {
+export async function getHabitsCacheSnapshot(userId: string): Promise<HabitsCacheData | null> {
   const kv = await getKV()
   if (!kv) {
     return null
@@ -43,11 +43,9 @@ export async function getHabitsFromCache(userId: string, dateKey: string): Promi
     const cached = await kv.get(key, 'json')
 
     if (!cached) {
-      logInfo('habit-cache:miss', { userId })
       return null
     }
 
-    // KVから取得したデータをバリデーション
     const parseResult = v.safeParse(HabitsCacheDataSchema, cached)
 
     if (!parseResult.success) {
@@ -59,21 +57,33 @@ export async function getHabitsFromCache(userId: string, dateKey: string): Promi
       return null
     }
 
-    const validated = parseResult.output
-
-    // dateKey 検証（現在の期間と一致するか）
-    if (validated.dateKey !== dateKey) {
-      logInfo('habit-cache:stale', { userId, cachedDateKey: validated.dateKey, requestedDateKey: dateKey })
-      await kv.delete(key)
-      return null
-    }
-
-    logInfo('habit-cache:hit', { userId, habitCount: validated.habits.length })
-    return validated.habits as HabitWithProgress[]
+    return parseResult.output as HabitsCacheData
   } catch (error) {
     logWarn('habit-cache:error:read', { userId, error: formatError(error) })
     return null
   }
+}
+
+export async function getHabitsFromCache(userId: string, dateKey: string): Promise<HabitWithProgress[] | null> {
+  const kv = await getKV()
+  if (!kv) {
+    return null
+  }
+
+  const snapshot = await getHabitsCacheSnapshot(userId)
+  if (!snapshot) {
+    logInfo('habit-cache:miss', { userId })
+    return null
+  }
+
+  if (snapshot.dateKey !== dateKey) {
+    logInfo('habit-cache:stale', { userId, cachedDateKey: snapshot.dateKey, requestedDateKey: dateKey })
+    await kv.delete(getCacheKey(userId))
+    return null
+  }
+
+  logInfo('habit-cache:hit', { userId, habitCount: snapshot.habits.length })
+  return snapshot.habits as HabitWithProgress[]
 }
 
 export async function setHabitsCache(userId: string, dateKey: string, habits: HabitWithProgress[]): Promise<void> {
