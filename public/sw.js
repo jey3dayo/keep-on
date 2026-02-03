@@ -5,7 +5,7 @@ const NEXT_STATIC_PREFIX = '/_next/static/'
 const NEXT_STATIC_CSS_PREFIX = '/_next/static/css/'
 const NEXT_STATIC_MEDIA_PREFIX = '/_next/static/media/'
 
-const PRECACHE_FILES = ['/', '/offline', '/manifest.json', '/icon-192.png', '/icon-512.png']
+const PRECACHE_FILES = ['/offline', '/manifest.json', '/icon-192.png', '/icon-512.png']
 
 const extractOfflineAssets = (html) => {
   const assets = new Set()
@@ -36,7 +36,7 @@ const precacheOfflineAssets = async (cache) => {
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      await cache.addAll(PRECACHE_FILES)
+      await Promise.all(PRECACHE_FILES.map((file) => cache.add(file).catch(() => undefined)))
       await precacheOfflineAssets(cache)
     })
   )
