@@ -160,7 +160,12 @@ export async function invalidateHabitsCache(userId: string): Promise<void> {
       expirationTtl: CACHE_TTL_SECONDS,
     })
 
-    logInfo('habit-cache:invalidate', { userId, mode: 'stale' })
+    logInfo('habit-cache:invalidate:stale', {
+      userId,
+      mode: 'stale',
+      cachedDateKey: data.dateKey,
+      staleAt: staleData.staleAt,
+    })
   } catch (error) {
     // KV delete のエラーは通常発生しないが、念のためログに記録
     logWarn('habit-cache:error:invalidate', { userId, error: formatError(error) })
