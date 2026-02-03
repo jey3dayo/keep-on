@@ -9,7 +9,7 @@ const PRECACHE_FILES = ['/', '/offline', '/manifest.json', '/icon-192.png', '/ic
 
 const extractOfflineAssets = (html) => {
   const assets = new Set()
-  const pattern = /["'](\/_next\/static\/[^"']+\.(?:css|woff2?|ttf|otf|eot))["']/g
+  const pattern = /["'](\/_next\/static\/[^"']+\.(?:css|js|mjs|woff2?|ttf|otf|eot))["']/g
   let match = pattern.exec(html)
   while (match) {
     assets.add(match[1])
@@ -60,6 +60,14 @@ self.addEventListener('fetch', (event) => {
     const isAllowedStatic =
       url.pathname.startsWith(NEXT_STATIC_CSS_PREFIX) || url.pathname.startsWith(NEXT_STATIC_MEDIA_PREFIX)
     if (!isAllowedStatic) {
+      if (request.method !== 'GET') {
+        return
+      }
+      event.respondWith(
+        fetch(request).catch(() =>
+          caches.match(request).then((cached) => cached || Response.error())
+        )
+      )
       return
     }
   }
