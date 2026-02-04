@@ -28,13 +28,13 @@
     "db:studio": "dotenvx run -- drizzle-kit studio",
     "env:encrypt": "dotenvx encrypt",
     "env:decrypt": "dotenvx decrypt",
-    "env:run": "dotenvx run --",
+    "env:run": "dotenvx run --overload --",
     "fix:db-permissions": "dotenvx run -- tsx scripts/fix-db-permissions.ts",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.37.0",
+    "@clerk/nextjs": "^6.37.1",
     "@hookform/resolvers": "^5.2.2",
     "@opennextjs/cloudflare": "^1.16.1",
     "@paralleldrive/cuid2": "^3.3.0",
