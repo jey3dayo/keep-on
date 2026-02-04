@@ -16,6 +16,8 @@ import {
   DEFAULT_HABIT_PERIOD,
   type Period,
 } from '@/constants/habit'
+import { useSyncContext } from '@/contexts/SyncContext'
+import { useBeforeUnload } from '@/hooks/useBeforeUnload'
 import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
 import { formatDateKey } from '@/lib/utils/date'
 import { appToast } from '@/lib/utils/toast'
@@ -45,6 +47,7 @@ export function DashboardWrapper({
 }: DashboardWrapperProps) {
   const router = useRouter()
   const [, startTransition] = useTransition()
+  const { startSync, endSync, isSyncing } = useSyncContext()
   const [isTimeZoneReady, setIsTimeZoneReady] = useState(hasTimeZoneCookie)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
@@ -54,6 +57,9 @@ export function DashboardWrapper({
   const hasRefreshedForTimeZone = useRef(false)
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isRefreshing = useRef(false)
+
+  // ページ離脱警告（同期中のみ）
+  useBeforeUnload(isSyncing)
 
   const runOptimisticUpdateForHabit = (
     habitId: string,
@@ -203,6 +209,7 @@ export function DashboardWrapper({
       pendingCheckinsRef.current = next
       return next
     })
+    startSync(habitId)
   }
 
   const clearPendingCheckin = (habitId: string) => {
@@ -216,6 +223,7 @@ export function DashboardWrapper({
       }
       return next
     })
+    endSync(habitId)
   }
 
   const runAddCheckin = async (habitId: string, dateKey: string) => {
