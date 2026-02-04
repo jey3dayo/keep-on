@@ -19,7 +19,7 @@ interface CreateCheckinWithLimitInput {
   weekStartDay?: WeekStartDay
 }
 
-interface CreateCheckinWithLimitResult {
+export interface CreateCheckinWithLimitResult {
   created: boolean
   currentCount: number
   checkin: typeof checkins.$inferSelect | null

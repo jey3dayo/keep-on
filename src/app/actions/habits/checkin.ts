@@ -6,7 +6,7 @@ import { toActionResult } from '@/lib/actions/result'
 import { resetDb } from '@/lib/db'
 import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
 import { createRequestMeta, isTimeoutError, logInfo, logSpan, logSpanOptional, logWarn } from '@/lib/logging'
-import { createCheckinWithLimit } from '@/lib/queries/checkin'
+import { type CreateCheckinWithLimitResult, createCheckinWithLimit } from '@/lib/queries/checkin'
 import { getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
@@ -95,10 +95,7 @@ async function resolveWeekStartDay(
   return weekStartToDay(weekStart)
 }
 
-interface CheckinResultData {
-  created: boolean
-  currentCount: number
-}
+type CheckinResultData = Pick<CreateCheckinWithLimitResult, 'created' | 'currentCount'>
 
 async function performCheckin(params: {
   habitId: string

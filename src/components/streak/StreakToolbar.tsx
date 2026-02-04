@@ -10,13 +10,10 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer'
-import type { ColorThemeName } from '@/constants/theme'
 import { cn } from '@/lib/utils'
-import { ColorPalette } from './ColorPalette'
+import { ColorPalette, type ColorPaletteProps } from './ColorPalette'
 
-interface StreakToolbarProps {
-  currentTheme: ColorThemeName
-  onThemeChange: (theme: ColorThemeName) => void
+interface StreakToolbarProps extends ColorPaletteProps {
   ready: boolean
 }
 

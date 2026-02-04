@@ -14,6 +14,14 @@ export type HabitInput = Omit<InferInsertModel<typeof import('@/db/schema').habi
  */
 export type HabitUpdateInput = Partial<HabitInput>
 
+const toValidationError = (issues: ReturnType<typeof safeParseHabitInput>['issues']) => {
+  const firstIssue = issues?.[0]
+  return new ValidationError({
+    field: firstIssue?.path?.map((p) => String(p.key)).join('.') || 'unknown',
+    reason: firstIssue?.message || 'Validation failed',
+  })
+}
+
 /**
  * FormDataから習慣入力をバリデーション
  *
@@ -26,13 +34,7 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
   const parseResult = safeParseHabitInput(transformed)
 
   if (!parseResult.success) {
-    const firstIssue = parseResult.issues[0]
-    return Result.fail(
-      new ValidationError({
-        field: firstIssue?.path?.map((p) => p.key).join('.') || 'unknown',
-        reason: firstIssue?.message || 'Validation failed',
-      })
-    )
+    return Result.fail(toValidationError(parseResult.issues))
   }
 
   return Result.succeed({
@@ -57,13 +59,7 @@ export function validateHabitUpdate(formData: FormData): Result.Result<HabitUpda
   const parseResult = safeParseHabitInput(transformed)
 
   if (!parseResult.success) {
-    const firstIssue = parseResult.issues[0]
-    return Result.fail(
-      new ValidationError({
-        field: firstIssue?.path?.map((p) => p.key).join('.') || 'unknown',
-        reason: firstIssue?.message || 'Validation failed',
-      })
-    )
+    return Result.fail(toValidationError(parseResult.issues))
   }
 
   return Result.succeed(parseResult.output)
