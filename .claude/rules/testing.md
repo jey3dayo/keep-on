@@ -27,8 +27,10 @@
 
 ## agent-browser スクリーンショット保存先
 
-- WSL2 環境でスクリーンショットをユーザーに見てもらう場合は、必ず `~/user_home/Downloads/debug` に保存する
+- WSL2 環境でスクリーンショットをユーザーに見てもらう場合は、必ず `~/user_home/Downloads/debug/<YYYYMMDDHHMM>` に保存する
+- 日付フォルダ形式: `YYYYMMDDHHMM`（例: `202602042208`）
 - 上記は C ドライブの Downloads へのシンボリックリンク
+- **重要**: 毎回新しい日付フォルダを作成してから保存すること
 
 ## テストユーザー運用方針
 
