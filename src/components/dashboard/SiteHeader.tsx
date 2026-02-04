@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeToggle } from '@/components/basics/ThemeToggle'
 import { ClerkUserButton } from '@/components/clerk/ClerkUserButton'
+import { SyncIndicator } from '@/components/SyncIndicator'
 import { SidebarTrigger } from '@/components/sidebar/Sidebar'
 import { Separator } from '@/components/ui/separator'
 import { getPageTitle } from '@/constants/navigation'
@@ -28,6 +29,7 @@ export function SiteHeader() {
         <Separator className="mx-2 data-[orientation=vertical]:h-4" orientation="vertical" />
         <h1 className="font-medium text-base">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
+          <SyncIndicator />
           <ThemeToggle />
           <ClerkUserButton />
         </div>
