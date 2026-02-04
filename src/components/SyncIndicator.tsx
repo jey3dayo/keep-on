@@ -36,15 +36,23 @@ export function SyncIndicator() {
   return (
     <div
       aria-atomic="true"
+      aria-label={isSyncing ? '同期中' : '同期完了'}
       aria-live="polite"
-      className="flex h-5 w-5 items-center justify-center"
+      className="flex min-h-[44px] min-w-[44px] items-center justify-center"
+      role="status"
       title={isSyncing ? '同期中' : '同期完了'}
     >
-      {isSyncing ? (
-        <CloudUpload aria-label="同期中" className="h-5 w-5 animate-spin text-muted-foreground" />
-      ) : (
-        <Check aria-label="同期完了" className="h-5 w-5 text-green-600 dark:text-green-400" />
-      )}
+      <div
+        className={`transition-all duration-200 ease-in-out ${showCompleted && !isSyncing ? 'fade-in zoom-in-95 animate-in' : ''}
+          ${isSyncing ? 'motion-safe:animate-spin motion-reduce:animate-pulse' : ''}
+        `}
+      >
+        {isSyncing ? (
+          <CloudUpload className="h-5 w-5 text-muted-foreground" />
+        ) : (
+          <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+        )}
+      </div>
     </div>
   )
 }
