@@ -6,6 +6,7 @@ vi.mock('drizzle-orm', () => ({
   gte: (left: unknown, right: unknown) => ({ op: 'gte', left, right }),
   lte: (left: unknown, right: unknown) => ({ op: 'lte', left, right }),
   desc: (value: unknown) => ({ op: 'desc', value }),
+  sql: Object.assign((...values: unknown[]) => ({ sql: values }), { mapWith: (fn: unknown) => fn }),
 }))
 
 vi.mock('@/lib/utils/date', async (importOriginal) => {
@@ -34,6 +35,7 @@ vi.mock('@/lib/db', () => ({
     limit: vi.fn().mockResolvedValue([]),
     insert: vi.fn().mockReturnThis(),
     values: vi.fn().mockReturnThis(),
+    onConflictDoNothing: vi.fn().mockReturnThis(),
     returning: vi.fn().mockResolvedValue([]),
     delete: vi.fn().mockReturnThis(),
   }),
@@ -44,6 +46,7 @@ import { getPeriodDateRange } from '@/lib/queries/period'
 import { formatDateKey, normalizeDateKey } from '@/lib/utils/date'
 import {
   createCheckin,
+  createCheckinWithLimit,
   deleteAllCheckinsByHabitAndPeriod,
   deleteLatestCheckinByHabitAndPeriod,
   getCheckinsByUserAndDate,
@@ -228,5 +231,91 @@ describe('deleteAllCheckinsByHabitAndPeriod', () => {
     expect(endCondition).toBeTruthy()
     expect(db.delete).toHaveBeenCalledTimes(1)
     expect(db.where).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('createCheckinWithLimit', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('creates a checkin when under frequency limit', async () => {
+    const db = await getDb()
+    const targetDate = new Date(2024, 0, 1)
+    const normalizedDate = formatDateKey(targetDate)
+    const createdCheckin = {
+      id: 'checkin-5',
+      habitId: 'habit-5',
+      date: normalizedDate,
+      createdAt: new Date('2024-01-01T10:00:00Z'),
+    }
+
+    // Mock COUNT query to return 2 (under limit of 3)
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 2 }])
+    // Mock INSERT with RETURNING
+    vi.mocked(db.returning).mockResolvedValueOnce([createdCheckin])
+
+    const result = await createCheckinWithLimit({
+      habitId: 'habit-5',
+      date: targetDate,
+      period: 'daily',
+      frequency: 3,
+    })
+
+    expect(result).toEqual({
+      created: true,
+      currentCount: 3,
+      checkin: createdCheckin,
+    })
+    expect(db.insert).toHaveBeenCalledTimes(1)
+    expect(db.onConflictDoNothing).toHaveBeenCalledTimes(1)
+    expect(db.returning).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns false when frequency limit is reached', async () => {
+    const db = await getDb()
+    const targetDate = new Date(2024, 0, 2)
+
+    // Mock COUNT query to return 3 (at limit)
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 3 }])
+
+    const result = await createCheckinWithLimit({
+      habitId: 'habit-6',
+      date: targetDate,
+      period: 'daily',
+      frequency: 3,
+    })
+
+    expect(result).toEqual({
+      created: false,
+      currentCount: 3,
+      checkin: null,
+    })
+    expect(db.insert).not.toHaveBeenCalled()
+  })
+
+  it('returns false when same-day checkin already exists (UNIQUE constraint)', async () => {
+    const db = await getDb()
+    const targetDate = new Date(2024, 0, 3)
+
+    // Mock COUNT query to return 1 (under limit)
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 1 }])
+    // Mock INSERT with RETURNING empty array (conflict)
+    vi.mocked(db.returning).mockResolvedValueOnce([])
+
+    const result = await createCheckinWithLimit({
+      habitId: 'habit-7',
+      date: targetDate,
+      period: 'daily',
+      frequency: 3,
+    })
+
+    expect(result).toEqual({
+      created: false,
+      currentCount: 1,
+      checkin: null,
+    })
+    expect(db.insert).toHaveBeenCalledTimes(1)
+    expect(db.onConflictDoNothing).toHaveBeenCalledTimes(1)
   })
 })

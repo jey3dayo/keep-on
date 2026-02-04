@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
-import { boolean, date, index, integer, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, date, index, integer, pgEnum, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
 import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
@@ -65,5 +65,6 @@ export const checkins = pgTable(
   },
   (table) => ({
     habitDateIndex: index('Checkin_habitId_date_idx').on(table.habitId, table.date),
+    habitDateUnique: unique('Checkin_habitId_date_unique').on(table.habitId, table.date),
   })
 )
