@@ -9,14 +9,17 @@ export function SyncIndicator() {
   const [showCompleted, setShowCompleted] = useState(false)
   const [wasJustSyncing, setWasJustSyncing] = useState(false)
 
+  // 同期開始時の状態更新
   useEffect(() => {
     if (isSyncing) {
       setWasJustSyncing(true)
       setShowCompleted(false)
-      return
     }
+  }, [isSyncing])
 
-    if (wasJustSyncing) {
+  // 同期完了時のチェックマーク表示
+  useEffect(() => {
+    if (!isSyncing && wasJustSyncing) {
       setShowCompleted(true)
       const timer = setTimeout(() => {
         setShowCompleted(false)

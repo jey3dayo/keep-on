@@ -13,6 +13,8 @@ export function useBeforeUnload(shouldWarn: boolean) {
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault()
       // モダンブラウザではカスタムメッセージは無視され、ブラウザ標準のメッセージが表示される
+      // Chrome/Edge などのモダンブラウザで警告を表示するには returnValue の設定が必要
+      e.returnValue = ''
       return ''
     }
 
