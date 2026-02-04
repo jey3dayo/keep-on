@@ -5,7 +5,15 @@ import { SIGN_IN_PATH } from '@/constants/auth'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import { getHabitsCacheSnapshot } from '@/lib/cache/habit-cache'
 import { withDbRetry } from '@/lib/db-retry'
-import { createRequestMeta, formatError, isDatabaseError, isTimeoutError, logInfo, logSpanOptional, logWarn } from '@/lib/logging'
+import {
+  createRequestMeta,
+  formatError,
+  isDatabaseError,
+  isTimeoutError,
+  logInfo,
+  logSpanOptional,
+  logWarn,
+} from '@/lib/logging'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
@@ -46,8 +54,7 @@ export default async function DashboardPage() {
   }
 
   const cacheSnapshot = await getHabitsCacheSnapshot(user.id)
-  const isStale =
-    cacheSnapshot && (cacheSnapshot.staleAt || cacheSnapshot.dateKey !== dateKey)
+  const isStale = cacheSnapshot && (cacheSnapshot.staleAt || cacheSnapshot.dateKey !== dateKey)
   const staleHabits = isStale ? cacheSnapshot.habits : null
 
   let habits: HabitWithProgress[]
