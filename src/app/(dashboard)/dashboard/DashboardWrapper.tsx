@@ -30,6 +30,12 @@ interface DashboardWrapperProps {
   hasTimeZoneCookie?: boolean
 }
 
+interface CheckinTask {
+  habitId: string
+  dateKey: string
+  rollback?: () => void
+}
+
 export function DashboardWrapper({
   habits,
   todayLabel,
@@ -43,8 +49,8 @@ export function DashboardWrapper({
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
   const pendingCheckinsRef = useRef<Set<string>>(new Set())
-  const inFlightCheckinsRef = useRef<Set<string>>(new Set())
   const activeRequestCountRef = useRef(0)
+  const checkinQueueRef = useRef<CheckinTask[]>([])
   const hasRefreshedForTimeZone = useRef(false)
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isRefreshing = useRef(false)
@@ -137,6 +143,40 @@ export function DashboardWrapper({
     }, 500)
   }
 
+  const scheduleLazyRefresh = () => {
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current)
+    }
+    // 5分後にバックグラウンドリフレッシュ（整合性確保のためのフォールバック）
+    refreshTimeoutRef.current = setTimeout(() => {
+      if (isRefreshing.current || pendingCheckinsRef.current.size > 0) {
+        return
+      }
+      isRefreshing.current = true
+      startTransition(() => {
+        router.refresh()
+        setTimeout(() => {
+          isRefreshing.current = false
+        }, 1000)
+      })
+    }, 300_000) // 5分
+  }
+
+  const finalizeCheckinProgress = (habitId: string, serverCount: number) => {
+    setOptimisticHabits((current) =>
+      current.map((habit) => {
+        if (habit.id !== habitId) {
+          return habit
+        }
+        const completionRate = Math.min(
+          COMPLETION_THRESHOLD,
+          Math.round((serverCount / habit.frequency) * COMPLETION_THRESHOLD)
+        )
+        return { ...habit, currentProgress: serverCount, completionRate }
+      })
+    )
+  }
+
   const updateHabitProgress = (habitId: string, delta: number) => {
     setOptimisticHabits((current) =>
       current.map((habit) => {
@@ -178,19 +218,6 @@ export function DashboardWrapper({
     })
   }
 
-  const markCheckinInFlight = (habitId: string) => {
-    const current = inFlightCheckinsRef.current
-    if (current.has(habitId)) {
-      return false
-    }
-    current.add(habitId)
-    return true
-  }
-
-  const clearCheckinInFlight = (habitId: string) => {
-    inFlightCheckinsRef.current.delete(habitId)
-  }
-
   const runAddCheckin = async (habitId: string, dateKey: string) => {
     try {
       const result = await addCheckinAction(habitId, dateKey)
@@ -202,18 +229,22 @@ export function DashboardWrapper({
       return { ok: false as const, error }
     }
   }
-  const handleCompletedCheckin = async (habitId: string, dateKey: string) => {
-    addPendingCheckin(habitId)
+  const runCheckinTask = async (task: CheckinTask) => {
+    let shouldRollback = Boolean(task.rollback)
 
     try {
-      const { ok, result, error } = await runAddCheckin(habitId, dateKey)
+      const { ok, result, error } = await runAddCheckin(task.habitId, task.dateKey)
 
       if (ok) {
-        scheduleRefresh()
+        shouldRollback = false
+        // サーバーの状態を即座に反映
+        finalizeCheckinProgress(task.habitId, result.data.currentCount)
+        // 5分後にバックグラウンドリフレッシュ（整合性確保のためのフォールバック）
+        scheduleLazyRefresh()
         return
       }
 
-      if (result) {
+      if (result && !ok && 'error' in result) {
         appToast.error('チェックインの切り替えに失敗しました', result.error)
         return
       }
@@ -221,8 +252,35 @@ export function DashboardWrapper({
     } catch (error) {
       appToast.error('チェックインの切り替えに失敗しました', error)
     } finally {
-      clearPendingCheckin(habitId)
+      if (shouldRollback && task.rollback) {
+        task.rollback()
+      }
+      clearPendingCheckin(task.habitId)
     }
+  }
+
+  const startCheckinTask = (task: CheckinTask) => {
+    activeRequestCountRef.current += 1
+
+    runCheckinTask(task).finally(() => {
+      activeRequestCountRef.current = Math.max(0, activeRequestCountRef.current - 1)
+      drainCheckinQueue()
+    })
+  }
+
+  const drainCheckinQueue = () => {
+    while (activeRequestCountRef.current < MAX_CONCURRENT_CHECKINS && checkinQueueRef.current.length > 0) {
+      const next = checkinQueueRef.current.shift()
+      if (!next) {
+        return
+      }
+      startCheckinTask(next)
+    }
+  }
+
+  const enqueueCheckin = (task: CheckinTask) => {
+    checkinQueueRef.current.push(task)
+    drainCheckinQueue()
   }
 
   useEffect(() => {
@@ -308,70 +366,32 @@ export function DashboardWrapper({
     appToast.error('習慣の作成に失敗しました', result.error)
   }
 
-  const processIncompleteCheckin = async (habitId: string, dateKey: string) => {
-    updateHabitProgress(habitId, 1)
-    addPendingCheckin(habitId)
-
-    let shouldRollback = true
-
-    try {
-      const { ok, result, error } = await runAddCheckin(habitId, dateKey)
-
-      if (ok) {
-        shouldRollback = false
-        scheduleRefresh()
-        return
-      }
-
-      if (result) {
-        appToast.error('チェックインの切り替えに失敗しました', result.error)
-        return
-      }
-      appToast.error('チェックインの切り替えに失敗しました', error)
-    } catch (error) {
-      appToast.error('チェックインの切り替えに失敗しました', error)
-    } finally {
-      if (shouldRollback) {
-        updateHabitProgress(habitId, -1)
-      }
-      clearPendingCheckin(habitId)
-    }
-  }
-
-  const handleToggleCheckin = async (habitId: string) => {
-    if (pendingCheckins.has(habitId)) {
-      return
+  const handleToggleCheckin = (habitId: string): Promise<void> => {
+    if (pendingCheckinsRef.current.has(habitId)) {
+      appToast.info('チェックイン処理中です', '完了するまでお待ちください')
+      return Promise.resolve()
     }
     const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
     if (!targetHabit) {
-      return
-    }
-    if (!markCheckinInFlight(habitId)) {
-      return
+      return Promise.resolve()
     }
 
-    // グローバル同時リクエスト制限
-    if (activeRequestCountRef.current >= MAX_CONCURRENT_CHECKINS) {
-      clearCheckinInFlight(habitId)
-      return
+    const isCompleted = targetHabit.currentProgress >= targetHabit.frequency
+    const now = new Date()
+    const dateKey = formatDateKey(now)
+
+    if (!isCompleted) {
+      updateHabitProgress(habitId, 1)
     }
 
-    activeRequestCountRef.current++
-    try {
-      const isCompleted = targetHabit.currentProgress >= targetHabit.frequency
-      const now = new Date()
-      const dateKey = formatDateKey(now)
+    addPendingCheckin(habitId)
+    enqueueCheckin({
+      habitId,
+      dateKey,
+      rollback: isCompleted ? undefined : () => updateHabitProgress(habitId, -1),
+    })
 
-      if (isCompleted) {
-        await handleCompletedCheckin(habitId, dateKey)
-        return
-      }
-
-      await processIncompleteCheckin(habitId, dateKey)
-    } finally {
-      activeRequestCountRef.current--
-      clearCheckinInFlight(habitId)
-    }
+    return Promise.resolve()
   }
 
   const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
