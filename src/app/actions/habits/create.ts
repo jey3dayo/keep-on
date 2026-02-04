@@ -25,9 +25,9 @@ const authenticateUser = async (): Result.ResultAsync<string, UnauthorizedError>
  * 習慣を作成するServer Action
  *
  * @param formData - フォームデータ
- * @returns ServerActionResult<void, SerializableHabitError>
+ * @returns ServerActionResult<{id: string}, SerializableHabitError>
  */
-export async function createHabit(formData: FormData): ServerActionResultAsync<void, SerializableHabitError> {
+export async function createHabit(formData: FormData): ServerActionResultAsync<{ id: string }, SerializableHabitError> {
   const userIdResult = await authenticateUser()
 
   if (!Result.isSuccess(userIdResult)) {
@@ -48,7 +48,7 @@ export async function createHabit(formData: FormData): ServerActionResultAsync<v
 
   if (Result.isSuccess(result)) {
     await revalidateHabitPaths(userId)
-    return actionOk()
+    return actionOk({ id: result.value.id })
   }
 
   // エラーをシリアライズ可能な形式に変換

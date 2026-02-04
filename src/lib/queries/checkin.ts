@@ -75,30 +75,39 @@ export async function createCheckinWithLimit(
       const dateKey = normalizeDateKey(input.date)
       const { startKey, endKey } = getPeriodDateRange(dateKey, input.period, input.weekStartDay ?? 1)
 
-      return await db.transaction(async (tx) => {
-        // Serialize per-habit checkins to avoid exceeding frequency under concurrency.
-        await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${input.habitId}))`)
+      // 1. 現在の期間内カウントを取得（トランザクション不要）
+      const countResult = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(checkins)
+        .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
-        const result = await tx
-          .select({ count: sql<number>`count(*)::int` })
-          .from(checkins)
-          .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+      const currentCount = countResult[0]?.count ?? 0
 
-        const currentCount = result[0]?.count ?? 0
-        if (currentCount >= input.frequency) {
-          return { created: false, currentCount, checkin: null }
-        }
+      // 2. 頻度上限チェック
+      if (currentCount >= input.frequency) {
+        return { created: false, currentCount, checkin: null }
+      }
 
-        const [checkin] = await tx
-          .insert(checkins)
-          .values({
-            habitId: input.habitId,
-            date: dateKey,
-          })
-          .returning()
+      // 3. INSERT with ON CONFLICT DO NOTHING (UNIQUE制約で同日重複防止)
+      const [checkin] = await db
+        .insert(checkins)
+        .values({
+          habitId: input.habitId,
+          date: dateKey,
+        })
+        .onConflictDoNothing()
+        .returning()
 
-        return { created: true, currentCount: currentCount + 1, checkin: checkin ?? null }
-      })
+      if (!checkin) {
+        // 既に同日にチェックイン済み（UNIQUE 制約違反）
+        return { created: false, currentCount, checkin: null }
+      }
+
+      return {
+        created: true,
+        currentCount: currentCount + 1,
+        checkin: checkin ?? null,
+      }
     },
     { habitId: input.habitId, period: input.period }
   )
