@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeToggle } from '@/components/basics/ThemeToggle'
 import { ClerkUserButton } from '@/components/clerk/ClerkUserButton'
+import { SyncIndicator } from '@/components/SyncIndicator'
 import { SidebarTrigger } from '@/components/sidebar/Sidebar'
 import { Separator } from '@/components/ui/separator'
 import { getPageTitle } from '@/constants/navigation'
@@ -18,16 +19,17 @@ export function SiteHeader() {
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <SidebarTrigger className="-ml-1" />
         <Link
-          className="flex items-center gap-2 rounded-md px-1.5 py-1 text-foreground/90 hover:text-foreground"
+          className="flex items-center gap-2 rounded-md px-1.5 py-1 text-foreground/90 transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           href="/dashboard"
           prefetch={false}
         >
-          <Image alt="" className="h-5 w-auto" height={20} priority src="/logo.svg" width={30} />
+          <Image alt="KeepOn ロゴ" className="h-5 w-auto" height={20} priority src="/logo.svg" width={30} />
           <span className="font-semibold text-base">KeepOn</span>
         </Link>
         <Separator className="mx-2 data-[orientation=vertical]:h-4" orientation="vertical" />
         <h1 className="font-medium text-base">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
+          <SyncIndicator />
           <ThemeToggle />
           <ClerkUserButton />
         </div>
