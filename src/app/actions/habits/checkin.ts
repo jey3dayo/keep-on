@@ -4,18 +4,8 @@ import { Result } from '@praha/byethrow'
 import { weekStartToDay } from '@/constants/habit'
 import { toActionResult } from '@/lib/actions/result'
 import { resetDb } from '@/lib/db'
-import { extractDbErrorInfo } from '@/lib/errors/db'
 import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
-import {
-  createRequestMeta,
-  formatError,
-  isTimeoutError,
-  logError,
-  logInfo,
-  logSpan,
-  logSpanOptional,
-  logWarn,
-} from '@/lib/logging'
+import { createRequestMeta, isTimeoutError, logInfo, logSpan, logSpanOptional, logWarn } from '@/lib/logging'
 import { createCheckinWithLimit } from '@/lib/queries/checkin'
 import { getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
@@ -105,53 +95,9 @@ async function resolveWeekStartDay(
   return weekStartToDay(weekStart)
 }
 
-async function createCheckinWithLogging(params: {
-  habitId: string
-  targetDate: Date | string
-  habit: HabitRecord
-  weekStartDay: WeekStartDay
-  countMeta: Record<string, unknown>
-  spans: CheckinSpans
-}): Promise<boolean> {
-  const { habitId, targetDate, habit, weekStartDay, countMeta, spans } = params
-
-  try {
-    const result = await spans.runWithDbTimeout(
-      'action.habits.checkin.createCheckin',
-      () =>
-        createCheckinWithLimit({
-          habitId,
-          date: targetDate,
-          period: habit.period,
-          frequency: habit.frequency,
-          weekStartDay,
-        }),
-      countMeta
-    )
-
-    if (!result.created) {
-      logInfo('action.habits.checkin.skip', { ...countMeta, currentCount: result.currentCount })
-      return false
-    }
-  } catch (error) {
-    if (isTimeoutError(error)) {
-      logWarn('action.habits.checkin.createCheckin:reset', { ...countMeta, timeoutMs: spans.dbTimeoutMs })
-      await resetDb('action.habits.checkin.createCheckin timeout')
-    }
-    const { message, code, causeCode } = extractDbErrorInfo(error)
-    const normalized = message.toLowerCase()
-    if (code || causeCode || normalized.includes('failed query')) {
-      logError('action.habits.checkin.createCheckin:db-error', {
-        ...countMeta,
-        code,
-        causeCode,
-        error: formatError(error),
-      })
-    }
-    throw error
-  }
-
-  return true
+interface CheckinResultData {
+  created: boolean
+  currentCount: number
 }
 
 async function performCheckin(params: {
@@ -159,7 +105,7 @@ async function performCheckin(params: {
   dateKey?: string
   baseMeta: Record<string, unknown>
   spans: CheckinSpans
-}): Promise<void> {
+}): Promise<CheckinResultData> {
   const { habitId, dateKey, baseMeta, spans } = params
   const userId = await requireUserId(baseMeta, spans.timeoutMs)
   const metaWithUser = { ...baseMeta, userId }
@@ -177,24 +123,31 @@ async function performCheckin(params: {
     frequency: habit.frequency,
   }
 
-  const created = await createCheckinWithLogging({
-    habitId,
-    targetDate,
-    habit,
-    weekStartDay,
-    countMeta,
-    spans,
-  })
+  const result = await spans.runWithDbTimeout(
+    'action.habits.checkin.createCheckin',
+    () =>
+      createCheckinWithLimit({
+        habitId,
+        date: targetDate,
+        period: habit.period,
+        frequency: habit.frequency,
+        weekStartDay,
+      }),
+    countMeta
+  )
 
-  if (!created) {
-    return
+  if (!result.created) {
+    logInfo('action.habits.checkin.skip', { ...countMeta, currentCount: result.currentCount })
+    return { created: false, currentCount: result.currentCount }
   }
 
   // チェックイン直後: 同期的にキャッシュ無効化（router.refresh が古いデータを拾わないようにする）
   await revalidateHabitPaths(userId, { sync: true })
+
+  return { created: true, currentCount: result.currentCount }
 }
 
-export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult {
+export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult<CheckinResultData> {
   const requestMeta = createRequestMeta('action.habits.checkin')
   const timeoutMs = getRequestTimeoutMs()
   const spans = createCheckinSpans(timeoutMs)

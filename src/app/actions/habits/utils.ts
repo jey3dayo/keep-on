@@ -108,15 +108,18 @@ export async function revalidateHabitPaths(userId: string, options: { sync?: boo
   // revalidatePath は即座に実行（Server Actions の場合のみ有効）
   revalidatePath('/dashboard')
 
-  // キャッシュ無効化処理
+  // キャッシュ無効化処理を並列実行
   const invalidateCaches = async () => {
     try {
-      await invalidateHabitsCache(userId)
-
-      // 習慣の変更（削除・アーカイブ等）によりチェックイン数が変わる可能性があるため、
-      // アナリティクスキャッシュも無効化
-      const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
-      await invalidateAnalyticsCache(userId)
+      await Promise.all([
+        invalidateHabitsCache(userId),
+        (async () => {
+          // 習慣の変更（削除・アーカイブ等）によりチェックイン数が変わる可能性があるため、
+          // アナリティクスキャッシュも無効化
+          const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
+          await invalidateAnalyticsCache(userId)
+        })(),
+      ])
     } catch (error) {
       // キャッシュ無効化の失敗は致命的ではないため、ログを記録して継続
       logWarn('revalidateHabitPaths:error', { userId, error: formatError(error) })

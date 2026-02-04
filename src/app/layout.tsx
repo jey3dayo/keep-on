@@ -5,6 +5,7 @@ import type React from 'react'
 import { ColorThemeScript } from '@/components/basics/ColorThemeScript'
 import { ThemeModeScript } from '@/components/basics/ThemeModeScript'
 import { ThemeProvider } from '@/components/basics/ThemeProvider'
+import { SyncProviderWrapper } from '@/components/providers/SyncProviderWrapper'
 import { A2HSPrompt } from '@/components/pwa/A2HSPrompt'
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration'
 import { Toaster } from '@/components/ui/sonner'
@@ -44,6 +45,33 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
+const nameHelperScript = `
+(function() {
+  try {
+    var globalRef = typeof globalThis !== 'undefined' ? globalThis : window;
+    if (typeof globalRef.__name !== 'function') {
+      globalRef.__name = function(target, name) {
+        try {
+          Object.defineProperty(target, 'name', { value: name, configurable: true });
+        } catch (e) {}
+        return target;
+      };
+    }
+  } catch (e) {}
+})();
+`
+
+const swRegistrationScript = `
+(function() {
+  try {
+    if (!('serviceWorker' in navigator)) return;
+    if (window.__swRegistering) return;
+    window.__swRegistering = true;
+    navigator.serviceWorker.register('/sw.js').catch(function() {});
+  } catch (e) {}
+})();
+`
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -64,6 +92,10 @@ export default async function RootLayout({
           <meta content="light dark" name="color-scheme" />
           <meta content={THEME_COLOR_LIGHT} name="theme-color" />
           <meta content={THEME_COLOR_DARK} media="(prefers-color-scheme: dark)" name="theme-color" />
+          <script dangerouslySetInnerHTML={{ __html: nameHelperScript }} />
+          {process.env.NODE_ENV === 'production' ? (
+            <script dangerouslySetInnerHTML={{ __html: swRegistrationScript }} />
+          ) : null}
           <ThemeModeScript />
           <ColorThemeScript />
         </head>
@@ -74,12 +106,14 @@ export default async function RootLayout({
           >
             本文へスキップ
           </a>
-          <ThemeProvider defaultTheme={themeMode}>
-            <div id="main-content" tabIndex={-1}>
-              {children}
-            </div>
-            <Toaster position="bottom-right" richColors />
-          </ThemeProvider>
+          <SyncProviderWrapper>
+            <ThemeProvider defaultTheme={themeMode}>
+              <div id="main-content" tabIndex={-1}>
+                {children}
+              </div>
+              <Toaster position="bottom-right" richColors />
+            </ThemeProvider>
+          </SyncProviderWrapper>
           <ServiceWorkerRegistration />
           <A2HSPrompt />
         </body>

@@ -1,4 +1,5 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { type ClerkMiddlewareOptions, clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -10,10 +11,15 @@ const isPublicRoute = createRouteMatcher([
 ])
 
 export default clerkMiddleware(async (auth, request) => {
+  if (request.nextUrl.searchParams.has('__clerk_handshake')) {
+    // Clerk ハンドシェイクは認証保護をスキップしてリダイレクトループを回避
+    return NextResponse.next()
+  }
   if (!isPublicRoute(request)) {
     await auth.protect()
   }
-})
+  return NextResponse.next()
+}, getClerkMiddlewareOptions())
 
 export const config = {
   matcher: [
@@ -22,4 +28,12 @@ export const config = {
     // Always run for API routes
     '/(api|trpc)(.*)',
   ],
+}
+
+function getClerkMiddlewareOptions(): ClerkMiddlewareOptions {
+  return {
+    publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
+    signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
+  }
 }

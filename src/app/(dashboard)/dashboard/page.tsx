@@ -3,13 +3,23 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
+import { getHabitsCacheSnapshot } from '@/lib/cache/habit-cache'
 import { withDbRetry } from '@/lib/db-retry'
-import { createRequestMeta, logInfo, logSpanOptional } from '@/lib/logging'
+import {
+  createRequestMeta,
+  formatError,
+  isDatabaseError,
+  isTimeoutError,
+  logInfo,
+  logSpanOptional,
+  logWarn,
+} from '@/lib/logging'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { syncUser } from '@/lib/user'
 import { formatDateLabel } from '@/lib/utils/date'
+import type { HabitWithProgress } from '@/types/habit'
 import { DashboardWrapper } from './DashboardWrapper'
 
 export const metadata: Metadata = {
@@ -43,11 +53,29 @@ export default async function DashboardPage() {
     redirect(SIGN_IN_PATH)
   }
 
-  const habits = await withDbRetry(
-    'dashboard.habits',
-    () => getHabitsWithProgress(user.id, user.clerkId, dateKey, user.weekStart),
-    { timeoutMs }
-  )
+  const cacheSnapshot = await getHabitsCacheSnapshot(user.id)
+  const isStale = cacheSnapshot && (cacheSnapshot.staleAt || cacheSnapshot.dateKey !== dateKey)
+  const staleHabits = isStale ? cacheSnapshot.habits : null
+
+  let habits: HabitWithProgress[]
+  try {
+    habits = await withDbRetry(
+      'dashboard.habits',
+      () => getHabitsWithProgress(user.id, user.clerkId, dateKey, user.weekStart),
+      { timeoutMs }
+    )
+  } catch (error) {
+    if (staleHabits && (isTimeoutError(error) || isDatabaseError(error))) {
+      logWarn('dashboard.habits:stale-fallback', {
+        cachedDateKey: cacheSnapshot?.dateKey,
+        requestedDateKey: dateKey,
+        error: formatError(error),
+      })
+      habits = staleHabits
+    } else {
+      throw error
+    }
+  }
 
   logInfo('request.dashboard:end', {
     ...requestMeta,
