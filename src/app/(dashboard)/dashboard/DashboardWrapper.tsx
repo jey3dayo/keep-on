@@ -168,32 +168,17 @@ export function DashboardWrapper({
     }, 300_000) // 5分
   }
 
-  const finalizeCheckinProgress = (habitId: string, serverCount: number) => {
-    setOptimisticHabits((current) =>
-      current.map((habit) => {
-        if (habit.id !== habitId) {
-          return habit
-        }
-        const completionRate = Math.min(
-          COMPLETION_THRESHOLD,
-          Math.round((serverCount / habit.frequency) * COMPLETION_THRESHOLD)
-        )
-        return { ...habit, currentProgress: serverCount, completionRate }
-      })
-    )
-  }
+  const calculateCompletionRate = (progress: number, frequency: number) =>
+    Math.min(COMPLETION_THRESHOLD, Math.round((progress / frequency) * COMPLETION_THRESHOLD))
 
-  const updateHabitProgress = (habitId: string, delta: number) => {
+  const updateOptimisticHabitProgress = (habitId: string, getNextProgress: (habit: HabitWithProgress) => number) => {
     setOptimisticHabits((current) =>
       current.map((habit) => {
         if (habit.id !== habitId) {
           return habit
         }
-        const nextProgress = Math.max(0, habit.currentProgress + delta)
-        const completionRate = Math.min(
-          COMPLETION_THRESHOLD,
-          Math.round((nextProgress / habit.frequency) * COMPLETION_THRESHOLD)
-        )
+        const nextProgress = getNextProgress(habit)
+        const completionRate = calculateCompletionRate(nextProgress, habit.frequency)
         return {
           ...habit,
           currentProgress: nextProgress,
@@ -201,6 +186,14 @@ export function DashboardWrapper({
         }
       })
     )
+  }
+
+  const finalizeCheckinProgress = (habitId: string, serverCount: number) => {
+    updateOptimisticHabitProgress(habitId, () => serverCount)
+  }
+
+  const updateHabitProgress = (habitId: string, delta: number) => {
+    updateOptimisticHabitProgress(habitId, (habit) => Math.max(0, habit.currentProgress + delta))
   }
 
   const addPendingCheckin = (habitId: string) => {
