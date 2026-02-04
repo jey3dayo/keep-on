@@ -359,7 +359,12 @@ export function DashboardWrapper({
     const result = await createHabit(formData)
 
     if (result.ok) {
-      router.refresh()
+      // サーバーから返されたIDで楽観的IDを置換
+      setOptimisticHabits((current) =>
+        current.map((habit) => (habit.id === optimisticId ? { ...habit, id: result.data.id } : habit))
+      )
+      // 5分後にバックグラウンドリフレッシュ（整合性確保のためのフォールバック）
+      scheduleLazyRefresh()
       return
     }
 
