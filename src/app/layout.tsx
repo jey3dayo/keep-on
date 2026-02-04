@@ -5,6 +5,7 @@ import type React from 'react'
 import { ColorThemeScript } from '@/components/basics/ColorThemeScript'
 import { ThemeModeScript } from '@/components/basics/ThemeModeScript'
 import { ThemeProvider } from '@/components/basics/ThemeProvider'
+import { SyncProviderWrapper } from '@/components/providers/SyncProviderWrapper'
 import { A2HSPrompt } from '@/components/pwa/A2HSPrompt'
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration'
 import { Toaster } from '@/components/ui/sonner'
@@ -105,12 +106,14 @@ export default async function RootLayout({
           >
             本文へスキップ
           </a>
-          <ThemeProvider defaultTheme={themeMode}>
-            <div id="main-content" tabIndex={-1}>
-              {children}
-            </div>
-            <Toaster position="bottom-right" richColors />
-          </ThemeProvider>
+          <SyncProviderWrapper>
+            <ThemeProvider defaultTheme={themeMode}>
+              <div id="main-content" tabIndex={-1}>
+                {children}
+              </div>
+              <Toaster position="bottom-right" richColors />
+            </ThemeProvider>
+          </SyncProviderWrapper>
           <ServiceWorkerRegistration />
           <A2HSPrompt />
         </body>

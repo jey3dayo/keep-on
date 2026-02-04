@@ -1,5 +1,13 @@
 import { getHabitsCacheSnapshot } from '@/lib/cache/habit-cache'
-import { createRequestMeta, formatError, isDatabaseError, isTimeoutError, logInfo, logSpan, logWarn } from '@/lib/logging'
+import {
+  createRequestMeta,
+  formatError,
+  isDatabaseError,
+  isTimeoutError,
+  logInfo,
+  logSpan,
+  logWarn,
+} from '@/lib/logging'
 import { getArchivedHabits, getHabitsWithProgress } from '@/lib/queries/habit'
 import { getServerDateKey } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
@@ -25,12 +33,9 @@ export async function HabitTable({ userId, clerkId, requestMeta }: HabitTablePro
   // アクティブな習慣（進捗付き）
   let activeHabits: HabitWithProgress[]
   try {
-    activeHabits = await logSpan(
-      'habits.table.query',
-      () => getHabitsWithProgress(userId, clerkId, dateKey),
-      meta,
-      { timeoutMs }
-    )
+    activeHabits = await logSpan('habits.table.query', () => getHabitsWithProgress(userId, clerkId, dateKey), meta, {
+      timeoutMs,
+    })
   } catch (error) {
     if (staleHabits && (isTimeoutError(error) || isDatabaseError(error))) {
       logWarn('habits.table.query:stale-fallback', {

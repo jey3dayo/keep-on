@@ -1,7 +1,7 @@
 const CACHE_NAME = 'keepon-v3'
 const OFFLINE_URL = '/offline'
 const NEXT_ASSET_PREFIX = '/_next/'
-const NEXT_STATIC_PREFIX = '/_next/static/'
+const _NEXT_STATIC_PREFIX = '/_next/static/'
 const NEXT_STATIC_CSS_PREFIX = '/_next/static/css/'
 const NEXT_STATIC_MEDIA_PREFIX = '/_next/static/media/'
 
@@ -63,11 +63,7 @@ self.addEventListener('fetch', (event) => {
       if (request.method !== 'GET') {
         return
       }
-      event.respondWith(
-        fetch(request).catch(() =>
-          caches.match(request).then((cached) => cached || Response.error())
-        )
-      )
+      event.respondWith(fetch(request).catch(() => caches.match(request).then((cached) => cached || Response.error())))
       return
     }
   }

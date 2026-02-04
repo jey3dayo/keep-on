@@ -1,4 +1,4 @@
-import { clerkMiddleware, createRouteMatcher, type ClerkMiddlewareOptions } from '@clerk/nextjs/server'
+import { type ClerkMiddlewareOptions, clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 const isPublicRoute = createRouteMatcher([
