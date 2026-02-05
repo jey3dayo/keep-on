@@ -390,6 +390,56 @@ export function DashboardWrapper({
     appToast.error('習慣の作成に失敗しました', result.error)
   }
 
+  const handleAddCheckin = (habitId: string): Promise<void> => {
+    if (pendingCheckinsRef.current.has(habitId)) {
+      appToast.info('チェックイン処理中です', '完了するまでお待ちください')
+      return Promise.resolve()
+    }
+    const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
+    if (!targetHabit || targetHabit.currentProgress >= targetHabit.frequency) {
+      return Promise.resolve()
+    }
+
+    const now = new Date()
+    const dateKey = formatDateKey(now)
+
+    updateHabitProgress(habitId, 1)
+    addPendingCheckin(habitId)
+    enqueueCheckin({
+      habitId,
+      dateKey,
+      isRemove: false,
+      rollback: () => updateHabitProgress(habitId, -1),
+    })
+
+    return Promise.resolve()
+  }
+
+  const handleRemoveCheckin = (habitId: string): Promise<void> => {
+    if (pendingCheckinsRef.current.has(habitId)) {
+      appToast.info('チェックイン処理中です', '完了するまでお待ちください')
+      return Promise.resolve()
+    }
+    const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
+    if (!targetHabit || targetHabit.currentProgress <= 0) {
+      return Promise.resolve()
+    }
+
+    const now = new Date()
+    const dateKey = formatDateKey(now)
+
+    updateHabitProgress(habitId, -1)
+    addPendingCheckin(habitId)
+    enqueueCheckin({
+      habitId,
+      dateKey,
+      isRemove: true,
+      rollback: () => updateHabitProgress(habitId, 1),
+    })
+
+    return Promise.resolve()
+  }
+
   const handleToggleCheckin = (habitId: string): Promise<void> => {
     if (pendingCheckinsRef.current.has(habitId)) {
       appToast.info('チェックイン処理中です', '完了するまでお待ちください')
@@ -439,9 +489,11 @@ export function DashboardWrapper({
         <StreakDashboard
           habits={activeHabits}
           initialView={initialView}
+          onAddCheckin={handleAddCheckin}
           onAddHabit={handleAddHabit}
           onArchiveOptimistic={archiveOptimistically}
           onDeleteOptimistic={deleteOptimistically}
+          onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
           onToggleCheckin={handleToggleCheckin}
           pendingCheckins={pendingCheckins}
@@ -453,9 +505,11 @@ export function DashboardWrapper({
       <div className="hidden flex-1 md:block">
         <DesktopDashboard
           habits={activeHabits}
+          onAddCheckin={handleAddCheckin}
           onAddHabit={handleAddHabit}
           onArchiveOptimistic={archiveOptimistically}
           onDeleteOptimistic={deleteOptimistically}
+          onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
           onToggleCheckin={handleToggleCheckin}
           pendingCheckins={pendingCheckins}

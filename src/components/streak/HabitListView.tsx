@@ -28,6 +28,8 @@ interface HabitListViewProps {
   periodFilter: 'all' | Period
   onPeriodChange: (filter: 'all' | Period) => void
   onToggleHabit: (habitId: string) => void
+  onAddCheckin?: (habitId: string) => Promise<void>
+  onRemoveCheckin?: (habitId: string) => Promise<void>
   onAddHabit: () => void
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
@@ -46,6 +48,8 @@ export function HabitListView({
   periodFilter,
   onPeriodChange,
   onToggleHabit,
+  onAddCheckin,
+  onRemoveCheckin,
   onAddHabit,
   onArchiveOptimistic,
   onDeleteOptimistic,
@@ -150,10 +154,24 @@ export function HabitListView({
                 dimmed={completed}
                 habit={habit}
                 key={habit.id}
+                onAdd={
+                  onAddCheckin
+                    ? async () => {
+                        await onAddCheckin(habit.id)
+                      }
+                    : undefined
+                }
                 onLongPressOrContextMenu={() => {
                   setDrawerHabitId(habit.id)
                   setDrawerState({ open: true, habit })
                 }}
+                onRemove={
+                  onRemoveCheckin
+                    ? async () => {
+                        await onRemoveCheckin(habit.id)
+                      }
+                    : undefined
+                }
                 onToggle={() => {
                   if (completed) {
                     setResetConfirmHabit(habit)
@@ -164,6 +182,11 @@ export function HabitListView({
                 pending={pendingCheckins?.has(habit.id) ?? false}
               />
             ))
+          )}
+          {filteredHabits.length > 0 && (
+            <div className="mt-6 flex justify-center">
+              <AddHabitButton onClick={onAddHabit}>習慣を追加</AddHabitButton>
+            </div>
           )}
         </div>
 

@@ -13,6 +13,8 @@ export interface DashboardBaseProps {
     options?: { color?: string | null; period?: Period; frequency?: number }
   ) => Promise<void>
   onToggleCheckin: (habitId: string) => Promise<void>
+  onAddCheckin?: (habitId: string) => Promise<void>
+  onRemoveCheckin?: (habitId: string) => Promise<void>
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
   onResetOptimistic?: (habitId: string) => OptimisticRollback

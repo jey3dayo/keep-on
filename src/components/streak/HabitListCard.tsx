@@ -16,6 +16,8 @@ interface HabitListCardProps {
   dimmed?: boolean
   dimmedOpacity?: number
   onToggle: () => void
+  onAdd?: () => void
+  onRemove?: () => void
   onLongPressOrContextMenu: () => void
 }
 
@@ -26,6 +28,8 @@ export function HabitListCard({
   dimmed = false,
   dimmedOpacity = 0.72,
   onToggle,
+  onAdd,
+  onRemove,
   onLongPressOrContextMenu,
 }: HabitListCardProps) {
   const colorData = getColorById(habit.color ?? DEFAULT_HABIT_COLOR)
@@ -147,6 +151,38 @@ export function HabitListCard({
             <span className="whitespace-nowrap font-medium text-muted-foreground text-sm">
               {habit.currentProgress} / {habit.frequency}
             </span>
+            {habit.frequency > 1 && onAdd && onRemove && (
+              <div className="flex items-center gap-1.5">
+                <Button
+                  aria-label="チェックインを1つ減らす"
+                  className="h-7 w-7 rounded-full bg-muted p-0 text-muted-foreground hover:bg-muted/80 disabled:opacity-50"
+                  disabled={habit.currentProgress <= 0 || pending}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onRemove()
+                  }}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  <Icon className="h-3.5 w-3.5" name="minus" />
+                </Button>
+                <Button
+                  aria-label="チェックインを1つ増やす"
+                  className="h-7 w-7 rounded-full bg-muted p-0 text-muted-foreground hover:bg-muted/80 disabled:opacity-50"
+                  disabled={habit.currentProgress >= habit.frequency || pending}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onAdd()
+                  }}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  <Icon className="h-3.5 w-3.5" name="plus" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 

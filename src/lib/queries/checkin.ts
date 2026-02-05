@@ -65,6 +65,30 @@ export async function createCheckin(input: CreateCheckinInput) {
   )
 }
 
+export async function getCurrentCountForPeriod(
+  habitId: string,
+  date: Date | string,
+  period: Period,
+  weekStartDay: WeekStartDay = 1
+): Promise<number> {
+  return await profileQuery(
+    'query.getCurrentCountForPeriod',
+    async () => {
+      const db = getDb()
+      const dateKey = normalizeDateKey(date)
+      const { startKey, endKey } = getPeriodDateRange(dateKey, period, weekStartDay)
+
+      const countResult = await db
+        .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
+        .from(checkins)
+        .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+
+      return countResult[0]?.count ?? 0
+    },
+    { habitId, period }
+  )
+}
+
 export async function createCheckinWithLimit(
   input: CreateCheckinWithLimitInput
 ): Promise<CreateCheckinWithLimitResult> {
