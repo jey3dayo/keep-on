@@ -80,5 +80,6 @@ dotenvx run -- wrangler tail --format pretty
 2. `requestId` や `cf-ray` を含むログを確認
 
 **対処**:
+
 - headless でのループは無視して OK（実ブラウザで問題がなければ設定不整合ではない可能性が高い）
 - 遅延調査は **実ブラウザ**で再現しながら `wrangler tail` でログ収集する
