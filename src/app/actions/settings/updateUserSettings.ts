@@ -3,13 +3,10 @@
 import { auth } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
+import type { SerializableSettingsError } from '@/lib/errors/settings'
 import { getOrCreateUserSettings, updateUserSettings } from '@/lib/queries/user-settings'
 import type { UpdateUserSettingsSchemaType } from '@/schemas/user-settings'
 import type { UserSettings } from '@/types/user-settings'
-
-type SerializableSettingsError =
-  | { name: 'UnauthorizedError'; message: string }
-  | { name: 'DatabaseError'; message: string }
 
 export async function updateUserSettingsAction(
   settings: UpdateUserSettingsSchemaType

@@ -2,11 +2,8 @@
 
 import type { WeekStart } from '@/constants/habit'
 import type { ServerActionResultAsync } from '@/lib/actions/result'
+import type { SerializableSettingsError } from '@/lib/errors/settings'
 import { updateUserSettingsAction } from './updateUserSettings'
-
-type SerializableSettingsError =
-  | { name: 'UnauthorizedError'; message: string }
-  | { name: 'DatabaseError'; message: string }
 
 /**
  * 週の開始日を更新（updateUserSettingsAction のラッパー）
