@@ -1,5 +1,9 @@
 ---
-paths: [".env*", "wrangler.jsonc", ".github/workflows/**/*.yml", "package.json"]
+paths:
+  - ".env*"
+  - "wrangler.jsonc"
+  - ".github/workflows/**/*.yml"
+  - "package.json"
 ---
 
 # dotenvx 暗号化管理ガイド

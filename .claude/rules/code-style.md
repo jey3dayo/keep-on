@@ -1,5 +1,6 @@
 ---
-paths: "src/**/*.{ts,tsx}"
+paths:
+  - "src/**/*.{ts,tsx}"
 ---
 
 # コードスタイルと開発規約

@@ -1,5 +1,6 @@
 ---
-paths: "src/**/*.{ts,tsx,js,jsx}"
+paths:
+  - "src/**/*.{ts,tsx,js,jsx}"
 ---
 
 # Ultracite Code Standards
