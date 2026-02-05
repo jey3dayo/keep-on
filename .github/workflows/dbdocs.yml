@@ -1,0 +1,54 @@
+name: Deploy Database Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/db/schema.ts"
+      - "docs/database/**"
+      - ".github/workflows/dbdocs.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy-dbdocs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.12"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate DBML
+        run: pnpm db:docs:generate
+
+      - name: Deploy to dbdocs.io
+        env:
+          DBDOCS_TOKEN: ${{ secrets.DBDOCS_TOKEN }}
+        run: pnpm db:docs:push
+
+      - name: Comment PR with dbdocs URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📊 Database documentation updated: https://dbdocs.io/keep-on'
+            })

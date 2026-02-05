@@ -1,0 +1,46 @@
+Table "User" {
+  "id" text [primary key, not null, note: 'ユーザーID (CUID2形式)']
+  "clerkId" text [not null, unique, note: 'Clerk認証ID']
+  "email" text [not null, unique, note: 'メールアドレス']
+  "weekStart" text [not null, default: 'monday', note: '週の開始曜日 (0: 日曜, 1: 月曜)']
+  "createdAt" text [not null, note: 'レコード作成日時 (ISO8601形式)']
+  "updatedAt" text [not null, note: 'レコード更新日時 (ISO8601形式)']
+
+  Note: 'ユーザー情報テーブル\nClerkで認証されたユーザーのデータを管理'
+}
+
+Table "Habit" {
+  "id" text [primary key, not null, note: '習慣ID (CUID2形式)']
+  "userId" text [not null, note: 'ユーザーID (外部キー: users.id)']
+  "name" text [not null, note: '習慣名']
+  "icon" text [default: 'droplets', note: 'アイコン識別子 (lucide-react icon name)']
+  "color" text [default: 'orange', note: '表示色 (Radix Colors)']
+  "period" text [not null, default: 'daily', note: '習慣の期間 (daily: 毎日, weekly: 毎週, monthly: 毎月)']
+  "frequency" integer [not null, default: 1, note: '期間内の目標回数']
+  "archived" integer [not null, default: false, note: 'アーカイブ済みフラグ']
+  "archivedAt" text [note: 'アーカイブ日時 (ISO8601形式)']
+  "createdAt" text [not null, note: 'レコード作成日時 (ISO8601形式)']
+  "updatedAt" text [not null, note: 'レコード更新日時 (ISO8601形式)']
+
+  indexes {
+    ("userId") [name: 'Habit_userId_idx']
+  }
+
+  Note: '習慣テーブル\nユーザーが管理する習慣の情報を保存'
+}
+
+Table "Checkin" {
+  "id" text [primary key, not null, note: 'チェックインID (CUID2形式)']
+  "habitId" text [not null, note: '習慣ID (外部キー: habits.id)']
+  "date" text [not null, note: 'チェックイン日付 (YYYY-MM-DD形式)']
+  "createdAt" text [not null, note: 'レコード作成日時 (ISO8601形式)']
+
+  indexes {
+    ("habitId", "date") [name: 'Checkin_habitId_date_idx']
+  }
+
+  Note: 'チェックインテーブル\n習慣の実行記録を保存'
+}
+
+Ref: "Habit"."userId" > "User"."id" [delete: cascade]
+Ref: "Checkin"."habitId" > "Habit"."id" [delete: cascade]
