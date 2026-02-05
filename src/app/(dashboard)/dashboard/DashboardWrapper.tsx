@@ -400,15 +400,15 @@ export function DashboardWrapper({
       return Promise.resolve()
     }
 
-    // 現在の進捗が0より大きい = 今日チェックイン済み → 削除モード
-    // 進捗が0 = 未チェックイン → 追加モード
-    const hasCheckedInToday = targetHabit.currentProgress > 0
+    // frequency未達成 = チェックイン追加可能
+    // frequency達成済み = トグルで削除
+    const isAtFrequencyLimit = targetHabit.currentProgress >= targetHabit.frequency
     const now = new Date()
     const dateKey = formatDateKey(now)
 
     // Optimistic Update
-    if (hasCheckedInToday) {
-      // 削除モード: 進捗を-1
+    if (isAtFrequencyLimit) {
+      // frequency達成済み: 削除モード（進捗を-1）
       updateHabitProgress(habitId, -1)
     } else {
       // 追加モード: 進捗を+1
@@ -419,8 +419,8 @@ export function DashboardWrapper({
     enqueueCheckin({
       habitId,
       dateKey,
-      isRemove: hasCheckedInToday,
-      rollback: () => updateHabitProgress(habitId, hasCheckedInToday ? 1 : -1),
+      isRemove: isAtFrequencyLimit,
+      rollback: () => updateHabitProgress(habitId, isAtFrequencyLimit ? 1 : -1),
     })
 
     return Promise.resolve()
