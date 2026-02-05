@@ -25,8 +25,8 @@ vi.mock('@/lib/queries/period', async (importOriginal) => {
   }
 })
 
-vi.mock('@/lib/db', () => ({
-  getDb: vi.fn().mockReturnValue({
+vi.mock('@/lib/db', () => {
+  const mockDbMethods = {
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
     innerJoin: vi.fn().mockReturnThis(),
@@ -35,12 +35,21 @@ vi.mock('@/lib/db', () => ({
     limit: vi.fn().mockResolvedValue([]),
     insert: vi.fn().mockReturnThis(),
     values: vi.fn().mockReturnThis(),
-    onConflictDoNothing: vi.fn().mockReturnThis(),
     returning: vi.fn().mockResolvedValue([]),
     delete: vi.fn().mockReturnThis(),
     run: vi.fn().mockResolvedValue({}),
-  }),
-}))
+  }
+
+  return {
+    getDb: vi.fn().mockReturnValue({
+      ...mockDbMethods,
+      transaction: vi.fn(async (callback) => {
+        // トランザクション内では同じメソッドセットを返す
+        return await callback(mockDbMethods)
+      }),
+    }),
+  }
+})
 
 import { getDb } from '@/lib/db'
 import { getPeriodDateRange } from '@/lib/queries/period'
@@ -269,7 +278,6 @@ describe('createCheckinWithLimit', () => {
       checkin: createdCheckin,
     })
     expect(db.insert).toHaveBeenCalledTimes(1)
-    expect(db.onConflictDoNothing).toHaveBeenCalledTimes(1)
     expect(db.returning).toHaveBeenCalledTimes(1)
   })
 
@@ -293,30 +301,5 @@ describe('createCheckinWithLimit', () => {
       checkin: null,
     })
     expect(db.insert).not.toHaveBeenCalled()
-  })
-
-  it('returns false when same-day checkin already exists (UNIQUE constraint)', async () => {
-    const db = getDb()
-    const targetDate = new Date(2024, 0, 3)
-
-    // Mock COUNT query to return 1 (under limit)
-    vi.mocked(db.where).mockResolvedValueOnce([{ count: 1 }])
-    // Mock INSERT with RETURNING empty array (conflict)
-    vi.mocked(db.returning).mockResolvedValueOnce([])
-
-    const result = await createCheckinWithLimit({
-      habitId: 'habit-7',
-      date: targetDate,
-      period: 'daily',
-      frequency: 3,
-    })
-
-    expect(result).toEqual({
-      created: false,
-      currentCount: 1,
-      checkin: null,
-    })
-    expect(db.insert).toHaveBeenCalledTimes(1)
-    expect(db.onConflictDoNothing).toHaveBeenCalledTimes(1)
   })
 })

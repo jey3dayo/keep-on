@@ -45,8 +45,8 @@ next-env.d.ts
 # opennext
 .open-next
 
-# drizzle
-drizzle/
+# drizzle - SQLファイルのみコミット対象
+drizzle/meta/
 
 # wrangler
 .wrangler
