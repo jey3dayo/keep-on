@@ -59,7 +59,7 @@ export function useUserSettings(initialSettings?: UserSettings | null): UseUserS
  * デフォルトのユーザー設定を生成
  */
 export function getDefaultUserSettings(userId: string): UserSettings {
-  const now = new Date()
+  const now = new Date().toISOString()
   return {
     id: '',
     userId,

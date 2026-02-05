@@ -1,17 +1,17 @@
 'use server'
 
-import { auth } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
 import type { SerializableSettingsError } from '@/lib/errors/settings'
 import { getOrCreateUserSettings, updateUserSettings } from '@/lib/queries/user-settings'
+import { getCurrentUserId } from '@/lib/user'
 import type { UpdateUserSettingsSchemaType } from '@/schemas/user-settings'
 import type { UserSettings } from '@/types/user-settings'
 
 export async function updateUserSettingsAction(
   settings: UpdateUserSettingsSchemaType
 ): ServerActionResultAsync<UserSettings, SerializableSettingsError> {
-  const { userId } = await auth()
+  const userId = await getCurrentUserId()
 
   if (!userId) {
     return actionError({ name: 'UnauthorizedError', message: 'Unauthorized' })

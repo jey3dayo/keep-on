@@ -22,11 +22,7 @@ export async function getUserSettings(userId: string): Promise<UserSettings | un
         return undefined
       }
 
-      return {
-        ...settings,
-        createdAt: new Date(settings.createdAt),
-        updatedAt: new Date(settings.updatedAt),
-      } as UserSettings
+      return settings as UserSettings
     },
     { userId }
   )
@@ -62,11 +58,7 @@ export async function getOrCreateUserSettings(
         })
         .returning()
 
-      return {
-        ...created,
-        createdAt: new Date(created.createdAt),
-        updatedAt: new Date(created.updatedAt),
-      } as UserSettings
+      return created as UserSettings
     },
     { userId, defaults }
   )
@@ -96,11 +88,7 @@ export async function updateUserSettings(
         .where(eq(userSettings.userId, userId))
         .returning()
 
-      return {
-        ...updated,
-        createdAt: new Date(updated.createdAt),
-        updatedAt: new Date(updated.updatedAt),
-      } as UserSettings
+      return updated as UserSettings
     },
     { userId, settings }
   )
