@@ -42,7 +42,7 @@ async function main() {
 
   const allPassed = results.every((r) => r)
 
-  console.log('\n' + '='.repeat(50))
+  console.log(`\n${'='.repeat(50)}`)
   if (allPassed) {
     console.log('✅ All tests passed!')
     console.log('D1 migration is successful in production.')

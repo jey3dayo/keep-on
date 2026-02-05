@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { addCheckinAction } from '@/app/actions/habits/checkin'
 import { createHabit } from '@/app/actions/habits/create'
+import { removeCheckinAction } from '@/app/actions/habits/remove-checkin'
 import type { IconName } from '@/components/basics/Icon'
 import { DesktopDashboard } from '@/components/streak/DesktopDashboard'
 import { StreakDashboard } from '@/components/streak/StreakDashboard'
@@ -35,6 +36,7 @@ interface DashboardWrapperProps {
 interface CheckinTask {
   habitId: string
   dateKey: string
+  isRemove?: boolean
   rollback?: () => void
 }
 
@@ -230,16 +232,32 @@ export function DashboardWrapper({
       return { ok: false as const, error }
     }
   }
+
+  const runRemoveCheckin = async (habitId: string, dateKey: string) => {
+    try {
+      const result = await removeCheckinAction(habitId, dateKey)
+      if (result.ok) {
+        return { ok: true as const, result }
+      }
+      return { ok: false as const, result }
+    } catch (error) {
+      return { ok: false as const, error }
+    }
+  }
+
   const runCheckinTask = async (task: CheckinTask) => {
     let shouldRollback = Boolean(task.rollback)
 
     try {
-      const { ok, result, error } = await runAddCheckin(task.habitId, task.dateKey)
+      const action = task.isRemove ? runRemoveCheckin : runAddCheckin
+      const { ok, result, error } = await action(task.habitId, task.dateKey)
 
       if (ok) {
         shouldRollback = false
         // サーバーの状態を即座に反映
-        finalizeCheckinProgress(task.habitId, result.data.currentCount)
+        if ('currentCount' in result.data) {
+          finalizeCheckinProgress(task.habitId, result.data.currentCount)
+        }
         // 5分後にバックグラウンドリフレッシュ（整合性確保のためのフォールバック）
         scheduleLazyRefresh()
         return
@@ -382,11 +400,18 @@ export function DashboardWrapper({
       return Promise.resolve()
     }
 
-    const isCompleted = targetHabit.currentProgress >= targetHabit.frequency
+    // 現在の進捗が0より大きい = 今日チェックイン済み → 削除モード
+    // 進捗が0 = 未チェックイン → 追加モード
+    const hasCheckedInToday = targetHabit.currentProgress > 0
     const now = new Date()
     const dateKey = formatDateKey(now)
 
-    if (!isCompleted) {
+    // Optimistic Update
+    if (hasCheckedInToday) {
+      // 削除モード: 進捗を-1
+      updateHabitProgress(habitId, -1)
+    } else {
+      // 追加モード: 進捗を+1
       updateHabitProgress(habitId, 1)
     }
 
@@ -394,7 +419,8 @@ export function DashboardWrapper({
     enqueueCheckin({
       habitId,
       dateKey,
-      rollback: isCompleted ? undefined : () => updateHabitProgress(habitId, -1),
+      isRemove: hasCheckedInToday,
+      rollback: () => updateHabitProgress(habitId, hasCheckedInToday ? 1 : -1),
     })
 
     return Promise.resolve()
