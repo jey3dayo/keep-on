@@ -101,6 +101,7 @@ async function resolveWeekStartDay(
 
 interface RemoveCheckinResultData {
   deleted: boolean
+  currentCount: number
 }
 
 async function performRemoveCheckin(params: {
@@ -133,7 +134,14 @@ async function performRemoveCheckin(params: {
 
   if (!deleted) {
     logInfo('action.habits.removeCheckin.skip', deleteMeta)
-    return { deleted: false }
+    // 削除されなかった場合でもcurrentCountを取得して返す
+    const { getCurrentCountForPeriod } = await import('@/lib/queries/checkin')
+    const currentCount = await spans.runWithDbTimeout(
+      'action.habits.removeCheckin.getCurrentCount',
+      () => getCurrentCountForPeriod(habitId, targetDate, habit.period, weekStartDay),
+      deleteMeta
+    )
+    return { deleted: false, currentCount }
   }
 
   // チェックイン削除直後: 同期的にキャッシュ無効化
@@ -143,7 +151,15 @@ async function performRemoveCheckin(params: {
   const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
   await invalidateAnalyticsCache(userId)
 
-  return { deleted: true }
+  // 削除後の現在のカウントを取得
+  const { getCurrentCountForPeriod } = await import('@/lib/queries/checkin')
+  const currentCount = await spans.runWithDbTimeout(
+    'action.habits.removeCheckin.getCurrentCount',
+    () => getCurrentCountForPeriod(habitId, targetDate, habit.period, weekStartDay),
+    deleteMeta
+  )
+
+  return { deleted: true, currentCount }
 }
 
 export async function removeCheckinAction(
