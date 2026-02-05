@@ -4,124 +4,42 @@
 
 KeepOn は、Next.js 15 + Cloudflare Workers + Drizzle ORM + Supabase + Clerk で構築された PWA アプリケーションです。
 
-**主要技術:**
+## コンテキスト参照
 
-- Next.js 15 (App Router, Turbopack)
-- OpenNext + Cloudflare Workers (Edge デプロイ)
-- Drizzle ORM + Supabase (PostgreSQL)
-- Clerk (認証)
-- Tailwind CSS v4.x
-- Ultracite (Biome) - フォーマット/Lint
+詳細な情報は以下を参照してください:
 
-詳細な技術スタック情報は `.claude/rules/tech-stack.md` を参照してください。
+**Steering (プロジェクト全体の知識)**:
 
-## 利用 MCP サーバー
+- `.kiro/steering/tech.md` - 技術スタック・開発ツール・コマンド一覧
+- `.kiro/steering/product.md` - プロダクト仕様
+- `.kiro/steering/structure.md` - ディレクトリ構造
 
-| MCP       | 用途                                        |
-| --------- | ------------------------------------------- |
-| context7  | 最新ライブラリドキュメント取得              |
-| serena    | セマンティックコード解析・編集              |
-| greptile  | PR/コードレビュー支援                       |
-| ultracite | Ultracite AI 統合（コード品質・最適化支援） |
-
-> **Note**: ライブラリの仕様や API で困った場合は、context7 を使用して最新ドキュメントを取得してください。
-
-## 利用 Skills
-
-| Skill                 | 用途                                                   |
-| --------------------- | ------------------------------------------------------ |
-| kiro:spec-\*          | Spec-Driven Development                                |
-| gh-address-comments   | GitHub PR コメント対応                                 |
-| ui-ux-pro-max         | UI/UXデザイン支援                                      |
-| web-design-guidelines | Web UIガイドライン準拠チェック（アクセシビリティ、UX） |
-| react-best-practices  | React/Next.jsパフォーマンス最適化ガイドライン          |
-
-## コマンド
-
-```bash
-# 開発
-pnpm dev              # 開発サーバー起動
-
-# データベース
-pnpm db:generate      # Drizzle migration 生成
-pnpm db:push          # スキーマ同期（dev用）
-pnpm db:migrate       # マイグレーション実行
-pnpm db:studio        # Drizzle Studio 起動
-
-# Cloudflare
-pnpm build:cf         # OpenNext ビルド
-pnpm deploy           # Cloudflare デプロイ
-pnpm preview          # ローカルプレビュー
-
-# 環境変数
-pnpm env:encrypt      # .env 暗号化
-pnpm env:run -- <cmd> # 復号して実行
-
-# mise タスク
-mise run format       # Ultracite + Taplo + Markdownlint
-mise run lint         # 型チェック + Biome + Markdown + YAML
-mise run check        # format + lint
-mise run ci           # CI相当のチェック
-```
-
-## 開発規約
-
-コードスタイル、ディレクトリ構造、セキュリティガイドラインは以下を参照してください：
+**Rules (開発規約)**:
 
 - `.claude/rules/code-style.md` - コードスタイルと開発規約
-- `.claude/rules/tech-stack.md` - 技術スタック詳細
 - `.claude/rules/security.md` - セキュリティガイドライン
 - `.claude/rules/dotenvx.md` - dotenvx 暗号化管理ガイド
+- `.claude/rules/testing.md` - テストユーザー管理ガイド
+- `.claude/rules/troubleshooting.md` - トラブルシューティング
+- `.claude/rules/cloudflare-deployment.md` - Cloudflare デプロイガイド
+
+## 重要な開発ルール
 
 ### コンポーネント使用規約
 
-**shadcn/ui コンポーネント (`src/components/ui/`) は直接編集しない:**
+- `src/components/ui/` 配下のshadcn/uiコンポーネントは直接編集しない
+- カスタマイズが必要な場合は `src/components/` 直下にラッパーを作成
+- フォーム入力には `@/components/Input` を使用（パスワードマネージャー対応済み）
 
-- `src/components/ui/` 配下は shadcn/ui が自動生成するコンポーネント
-- これらのファイルは直接編集せず、ラッパーコンポーネントを作成する
-- 例: `src/components/Input.tsx` は `src/components/ui/input.tsx` のラッパー
-- カスタマイズが必要な場合は `src/components/` 直下に新規作成
+### 環境変数管理
 
-**Input コンポーネントの使用:**
+- dotenvx で暗号化管理（`.env` はコミット可、`.env.keys` は**絶対にコミット禁止**）
+- コマンド実行時は `pnpm env:run --` または `dotenvx run --` を使用
+- 詳細は `.claude/rules/dotenvx.md` を参照
 
-- `src/components/ui/input` ではなく `@/components/Input` を使用
-- `@/components/Input` はパスワードマネージャーのサジェスト無効化機能を含む
-- フォームや入力フィールドでは必ずこちらを使用すること
+### 開発開始手順
 
-## フォーマット/Lint
-
-- **ツール**: Ultracite (Biome)
-- **スタイル**: シングルクォート、セミコロンなし、行幅120
-- **実行**: `mise run format` / `mise run lint`
-
-## 環境変数設定
-
-dotenvx による暗号化管理:
-
-- `.env` - 暗号化済み（コミット対象）
-- `.env.keys` - 秘密鍵（**絶対にコミットしない**）
-
-認証情報の取得先:
-
-- **Clerk**: https://dashboard.clerk.com/
-- **Supabase**: https://supabase.com/dashboard
-  - Transaction Mode (Port 6543) の接続文字列を使用
-  - `?pgbouncer=true` パラメータを追加
-
-詳細は `.claude/rules/dotenvx.md` および `.claude/rules/security.md` を参照してください。
-
-## 次のステップ
-
-1. Clerk と Supabase プロジェクトを作成
-2. 環境変数を復号化して編集
-
-   ```bash
-   # .envを復号化して一時的に平文で編集
-   pnpm dotenvx decrypt
-   # 編集後に再暗号化
-   pnpm env:encrypt
-   ```
-
-3. `pnpm db:push` でスキーマを同期
+1. 環境変数を復号化: `pnpm dotenvx decrypt`
+2. 編集後に再暗号化: `pnpm env:encrypt`
+3. スキーマ同期: `pnpm db:push`
 4. 開発サーバー起動: `pnpm env:run -- pnpm dev`
-5. `/sign-in` でサインイン確認
