@@ -6,7 +6,7 @@ type Habit = InferSelectModel<typeof import('@/db/schema').habits>
 
 // Drizzle ORMのモック
 vi.mock('@/lib/db', () => ({
-  getDb: vi.fn().mockResolvedValue({
+  getDb: vi.fn().mockReturnValue({
     select: vi.fn().mockReturnThis(),
     selectDistinctOn: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
@@ -16,6 +16,12 @@ vi.mock('@/lib/db', () => ({
     values: vi.fn().mockReturnThis(),
     returning: vi.fn().mockResolvedValue([]),
     onConflictDoUpdate: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    set: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    innerJoin: vi.fn().mockReturnThis(),
+    groupBy: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue([]),
   }),
 }))
 
@@ -59,7 +65,7 @@ describe('getHabitsByUserId', () => {
   })
 
   it('ユーザーIDで習慣一覧を取得', async () => {
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.orderBy).mockResolvedValueOnce(mockHabits)
 
     const result = await getHabitsByUserId('user-123')
@@ -72,7 +78,7 @@ describe('getHabitsByUserId', () => {
   })
 
   it('該当する習慣がない場合は空配列を返す', async () => {
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.orderBy).mockResolvedValueOnce([])
 
     const result = await getHabitsByUserId('user-456')
@@ -87,7 +93,7 @@ describe('getCheckinCountForPeriod', () => {
   })
 
   it('チェックイン数を返す', async () => {
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.where).mockResolvedValueOnce([{ count: 2 }])
 
     const result = await getCheckinCountForPeriod('habit-1', new Date(2024, 0, 15), 'daily')
@@ -99,7 +105,7 @@ describe('getCheckinCountForPeriod', () => {
   })
 
   it('結果が空の場合は0を返す', async () => {
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.where).mockResolvedValueOnce([])
 
     const result = await getCheckinCountForPeriod('habit-1', new Date(2024, 0, 15), 'daily')
@@ -126,7 +132,7 @@ describe('calculateStreak', () => {
   })
 
   it('習慣が存在しない場合は0を返す', async () => {
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.where).mockResolvedValueOnce([])
 
     const result = await calculateStreak('habit-1', 'daily')
@@ -138,7 +144,7 @@ describe('calculateStreak', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2024, 0, 17, 12, 0, 0))
 
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.where).mockResolvedValueOnce([baseHabit])
     vi.mocked(db.orderBy).mockResolvedValueOnce([{ date: new Date(2024, 0, 16) }, { date: new Date(2024, 0, 15) }])
 
@@ -180,7 +186,7 @@ describe('getHabitsWithProgress', () => {
   })
 
   it('習慣がない場合は空配列を返す', async () => {
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.orderBy).mockResolvedValueOnce([])
 
     const result = await getHabitsWithProgress('user-123', 'clerk-123', baseDate)
@@ -193,7 +199,7 @@ describe('getHabitsWithProgress', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2024, 0, 20, 12, 0, 0))
 
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.orderBy)
       .mockResolvedValueOnce(habits)
       .mockResolvedValueOnce([
@@ -233,7 +239,7 @@ describe('getHabitsWithProgress', () => {
       },
     ]
 
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(getUserWeekStart).mockResolvedValueOnce('sunday')
     vi.mocked(db.orderBy)
       .mockResolvedValueOnce(sundayHabits)
@@ -263,7 +269,7 @@ describe('getHabitById', () => {
   })
 
   it('IDで習慣を取得', async () => {
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.where).mockResolvedValueOnce([mockHabit])
 
     const result = await getHabitById('habit-1')
@@ -275,7 +281,7 @@ describe('getHabitById', () => {
   })
 
   it('該当する習慣がない場合はnullを返す', async () => {
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.where).mockResolvedValueOnce([])
 
     const result = await getHabitById('non-existent')

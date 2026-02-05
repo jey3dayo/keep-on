@@ -29,7 +29,7 @@ export async function getCheckinsByUserAndDate(userId: string, date: Date | stri
   return await profileQuery(
     'query.getCheckinsByUserAndDate',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const dateKey = normalizeDateKey(date)
 
       const result = await db
@@ -48,7 +48,7 @@ export async function createCheckin(input: CreateCheckinInput) {
   return await profileQuery(
     'query.createCheckin',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const dateKey = normalizeDateKey(input.date)
 
       const [checkin] = await db
@@ -71,13 +71,13 @@ export async function createCheckinWithLimit(
   return await profileQuery(
     'query.createCheckinWithLimit',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const dateKey = normalizeDateKey(input.date)
       const { startKey, endKey } = getPeriodDateRange(dateKey, input.period, input.weekStartDay ?? 1)
 
       // 1. 現在の期間内カウントを取得（トランザクション不要）
       const countResult = await db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
         .from(checkins)
         .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
@@ -122,7 +122,7 @@ export async function deleteLatestCheckinByHabitAndPeriod(
   return await profileQuery(
     'query.deleteLatestCheckinByHabitAndPeriod',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const { startKey, endKey } = getPeriodDateRange(date, period, weekStartDay)
 
       const [latestCheckin] = await db
@@ -152,7 +152,7 @@ export async function deleteAllCheckinsByHabitAndPeriod(
   return await profileQuery(
     'query.deleteAllCheckinsByHabitAndPeriod',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const { startKey, endKey } = getPeriodDateRange(date, period, weekStartDay)
 
       const result = await db
@@ -177,9 +177,9 @@ export async function getTotalCheckinsByUserId(userId: string): Promise<number> 
   return await profileQuery(
     'query.getTotalCheckinsByUserId',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const result = await db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
         .from(checkins)
         .innerJoin(habits, eq(checkins.habitId, habits.id))
         .where(eq(habits.userId, userId))
@@ -199,9 +199,9 @@ export async function getCheckinCountsByDateRange(userId: string, startDateKey: 
   return await profileQuery(
     'query.getCheckinCountsByDateRange',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const results = await db
-        .select({ date: checkins.date, count: sql<number>`count(*)::int` })
+        .select({ date: checkins.date, count: sql<number>`CAST(count(*) AS INTEGER)` })
         .from(checkins)
         .innerJoin(habits, eq(checkins.habitId, habits.id))
         .where(and(eq(habits.userId, userId), gte(checkins.date, startDateKey), lte(checkins.date, endDateKey)))

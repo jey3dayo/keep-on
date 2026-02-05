@@ -23,7 +23,7 @@ export async function upsertUser(input: UpsertUserInput) {
   return await profileQuery(
     'query.upsertUser',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const [user] = await db
         .insert(users)
         .values({
@@ -34,7 +34,7 @@ export async function upsertUser(input: UpsertUserInput) {
           target: users.clerkId,
           set: {
             email: input.email,
-            updatedAt: new Date(),
+            updatedAt: new Date().toISOString(),
           },
         })
         .returning()
@@ -54,7 +54,7 @@ export async function getUserByClerkId(clerkId: string) {
   return await profileQuery(
     'query.getUserByClerkId',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const [user] = await db.select().from(users).where(eq(users.clerkId, clerkId))
       return user ?? null
     },
@@ -72,7 +72,7 @@ export async function getUserWeekStart(clerkId: string): Promise<WeekStart> {
   return await profileQuery(
     'query.getUserWeekStart',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const [user] = await db.select({ weekStart: users.weekStart }).from(users).where(eq(users.clerkId, clerkId))
       return (user?.weekStart as WeekStart) ?? DEFAULT_WEEK_START
     },
@@ -90,7 +90,7 @@ export async function getUserWeekStartById(userId: string): Promise<WeekStart> {
   return await profileQuery(
     'query.getUserWeekStartById',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const [user] = await db.select({ weekStart: users.weekStart }).from(users).where(eq(users.id, userId))
       return (user?.weekStart as WeekStart) ?? DEFAULT_WEEK_START
     },
@@ -109,7 +109,7 @@ export async function updateUserWeekStart(clerkId: string, weekStart: WeekStart)
   return await profileQuery(
     'query.updateUserWeekStart',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const [user] = await db.update(users).set({ weekStart }).where(eq(users.clerkId, clerkId)).returning()
 
       // キャッシュ無効化

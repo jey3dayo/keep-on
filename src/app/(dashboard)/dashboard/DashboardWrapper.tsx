@@ -99,7 +99,7 @@ export function DashboardWrapper({
           ? {
               ...habit,
               archived: true,
-              archivedAt: habit.archivedAt ?? new Date(),
+              archivedAt: habit.archivedAt ?? new Date().toISOString(),
             }
           : habit
       )
@@ -329,7 +329,7 @@ export function DashboardWrapper({
     const nextColor = options?.color ?? DEFAULT_HABIT_COLOR
     const nextFrequency = options?.frequency ?? DEFAULT_HABIT_FREQUENCY
     const optimisticId = `optimistic-${createId()}`
-    const now = new Date()
+    const now = new Date().toISOString()
     const optimisticHabit: HabitWithProgress = {
       id: optimisticId,
       userId: user.id,

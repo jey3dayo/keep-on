@@ -35,8 +35,8 @@ export async function withDbRetry<T>(name: string, fn: () => Promise<T>, options
   const {
     maxRetries = 1,
     retryOn = isDatabaseError,
-    onRetry = async () => {
-      await resetDb(`${name} retry`)
+    onRetry = () => {
+      resetDb()
     },
     timeoutMs,
   } = options

@@ -105,7 +105,7 @@ async function runTask(
 
   checks.push(
     runTimed(async () => {
-      await db.execute(sql`select 1`)
+      await db.run(sql`select 1`)
     })
   )
   checks.push(
@@ -143,7 +143,7 @@ export async function runConcurrencyChecks(params: ConcurrencyParams): Promise<C
   )
 
   const startedAt = new Date().toISOString()
-  const db = await getDb()
+  const db = getDb()
   const { client: clerk, error: clerkError } = await resolveClerkClient()
   const batches: ConcurrencyResult['batches'] = []
 

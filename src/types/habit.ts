@@ -12,9 +12,9 @@ export interface Habit {
   frequency: number
   userId: string
   archived: boolean
-  archivedAt: Date | null
-  createdAt: Date
-  updatedAt: Date
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 /**
@@ -36,6 +36,6 @@ export interface HabitCheckin {
   id: string
   habitId: string
   userId: string
-  checkedAt: Date
-  createdAt: Date
+  checkedAt: string
+  createdAt: string
 }

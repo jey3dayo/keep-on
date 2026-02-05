@@ -40,7 +40,7 @@ function createCheckinSpans(timeoutMs: number): CheckinSpans {
         throw error
       }
       logWarn(`${name}:reset`, data ? { ...data, timeoutMs: dbTimeoutMs } : { timeoutMs: dbTimeoutMs })
-      await resetDb(`${name} timeout`)
+      resetDb()
       return await runWithDbTimeout(`${name}.retry`, fn, data)
     }
   }

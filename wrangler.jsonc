@@ -24,10 +24,11 @@
       "id": "feaaf2df1aab41b68e7a19cb48779738"
     }
   ],
-  "hyperdrive": [
+  "d1_databases": [
     {
-      "binding": "HYPERDRIVE",
-      "id": "06274ec0a69849e68ea9c4997c4c9bc3"
+      "binding": "DB",
+      "database_name": "keep-on-db",
+      "database_id": "763c22af-de35-49ef-8171-2ae5293491d5"
     }
   ]
 }

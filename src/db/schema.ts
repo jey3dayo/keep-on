@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
-import { boolean, date, index, integer, pgEnum, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
 import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
@@ -8,23 +8,22 @@ import {
   DEFAULT_WEEK_START,
 } from '@/constants/habit'
 
-export const taskPeriodEnum = pgEnum('task_period', ['daily', 'weekly', 'monthly'])
-
-export const users = pgTable('User', {
+export const users = sqliteTable('User', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => createId()),
   clerkId: text('clerkId').notNull().unique(),
   email: text('email').notNull().unique(),
   weekStart: text('weekStart').default(DEFAULT_WEEK_START).notNull(),
-  createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' })
-    .$onUpdate(() => new Date())
-    .defaultNow()
+  createdAt: text('createdAt')
+    .$defaultFn(() => new Date().toISOString())
+    .notNull(),
+  updatedAt: text('updatedAt')
+    .$defaultFn(() => new Date().toISOString())
     .notNull(),
 })
 
-export const habits = pgTable(
+export const habits = sqliteTable(
   'Habit',
   {
     id: text('id')
@@ -36,14 +35,17 @@ export const habits = pgTable(
     name: text('name').notNull(),
     icon: text('icon').default(DEFAULT_HABIT_ICON),
     color: text('color').default(DEFAULT_HABIT_COLOR),
-    period: taskPeriodEnum('period').default(DEFAULT_HABIT_PERIOD).notNull(),
+    period: text('period', { enum: ['daily', 'weekly', 'monthly'] })
+      .default(DEFAULT_HABIT_PERIOD)
+      .notNull(),
     frequency: integer('frequency').default(DEFAULT_HABIT_FREQUENCY).notNull(),
-    archived: boolean('archived').default(false).notNull(),
-    archivedAt: timestamp('archivedAt', { mode: 'date' }),
-    createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
-    updatedAt: timestamp('updatedAt', { mode: 'date' })
-      .$onUpdate(() => new Date())
-      .defaultNow()
+    archived: integer('archived', { mode: 'boolean' }).default(false).notNull(),
+    archivedAt: text('archivedAt'),
+    createdAt: text('createdAt')
+      .$defaultFn(() => new Date().toISOString())
+      .notNull(),
+    updatedAt: text('updatedAt')
+      .$defaultFn(() => new Date().toISOString())
       .notNull(),
   },
   (table) => ({
@@ -51,7 +53,7 @@ export const habits = pgTable(
   })
 )
 
-export const checkins = pgTable(
+export const checkins = sqliteTable(
   'Checkin',
   {
     id: text('id')
@@ -60,8 +62,10 @@ export const checkins = pgTable(
     habitId: text('habitId')
       .notNull()
       .references(() => habits.id, { onDelete: 'cascade' }),
-    date: date('date', { mode: 'string' }).notNull(),
-    createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
+    date: text('date').notNull(),
+    createdAt: text('createdAt')
+      .$defaultFn(() => new Date().toISOString())
+      .notNull(),
   },
   (table) => ({
     habitDateIndex: index('Checkin_habitId_date_idx').on(table.habitId, table.date),
