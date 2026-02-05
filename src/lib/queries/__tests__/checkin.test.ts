@@ -25,8 +25,8 @@ vi.mock('@/lib/queries/period', async (importOriginal) => {
   }
 })
 
-vi.mock('@/lib/db', () => ({
-  getDb: vi.fn().mockReturnValue({
+vi.mock('@/lib/db', () => {
+  const mockDbMethods = {
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
     innerJoin: vi.fn().mockReturnThis(),
@@ -38,8 +38,18 @@ vi.mock('@/lib/db', () => ({
     returning: vi.fn().mockResolvedValue([]),
     delete: vi.fn().mockReturnThis(),
     run: vi.fn().mockResolvedValue({}),
-  }),
-}))
+  }
+
+  return {
+    getDb: vi.fn().mockReturnValue({
+      ...mockDbMethods,
+      transaction: vi.fn(async (callback) => {
+        // トランザクション内では同じメソッドセットを返す
+        return await callback(mockDbMethods)
+      }),
+    }),
+  }
+})
 
 import { getDb } from '@/lib/db'
 import { getPeriodDateRange } from '@/lib/queries/period'
