@@ -4,6 +4,15 @@
 
 このプロジェクトでは、Drizzle ORMスキーマから自動的にDBMLを生成し、dbdocs.ioでデータベースドキュメントを公開しています。
 
+## 関連ファイル
+
+| ファイル                       | 説明                        |
+| ------------------------------ | --------------------------- |
+| `src/db/schema.ts`             | Drizzle ORMスキーマ定義     |
+| `scripts/generate-dbml.ts`     | DBML生成スクリプト          |
+| `docs/database/schema.dbml`    | 生成されたDBML（自動生成）  |
+| `.github/workflows/dbdocs.yml` | GitHub Actions ワークフロー |
+
 ## ツール構成
 
 | ツール                 | 用途                                   |
