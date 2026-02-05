@@ -66,9 +66,16 @@ export async function getOrCreateUserSettings(
           colorTheme: defaults?.colorTheme ?? DEFAULT_COLOR_THEME,
           themeMode: defaults?.themeMode ?? DEFAULT_THEME_MODE,
         })
+        .onConflictDoNothing({ target: userSettings.userId })
         .returning()
 
-      const parsed = v.safeParse(UserSettingsSchema, created)
+      const resolved = created ?? (await db.select().from(userSettings).where(eq(userSettings.userId, userId)))[0]
+
+      if (!resolved) {
+        throw new Error('Failed to create or fetch user settings')
+      }
+
+      const parsed = v.safeParse(UserSettingsSchema, resolved)
       if (!parsed.success) {
         throw new Error('Failed to create user settings: invalid data')
       }
