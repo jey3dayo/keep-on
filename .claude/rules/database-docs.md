@@ -114,11 +114,11 @@ https://dbdocs.io/keep-on
 
 ### DBML生成エラー
 
-**エラー**: `Cannot read properties of undefined`
+エラー: `Cannot read properties of undefined`
 
-**原因**: drizzle-dbml-generatorがスキーマ構造を正しく解釈できていない
+原因: drizzle-dbml-generatorがスキーマ構造を正しく解釈できていない
 
-**解決方法**:
+解決方法:
 
 ```bash
 # スキーマファイルの構文を確認
@@ -130,11 +130,11 @@ pnpm db:generate
 
 ### dbdocs認証エラー
 
-**エラー**: `Unauthorized` や `Authentication failed`
+エラー: `Unauthorized` や `Authentication failed`
 
-**原因**: `DBDOCS_TOKEN` が設定されていない、または期限切れ
+原因: `DBDOCS_TOKEN` が設定されていない、または期限切れ
 
-**解決方法**:
+解決方法:
 
 ```bash
 # ローカルで再認証
@@ -149,11 +149,11 @@ gh secret set DBDOCS_TOKEN -b"<token>"
 
 ### GitHub Actions デプロイ失敗
 
-**エラー**: `pnpm db:docs:push` が失敗する
+エラー: `pnpm db:docs:push` が失敗する
 
-**原因**: `DBDOCS_TOKEN` が GitHub Secrets に設定されていない
+原因: `DBDOCS_TOKEN` が GitHub Secrets に設定されていない
 
-**解決方法**:
+解決方法:
 
 1. ローカルで `pnpm dbdocs token -g` を実行
 2. 出力されたトークンを GitHub Secrets に設定:
