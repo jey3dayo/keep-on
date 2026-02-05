@@ -27,6 +27,8 @@ interface HabitSimpleViewProps {
   habits: HabitWithProgress[]
   completedHabitIds: Set<string>
   onToggleHabit: (habitId: string) => void
+  onAddCheckin?: (habitId: string) => Promise<void>
+  onRemoveCheckin?: (habitId: string) => Promise<void>
   onAddHabit: () => void
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
@@ -76,6 +78,8 @@ export function HabitSimpleView({
   habits,
   completedHabitIds,
   onToggleHabit,
+  onAddCheckin: _onAddCheckin,
+  onRemoveCheckin: _onRemoveCheckin,
   onAddHabit,
   onArchiveOptimistic,
   onDeleteOptimistic,

@@ -21,6 +21,7 @@ import {
   type LucideProps,
   Mail,
   Menu,
+  Minus,
   Moon,
   MoreHorizontal,
   Music,
@@ -62,6 +63,7 @@ export type IconName =
   | 'info'
   | 'mail'
   | 'menu'
+  | 'minus'
   | 'moon'
   | 'more-horizontal'
   | 'music'
@@ -103,6 +105,7 @@ const icons: Record<IconName, React.ComponentType<LucideProps>> = {
   info: Info,
   mail: Mail,
   menu: Menu,
+  minus: Minus,
   moon: Moon,
   'more-horizontal': MoreHorizontal,
   music: Music,

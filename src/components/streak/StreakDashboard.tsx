@@ -40,6 +40,8 @@ export function StreakDashboard({
   pendingCheckins,
   onAddHabit,
   onToggleCheckin,
+  onAddCheckin,
+  onRemoveCheckin,
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
@@ -167,9 +169,11 @@ export function StreakDashboard({
           backgroundColor="var(--primary)"
           completedHabitIds={completedHabitIds}
           habits={habits}
+          onAddCheckin={onAddCheckin}
           onAddHabit={openPresetSelector}
           onArchiveOptimistic={onArchiveOptimistic}
           onDeleteOptimistic={onDeleteOptimistic}
+          onRemoveCheckin={onRemoveCheckin}
           onResetOptimistic={onResetOptimistic}
           onSettings={() => handleViewChange('dashboard')}
           onToggleHabit={handleToggleHabit}
@@ -181,10 +185,12 @@ export function StreakDashboard({
             completedHabitIds={completedHabitIds}
             filteredHabits={filteredHabits}
             habits={habits}
+            onAddCheckin={onAddCheckin}
             onAddHabit={openPresetSelector}
             onArchiveOptimistic={onArchiveOptimistic}
             onDeleteOptimistic={onDeleteOptimistic}
             onPeriodChange={setPeriodFilter}
+            onRemoveCheckin={onRemoveCheckin}
             onResetOptimistic={onResetOptimistic}
             onToggleHabit={handleToggleHabit}
             pendingCheckins={pendingCheckins}

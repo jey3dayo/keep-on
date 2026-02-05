@@ -8,6 +8,7 @@ import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import type { User } from '@/types/user'
 import { HabitForm } from './HabitForm'
 import { HabitListView } from './HabitListView'
+import { HabitPresetSelector } from './HabitPresetSelector'
 import type { DashboardBaseProps } from './types'
 
 interface DesktopDashboardProps extends DashboardBaseProps {
@@ -15,13 +16,15 @@ interface DesktopDashboardProps extends DashboardBaseProps {
 }
 
 type PeriodFilter = 'all' | Period
-type View = 'dashboard' | 'add'
+type View = 'dashboard' | 'preset-selector' | 'add'
 
 export function DesktopDashboard({
   habits,
   pendingCheckins,
   onAddHabit,
   onToggleCheckin,
+  onAddCheckin,
+  onRemoveCheckin,
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
@@ -75,13 +78,31 @@ export function DesktopDashboard({
     await onToggleCheckin(habitId)
   }
 
+  if (currentView === 'preset-selector') {
+    return (
+      <div className="space-y-6 p-6">
+        <HabitPresetSelector
+          onClose={() => {
+            setSelectedPreset(null)
+            setCurrentView('dashboard')
+          }}
+          onCreateCustom={() => {
+            setSelectedPreset(null)
+            setCurrentView('add')
+          }}
+          onSelectPreset={(preset: HabitPreset) => {
+            setSelectedPreset(preset)
+            setCurrentView('add')
+          }}
+        />
+      </div>
+    )
+  }
+
   if (currentView === 'add') {
     return (
       <HabitForm
-        onBack={() => {
-          setSelectedPreset(null)
-          setCurrentView('dashboard')
-        }}
+        onBack={() => setCurrentView('preset-selector')}
         onSubmit={async (input) => {
           await handleAddHabit(input.name, input.icon, {
             color: input.color,
@@ -102,10 +123,12 @@ export function DesktopDashboard({
         completedHabitIds={completedHabitIds}
         filteredHabits={filteredHabits}
         habits={habits}
-        onAddHabit={() => setCurrentView('add')}
+        onAddCheckin={onAddCheckin}
+        onAddHabit={() => setCurrentView('preset-selector')}
         onArchiveOptimistic={onArchiveOptimistic}
         onDeleteOptimistic={onDeleteOptimistic}
         onPeriodChange={setPeriodFilter}
+        onRemoveCheckin={onRemoveCheckin}
         onResetOptimistic={onResetOptimistic}
         onToggleHabit={handleToggleHabit}
         pendingCheckins={pendingCheckins}
