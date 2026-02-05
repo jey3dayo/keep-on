@@ -100,7 +100,8 @@ export async function createCheckinWithLimit(
       const { startKey, endKey } = getPeriodDateRange(dateKey, input.period, input.weekStartDay ?? 1)
 
       // トランザクション内でカウントチェックとINSERTをアトミックに実行
-      // 競合状態を防ぐため、トランザクション分離レベルでシリアライズ可能性を保証
+      // 注: D1はREAD UNCOMMITTED相当の分離レベルのため、高頻度の同時実行時に
+      // frequency制限を超えるレコードが作成される可能性がある（UI側でdebounce推奨）
       return await db.transaction(async (tx) => {
         // 1. 現在の期間内カウントを取得
         const countResult = await tx
