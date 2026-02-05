@@ -112,19 +112,17 @@ export async function createCheckinWithLimit(
         return { created: false, currentCount, checkin: null }
       }
 
-      // 3. INSERT with ON CONFLICT DO NOTHING (UNIQUE制約で同日重複防止)
+      // 3. INSERT（頻度上限は既にチェック済み）
       const [checkin] = await db
         .insert(checkins)
         .values({
           habitId: input.habitId,
           date: dateKey,
         })
-        .onConflictDoNothing()
         .returning()
 
       if (!checkin) {
-        // 既に同日にチェックイン済み（UNIQUE 制約違反）
-        return { created: false, currentCount, checkin: null }
+        throw new Error('Failed to create checkin')
       }
 
       return {
