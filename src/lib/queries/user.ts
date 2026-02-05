@@ -99,6 +99,30 @@ export async function getUserWeekStartById(userId: string): Promise<WeekStart> {
 }
 
 /**
+ * ユーザーIDから週開始日設定を更新
+ *
+ * @param userId - アプリ内ユーザーID
+ * @param weekStart - 週開始日 ('monday' | 'sunday')
+ * @returns 更新されたユーザー
+ */
+export async function updateUserWeekStartById(userId: string, weekStart: WeekStart) {
+  return await profileQuery(
+    'query.updateUserWeekStartById',
+    async () => {
+      const db = getDb()
+      const [user] = await db.update(users).set({ weekStart }).where(eq(users.id, userId)).returning()
+
+      if (user?.clerkId) {
+        await invalidateUserCache(user.clerkId)
+      }
+
+      return user
+    },
+    { userId, weekStart }
+  )
+}
+
+/**
  * ユーザーの週開始日設定を更新
  *
  * @param clerkId - ClerkのユーザーID

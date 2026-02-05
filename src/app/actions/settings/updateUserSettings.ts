@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
 import type { SerializableSettingsError } from '@/lib/errors/settings'
-import { getOrCreateUserSettings, updateUserSettings } from '@/lib/queries/user-settings'
+import { updateUserWeekStartById } from '@/lib/queries/user'
+import { updateUserSettings } from '@/lib/queries/user-settings'
 import { getCurrentUserId } from '@/lib/user'
 import type { UpdateUserSettingsSchemaType } from '@/schemas/user-settings'
 import type { UserSettings } from '@/types/user-settings'
@@ -18,11 +19,13 @@ export async function updateUserSettingsAction(
   }
 
   try {
-    // ユーザー設定が存在しない場合は作成
-    await getOrCreateUserSettings(userId)
-
-    // 設定を更新
+    // 設定を更新または作成（upsert）
     const updated = await updateUserSettings(userId, settings)
+
+    // users テーブルの weekStart も同期（後方互換性のため）
+    if (settings.weekStart) {
+      await updateUserWeekStartById(userId, settings.weekStart)
+    }
 
     revalidatePath('/dashboard')
     revalidatePath('/settings')

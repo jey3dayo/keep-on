@@ -1,4 +1,6 @@
 import { eq } from 'drizzle-orm'
+import { DEFAULT_WEEK_START } from '@/constants/habit'
+import { DEFAULT_COLOR_THEME, DEFAULT_THEME_MODE } from '@/constants/theme'
 import { userSettings } from '@/db/schema'
 import { getDb } from '@/lib/db'
 import { profileQuery } from '@/lib/queries/profiler'
@@ -52,9 +54,9 @@ export async function getOrCreateUserSettings(
         .insert(userSettings)
         .values({
           userId,
-          weekStart: defaults?.weekStart,
-          colorTheme: defaults?.colorTheme,
-          themeMode: defaults?.themeMode,
+          weekStart: defaults?.weekStart ?? DEFAULT_WEEK_START,
+          colorTheme: defaults?.colorTheme ?? DEFAULT_COLOR_THEME,
+          themeMode: defaults?.themeMode ?? DEFAULT_THEME_MODE,
         })
         .returning()
 
@@ -65,7 +67,7 @@ export async function getOrCreateUserSettings(
 }
 
 /**
- * ユーザー設定を更新
+ * ユーザー設定を更新または作成（upsert）
  *
  * @param userId - ユーザーID
  * @param settings - 更新する設定（部分更新）
@@ -79,16 +81,28 @@ export async function updateUserSettings(
     'query.updateUserSettings',
     async () => {
       const db = getDb()
-      const [updated] = await db
-        .update(userSettings)
-        .set({
-          ...settings,
-          updatedAt: new Date().toISOString(),
+      const now = new Date().toISOString()
+
+      const [upserted] = await db
+        .insert(userSettings)
+        .values({
+          userId,
+          weekStart: settings.weekStart ?? DEFAULT_WEEK_START,
+          colorTheme: settings.colorTheme ?? DEFAULT_COLOR_THEME,
+          themeMode: settings.themeMode ?? DEFAULT_THEME_MODE,
+          createdAt: now,
+          updatedAt: now,
         })
-        .where(eq(userSettings.userId, userId))
+        .onConflictDoUpdate({
+          target: userSettings.userId,
+          set: {
+            ...settings,
+            updatedAt: now,
+          },
+        })
         .returning()
 
-      return updated as UserSettings
+      return upserted as UserSettings
     },
     { userId, settings }
   )
