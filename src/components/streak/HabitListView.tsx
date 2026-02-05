@@ -173,7 +173,7 @@ export function HabitListView({
                     : undefined
                 }
                 onToggle={() => {
-                  if (completed) {
+                  if (completed && habit.frequency > 1) {
                     setResetConfirmHabit(habit)
                     return
                   }

@@ -78,8 +78,8 @@ export function HabitSimpleView({
   habits,
   completedHabitIds,
   onToggleHabit,
-  onAddCheckin: _onAddCheckin,
-  onRemoveCheckin: _onRemoveCheckin,
+  onAddCheckin,
+  onRemoveCheckin,
   onAddHabit,
   onArchiveOptimistic,
   onDeleteOptimistic,
@@ -135,11 +135,20 @@ export function HabitSimpleView({
       longPressTriggeredRef.current = false
       return
     }
+
+    if (habit.frequency === 1) {
+      onToggleHabit(habit.id)
+      return
+    }
+
     if (isCompleted) {
       setResetConfirm({ habitId: habit.id, habitName: habit.name })
       return
     }
-    onToggleHabit(habit.id)
+
+    if (onAddCheckin) {
+      onAddCheckin(habit.id)
+    }
   }
 
   const runResetWithRetry = async (habitId: string) => {
@@ -295,14 +304,58 @@ export function HabitSimpleView({
                   </div>
                 </Button>
 
-                <p
-                  className={cn(
-                    'max-w-[160px] text-center font-medium text-base text-white leading-tight',
-                    isCompleted && 'opacity-80'
+                <div className="flex flex-col items-center gap-2">
+                  <p
+                    className={cn(
+                      'max-w-[160px] text-center font-medium text-base text-white leading-tight',
+                      isCompleted && 'opacity-80'
+                    )}
+                  >
+                    {habit.name}
+                  </p>
+
+                  {habit.frequency > 1 && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        aria-label="チェックインを減らす"
+                        className="h-7 w-7 rounded-full bg-white/10 p-0 text-white hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
+                        disabled={habit.currentProgress === 0 || isPending}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (onRemoveCheckin) {
+                            onRemoveCheckin(habit.id)
+                          }
+                        }}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Icon className="h-4 w-4" name="minus" />
+                      </Button>
+
+                      <span className="min-w-[3rem] text-center font-medium text-sm text-white">
+                        {habit.currentProgress} / {habit.frequency}
+                      </span>
+
+                      <Button
+                        aria-label="チェックインを増やす"
+                        className="h-7 w-7 rounded-full bg-white/10 p-0 text-white hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
+                        disabled={isCompleted || isPending}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (onAddCheckin) {
+                            onAddCheckin(habit.id)
+                          }
+                        }}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Icon className="h-4 w-4" name="plus" />
+                      </Button>
+                    </div>
                   )}
-                >
-                  {habit.name}
-                </p>
+                </div>
               </div>
             )
           })}

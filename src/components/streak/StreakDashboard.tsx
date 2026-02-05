@@ -3,11 +3,11 @@
 import { Circle, LayoutGrid } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/basics/Button'
-import type { IconName } from '@/components/basics/Icon'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import type { Period } from '@/constants/habit'
-import type { HabitPreset } from '@/constants/habit-data'
+import { useDashboardStats } from '@/hooks/use-dashboard-stats'
+import { usePresetSelection } from '@/hooks/use-preset-selection'
 import { cn } from '@/lib/utils'
 import { setClientCookie } from '@/lib/utils/cookies'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
@@ -50,38 +50,10 @@ export function StreakDashboard({
 }: StreakDashboardProps) {
   const [currentView, setCurrentView] = useState<View>(initialView)
   const [returnView, setReturnView] = useState<MainView>(initialView)
-  const [selectedPreset, setSelectedPreset] = useState<HabitPreset | null>(null)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
 
-  const { completedHabitIds, todayCompleted, totalDaily, totalStreak } = useMemo(() => {
-    const completedIds = new Set<string>()
-    let dailyTotal = 0
-    let dailyCompleted = 0
-    let streakTotal = 0
-
-    for (const habit of habits) {
-      const isCompleted = habit.currentProgress >= habit.frequency
-      if (isCompleted) {
-        completedIds.add(habit.id)
-      }
-
-      if (habit.period === 'daily') {
-        dailyTotal += 1
-        if (isCompleted) {
-          dailyCompleted += 1
-        }
-      }
-
-      streakTotal += habit.streak
-    }
-
-    return {
-      completedHabitIds: completedIds,
-      todayCompleted: dailyCompleted,
-      totalDaily: dailyTotal,
-      totalStreak: streakTotal,
-    }
-  }, [habits])
+  const { selectedPreset, selectPreset, clearPreset } = usePresetSelection()
+  const { completedHabitIds, todayCompleted, totalDaily, totalStreak } = useDashboardStats(habits)
 
   const filteredHabits = useMemo(() => filterHabitsByPeriod(habits, periodFilter), [habits, periodFilter])
   useEffect(() => {
@@ -105,18 +77,6 @@ export function StreakDashboard({
     setCurrentView('preset-selector')
   }
 
-  const handleAddHabit = async (
-    name: string,
-    icon: IconName,
-    options?: { color?: string | null; period?: Period; frequency?: number }
-  ) => {
-    await onAddHabit(name, icon, options)
-  }
-
-  const handleToggleHabit = async (habitId: string) => {
-    await onToggleCheckin(habitId)
-  }
-
   const handleViewChange = (view: View) => {
     setCurrentView(view)
     if (view === 'dashboard' || view === 'simple') {
@@ -129,15 +89,15 @@ export function StreakDashboard({
     return (
       <HabitPresetSelector
         onClose={() => {
-          setSelectedPreset(null)
+          clearPreset()
           setCurrentView(returnView)
         }}
         onCreateCustom={() => {
-          setSelectedPreset(null)
+          clearPreset()
           setCurrentView('add')
         }}
         onSelectPreset={(preset) => {
-          setSelectedPreset(preset)
+          selectPreset(preset)
           setCurrentView('add')
         }}
       />
@@ -149,12 +109,12 @@ export function StreakDashboard({
       <HabitForm
         onBack={() => setCurrentView('preset-selector')}
         onSubmit={async (input) => {
-          await handleAddHabit(input.name, input.icon, {
+          await onAddHabit(input.name, input.icon, {
             color: input.color,
             period: input.period,
             frequency: input.frequency,
           })
-          setSelectedPreset(null)
+          clearPreset()
           setCurrentView(returnView)
         }}
         preset={selectedPreset}
@@ -176,7 +136,7 @@ export function StreakDashboard({
           onRemoveCheckin={onRemoveCheckin}
           onResetOptimistic={onResetOptimistic}
           onSettings={() => handleViewChange('dashboard')}
-          onToggleHabit={handleToggleHabit}
+          onToggleHabit={onToggleCheckin}
           pendingCheckins={pendingCheckins}
         />
       ) : (
@@ -192,7 +152,7 @@ export function StreakDashboard({
             onPeriodChange={setPeriodFilter}
             onRemoveCheckin={onRemoveCheckin}
             onResetOptimistic={onResetOptimistic}
-            onToggleHabit={handleToggleHabit}
+            onToggleHabit={onToggleCheckin}
             pendingCheckins={pendingCheckins}
             periodFilter={periodFilter}
             todayCompleted={todayCompleted}
