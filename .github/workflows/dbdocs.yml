@@ -21,8 +21,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.28.0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -40,15 +38,3 @@ jobs:
         env:
           DBDOCS_TOKEN: ${{ secrets.DBDOCS_TOKEN }}
         run: pnpm db:docs:push
-
-      - name: Comment PR with dbdocs URL
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '📊 Database documentation updated: https://dbdocs.io/keep-on'
-            })
