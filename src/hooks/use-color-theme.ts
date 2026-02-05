@@ -12,6 +12,12 @@ interface UseColorTheme {
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
 
+/**
+ * カラーテーマフック
+ *
+ * Note: このフックは後方互換性のために Cookie/localStorage ベースで動作しています。
+ * 将来的には useUserSettings を使用してDB同期を実装予定です。
+ */
 export function useColorTheme(initialTheme?: ColorThemeName): UseColorTheme {
   const [theme, setThemeState] = useState<ColorThemeName | null>(initialTheme ?? null)
 

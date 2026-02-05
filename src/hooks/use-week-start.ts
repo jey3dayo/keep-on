@@ -11,6 +11,12 @@ interface UseWeekStart {
 
 const STORAGE_KEY = 'week-start'
 
+/**
+ * 週の開始日フック
+ *
+ * Note: このフックは後方互換性のために維持されています。
+ * 新しいコードでは useUserSettings を使用することを推奨します。
+ */
 export function useWeekStart(): UseWeekStart {
   const [weekStart, setWeekStartState] = useState<WeekStart | null>(null)
 

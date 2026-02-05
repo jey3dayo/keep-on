@@ -7,6 +7,7 @@ import {
   DEFAULT_HABIT_PERIOD,
   DEFAULT_WEEK_START,
 } from '@/constants/habit'
+import { DEFAULT_COLOR_THEME, DEFAULT_THEME_MODE } from '@/constants/theme'
 
 /**
  * ユーザー情報テーブル
@@ -23,6 +24,36 @@ export const users = sqliteTable('User', {
   email: text('email').notNull().unique(),
   /** 週の開始曜日 (0: 日曜, 1: 月曜) */
   weekStart: text('weekStart').default(DEFAULT_WEEK_START).notNull(),
+  /** レコード作成日時 (ISO8601形式) */
+  createdAt: text('createdAt')
+    .$defaultFn(() => new Date().toISOString())
+    .notNull(),
+  /** レコード更新日時 (ISO8601形式) */
+  updatedAt: text('updatedAt')
+    .$defaultFn(() => new Date().toISOString())
+    .notNull(),
+})
+
+/**
+ * ユーザー設定テーブル
+ * ユーザーごとの設定情報を管理
+ */
+export const userSettings = sqliteTable('UserSettings', {
+  /** 設定ID (CUID2形式) */
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  /** ユーザーID (外部キー: users.id, UNIQUE) */
+  userId: text('userId')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  /** 週の開始曜日 ('monday' | 'sunday') */
+  weekStart: text('weekStart').default(DEFAULT_WEEK_START).notNull(),
+  /** カラーテーマ ('teal' | 'lime' | ...) */
+  colorTheme: text('colorTheme').default(DEFAULT_COLOR_THEME).notNull(),
+  /** テーマモード ('light' | 'dark' | 'system') */
+  themeMode: text('themeMode').default(DEFAULT_THEME_MODE).notNull(),
   /** レコード作成日時 (ISO8601形式) */
   createdAt: text('createdAt')
     .$defaultFn(() => new Date().toISOString())
