@@ -1,10 +1,12 @@
 import { eq } from 'drizzle-orm'
+import * as v from 'valibot'
 import { DEFAULT_WEEK_START } from '@/constants/habit'
 import { DEFAULT_COLOR_THEME, DEFAULT_THEME_MODE } from '@/constants/theme'
-import { userSettings } from '@/db/schema'
+import { userSettings, users } from '@/db/schema'
+import { invalidateUserCache } from '@/lib/cache/user-cache'
 import { getDb } from '@/lib/db'
 import { profileQuery } from '@/lib/queries/profiler'
-import type { UpdateUserSettingsSchemaType } from '@/schemas/user-settings'
+import { type UpdateUserSettingsSchemaType, UserSettingsSchema } from '@/schemas/user-settings'
 import type { UserSettings } from '@/types/user-settings'
 
 /**
@@ -24,7 +26,13 @@ export async function getUserSettings(userId: string): Promise<UserSettings | un
         return undefined
       }
 
-      return settings as UserSettings
+      const parsed = v.safeParse(UserSettingsSchema, settings)
+      if (!parsed.success) {
+        console.error('Invalid user settings:', parsed.issues)
+        return undefined
+      }
+
+      return parsed.output
     },
     { userId }
   )
@@ -60,7 +68,12 @@ export async function getOrCreateUserSettings(
         })
         .returning()
 
-      return created as UserSettings
+      const parsed = v.safeParse(UserSettingsSchema, created)
+      if (!parsed.success) {
+        throw new Error('Failed to create user settings: invalid data')
+      }
+
+      return parsed.output
     },
     { userId, defaults }
   )
@@ -82,27 +95,55 @@ export async function updateUserSettings(
     async () => {
       const db = getDb()
       const now = new Date().toISOString()
+      let clerkId: string | null = null
 
-      const [upserted] = await db
-        .insert(userSettings)
-        .values({
-          userId,
-          weekStart: settings.weekStart ?? DEFAULT_WEEK_START,
-          colorTheme: settings.colorTheme ?? DEFAULT_COLOR_THEME,
-          themeMode: settings.themeMode ?? DEFAULT_THEME_MODE,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .onConflictDoUpdate({
-          target: userSettings.userId,
-          set: {
-            ...settings,
+      const upserted = await db.transaction(async (tx) => {
+        const [nextSettings] = await tx
+          .insert(userSettings)
+          .values({
+            userId,
+            weekStart: settings.weekStart ?? DEFAULT_WEEK_START,
+            colorTheme: settings.colorTheme ?? DEFAULT_COLOR_THEME,
+            themeMode: settings.themeMode ?? DEFAULT_THEME_MODE,
+            createdAt: now,
             updatedAt: now,
-          },
-        })
-        .returning()
+          })
+          .onConflictDoUpdate({
+            target: userSettings.userId,
+            set: {
+              ...settings,
+              updatedAt: now,
+            },
+          })
+          .returning()
 
-      return upserted as UserSettings
+        if (!nextSettings) {
+          throw new Error('Failed to update user settings')
+        }
+
+        if (settings.weekStart !== undefined) {
+          const [user] = await tx
+            .update(users)
+            .set({ weekStart: settings.weekStart })
+            .where(eq(users.id, userId))
+            .returning()
+
+          clerkId = user?.clerkId ?? null
+        }
+
+        const parsed = v.safeParse(UserSettingsSchema, nextSettings)
+        if (!parsed.success) {
+          throw new Error('Failed to update user settings: invalid data')
+        }
+
+        return parsed.output
+      })
+
+      if (settings.weekStart !== undefined && clerkId) {
+        await invalidateUserCache(clerkId)
+      }
+
+      return upserted
     },
     { userId, settings }
   )

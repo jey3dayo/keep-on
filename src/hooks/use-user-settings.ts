@@ -22,11 +22,13 @@ interface UseUserSettings {
  */
 export function useUserSettings(initialSettings?: UserSettings | null): UseUserSettings {
   const [settings, setSettings] = useState<UserSettings | null>(initialSettings ?? null)
+  const [ready, setReady] = useState(initialSettings !== undefined)
   const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
-    if (initialSettings) {
+    if (initialSettings !== undefined) {
       setSettings(initialSettings)
+      setReady(true)
     }
   }, [initialSettings])
 
@@ -37,6 +39,7 @@ export function useUserSettings(initialSettings?: UserSettings | null): UseUserS
 
       if (result.ok) {
         setSettings(result.data)
+        setReady(true)
       } else {
         console.error('Failed to update user settings:', result.error)
       }
@@ -50,7 +53,7 @@ export function useUserSettings(initialSettings?: UserSettings | null): UseUserS
   return {
     settings,
     updateSettings,
-    ready: settings !== null,
+    ready,
     syncing,
   }
 }
