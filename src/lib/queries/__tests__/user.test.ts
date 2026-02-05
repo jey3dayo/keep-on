@@ -3,7 +3,7 @@ import { upsertUser } from '../user'
 
 // Drizzle ORMのモック
 vi.mock('@/lib/db', () => ({
-  getDb: vi.fn().mockResolvedValue({
+  getDb: vi.fn().mockReturnValue({
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
@@ -12,6 +12,8 @@ vi.mock('@/lib/db', () => ({
     values: vi.fn().mockReturnThis(),
     returning: vi.fn().mockResolvedValue([]),
     onConflictDoUpdate: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    set: vi.fn().mockReturnThis(),
   }),
 }))
 
@@ -31,7 +33,7 @@ describe('upsertUser', () => {
       updatedAt: new Date(),
     }
 
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.returning).mockResolvedValueOnce([mockUser])
 
     const result = await upsertUser({
@@ -55,7 +57,7 @@ describe('upsertUser', () => {
       updatedAt: new Date(),
     }
 
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.returning).mockResolvedValueOnce([mockUser])
 
     const result = await upsertUser({
@@ -76,7 +78,7 @@ describe('upsertUser', () => {
       updatedAt: new Date(),
     }
 
-    const db = await getDb()
+    const db = getDb()
     vi.mocked(db.returning).mockResolvedValueOnce([mockUser])
 
     await upsertUser({

@@ -22,7 +22,7 @@ export async function getHabitsByUserId(userId: string) {
   return await profileQuery(
     'query.getHabitsByUserId',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       return await db
         .select()
         .from(habits)
@@ -43,7 +43,7 @@ export async function getHabitById(id: string) {
   return await profileQuery(
     'query.getHabitById',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const [habit] = await db.select().from(habits).where(eq(habits.id, id))
       return habit ?? null
     },
@@ -61,7 +61,7 @@ export async function createHabit(input: HabitInput) {
   return await profileQuery(
     'query.createHabit',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const [habit] = await db
         .insert(habits)
         .values({
@@ -92,7 +92,7 @@ export async function updateHabit(id: string, userId: string, input: Partial<Hab
   return await profileQuery(
     'query.updateHabit',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const [habit] = await db
         .update(habits)
         .set(input)
@@ -115,12 +115,13 @@ export async function archiveHabit(id: string, userId: string) {
   return await profileQuery(
     'query.archiveHabit',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const result = await db
         .update(habits)
         .set({
           archived: true,
-          archivedAt: new Date(),
+          archivedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         })
         .where(and(eq(habits.id, id), eq(habits.userId, userId)))
         .returning()
@@ -141,7 +142,7 @@ export async function deleteHabit(id: string, userId: string) {
   return await profileQuery(
     'query.deleteHabit',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const result = await db
         .delete(habits)
         .where(and(eq(habits.id, id), eq(habits.userId, userId)))
@@ -162,7 +163,7 @@ export async function getArchivedHabits(userId: string) {
   return await profileQuery(
     'query.getArchivedHabits',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       return await db
         .select()
         .from(habits)
@@ -183,12 +184,13 @@ export async function unarchiveHabit(id: string, userId: string) {
   return await profileQuery(
     'query.unarchiveHabit',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const result = await db
         .update(habits)
         .set({
           archived: false,
           archivedAt: null,
+          updatedAt: new Date().toISOString(),
         })
         .where(and(eq(habits.id, id), eq(habits.userId, userId)))
         .returning()
@@ -216,11 +218,11 @@ export async function getCheckinCountForPeriod(
   return await profileQuery(
     'query.getCheckinCountForPeriod',
     async () => {
-      const db = await getDb()
+      const db = getDb()
       const { startKey, endKey } = getPeriodDateRange(date, period, weekStartDay)
 
       const result = await db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
         .from(checkins)
         .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
@@ -246,7 +248,7 @@ export async function calculateStreak(
   return await profileQuery(
     'query.calculateStreak',
     async () => {
-      const db = await getDb()
+      const db = getDb()
 
       // 習慣情報を取得
       const habit = await getHabitById(habitId)
@@ -372,7 +374,7 @@ export async function getHabitsWithProgress(
   // 2. キャッシュミス - DB クエリ実行
   try {
     const dbStart = nowMs()
-    const db = await getDb()
+    const db = getDb()
     const dbMs = Math.round(nowMs() - dbStart)
     logInfo('getHabitsWithProgress:db-acquisition', { userId, ms: dbMs })
 

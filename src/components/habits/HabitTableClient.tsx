@@ -49,7 +49,7 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
           ? {
               ...habit,
               archived: true,
-              archivedAt: habit.archivedAt ?? new Date(),
+              archivedAt: habit.archivedAt ?? new Date().toISOString(),
             }
           : habit
       )

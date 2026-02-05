@@ -109,7 +109,7 @@ async function fetchExistingUserWithRetry(clerkId: string, dbTimeoutMs: number):
       throw error
     }
     logWarn('syncUser.getUserByClerkId:reset', { clerkId, timeoutMs: dbTimeoutMs, reason: retryReason })
-    await resetDb(`syncUser.getUserByClerkId ${retryReason}`)
+    resetDb()
     return await fetchExisting('syncUser.getUserByClerkId.retry')
   }
 }

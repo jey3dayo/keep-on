@@ -26,7 +26,7 @@ vi.mock('@/lib/queries/period', async (importOriginal) => {
 })
 
 vi.mock('@/lib/db', () => ({
-  getDb: vi.fn().mockResolvedValue({
+  getDb: vi.fn().mockReturnValue({
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
     innerJoin: vi.fn().mockReturnThis(),
@@ -38,6 +38,7 @@ vi.mock('@/lib/db', () => ({
     onConflictDoNothing: vi.fn().mockReturnThis(),
     returning: vi.fn().mockResolvedValue([]),
     delete: vi.fn().mockReturnThis(),
+    run: vi.fn().mockResolvedValue({}),
   }),
 }))
 
@@ -65,7 +66,7 @@ describe('getCheckinsByUserAndDate', () => {
   })
 
   it('returns checkins for the user and date', async () => {
-    const db = await getDb()
+    const db = getDb()
     const targetDate = new Date(2024, 0, 1)
     const normalizedDate = formatDateKey(targetDate)
     const mockCheckins = [
@@ -110,7 +111,7 @@ describe('createCheckin', () => {
   })
 
   it('creates a checkin and returns it', async () => {
-    const db = await getDb()
+    const db = getDb()
     const targetDate = new Date(2024, 0, 2)
     const normalizedDate = formatDateKey(targetDate)
     const createdCheckin = {
@@ -139,7 +140,7 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
   })
 
   it('returns false when no checkin exists in the period', async () => {
-    const db = await getDb()
+    const db = getDb()
     const targetDate = new Date(2024, 0, 1)
 
     vi.mocked(db.limit).mockResolvedValueOnce([])
@@ -162,7 +163,7 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
   })
 
   it('uses weekStartDay when calculating weekly range', async () => {
-    const db = await getDb()
+    const db = getDb()
     const targetDate = new Date(2024, 0, 7)
     const weekStartDay = 0
 
@@ -185,7 +186,7 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
   })
 
   it('deletes the latest checkin and returns true', async () => {
-    const db = await getDb()
+    const db = getDb()
     const latestCheckin = {
       id: 'checkin-4',
       habitId: 'habit-1',
@@ -209,7 +210,7 @@ describe('deleteAllCheckinsByHabitAndPeriod', () => {
   })
 
   it('deletes all checkins in the period', async () => {
-    const db = await getDb()
+    const db = getDb()
     const targetDate = new Date(2024, 0, 5)
     const deleteResult = { rowCount: 2 }
 
@@ -240,7 +241,7 @@ describe('createCheckinWithLimit', () => {
   })
 
   it('creates a checkin when under frequency limit', async () => {
-    const db = await getDb()
+    const db = getDb()
     const targetDate = new Date(2024, 0, 1)
     const normalizedDate = formatDateKey(targetDate)
     const createdCheckin = {
@@ -273,7 +274,7 @@ describe('createCheckinWithLimit', () => {
   })
 
   it('returns false when frequency limit is reached', async () => {
-    const db = await getDb()
+    const db = getDb()
     const targetDate = new Date(2024, 0, 2)
 
     // Mock COUNT query to return 3 (at limit)
@@ -295,7 +296,7 @@ describe('createCheckinWithLimit', () => {
   })
 
   it('returns false when same-day checkin already exists (UNIQUE constraint)', async () => {
-    const db = await getDb()
+    const db = getDb()
     const targetDate = new Date(2024, 0, 3)
 
     // Mock COUNT query to return 1 (under limit)
