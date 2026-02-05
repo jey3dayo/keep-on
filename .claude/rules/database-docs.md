@@ -1,3 +1,13 @@
+---
+paths:
+  [
+    "src/db/schema.ts",
+    "scripts/generate-dbml.ts",
+    "docs/database/**",
+    ".github/workflows/dbdocs.yml",
+  ]
+---
+
 # データベースドキュメント管理ガイド
 
 ## 概要
