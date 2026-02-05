@@ -16,7 +16,7 @@ MD_EXCLUDE_WORKTREES = "#**/.worktrees/**"
 # ========================================
 
 [tools]
-node = "24.12"
+node = "24.13.0"
 pnpm = "10.28.0"
 taplo = "0.10.0"
 "pipx:yamllint" = "latest"
@@ -66,8 +66,8 @@ description = "クイックチェック（型 + Biome）"
 depends = ["lint:types", "lint:biome"]
 
 [tasks.ci]
-description = "CI相当のチェック（format + 型チェック + Markdown + YAML）"
-depends = ["format", "lint:types", "lint:md", "lint:yaml"]
+description = "CI相当のチェック（format + 型チェック + Markdown + YAML + DBML生成）"
+depends = ["format", "lint:types", "lint:md", "lint:yaml", "db:docs:generate"]
 
 # ========================================
 # デプロイ関連
@@ -88,3 +88,15 @@ run = [
   "DOTENVX_PRIVATE_KEY=$(rg -N '^DOTENV_PRIVATE_KEY=' .env.keys | cut -d= -f2-) dotenvx run -- sh -lc 'printf \"%s\\n\" \"$CLERK_SECRET_KEY\" | wrangler secret put CLERK_SECRET_KEY'",
   "DOTENVX_PRIVATE_KEY=$(rg -N '^DOTENV_PRIVATE_KEY=' .env.keys | cut -d= -f2-) dotenvx run -- sh -lc 'wrangler deploy --var NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=\"$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY\" --keep-vars'",
 ]
+
+# ========================================
+# データベースドキュメント
+# ========================================
+
+[tasks."db:docs"]
+description = "DBMLを生成してdbdocsにデプロイ"
+run = ["pnpm db:docs:generate", "pnpm db:docs:push"]
+
+[tasks."db:docs:generate"]
+description = "DrizzleスキーマからDBMLを生成"
+run = "pnpm db:docs:generate"

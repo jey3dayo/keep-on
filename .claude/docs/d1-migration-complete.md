@@ -49,7 +49,7 @@ Phase 2実装完了: Supabase (PostgreSQL) から Cloudflare D1 (SQLite) への�
 
 ### Before (Supabase + Hyperdrive)
 
-```
+```text
 Cloudflare Workers → Hyperdrive → Supabase (PostgreSQL)
                      ↓
                 Connection Pool (max 2)
@@ -59,7 +59,7 @@ Cloudflare Workers → Hyperdrive → Supabase (PostgreSQL)
 
 ### After (D1)
 
-```
+```text
 Cloudflare Workers → D1 (SQLite)
                      ↓
                 Direct Access (0ms)
