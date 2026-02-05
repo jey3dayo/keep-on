@@ -16,7 +16,7 @@ MD_EXCLUDE_WORKTREES = "#**/.worktrees/**"
 # ========================================
 
 [tools]
-node = "24.12"
+node = "24.13.0"
 pnpm = "10.28.0"
 taplo = "0.10.0"
 "pipx:yamllint" = "latest"
