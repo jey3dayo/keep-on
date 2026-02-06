@@ -20,11 +20,14 @@ import {
 } from '@/constants/theme'
 import './globals.css'
 
-// Development-only: agentation toolbar
-const DevAgentationToolbar: React.ComponentType =
-  process.env.NODE_ENV !== 'production'
-    ? dynamic(() => import('@/components/dev/AgentationToolbar').then((mod) => mod.AgentationToolbar))
-    : () => null
+// Development-only: agentation toolbar (tree-shaken in production).
+let DevAgentationToolbar: React.ComponentType = () => null
+
+if (process.env.NODE_ENV !== 'production') {
+  DevAgentationToolbar = dynamic(() =>
+    import('@/components/dev/AgentationToolbar').then((mod) => mod.AgentationToolbar)
+  )
+}
 
 export const metadata: Metadata = {
   title: 'KeepOn - 習慣トラッキング',
