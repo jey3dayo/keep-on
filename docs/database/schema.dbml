@@ -27,7 +27,7 @@ table Habit {
 
 
   indexes {
-    userId [name: 'Habit_userId_idx']
+    (userId) [name: 'Habit_userId_idx']
   }
 }
 
