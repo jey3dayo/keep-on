@@ -11,19 +11,13 @@ export function injectDbmlNotes(baseDbml: string, comments: SchemaComments): str
 
   // テーブルごとに処理
   for (const [tableName, tableInfo] of Object.entries(comments.tables)) {
-    // テーブルブロックを正規表現で検索
-    const tablePattern = new RegExp(`table ${tableName} \\{([^}]+)\\}`, 's')
-    const match = result.match(tablePattern)
-
-    if (!match) {
+    const tableBlock = findTableBlock(result, tableName)
+    if (!tableBlock) {
       continue
     }
 
-    const originalBlock = match[0]
-    const tableContent = match[1]
-
     // カラム行にnoteを追加
-    let updatedContent = tableContent
+    let updatedContent = tableBlock.body
     for (const [columnName, columnInfo] of Object.entries(tableInfo.columns)) {
       // カラム行のパターン: "id text [pk, not null]"
       const columnPattern = new RegExp(`(\\s+${columnName}\\s+[^\\[\\n]+\\[)([^\\]]+)(\\])`, 'g')
@@ -35,22 +29,21 @@ export function injectDbmlNotes(baseDbml: string, comments: SchemaComments): str
     }
 
     // テーブルコメントをNote行として追加
-    let newBlock = `table ${tableName} {${updatedContent}`
+    let newContent = updatedContent
     if (tableInfo.comment) {
       const escapedTableComment = escapeDbmlNote(tableInfo.comment)
       // indexes ブロックの前にNote行を挿入
-      if (newBlock.includes('indexes {')) {
-        newBlock = newBlock.replace(/(\s+indexes \{)/, `\n  Note: '${escapedTableComment}'\n$1`)
+      if (newContent.includes('indexes {')) {
+        newContent = newContent.replace(/(\n\s*indexes \{)/, `\n  Note: '${escapedTableComment}'$1`)
       } else {
         // indexes がない場合は閉じ括弧の直前に挿入
-        newBlock = `${newBlock.trimEnd()}\n\n  Note: '${escapedTableComment}'\n}`
+        newContent = `${newContent.trimEnd()}\n\n  Note: '${escapedTableComment}'\n`
       }
-    } else {
-      newBlock += '}'
     }
 
     // 元のブロックを置換
-    result = result.replace(originalBlock, newBlock)
+    const newBlock = `${tableBlock.header}${newContent}}`
+    result = `${result.slice(0, tableBlock.start)}${newBlock}${result.slice(tableBlock.end + 1)}`
   }
 
   return result
@@ -62,4 +55,52 @@ export function injectDbmlNotes(baseDbml: string, comments: SchemaComments): str
  */
 function escapeDbmlNote(text: string): string {
   return text.replace(/'/g, "\\'").replace(/\n/g, '\\n')
+}
+
+function findTableBlock(
+  source: string,
+  tableName: string
+): { start: number; end: number; header: string; body: string } | null {
+  const headerPattern = new RegExp(`table\\s+${escapeRegExp(tableName)}\\s*\\{`, 'g')
+  const match = headerPattern.exec(source)
+  if (!match) {
+    return null
+  }
+
+  const start = match.index
+  const headerEnd = start + match[0].length
+  let depth = 1
+  let inString = false
+
+  for (let i = headerEnd; i < source.length; i += 1) {
+    const char = source[i]
+    if (char === "'" && source[i - 1] !== '\\') {
+      inString = !inString
+      continue
+    }
+    if (inString) {
+      continue
+    }
+    if (char === '{') {
+      depth += 1
+      continue
+    }
+    if (char === '}') {
+      depth -= 1
+      if (depth === 0) {
+        return {
+          start,
+          end: i,
+          header: source.slice(start, headerEnd),
+          body: source.slice(headerEnd, i),
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

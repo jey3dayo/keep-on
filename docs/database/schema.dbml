@@ -5,10 +5,9 @@ table Checkin {
   createdAt text [not null, note: 'レコード作成日時 (ISO8601形式)']
   Note: 'チェックインテーブル\n習慣の実行記録を保存'
 
-
   indexes {
     (habitId, date) [name: 'Checkin_habitId_date_idx']
-  
+  }
 }
 
 table Habit {
@@ -25,10 +24,9 @@ table Habit {
   updatedAt text [not null, note: 'レコード更新日時 (ISO8601形式)']
   Note: '習慣テーブル\nユーザーが管理する習慣の情報を保存'
 
-
   indexes {
     userId [name: 'Habit_userId_idx']
-  
+  }
 }
 
 table UserSettings {
