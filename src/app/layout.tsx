@@ -1,6 +1,5 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata, Viewport } from 'next'
-import dynamic from 'next/dynamic'
 import { cookies } from 'next/headers'
 import type React from 'react'
 import { ColorThemeScript } from '@/components/basics/ColorThemeScript'
@@ -20,10 +19,15 @@ import {
 } from '@/constants/theme'
 import './globals.css'
 
-const DevAgentationToolbar =
-  process.env.NODE_ENV === 'production'
-    ? () => null
-    : dynamic(() => import('@/components/dev/AgentationToolbar').then((mod) => mod.AgentationToolbar))
+// Development-only: agentation toolbar
+let DevAgentationToolbar: React.ComponentType = () => null
+
+if (process.env.NODE_ENV !== 'production') {
+  const dynamic = require('next/dynamic').default
+  DevAgentationToolbar = dynamic(() =>
+    import('@/components/dev/AgentationToolbar').then((mod) => mod.AgentationToolbar)
+  )
+}
 
 export const metadata: Metadata = {
   title: 'KeepOn - 習慣トラッキング',

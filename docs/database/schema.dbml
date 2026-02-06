@@ -8,7 +8,7 @@ table Checkin {
 
   indexes {
     (habitId, date) [name: 'Checkin_habitId_date_idx']
-  
+  }
 }
 
 table Habit {
@@ -28,7 +28,7 @@ table Habit {
 
   indexes {
     userId [name: 'Habit_userId_idx']
-  
+  }
 }
 
 table UserSettings {
