@@ -24,7 +24,9 @@ import './globals.css'
 let DevAgentationToolbar: React.ComponentType = () => null
 
 if (process.env.NODE_ENV !== 'production') {
-  DevAgentationToolbar = dynamic(() => import('@/components/dev/AgentationToolbar').then((mod) => mod.AgentationToolbar))
+  DevAgentationToolbar = dynamic(() =>
+    import('@/components/dev/AgentationToolbar').then((mod) => mod.AgentationToolbar)
+  )
 }
 
 export const metadata: Metadata = {
