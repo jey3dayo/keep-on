@@ -5,6 +5,7 @@ src/components/ui/** linguist-generated=true
 .open-next/** linguist-generated=true
 public/icon-*.png linguist-generated=true
 public/apple-touch-icon.png linguist-generated=true
+docs/database/schema.dbml linguist-generated=true
 
 # Line endings normalization
 * text=auto eol=lf
