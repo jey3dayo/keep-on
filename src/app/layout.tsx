@@ -5,6 +5,7 @@ import type React from 'react'
 import { ColorThemeScript } from '@/components/basics/ColorThemeScript'
 import { ThemeModeScript } from '@/components/basics/ThemeModeScript'
 import { ThemeProvider } from '@/components/basics/ThemeProvider'
+import { DevAgentationToolbar } from '@/components/dev/DevAgentationToolbar'
 import { SyncProviderWrapper } from '@/components/providers/SyncProviderWrapper'
 import { A2HSPrompt } from '@/components/pwa/A2HSPrompt'
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration'
@@ -116,6 +117,7 @@ export default async function RootLayout({
           </SyncProviderWrapper>
           <ServiceWorkerRegistration />
           <A2HSPrompt />
+          <DevAgentationToolbar />
         </body>
       </html>
     </ClerkProvider>
