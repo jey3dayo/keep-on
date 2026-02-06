@@ -5,6 +5,7 @@ import type React from 'react'
 import { ColorThemeScript } from '@/components/basics/ColorThemeScript'
 import { ThemeModeScript } from '@/components/basics/ThemeModeScript'
 import { ThemeProvider } from '@/components/basics/ThemeProvider'
+import { DevAgentationToolbar } from '@/components/dev/DevAgentationToolbar'
 import { SyncProviderWrapper } from '@/components/providers/SyncProviderWrapper'
 import { A2HSPrompt } from '@/components/pwa/A2HSPrompt'
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration'
@@ -18,14 +19,6 @@ import {
   THEME_MODE_COOKIE_KEY,
 } from '@/constants/theme'
 import './globals.css'
-
-// Development-only: agentation toolbar
-const DevAgentationToolbar: React.ComponentType =
-  process.env.NODE_ENV !== 'production'
-    ? require('next/dynamic').default(() =>
-        import('@/components/dev/AgentationToolbar').then((mod) => mod.AgentationToolbar)
-      )
-    : () => null
 
 export const metadata: Metadata = {
   title: 'KeepOn - 習慣トラッキング',
