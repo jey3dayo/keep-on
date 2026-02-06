@@ -18,6 +18,7 @@ keep-on/
 │   │   ├── dashboard/    # ダッシュボード UI
 │   │   └── settings/     # 設定 UI
 │   ├── constants/        # ドメイン定数・プリセット
+│   ├── contexts/         # React Context/Provider
 │   ├── db/               # Drizzle スキーマ
 │   ├── env.ts            # 環境変数バリデーション
 │   ├── hooks/            # 共有カスタム Hooks
@@ -28,6 +29,9 @@ keep-on/
 │   ├── types/            # 共有 TypeScript 型
 │   ├── validators/       # バリデーション（Result 型）
 ├── public/               # 静的アセット・PWA ファイル
+├── docs/                 # ドキュメント/DB関連メモ
+├── drizzle/              # Drizzle マイグレーション出力
+├── scripts/              # 運用/生成スクリプト
 ├── drizzle.config.ts     # Drizzle 設定
 ├── open-next.config.ts   # OpenNext 設定
 └── wrangler.jsonc        # Cloudflare Workers 設定
@@ -139,6 +143,8 @@ export async function createHabit(formData: FormData) {
 - `logging.ts`: LOG_LEVEL ベースの軽量ログ/計測ユーティリティ
 - `user.ts`: Clerk ユーザーを `users` テーブルへ同期（upsert）
 - `queries/`: ドメインごとのDBアクセス層（habit/user など、Drizzle クエリ）
+- `cache/`: Cloudflare KV を使ったアプリ内キャッシュ（analytics/habit/user など）
+- `cloudflare/`: Workers 専用ユーティリティ（`waitUntil` など）
 - `errors/`: ドメインエラー定義とシリアライズ変換
 - `server/`: Server Component 専用のユーティリティ（cookies/date/timeout など）
 - `utils/`: 小さなドメイン/日付ユーティリティを集約
@@ -204,6 +210,15 @@ User (Clerk 認証ユーザー)
 
 - `*.stories.tsx` をコンポーネントと同階層に配置
 - UI の振る舞い・状態バリエーションをドキュメント化
+
+### `src/contexts/` - 共有コンテキスト
+
+アプリ全体で共有する React Context / Provider を集約。
+
+**パターン:**
+
+- `"use client"` を明示し、Provider + Hook を同一ファイルにまとめる
+- UI/同期状態などの横断的な状態管理に使用
 
 ### `src/hooks/` - 共有カスタム Hooks
 
@@ -286,6 +301,14 @@ UI 由来の入力をバリデーション可能な形に整形する中間層�
 - `favicon.ico`, `icon-*.png`: アプリアイコン（必要に応じて追加）
 - その他の静的アセット（画像、フォントなど）
 
+### `docs/` - ドキュメント
+
+DB ドキュメントや移行メモなど、プロジェクト内の補助ドキュメントを配置。
+
+### `drizzle/` - マイグレーション出力
+
+`drizzle-kit generate` の出力先。履歴としてコミット対象。
+
 ### `scripts/` - 運用・インフラ補助スクリプト
 
 Cloudflare Secrets などの運用初期化・補助スクリプトを配置。
@@ -349,15 +372,16 @@ import { getDb } from "../../lib/db";
 
 1. `pnpm dev`: 開発サーバー起動
 2. `mise run check`: ローカルチェック（format + lint）
-3. `pnpm db:push`: スキーマ同期（開発時）
+3. `pnpm db:generate` + `pnpm db:migrate:local`: D1 ローカルへ反映（必要時）
 
 ### デプロイフロー
 
 1. `mise run ci`: CI チェック（lint）
-2. `pnpm cf:build`: OpenNext ビルド
+2. `pnpm build:cf`: OpenNext ビルド
 3. `pnpm cf:deploy`（または `pnpm deploy`）: Cloudflare Workers デプロイ
 
 ### データベースマイグレーション
 
 1. `pnpm db:generate`: マイグレーション生成
-2. `pnpm db:migrate`: マイグレーション適用
+2. `pnpm db:migrate:local`: ローカル D1 へ適用
+3. `pnpm db:migrate:remote`: リモート D1 へ適用

@@ -43,17 +43,17 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 
 ### データベース・ORM
 
-- **PostgreSQL**: 接続先は `DATABASE_URL` で指定（環境差分は接続文字列で吸収）
-- **Drizzle ORM**: 型安全なクエリとスキーマ管理
-- **drizzle-kit**: マイグレーション/スキーマ生成（`drizzle.config.ts`）
+- **Cloudflare D1 (SQLite)**: Workers ネイティブのデータベース。`wrangler.jsonc` の `d1_databases` バインディングを利用
+- **Drizzle ORM**: 型安全なクエリとスキーマ管理（`drizzle-orm/d1`）
+- **drizzle-kit**: マイグレーション/スキーマ生成（`drizzle.config.ts` は `dialect: 'sqlite'`）
 
 **接続パターン:**
 
 - `src/db/schema.ts` にスキーマ定義を集約
-- `src/lib/db.ts` で接続ロジックを一元化し、`drizzle-orm/postgres-js` + `postgres` を使用
-- Cloudflare Workers では Hyperdrive (`HYPERDRIVE.connectionString`) があれば優先し、なければ `DATABASE_URL` を使用
-- Workers 向けの接続最適化（`prepare: false` / `fetch_types: false` / `max: 1` など）を付与
-- 接続生成は `globalThis` 上の Promise を再利用して多重初期化を回避
+- `src/lib/db.ts` で接続ロジックを一元化し、`getCloudflareContext().env.DB` から D1 を取得して `drizzle()` を生成
+- D1 バインディングは `wrangler.jsonc` の `d1_databases` で `DB` として提供
+- 接続生成はモジュールスコープのキャッシュで再利用し、多重初期化を回避
+- `DATABASE_URL` / `HYPERDRIVE` は診断や将来拡張のために環境スキーマに残している（ランタイムの主経路は D1）
 
 ### デプロイ
 
@@ -87,9 +87,10 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 
 ### データベース接続と Edge 対応
 
-- Edge 環境でも動く `postgres` ドライバを採用
-- 接続初期化は `globalThis` 上の Promise を再利用して多重初期化を回避
-- 接続文字列は `DATABASE_URL` / Hyperdrive を切り替え
+- Workers ネイティブの D1 を採用し、`drizzle-orm/d1` で接続
+- `getCloudflareContext().env.DB` を使った D1 バインディング取得を基本とする
+- 接続初期化はキャッシュで再利用して多重初期化を回避
+- `DATABASE_URL` / Hyperdrive は診断用途・将来の移行余地として保持
 
 ## 開発ツール
 
@@ -130,7 +131,7 @@ format       # Ultracite + Taplo + Markdownlint(--fix)
 lint         # 型チェック + Biome + Markdown + YAML
 check        # ローカル確認（format + lint）
 check:quick  # クイックチェック（型 + Biome）
-ci           # CI 相当のチェック（format + 型 + Markdown + YAML）
+ci           # CI 相当のチェック（format + 型 + Markdown + YAML + DBML生成）
 ```
 
 - lint は `lint:types` / `lint:biome` / `lint:md` / `lint:yaml` に分割し、必要に応じて個別実行

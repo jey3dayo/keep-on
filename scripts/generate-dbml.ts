@@ -1,30 +1,23 @@
-import { mkdirSync, writeFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { extractComments, sqliteGenerate } from 'drizzle-docs-generator'
+import { writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { sqliteGenerate } from 'drizzle-dbml-generator'
 import * as schema from '../src/db/schema'
+import { extractSchemaComments } from './lib/extract-jsdoc'
+import { injectDbmlNotes } from './lib/inject-dbml-notes'
 
-const out = './docs/database/schema.dbml'
+const outPath = './docs/database/schema.dbml'
 const schemaPath = resolve('./src/db/schema.ts')
 
-// スキーマファイルからJSDocコメントを抽出（パスを渡す）
-const comments = extractComments(schemaPath)
+// 1. DBML生成（noteなし）
+const baseDbml = sqliteGenerate({ schema })
 
-const relationalSchema = {
-  users: schema.users,
-  habits: schema.habits,
-  checkins: schema.checkins,
-}
+// 2. JSDocコメント抽出
+const comments = extractSchemaComments(schemaPath)
 
-// SQLiteスキーマからDBMLを生成
-const dbml = sqliteGenerate({
-  schema: relationalSchema,
-  comments,
-})
+// 3. note注入
+const dbml = injectDbmlNotes(baseDbml, comments)
 
-// ディレクトリを確実に作成
-mkdirSync(dirname(out), { recursive: true })
+// 4. ファイル書き込み
+writeFileSync(outPath, dbml)
 
-// DBMLファイルを書き込み
-writeFileSync(out, dbml)
-
-console.log(`✅ DBML generated successfully: ${out}`)
+console.log('✅ DBML generated successfully: docs/database/schema.dbml')
