@@ -154,22 +154,18 @@ export async function createHabit(formData: FormData) {
 
 ```tsx
 // src/lib/db.ts
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { drizzle } from "drizzle-orm/d1";
 import * as schema from "@/db/schema";
 
-function createDb() {
-  return drizzle(postgres(process.env.DATABASE_URL!), { schema });
-}
+let cachedDb: ReturnType<typeof drizzle> | null = null;
 
-type DbPromise = ReturnType<typeof createDb>;
-const globalForDb = globalThis as typeof globalThis & { __dbPromise?: DbPromise };
-
-export async function getDb() {
-  if (!globalForDb.__dbPromise) {
-    globalForDb.__dbPromise = createDb();
+export function getDb() {
+  if (!cachedDb) {
+    const { env } = getCloudflareContext();
+    cachedDb = drizzle(env.DB, { schema });
   }
-  return await globalForDb.__dbPromise;
+  return cachedDb;
 }
 ```
 
@@ -204,6 +200,7 @@ User (Clerk 認証ユーザー)
 
 - `basics/`: アプリ固有の基本コンポーネント（Button, Input, Theme など）
 - サブディレクトリ: 機能別グルーピング（例: `habits/`, `dashboard/`, `settings/`, `pwa/`, `streak/`）
+- `dev/`: 開発専用の補助UI（本番バンドルから除外する前提のツール群）
 - `ui/`: shadcn/ui 由来のプリミティブ（Radix ラッパー）
 
 **Storybook:**
