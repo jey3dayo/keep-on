@@ -165,6 +165,9 @@ importers:
       '@vitest/ui':
         specifier: ^4.0.18
         version: 4.0.18(vitest@4.0.18)
+      agentation:
+        specifier: ^2.1.1
+        version: 2.1.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       autoprefixer:
         specifier: ^10
         version: 10.4.23(postcss@8.5.6)
@@ -3786,6 +3789,17 @@ packages:
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
+
+  agentation@2.1.1:
+    resolution: {integrity: sha512-l1XNNahitelS0FaY+2r/Drea9Y3M5P7srMfgqZkvDRDCMA7GV/hsCqK4QI+p9mfFxL7j9HmzLXD54DlOmZIhsg==}
+    peerDependencies:
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
 
   agentkeepalive@4.6.0:
     resolution: {integrity: sha512-kja8j7PjmncONqaTsB8fQ+wE2mSU2DJ9D4XKoJ5PFWIdRMa6SLSN1ff4mOr4jCbfRSsxR4keIiySJU0N9T5hIQ==}
@@ -11974,6 +11988,11 @@ snapshots:
       - supports-color
 
   agent-base@7.1.4: {}
+
+  agentation@2.1.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    optionalDependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   agentkeepalive@4.6.0:
     dependencies:

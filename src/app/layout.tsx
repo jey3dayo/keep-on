@@ -1,5 +1,6 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata, Viewport } from 'next'
+import dynamic from 'next/dynamic'
 import { cookies } from 'next/headers'
 import type React from 'react'
 import { ColorThemeScript } from '@/components/basics/ColorThemeScript'
@@ -18,6 +19,11 @@ import {
   THEME_MODE_COOKIE_KEY,
 } from '@/constants/theme'
 import './globals.css'
+
+const DevAgentationToolbar =
+  process.env.NODE_ENV === 'production'
+    ? () => null
+    : dynamic(() => import('@/components/dev/AgentationToolbar').then((mod) => mod.AgentationToolbar))
 
 export const metadata: Metadata = {
   title: 'KeepOn - 習慣トラッキング',
@@ -116,6 +122,7 @@ export default async function RootLayout({
           </SyncProviderWrapper>
           <ServiceWorkerRegistration />
           <A2HSPrompt />
+          <DevAgentationToolbar />
         </body>
       </html>
     </ClerkProvider>
