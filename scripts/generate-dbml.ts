@@ -17,7 +17,8 @@ const comments = extractSchemaComments(schemaPath)
 // 3. note注入
 const dbml = injectDbmlNotes(baseDbml, comments)
 
-// 4. ファイル書き込み
-writeFileSync(outPath, dbml)
+// 4. ファイル書き込み（末尾改行を保証）
+const normalizedDbml = dbml.endsWith('\n') ? dbml : `${dbml}\n`
+writeFileSync(outPath, normalizedDbml)
 
 console.log('✅ DBML generated successfully: docs/database/schema.dbml')
