@@ -1,12 +1,14 @@
-Table "User" {
-  "id" text [primary key, not null, note: 'ユーザーID (CUID2形式)']
-  "clerkId" text [not null, unique, note: 'Clerk認証ID']
-  "email" text [not null, unique, note: 'メールアドレス']
-  "weekStart" text [not null, default: 'monday', note: '週の開始曜日 (0: 日曜, 1: 月曜)']
+Table "Checkin" {
+  "id" text [primary key, not null, note: 'チェックインID (CUID2形式)']
+  "habitId" text [not null, note: '習慣ID (外部キー: habits.id)']
+  "date" text [not null, note: 'チェックイン日付 (YYYY-MM-DD形式)']
   "createdAt" text [not null, note: 'レコード作成日時 (ISO8601形式)']
-  "updatedAt" text [not null, note: 'レコード更新日時 (ISO8601形式)']
 
-  Note: 'ユーザー情報テーブル\nClerkで認証されたユーザーのデータを管理'
+  indexes {
+    ("habitId", "date") [name: 'Checkin_habitId_date_idx']
+  }
+
+  Note: 'チェックインテーブル\n習慣の実行記録を保存'
 }
 
 Table "Habit" {
@@ -29,18 +31,29 @@ Table "Habit" {
   Note: '習慣テーブル\nユーザーが管理する習慣の情報を保存'
 }
 
-Table "Checkin" {
-  "id" text [primary key, not null, note: 'チェックインID (CUID2形式)']
-  "habitId" text [not null, note: '習慣ID (外部キー: habits.id)']
-  "date" text [not null, note: 'チェックイン日付 (YYYY-MM-DD形式)']
+Table "UserSettings" {
+  "id" text [primary key, not null, note: '設定ID (CUID2形式)']
+  "userId" text [not null, unique, note: 'ユーザーID (外部キー: users.id, UNIQUE)']
+  "weekStart" text [not null, default: 'monday', note: '週の開始曜日 (\'monday\' | \'sunday\')']
+  "colorTheme" text [not null, default: 'teal', note: 'カラーテーマ (\'teal\' | \'lime\' | ...)']
+  "themeMode" text [not null, default: 'system', note: 'テーマモード (\'light\' | \'dark\' | \'system\')']
   "createdAt" text [not null, note: 'レコード作成日時 (ISO8601形式)']
+  "updatedAt" text [not null, note: 'レコード更新日時 (ISO8601形式)']
 
-  indexes {
-    ("habitId", "date") [name: 'Checkin_habitId_date_idx']
-  }
-
-  Note: 'チェックインテーブル\n習慣の実行記録を保存'
+  Note: 'ユーザー設定テーブル\nユーザーごとの設定情報を管理'
 }
 
-Ref: "Habit"."userId" > "User"."id" [delete: cascade]
+Table "User" {
+  "id" text [primary key, not null, note: 'ユーザーID (CUID2形式)']
+  "clerkId" text [not null, unique, note: 'Clerk認証ID']
+  "email" text [not null, unique, note: 'メールアドレス']
+  "weekStart" text [not null, default: 'monday', note: '週の開始曜日 (0: 日曜, 1: 月曜)']
+  "createdAt" text [not null, note: 'レコード作成日時 (ISO8601形式)']
+  "updatedAt" text [not null, note: 'レコード更新日時 (ISO8601形式)']
+
+  Note: 'ユーザー情報テーブル\nClerkで認証されたユーザーのデータを管理'
+}
+
 Ref: "Checkin"."habitId" > "Habit"."id" [delete: cascade]
+Ref: "Habit"."userId" > "User"."id" [delete: cascade]
+Ref: "UserSettings"."userId" > "User"."id" [delete: cascade]
