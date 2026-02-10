@@ -440,42 +440,6 @@ export function DashboardWrapper({
     return Promise.resolve()
   }
 
-  const handleToggleCheckin = (habitId: string): Promise<void> => {
-    if (pendingCheckinsRef.current.has(habitId)) {
-      appToast.info('チェックイン処理中です', '完了するまでお待ちください')
-      return Promise.resolve()
-    }
-    const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
-    if (!targetHabit) {
-      return Promise.resolve()
-    }
-
-    // frequency未達成 = チェックイン追加可能
-    // frequency達成済み = トグルで削除
-    const isAtFrequencyLimit = targetHabit.currentProgress >= targetHabit.frequency
-    const now = new Date()
-    const dateKey = formatDateKey(now)
-
-    // Optimistic Update
-    if (isAtFrequencyLimit) {
-      // frequency達成済み: 削除モード（進捗を-1）
-      updateHabitProgress(habitId, -1)
-    } else {
-      // 追加モード: 進捗を+1
-      updateHabitProgress(habitId, 1)
-    }
-
-    addPendingCheckin(habitId)
-    enqueueCheckin({
-      habitId,
-      dateKey,
-      isRemove: isAtFrequencyLimit,
-      rollback: () => updateHabitProgress(habitId, isAtFrequencyLimit ? 1 : -1),
-    })
-
-    return Promise.resolve()
-  }
-
   const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
 
   if (!isTimeZoneReady) {
@@ -495,7 +459,6 @@ export function DashboardWrapper({
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
-          onToggleCheckin={handleToggleCheckin}
           pendingCheckins={pendingCheckins}
           todayLabel={todayLabel}
         />
@@ -511,7 +474,6 @@ export function DashboardWrapper({
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
-          onToggleCheckin={handleToggleCheckin}
           pendingCheckins={pendingCheckins}
           todayLabel={todayLabel}
           user={user}

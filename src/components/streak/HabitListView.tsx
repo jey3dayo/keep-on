@@ -27,7 +27,6 @@ interface HabitListViewProps {
   completedHabitIds: Set<string>
   periodFilter: 'all' | Period
   onPeriodChange: (filter: 'all' | Period) => void
-  onToggleHabit: (habitId: string) => void
   onAddCheckin?: (habitId: string) => Promise<void>
   onRemoveCheckin?: (habitId: string) => Promise<void>
   onAddHabit: () => void
@@ -47,7 +46,6 @@ export function HabitListView({
   completedHabitIds,
   periodFilter,
   onPeriodChange,
-  onToggleHabit,
   onAddCheckin,
   onRemoveCheckin,
   onAddHabit,
@@ -172,13 +170,6 @@ export function HabitListView({
                       }
                     : undefined
                 }
-                onToggle={() => {
-                  if (completed && habit.frequency > 1) {
-                    setResetConfirmHabit(habit)
-                    return
-                  }
-                  onToggleHabit(habit.id)
-                }}
                 pending={pendingCheckins?.has(habit.id) ?? false}
               />
             ))

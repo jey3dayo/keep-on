@@ -22,7 +22,6 @@ export function DesktopDashboard({
   habits,
   pendingCheckins,
   onAddHabit,
-  onToggleCheckin,
   onAddCheckin,
   onRemoveCheckin,
   onArchiveOptimistic,
@@ -90,7 +89,6 @@ export function DesktopDashboard({
         onPeriodChange={setPeriodFilter}
         onRemoveCheckin={onRemoveCheckin}
         onResetOptimistic={onResetOptimistic}
-        onToggleHabit={onToggleCheckin}
         pendingCheckins={pendingCheckins}
         periodFilter={periodFilter}
         todayCompleted={todayCompleted}
