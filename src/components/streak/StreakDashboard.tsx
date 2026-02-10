@@ -39,7 +39,6 @@ export function StreakDashboard({
   habits,
   pendingCheckins,
   onAddHabit,
-  onToggleCheckin,
   onAddCheckin,
   onRemoveCheckin,
   onArchiveOptimistic,
@@ -136,7 +135,6 @@ export function StreakDashboard({
           onRemoveCheckin={onRemoveCheckin}
           onResetOptimistic={onResetOptimistic}
           onSettings={() => handleViewChange('dashboard')}
-          onToggleHabit={onToggleCheckin}
           pendingCheckins={pendingCheckins}
         />
       ) : (
@@ -152,7 +150,6 @@ export function StreakDashboard({
             onPeriodChange={setPeriodFilter}
             onRemoveCheckin={onRemoveCheckin}
             onResetOptimistic={onResetOptimistic}
-            onToggleHabit={onToggleCheckin}
             pendingCheckins={pendingCheckins}
             periodFilter={periodFilter}
             todayCompleted={todayCompleted}

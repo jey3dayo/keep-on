@@ -26,7 +26,6 @@ const HabitActionDrawer = dynamic(
 interface HabitSimpleViewProps {
   habits: HabitWithProgress[]
   completedHabitIds: Set<string>
-  onToggleHabit: (habitId: string) => void
   onAddCheckin?: (habitId: string) => Promise<void>
   onRemoveCheckin?: (habitId: string) => Promise<void>
   onAddHabit: () => void
@@ -77,7 +76,6 @@ function ProgressRing({
 export function HabitSimpleView({
   habits,
   completedHabitIds,
-  onToggleHabit,
   onAddCheckin,
   onRemoveCheckin,
   onAddHabit,
@@ -136,13 +134,8 @@ export function HabitSimpleView({
       return
     }
 
-    if (habit.frequency === 1) {
-      onToggleHabit(habit.id)
-      return
-    }
-
+    // 完了済みの場合は何もしない（ボタンは無効化されている）
     if (isCompleted) {
-      setResetConfirm({ habitId: habit.id, habitName: habit.name })
       return
     }
 
@@ -263,9 +256,9 @@ export function HabitSimpleView({
             return (
               <div className="flex flex-col items-center gap-3" key={habit.id}>
                 <Button
-                  aria-label={`${habit.name}をチェックイン`}
+                  aria-label={isCompleted ? '達成済み' : `${habit.name}をチェックイン`}
                   className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
-                  disabled={isPending}
+                  disabled={isCompleted || isPending}
                   onClick={(event) => handleProgressClick(event, habit, isCompleted)}
                   onContextMenu={(e) => handleContextMenu(e, habit)}
                   onPointerCancel={() => handleLongPressEnd(true)}

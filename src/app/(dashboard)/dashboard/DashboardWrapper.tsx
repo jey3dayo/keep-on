@@ -30,7 +30,6 @@ interface DashboardWrapperProps {
   todayLabel: string
   user: User
   initialView?: 'dashboard' | 'simple'
-  hasTimeZoneCookie?: boolean
 }
 
 interface CheckinTask {
@@ -40,23 +39,15 @@ interface CheckinTask {
   rollback?: () => void
 }
 
-export function DashboardWrapper({
-  habits,
-  todayLabel,
-  user,
-  initialView,
-  hasTimeZoneCookie = true,
-}: DashboardWrapperProps) {
+export function DashboardWrapper({ habits, todayLabel, user, initialView }: DashboardWrapperProps) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   const { startSync, endSync, isSyncing } = useSyncContext()
-  const [isTimeZoneReady, setIsTimeZoneReady] = useState(hasTimeZoneCookie)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
   const pendingCheckinsRef = useRef<Set<string>>(new Set())
   const activeRequestCountRef = useRef(0)
   const checkinQueueRef = useRef<CheckinTask[]>([])
-  const hasRefreshedForTimeZone = useRef(false)
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isRefreshing = useRef(false)
 
@@ -302,28 +293,24 @@ export function DashboardWrapper({
     drainCheckinQueue()
   }
 
+  // タイムゾーンCookieをバックグラウンドで設定（ブロッキングなし）
   useEffect(() => {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (!timeZone) {
-      setIsTimeZoneReady(true)
       return
     }
 
     const existingTimeZone = getClientCookie('ko_tz') ?? ''
     if (existingTimeZone === timeZone) {
-      setIsTimeZoneReady(true)
       return
     }
 
-    if (hasRefreshedForTimeZone.current) {
-      setIsTimeZoneReady(true)
-      return
-    }
-
-    hasRefreshedForTimeZone.current = true
-    setIsTimeZoneReady(false)
+    // Cookieを設定してサーバーコンポーネントを再取得
     setClientCookie('ko_tz', timeZone, { maxAge: 31_536_000, path: '/', sameSite: 'lax' })
-    router.refresh()
+    // タイムゾーン反映のため一度だけrefresh（初回アクセス時のみ）
+    startTransition(() => {
+      router.refresh()
+    })
   }, [router])
 
   useEffect(() => {
@@ -440,47 +427,7 @@ export function DashboardWrapper({
     return Promise.resolve()
   }
 
-  const handleToggleCheckin = (habitId: string): Promise<void> => {
-    if (pendingCheckinsRef.current.has(habitId)) {
-      appToast.info('チェックイン処理中です', '完了するまでお待ちください')
-      return Promise.resolve()
-    }
-    const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
-    if (!targetHabit) {
-      return Promise.resolve()
-    }
-
-    // frequency未達成 = チェックイン追加可能
-    // frequency達成済み = トグルで削除
-    const isAtFrequencyLimit = targetHabit.currentProgress >= targetHabit.frequency
-    const now = new Date()
-    const dateKey = formatDateKey(now)
-
-    // Optimistic Update
-    if (isAtFrequencyLimit) {
-      // frequency達成済み: 削除モード（進捗を-1）
-      updateHabitProgress(habitId, -1)
-    } else {
-      // 追加モード: 進捗を+1
-      updateHabitProgress(habitId, 1)
-    }
-
-    addPendingCheckin(habitId)
-    enqueueCheckin({
-      habitId,
-      dateKey,
-      isRemove: isAtFrequencyLimit,
-      rollback: () => updateHabitProgress(habitId, isAtFrequencyLimit ? 1 : -1),
-    })
-
-    return Promise.resolve()
-  }
-
   const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
-
-  if (!isTimeZoneReady) {
-    return <div className="flex h-screen items-center justify-center text-muted-foreground text-sm">読み込み中…</div>
-  }
 
   return (
     <>
@@ -495,7 +442,6 @@ export function DashboardWrapper({
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
-          onToggleCheckin={handleToggleCheckin}
           pendingCheckins={pendingCheckins}
           todayLabel={todayLabel}
         />
@@ -511,7 +457,6 @@ export function DashboardWrapper({
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
-          onToggleCheckin={handleToggleCheckin}
           pendingCheckins={pendingCheckins}
           todayLabel={todayLabel}
           user={user}
