@@ -15,7 +15,6 @@ interface HabitListCardProps {
   pending?: boolean
   dimmed?: boolean
   dimmedOpacity?: number
-  onToggle: () => void
   onAdd?: () => void
   onRemove?: () => void
   onLongPressOrContextMenu: () => void
@@ -27,7 +26,6 @@ export function HabitListCard({
   pending = false,
   dimmed = false,
   dimmedOpacity = 0.72,
-  onToggle,
   onAdd,
   onRemove,
   onLongPressOrContextMenu,
@@ -104,11 +102,11 @@ export function HabitListCard({
       </Button>
       <div className="flex items-center gap-4">
         <CheckInButton
-          aria-label={`${habit.name}をチェックイン`}
+          aria-label={completed ? '達成済み' : `${habit.name}をチェックイン`}
           aria-pressed={completed}
           completed={completed}
-          disabled={pending}
-          onClick={onToggle}
+          disabled={completed || pending}
+          onClick={completed ? undefined : onAdd}
           style={
             {
               backgroundColor: colorData.color,

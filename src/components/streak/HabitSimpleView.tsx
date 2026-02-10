@@ -26,7 +26,6 @@ const HabitActionDrawer = dynamic(
 interface HabitSimpleViewProps {
   habits: HabitWithProgress[]
   completedHabitIds: Set<string>
-  onToggleHabit: (habitId: string) => void
   onAddCheckin?: (habitId: string) => Promise<void>
   onRemoveCheckin?: (habitId: string) => Promise<void>
   onAddHabit: () => void
@@ -77,7 +76,6 @@ function ProgressRing({
 export function HabitSimpleView({
   habits,
   completedHabitIds,
-  onToggleHabit,
   onAddCheckin,
   onRemoveCheckin,
   onAddHabit,
@@ -136,13 +134,8 @@ export function HabitSimpleView({
       return
     }
 
-    if (habit.frequency === 1) {
-      onToggleHabit(habit.id)
-      return
-    }
-
+    // 完了済みの場合は何もしない（ボタンは無効化されている）
     if (isCompleted) {
-      setResetConfirm({ habitId: habit.id, habitName: habit.name })
       return
     }
 

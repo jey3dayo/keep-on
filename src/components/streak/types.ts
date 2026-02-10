@@ -12,7 +12,6 @@ export interface DashboardBaseProps {
     icon: IconName,
     options?: { color?: string | null; period?: Period; frequency?: number }
   ) => Promise<void>
-  onToggleCheckin: (habitId: string) => Promise<void>
   onAddCheckin?: (habitId: string) => Promise<void>
   onRemoveCheckin?: (habitId: string) => Promise<void>
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback

@@ -202,7 +202,7 @@ export const habitPresets: HabitPreset[] = [
     iconId: 'droplets',
     colorId: 'cyan',
     period: 'daily',
-    frequency: 1,
+    frequency: 8,
     category: 'health',
   },
   {
@@ -248,7 +248,7 @@ export const habitPresets: HabitPreset[] = [
     iconId: 'clock',
     colorId: 'red',
     period: 'daily',
-    frequency: 1,
+    frequency: 4,
     category: 'productivity',
   },
   {
@@ -293,7 +293,7 @@ export const habitPresets: HabitPreset[] = [
     iconId: 'camera',
     colorId: 'pink',
     period: 'daily',
-    frequency: 1,
+    frequency: 3,
     category: 'lifestyle',
   },
   {
@@ -311,7 +311,7 @@ export const habitPresets: HabitPreset[] = [
     iconId: 'apple',
     colorId: 'orange',
     period: 'daily',
-    frequency: 1,
+    frequency: 2,
     category: 'lifestyle',
   },
   {
@@ -320,7 +320,7 @@ export const habitPresets: HabitPreset[] = [
     iconId: 'book-open',
     colorId: 'purple',
     period: 'daily',
-    frequency: 1,
+    frequency: 2,
     category: 'learning',
   },
   {
@@ -347,7 +347,7 @@ export const habitPresets: HabitPreset[] = [
     iconId: 'brain',
     colorId: 'teal',
     period: 'weekly',
-    frequency: 1,
+    frequency: 3,
     category: 'learning',
   },
 ]
