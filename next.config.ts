@@ -1,4 +1,10 @@
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 import type { NextConfig } from 'next'
+
+// 開発環境でCloudflare Context APIを利用可能にする
+if (process.env.NODE_ENV === 'development') {
+  initOpenNextCloudflareForDev()
+}
 
 const nextConfig: NextConfig = {
   experimental: {
