@@ -305,9 +305,13 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
       return
     }
 
-    // Cookieを設定（router.refresh()は呼ばない）
+    // Cookieを設定してサーバーコンポーネントを再取得
     setClientCookie('ko_tz', timeZone, { maxAge: 31_536_000, path: '/', sameSite: 'lax' })
-  }, [])
+    // タイムゾーン反映のため一度だけrefresh（初回アクセス時のみ）
+    startTransition(() => {
+      router.refresh()
+    })
+  }, [router])
 
   useEffect(() => {
     setOptimisticHabits(habits)
