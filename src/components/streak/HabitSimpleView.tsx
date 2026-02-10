@@ -256,9 +256,9 @@ export function HabitSimpleView({
             return (
               <div className="flex flex-col items-center gap-3" key={habit.id}>
                 <Button
-                  aria-label={`${habit.name}をチェックイン`}
+                  aria-label={isCompleted ? '達成済み' : `${habit.name}をチェックイン`}
                   className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
-                  disabled={isPending}
+                  disabled={isCompleted || isPending}
                   onClick={(event) => handleProgressClick(event, habit, isCompleted)}
                   onContextMenu={(e) => handleContextMenu(e, habit)}
                   onPointerCancel={() => handleLongPressEnd(true)}
