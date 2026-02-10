@@ -30,7 +30,6 @@ interface DashboardWrapperProps {
   todayLabel: string
   user: User
   initialView?: 'dashboard' | 'simple'
-  hasTimeZoneCookie?: boolean
 }
 
 interface CheckinTask {
@@ -40,23 +39,15 @@ interface CheckinTask {
   rollback?: () => void
 }
 
-export function DashboardWrapper({
-  habits,
-  todayLabel,
-  user,
-  initialView,
-  hasTimeZoneCookie = true,
-}: DashboardWrapperProps) {
+export function DashboardWrapper({ habits, todayLabel, user, initialView }: DashboardWrapperProps) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   const { startSync, endSync, isSyncing } = useSyncContext()
-  const [isTimeZoneReady, setIsTimeZoneReady] = useState(hasTimeZoneCookie)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
   const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
   const pendingCheckinsRef = useRef<Set<string>>(new Set())
   const activeRequestCountRef = useRef(0)
   const checkinQueueRef = useRef<CheckinTask[]>([])
-  const hasRefreshedForTimeZone = useRef(false)
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isRefreshing = useRef(false)
 
@@ -302,29 +293,21 @@ export function DashboardWrapper({
     drainCheckinQueue()
   }
 
+  // タイムゾーンCookieをバックグラウンドで設定（ブロッキングなし）
   useEffect(() => {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (!timeZone) {
-      setIsTimeZoneReady(true)
       return
     }
 
     const existingTimeZone = getClientCookie('ko_tz') ?? ''
     if (existingTimeZone === timeZone) {
-      setIsTimeZoneReady(true)
       return
     }
 
-    if (hasRefreshedForTimeZone.current) {
-      setIsTimeZoneReady(true)
-      return
-    }
-
-    hasRefreshedForTimeZone.current = true
-    setIsTimeZoneReady(false)
+    // Cookieを設定（router.refresh()は呼ばない）
     setClientCookie('ko_tz', timeZone, { maxAge: 31_536_000, path: '/', sameSite: 'lax' })
-    router.refresh()
-  }, [router])
+  }, [])
 
   useEffect(() => {
     setOptimisticHabits(habits)
@@ -441,10 +424,6 @@ export function DashboardWrapper({
   }
 
   const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
-
-  if (!isTimeZoneReady) {
-    return <div className="flex h-screen items-center justify-center text-muted-foreground text-sm">読み込み中…</div>
-  }
 
   return (
     <>

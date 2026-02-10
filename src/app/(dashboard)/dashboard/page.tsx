@@ -37,7 +37,6 @@ export default async function DashboardPage() {
   const cookieStore = await cookies()
   const rawView = cookieStore.get('ko_dashboard_view')?.value
   const initialView = rawView === 'simple' || rawView === 'dashboard' ? rawView : DEFAULT_DASHBOARD_VIEW
-  const hasTimeZoneCookie = cookieStore.has('ko_tz')
   const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/dashboard')
   const now = new Date()
@@ -82,13 +81,5 @@ export default async function DashboardPage() {
     habits: habits.length,
   })
 
-  return (
-    <DashboardWrapper
-      habits={habits}
-      hasTimeZoneCookie={hasTimeZoneCookie}
-      initialView={initialView}
-      todayLabel={todayLabel}
-      user={user}
-    />
-  )
+  return <DashboardWrapper habits={habits} initialView={initialView} todayLabel={todayLabel} user={user} />
 }
