@@ -400,13 +400,7 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
 
   const handleAddCheckin = (habitId: string): Promise<void> => {
     const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
-    if (!targetHabit) {
-      return Promise.resolve()
-    }
-
-    // キュー内のペンディングカウントも考慮して頻度チェック
-    const pendingCount = pendingCountRef.current.get(habitId) ?? 0
-    if (targetHabit.currentProgress + pendingCount >= targetHabit.frequency) {
+    if (!targetHabit || targetHabit.currentProgress >= targetHabit.frequency) {
       return Promise.resolve()
     }
 
