@@ -10,12 +10,7 @@ import { getUserWeekStartById } from '@/lib/queries/user'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 import { validateHabitActionInput } from '@/validators/habit-action'
-import {
-  createHabitCheckinSpans,
-  type HabitCheckinParams,
-  requireHabitForUserWithRetry,
-  type SpanRunner,
-} from './checkin-shared'
+import { createHabitCheckinSpans, type HabitCheckinParams, requireHabitForUserWithRetry } from './checkin-shared'
 import { type HabitActionResult, revalidateHabitPaths, serializeActionError } from './utils'
 
 type WeekStartDay = ReturnType<typeof weekStartToDay>
@@ -40,7 +35,7 @@ async function requireUserId(baseMeta: Record<string, unknown>, timeoutMs: numbe
 async function resolveWeekStartDay(
   userId: string,
   meta: Record<string, unknown>,
-  runWithRetry: SpanRunner
+  runWithRetry: HabitCheckinParams['spans']['runWithRetry']
 ): Promise<WeekStartDay> {
   const weekStart = await runWithRetry(
     'action.habits.removeCheckin.getUserWeekStartById',
