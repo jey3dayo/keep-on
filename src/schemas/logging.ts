@@ -84,20 +84,8 @@ export function formatErrorObject(error: unknown): FormattedError {
     return { name: 'UnknownError', message: String(error) }
   }
 
-  // Error インスタンスの場合
-  if (error instanceof Error) {
-    const parsed = v.safeParse(DetailedErrorSchema, {
-      name: error.name,
-      message: error.message,
-      cause: error.cause,
-    })
-    if (parsed.success) {
-      return { name: error.name, ...parsed.output }
-    }
-    return { name: error.name, message: error.message }
-  }
-
-  // オブジェクトの場合（PostgresError など）
+  // Error インスタンス（PostgresError 等のサブクラスを含む）の場合
+  // error オブジェクト全体をパースして追加プロパティも取り込む
   const parsed = v.safeParse(DetailedErrorSchema, error)
   if (parsed.success) {
     const result = parsed.output
@@ -111,9 +99,16 @@ export function formatErrorObject(error: unknown): FormattedError {
         delete result[key as keyof typeof result]
       }
     }
+    // Error インスタンスの場合は name を確実に保持
+    if (error instanceof Error) {
+      return { name: error.name, ...result }
+    }
     return { name: result.name ?? 'Error', ...result }
   }
 
-  // パース失敗時は基本情報のみ
+  // パース失敗時は基本情報のみ（Error インスタンスは name/message を保証）
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message }
+  }
   return { name: 'Error', message: String(error) }
 }

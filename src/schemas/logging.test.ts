@@ -27,6 +27,43 @@ describe('formatErrorObject', () => {
     expect(result.table_name).toBe('Checkin')
   })
 
+  it('Error サブクラス（PostgresError）の詳細フィールドも抽出する', () => {
+    // postgres-js の PostgresError を模倣した Error サブクラス
+    class PostgresError extends Error {
+      code: string
+      severity: string
+      constraint_name: string
+      table_name: string
+
+      constructor(
+        message: string,
+        details: { code: string; severity: string; constraint_name: string; table_name: string }
+      ) {
+        super(message)
+        this.name = 'PostgresError'
+        this.code = details.code
+        this.severity = details.severity
+        this.constraint_name = details.constraint_name
+        this.table_name = details.table_name
+      }
+    }
+
+    const error = new PostgresError('duplicate key value violates unique constraint', {
+      code: '23505',
+      severity: 'ERROR',
+      constraint_name: 'Checkin_habitId_date_unique',
+      table_name: 'Checkin',
+    })
+    const result = formatErrorObject(error)
+
+    expect(result.name).toBe('PostgresError')
+    expect(result.message).toBe('duplicate key value violates unique constraint')
+    expect(result.code).toBe('23505')
+    expect(result.severity).toBe('ERROR')
+    expect(result.constraint_name).toBe('Checkin_habitId_date_unique')
+    expect(result.table_name).toBe('Checkin')
+  })
+
   it('cause チェーンは1レベルだけ含める', () => {
     const error = {
       name: 'DatabaseError',
