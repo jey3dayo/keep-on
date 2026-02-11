@@ -33,7 +33,6 @@ interface HabitListViewProps {
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
   onResetOptimistic?: (habitId: string) => OptimisticRollback
-  pendingCheckins?: Set<string>
   todayCompleted: number
   todayLabel: string
   totalDaily: number
@@ -52,7 +51,6 @@ export function HabitListView({
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
-  pendingCheckins,
   todayCompleted,
   todayLabel,
   totalDaily,
@@ -170,7 +168,6 @@ export function HabitListView({
                       }
                     : undefined
                 }
-                pending={pendingCheckins?.has(habit.id) ?? false}
               />
             ))
           )}

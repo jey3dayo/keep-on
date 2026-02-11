@@ -13,19 +13,34 @@ const SyncContext = createContext<SyncContextValue | null>(null)
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [pendingCount, setPendingCount] = useState(0)
-  const pendingIdsRef = useRef<Set<string>>(new Set())
+  const pendingCountsRef = useRef<Map<string, number>>(new Map())
 
   const startSync = (id: string) => {
-    if (pendingIdsRef.current.has(id)) {
-      return
+    const current = pendingCountsRef.current.get(id) ?? 0
+    pendingCountsRef.current.set(id, current + 1)
+
+    // 全体のカウントを計算
+    let total = 0
+    for (const count of pendingCountsRef.current.values()) {
+      total += count
     }
-    pendingIdsRef.current.add(id)
-    setPendingCount(pendingIdsRef.current.size)
+    setPendingCount(total)
   }
 
   const endSync = (id: string) => {
-    pendingIdsRef.current.delete(id)
-    setPendingCount(pendingIdsRef.current.size)
+    const current = pendingCountsRef.current.get(id) ?? 0
+    if (current <= 1) {
+      pendingCountsRef.current.delete(id)
+    } else {
+      pendingCountsRef.current.set(id, current - 1)
+    }
+
+    // 全体のカウントを計算
+    let total = 0
+    for (const count of pendingCountsRef.current.values()) {
+      total += count
+    }
+    setPendingCount(total)
   }
 
   const isSyncing = pendingCount > 0

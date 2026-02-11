@@ -6,7 +6,6 @@ import type { HabitWithProgress } from '@/types/habit'
 export interface DashboardBaseProps {
   habits: HabitWithProgress[]
   todayLabel: string
-  pendingCheckins?: Set<string>
   onAddHabit: (
     name: string,
     icon: IconName,

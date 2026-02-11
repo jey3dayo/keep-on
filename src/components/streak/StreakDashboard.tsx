@@ -37,7 +37,6 @@ const persistMainView = (view: MainView) => {
 
 export function StreakDashboard({
   habits,
-  pendingCheckins,
   onAddHabit,
   onAddCheckin,
   onRemoveCheckin,
@@ -135,7 +134,6 @@ export function StreakDashboard({
           onRemoveCheckin={onRemoveCheckin}
           onResetOptimistic={onResetOptimistic}
           onSettings={() => handleViewChange('dashboard')}
-          pendingCheckins={pendingCheckins}
         />
       ) : (
         <div className="streak-bg flex min-h-full flex-col" style={{ backgroundColor: 'var(--primary)' }}>
@@ -150,7 +148,6 @@ export function StreakDashboard({
             onPeriodChange={setPeriodFilter}
             onRemoveCheckin={onRemoveCheckin}
             onResetOptimistic={onResetOptimistic}
-            pendingCheckins={pendingCheckins}
             periodFilter={periodFilter}
             todayCompleted={todayCompleted}
             todayLabel={todayLabel}

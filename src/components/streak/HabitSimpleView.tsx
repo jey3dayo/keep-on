@@ -32,7 +32,6 @@ interface HabitSimpleViewProps {
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
   onResetOptimistic?: (habitId: string) => OptimisticRollback
-  pendingCheckins?: Set<string>
   onSettings?: () => void
   backgroundColor?: string
 }
@@ -82,7 +81,6 @@ export function HabitSimpleView({
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
-  pendingCheckins,
   onSettings,
   backgroundColor,
 }: HabitSimpleViewProps) {
@@ -251,14 +249,13 @@ export function HabitSimpleView({
             const IconComponent = iconData.icon
             const progressPercent = Math.min((habit.currentProgress / habit.frequency) * 100, 100)
             const isCompleted = completedHabitIds.has(habit.id)
-            const isPending = pendingCheckins?.has(habit.id) ?? false
 
             return (
               <div className="flex flex-col items-center gap-3" key={habit.id}>
                 <Button
                   aria-label={isCompleted ? '達成済み' : `${habit.name}をチェックイン`}
                   className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
-                  disabled={isCompleted || isPending}
+                  disabled={isCompleted}
                   onClick={(event) => handleProgressClick(event, habit, isCompleted)}
                   onContextMenu={(e) => handleContextMenu(e, habit)}
                   onPointerCancel={() => handleLongPressEnd(true)}
@@ -312,7 +309,7 @@ export function HabitSimpleView({
                       <Button
                         aria-label="チェックインを減らす"
                         className="h-7 w-7 rounded-full bg-white/10 p-0 text-white hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
-                        disabled={habit.currentProgress === 0 || isPending}
+                        disabled={habit.currentProgress === 0}
                         onClick={(e) => {
                           e.stopPropagation()
                           if (onRemoveCheckin) {
@@ -333,7 +330,7 @@ export function HabitSimpleView({
                       <Button
                         aria-label="チェックインを増やす"
                         className="h-7 w-7 rounded-full bg-white/10 p-0 text-white hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
-                        disabled={isCompleted || isPending}
+                        disabled={isCompleted}
                         onClick={(e) => {
                           e.stopPropagation()
                           if (onAddCheckin) {
