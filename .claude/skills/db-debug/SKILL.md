@@ -45,7 +45,7 @@ DB エラーの場合、`code`, `severity`, `constraint_name`, `table_name`, `ca
 
 ## 3層レジリエンス
 
-```
+```text
 1. withDbRetry     → DB エラー時に resetDb() + リトライ (最大2回)
 2. Stale cache     → リトライ失敗時にキャッシュ済みデータで応答
 3. logSpanOptional → タイムアウト時に null を返し、非必須データをスキップ

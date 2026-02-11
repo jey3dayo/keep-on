@@ -6,7 +6,7 @@
 
 **ファイル:** `src/lib/db.ts`
 
-```
+```text
 getCloudflareContext() → env.DB (D1Database) → drizzle(d1Database, { schema })
 ```
 
@@ -32,7 +32,7 @@ getCloudflareContext() → env.DB (D1Database) → drizzle(d1Database, { schema 
 
 **ファイル:** `src/lib/db-retry.ts`
 
-```
+```text
 withDbRetry(name, fn, { maxRetries=1, retryOn=isDatabaseError, timeoutMs })
   ├─ 成功 → 結果を返す
   ├─ isDatabaseError → resetDb() + リトライ (最大2回)
@@ -46,7 +46,7 @@ withDbRetry(name, fn, { maxRetries=1, retryOn=isDatabaseError, timeoutMs })
 
 **ファイル:** `src/app/actions/habits/checkin.ts`, `remove-checkin.ts`
 
-```
+```text
 runWithRetry(spanName, fn, { dbTimeoutMs })
   ├─ logSpan(name, fn, { timeoutMs: dbTimeoutMs })
   ├─ TimeoutError → resetDb() + 1回リトライ
@@ -59,7 +59,7 @@ runWithRetry(spanName, fn, { dbTimeoutMs })
 
 **ファイル:** `src/lib/user.ts`
 
-```
+```text
 fetchExistingUserWithRetry(clerkId, dbTimeoutMs)
   ├─ getUserByClerkId()
   ├─ getRetryableDbReason(error) でリトライ判定
@@ -72,7 +72,7 @@ fetchExistingUserWithRetry(clerkId, dbTimeoutMs)
 
 **ファイル:** `src/constants/request-timeout.ts`
 
-```
+```text
 requestTimeoutMs (8000ms / Cloudflare: 15000ms)
   └─ dbTimeoutMs = max(3000, min(8000, requestTimeoutMs - 2000))
        └─ 個別クエリ span の timeoutMs
