@@ -398,45 +398,48 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
     appToast.error('習慣の作成に失敗しました', result.error)
   }
 
-  const handleAddCheckin = (habitId: string): Promise<void> => {
+  const queueOptimisticCheckin = (
+    habitId: string,
+    options: {
+      canApply: (habit: HabitWithProgress) => boolean
+      delta: number
+      isRemove: boolean
+    }
+  ) => {
     const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
-    if (!targetHabit || targetHabit.currentProgress >= targetHabit.frequency) {
-      return Promise.resolve()
+    if (!targetHabit) {
+      return
+    }
+    if (!options.canApply(targetHabit)) {
+      return
     }
 
-    const now = new Date()
-    const dateKey = formatDateKey(now)
-
-    updateHabitProgress(habitId, 1)
+    const dateKey = formatDateKey(new Date())
+    updateHabitProgress(habitId, options.delta)
     addPendingCheckin(habitId)
     enqueueCheckin({
       habitId,
       dateKey,
-      isRemove: false,
-      rollback: () => updateHabitProgress(habitId, -1),
+      isRemove: options.isRemove,
+      rollback: () => updateHabitProgress(habitId, -options.delta),
     })
+  }
 
+  const handleAddCheckin = (habitId: string): Promise<void> => {
+    queueOptimisticCheckin(habitId, {
+      canApply: (habit) => habit.currentProgress < habit.frequency,
+      delta: 1,
+      isRemove: false,
+    })
     return Promise.resolve()
   }
 
   const handleRemoveCheckin = (habitId: string): Promise<void> => {
-    const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
-    if (!targetHabit || targetHabit.currentProgress <= 0) {
-      return Promise.resolve()
-    }
-
-    const now = new Date()
-    const dateKey = formatDateKey(now)
-
-    updateHabitProgress(habitId, -1)
-    addPendingCheckin(habitId)
-    enqueueCheckin({
-      habitId,
-      dateKey,
+    queueOptimisticCheckin(habitId, {
+      canApply: (habit) => habit.currentProgress > 0,
+      delta: -1,
       isRemove: true,
-      rollback: () => updateHabitProgress(habitId, 1),
     })
-
     return Promise.resolve()
   }
 
