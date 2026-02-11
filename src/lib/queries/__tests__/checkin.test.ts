@@ -264,6 +264,8 @@ describe('createCheckinWithLimit', () => {
     vi.mocked(db.where).mockResolvedValueOnce([{ count: 2 }])
     // Mock INSERT with RETURNING
     vi.mocked(db.returning).mockResolvedValueOnce([createdCheckin])
+    // Mock final COUNT query after INSERT (should return 3 = 2 + 1)
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 3 }])
 
     const result = await createCheckinWithLimit({
       habitId: 'habit-5',

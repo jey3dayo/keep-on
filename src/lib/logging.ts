@@ -1,4 +1,4 @@
-import type { LogLevel } from '@/schemas/logging'
+import type { FormattedError, LogLevel } from '@/schemas/logging'
 import { formatErrorObject, parseLogLevel } from '@/schemas/logging'
 
 const LOG_LEVEL_ORDER: Record<LogLevel, number> = {
@@ -76,7 +76,7 @@ export function nowMs(): number {
   return Date.now()
 }
 
-export function formatError(error: unknown): { name: string; message: string } {
+export function formatError(error: unknown): FormattedError {
   return formatErrorObject(error)
 }
 
