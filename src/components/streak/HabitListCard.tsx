@@ -12,7 +12,6 @@ import type { HabitWithProgress } from '@/types/habit'
 interface HabitListCardProps {
   habit: HabitWithProgress
   completed: boolean
-  pending?: boolean
   dimmed?: boolean
   dimmedOpacity?: number
   onAdd?: () => void
@@ -23,7 +22,6 @@ interface HabitListCardProps {
 export function HabitListCard({
   habit,
   completed,
-  pending = false,
   dimmed = false,
   dimmedOpacity = 0.72,
   onAdd,
@@ -105,7 +103,7 @@ export function HabitListCard({
           aria-label={completed ? '達成済み' : `${habit.name}をチェックイン`}
           aria-pressed={completed}
           completed={completed}
-          disabled={completed || pending}
+          disabled={completed}
           onClick={completed ? undefined : onAdd}
           style={
             {
@@ -154,7 +152,7 @@ export function HabitListCard({
                 <Button
                   aria-label="チェックインを1つ減らす"
                   className="h-7 w-7 rounded-full bg-muted p-0 text-muted-foreground hover:bg-muted/80 disabled:opacity-50"
-                  disabled={habit.currentProgress <= 0 || pending}
+                  disabled={habit.currentProgress <= 0}
                   onClick={(e) => {
                     e.stopPropagation()
                     onRemove()
@@ -168,7 +166,7 @@ export function HabitListCard({
                 <Button
                   aria-label="チェックインを1つ増やす"
                   className="h-7 w-7 rounded-full bg-muted p-0 text-muted-foreground hover:bg-muted/80 disabled:opacity-50"
-                  disabled={habit.currentProgress >= habit.frequency || pending}
+                  disabled={habit.currentProgress >= habit.frequency}
                   onClick={(e) => {
                     e.stopPropagation()
                     onAdd()

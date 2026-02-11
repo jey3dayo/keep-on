@@ -20,7 +20,6 @@ type View = 'dashboard' | 'preset-selector' | 'add'
 
 export function DesktopDashboard({
   habits,
-  pendingCheckins,
   onAddHabit,
   onAddCheckin,
   onRemoveCheckin,
@@ -89,7 +88,6 @@ export function DesktopDashboard({
         onPeriodChange={setPeriodFilter}
         onRemoveCheckin={onRemoveCheckin}
         onResetOptimistic={onResetOptimistic}
-        pendingCheckins={pendingCheckins}
         periodFilter={periodFilter}
         todayCompleted={todayCompleted}
         todayLabel={todayLabel}

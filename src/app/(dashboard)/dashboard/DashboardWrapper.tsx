@@ -44,9 +44,10 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   const [, startTransition] = useTransition()
   const { startSync, endSync, isSyncing } = useSyncContext()
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
-  const [pendingCheckins, setPendingCheckins] = useState<Set<string>>(new Set())
   const pendingCheckinsRef = useRef<Set<string>>(new Set())
+  const pendingCountRef = useRef<Map<string, number>>(new Map())
   const activeRequestCountRef = useRef(0)
+  const activeHabitsRef = useRef<Set<string>>(new Set())
   const checkinQueueRef = useRef<CheckinTask[]>([])
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isRefreshing = useRef(false)
@@ -190,25 +191,33 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   }
 
   const addPendingCheckin = (habitId: string) => {
-    setPendingCheckins((current) => {
-      const next = new Set(current).add(habitId)
-      pendingCheckinsRef.current = next
-      return next
-    })
+    // カウントを増やす
+    const currentCount = pendingCountRef.current.get(habitId) ?? 0
+    pendingCountRef.current.set(habitId, currentCount + 1)
+
+    // 初回のみSetに追加
+    if (currentCount === 0) {
+      pendingCheckinsRef.current.add(habitId)
+    }
+
     startSync(habitId)
   }
 
   const clearPendingCheckin = (habitId: string) => {
-    setPendingCheckins((current) => {
-      const next = new Set(current)
-      next.delete(habitId)
-      pendingCheckinsRef.current = next
+    // カウントを減らす
+    const currentCount = pendingCountRef.current.get(habitId) ?? 0
+    if (currentCount <= 1) {
+      pendingCountRef.current.delete(habitId)
+      pendingCheckinsRef.current.delete(habitId)
+
       // pendingセットが空になった場合、保留されていたリフレッシュを再スケジュール
-      if (next.size === 0 && refreshTimeoutRef.current) {
+      if (pendingCheckinsRef.current.size === 0 && refreshTimeoutRef.current) {
         scheduleRefresh()
       }
-      return next
-    })
+    } else {
+      pendingCountRef.current.set(habitId, currentCount - 1)
+    }
+
     endSync(habitId)
   }
 
@@ -271,16 +280,24 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
 
   const startCheckinTask = (task: CheckinTask) => {
     activeRequestCountRef.current += 1
+    activeHabitsRef.current.add(task.habitId)
 
     runCheckinTask(task).finally(() => {
       activeRequestCountRef.current = Math.max(0, activeRequestCountRef.current - 1)
+      activeHabitsRef.current.delete(task.habitId)
       drainCheckinQueue()
     })
   }
 
   const drainCheckinQueue = () => {
     while (activeRequestCountRef.current < MAX_CONCURRENT_CHECKINS && checkinQueueRef.current.length > 0) {
-      const next = checkinQueueRef.current.shift()
+      // まだ実行中でないhabitIdのタスクを優先的に選択
+      const nextIndex = checkinQueueRef.current.findIndex((task) => !activeHabitsRef.current.has(task.habitId))
+      if (nextIndex === -1) {
+        // すべてのキュー内タスクが実行中の習慣 → 待機
+        break
+      }
+      const next = checkinQueueRef.current.splice(nextIndex, 1)[0]
       if (!next) {
         return
       }
@@ -378,10 +395,6 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   }
 
   const handleAddCheckin = (habitId: string): Promise<void> => {
-    if (pendingCheckinsRef.current.has(habitId)) {
-      appToast.info('チェックイン処理中です', '完了するまでお待ちください')
-      return Promise.resolve()
-    }
     const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
     if (!targetHabit || targetHabit.currentProgress >= targetHabit.frequency) {
       return Promise.resolve()
@@ -403,10 +416,6 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   }
 
   const handleRemoveCheckin = (habitId: string): Promise<void> => {
-    if (pendingCheckinsRef.current.has(habitId)) {
-      appToast.info('チェックイン処理中です', '完了するまでお待ちください')
-      return Promise.resolve()
-    }
     const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
     if (!targetHabit || targetHabit.currentProgress <= 0) {
       return Promise.resolve()
@@ -442,7 +451,6 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
-          pendingCheckins={pendingCheckins}
           todayLabel={todayLabel}
         />
       </div>
@@ -457,7 +465,6 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
-          pendingCheckins={pendingCheckins}
           todayLabel={todayLabel}
           user={user}
         />
