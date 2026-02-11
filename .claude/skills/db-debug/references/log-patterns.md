@@ -4,13 +4,13 @@
 
 `logSpan` / `logInfo` / `logError` の出力形式:
 
-```
+```text
 <name>:<suffix> {"key":"value","ms":123}
 ```
 
 例:
 
-```
+```text
 query.createCheckinWithLimit:start {"habitId":"abc"}
 query.createCheckinWithLimit:end {"habitId":"abc","ms":45}
 query.createCheckinWithLimit:error {"habitId":"abc","ms":45,"error":{"name":"PostgresError","message":"duplicate key...","code":"23505"}}
@@ -47,14 +47,14 @@ query.createCheckinWithLimit:error {"habitId":"abc","ms":45,"error":{"name":"Pos
 
 ### 正常系
 
-```
+```text
 dashboard.habits:start {}
 dashboard.habits:end {"ms":120}
 ```
 
 ### タイムアウト
 
-```
+```text
 dashboard.habits:start {}
 dashboard.habits:timeout {"ms":8000}
 dashboard.habits:late-error {"error":{"name":"Error","message":"connection terminated"}}
@@ -64,7 +64,7 @@ dashboard.habits:late-error {"error":{"name":"Error","message":"connection termi
 
 ### リトライ成功
 
-```
+```text
 dashboard.habits:start {}
 dashboard.habits:retry {"attempt":1,"maxRetries":1,"error":{"name":"Error","message":"ECONNRESET"}}
 dashboard.habits:end {"ms":350}
@@ -72,7 +72,7 @@ dashboard.habits:end {"ms":350}
 
 ### リトライ失敗
 
-```
+```text
 dashboard.habits:start {}
 dashboard.habits:retry {"attempt":1,"maxRetries":1,"error":{"name":"Error","message":"ECONNRESET"}}
 dashboard.habits:final-failure {"attempt":2,"maxRetries":1,"error":{"name":"Error","message":"ECONNRESET"}}
@@ -80,13 +80,13 @@ dashboard.habits:final-failure {"attempt":2,"maxRetries":1,"error":{"name":"Erro
 
 ### 制約違反（リトライなし）
 
-```
+```text
 query.createCheckinWithLimit:error {"habitId":"abc","ms":45,"error":{"name":"PostgresError","message":"duplicate key...","code":"23505","constraint_name":"Checkin_habitId_date_unique","table_name":"Checkin"}}
 ```
 
 ### 遅いクエリ
 
-```
+```text
 query.getHabitsWithProgress:slow {"ms":150}
 ```
 

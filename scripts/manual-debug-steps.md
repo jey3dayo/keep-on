@@ -10,7 +10,7 @@ Chrome が http://localhost:3000/dashboard で起動している状態
 2. **Console** タブを選択
 3. 以下のエラーがないか確認:
 
-```
+```text
 ❌ 確認すべきエラー:
 - Uncaught TypeError
 - Clerk: Refreshing the session token resulted in an infinite redirect loop
@@ -25,7 +25,7 @@ Chrome が http://localhost:3000/dashboard で起動している状態
 2. **F5** でページをリロード
 3. 以下を確認:
 
-```
+```text
 ❌ 確認すべき問題:
 - /dashboard への複数回のリクエスト (無限ループ)
 - Status: 500, 503, timeout のリクエスト
