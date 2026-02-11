@@ -206,6 +206,10 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   const clearPendingCheckin = (habitId: string) => {
     // カウントを減らす
     const currentCount = pendingCountRef.current.get(habitId) ?? 0
+    if (currentCount === 0) {
+      // カウントが0の場合は何もしない（二重呼び出し防止）
+      return
+    }
     if (currentCount <= 1) {
       pendingCountRef.current.delete(habitId)
       pendingCheckinsRef.current.delete(habitId)
