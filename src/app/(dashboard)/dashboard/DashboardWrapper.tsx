@@ -206,6 +206,10 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   const clearPendingCheckin = (habitId: string) => {
     // カウントを減らす
     const currentCount = pendingCountRef.current.get(habitId) ?? 0
+    if (currentCount === 0) {
+      // カウントが0の場合は何もしない（二重呼び出し防止）
+      return
+    }
     if (currentCount <= 1) {
       pendingCountRef.current.delete(habitId)
       pendingCheckinsRef.current.delete(habitId)
@@ -396,7 +400,13 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
 
   const handleAddCheckin = (habitId: string): Promise<void> => {
     const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
-    if (!targetHabit || targetHabit.currentProgress >= targetHabit.frequency) {
+    if (!targetHabit) {
+      return Promise.resolve()
+    }
+
+    // キュー内のペンディングカウントも考慮して頻度チェック
+    const pendingCount = pendingCountRef.current.get(habitId) ?? 0
+    if (targetHabit.currentProgress + pendingCount >= targetHabit.frequency) {
       return Promise.resolve()
     }
 
