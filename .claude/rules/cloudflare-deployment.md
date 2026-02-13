@@ -16,8 +16,8 @@
     "NEXTJS_ENV": "production",
     "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "...",
     "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
-    "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up"
-  }
+    "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up",
+  },
 }
 ```
 
@@ -139,11 +139,11 @@ pnpm wrangler secret list
 
 GitHub リポジトリの Settings → Secrets and variables → Actions で設定：
 
-| Secret名 | 説明 | 取得方法 |
-| --- | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API トークン | [API Tokens](https://dash.cloudflare.com/profile/api-tokens) |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウントID | Dashboard 右サイドバー |
-| `DOTENV_PRIVATE_KEY` | dotenvx 秘密鍵 | `.env.keys` ファイル |
+| Secret名                | 説明                    | 取得方法                                                     |
+| ----------------------- | ----------------------- | ------------------------------------------------------------ |
+| `CLOUDFLARE_API_TOKEN`  | Cloudflare API トークン | [API Tokens](https://dash.cloudflare.com/profile/api-tokens) |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウントID | Dashboard 右サイドバー                                       |
+| `DOTENV_PRIVATE_KEY`    | dotenvx 秘密鍵          | `.env.keys` ファイル                                         |
 
 #### ワークフロー有効化
 
@@ -169,6 +169,54 @@ git push origin main
 - `CLOUDFLARE_ACCOUNT_ID`
 
 スクリプトは自動的に `.env` から `DATABASE_URL` と `CLERK_SECRET_KEY` を読み込みます。
+
+---
+
+## バンドルサイズ監視
+
+Cloudflare Workers のバンドルサイズ制限（25MB gzipped）を超えないように、CI で自動監視しています。
+
+### 自動チェック
+
+`.github/workflows/bundle-size.yml` で以下を実行：
+
+1. **PR作成時**: バンドルサイズをチェックしてコメント
+2. **main ブランチ**: サイズ履歴を記録（`.bundle-history/history.txt`）
+
+### 警告・エラー基準
+
+| 状態      | サイズ            | 動作              |
+| --------- | ----------------- | ----------------- |
+| ✅ 正常   | < 20MB (80%)      | CI 成功           |
+| ⚠️ 警告   | 20-25MB (80-100%) | CI 成功、警告表示 |
+| ❌ エラー | > 25MB (100%)     | CI 失敗           |
+
+### 手動確認
+
+ローカルでバンドルサイズを確認：
+
+```bash
+# ビルド実行
+pnpm build:cf
+
+# Dry-run でサイズ確認
+pnpm wrangler deploy --dry-run
+```
+
+出力例：
+
+```
+Total Upload: 12.34 MB / gzip: 4.56 MB
+```
+
+### サイズ削減方法
+
+バンドルサイズが大きい場合の対処法：
+
+1. **未使用依存の削除**: `pnpm dlx depcheck` で検出
+2. **Dynamic Import**: 大きなライブラリを遅延ロード
+3. **Tree Shaking**: 未使用エクスポートを削除
+4. **WASM 除外**: 不要な WASM ファイルを Webpack で除外
 
 ---
 

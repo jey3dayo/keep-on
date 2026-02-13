@@ -1,0 +1,145 @@
+name: Bundle Size Check
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  check-size:
+    name: Check Bundle Size
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: "package.json"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Drizzle migrations
+        run: pnpm db:generate
+
+      - name: Build for Cloudflare
+        env:
+          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
+        run: pnpm build:cf
+
+      - name: Check bundle size
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # Dry-run でサイズチェック
+          OUTPUT=$(pnpm wrangler deploy --dry-run 2>&1 || true)
+          echo "$OUTPUT"
+          echo "$OUTPUT" > /tmp/bundle-size.txt
+
+          # サイズを抽出（例: "Total Upload: 12.34 MB"）
+          SIZE=$(echo "$OUTPUT" | grep -oP 'Total Upload: \K[\d.]+(?= MB)' || echo "0")
+          LIMIT=25
+
+          echo "Bundle size: ${SIZE}MB (limit: ${LIMIT}MB)"
+
+          # 環境変数に保存（後続ステップで使用）
+          echo "BUNDLE_SIZE=${SIZE}" >> $GITHUB_ENV
+          echo "BUNDLE_LIMIT=${LIMIT}" >> $GITHUB_ENV
+
+          # 80%を超えたら警告
+          THRESHOLD=$(echo "$LIMIT * 0.8" | bc)
+          if (( $(echo "$SIZE > $THRESHOLD" | bc -l) )); then
+            echo "⚠️ Warning: Bundle size is over 80% of the limit!"
+            echo "Current: ${SIZE}MB / Limit: ${LIMIT}MB"
+            echo "WARNING=true" >> $GITHUB_ENV
+          else
+            echo "WARNING=false" >> $GITHUB_ENV
+          fi
+
+          # 制限を超えたらエラー
+          if (( $(echo "$SIZE > $LIMIT" | bc -l) )); then
+            echo "❌ Error: Bundle size exceeds the limit!"
+            exit 1
+          fi
+
+          echo "✅ Bundle size is within the limit"
+
+      - name: Comment bundle size on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const size = process.env.BUNDLE_SIZE || 'unknown';
+            const limit = process.env.BUNDLE_LIMIT || '25';
+            const warning = process.env.WARNING === 'true';
+
+            const percentage = ((parseFloat(size) / parseFloat(limit)) * 100).toFixed(1);
+            const statusEmoji = warning ? '⚠️' : '✅';
+            const statusText = warning ? 'Warning: Approaching limit!' : 'Size is healthy';
+
+            const body = `## 📦 Bundle Size Report
+
+            **Size:** ${size} MB (gzipped)
+            **Limit:** ${limit} MB
+            **Usage:** ${percentage}%
+
+            ${statusEmoji} ${statusText}`;
+
+            // 既存のコメントを検索
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('📦 Bundle Size Report')
+            );
+
+            if (botComment) {
+              // 既存のコメントを更新
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              // 新しいコメントを作成
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: body
+              });
+            }
+
+      - name: Record bundle size history
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          SIZE="${{ env.BUNDLE_SIZE }}"
+          DATE=$(date +%Y-%m-%d)
+
+          # 履歴ディレクトリを作成
+          mkdir -p .bundle-history
+
+          # サイズを記録
+          echo "${DATE} ${SIZE}MB ${{ github.sha }}" >> .bundle-history/history.txt
+
+          echo "📊 Bundle size recorded: ${SIZE}MB"

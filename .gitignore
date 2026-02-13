@@ -63,3 +63,6 @@ storybook-static/
 tmp/
 # next-agents-md
 .next-docs/
+
+# bundle size history
+.bundle-history/
