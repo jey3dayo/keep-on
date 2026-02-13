@@ -17,8 +17,8 @@ function isSentryEnabled(): boolean {
 /**
  * Sentry スコープ内でハンドラーを実行
  */
-export async function withSentryScope<T>(
-  handler: () => Promise<T> | T,
+export function withSentryScope<T>(
+  handler: () => Promise<T>,
   options?: {
     tags?: Record<string, string>
     context?: Record<string, unknown>
