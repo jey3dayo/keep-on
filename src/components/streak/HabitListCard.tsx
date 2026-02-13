@@ -103,8 +103,8 @@ export function HabitListCard({
           aria-label={completed ? '達成済み' : `${habit.name}をチェックイン`}
           aria-pressed={completed}
           completed={completed}
-          disabled={completed}
-          onClick={completed ? undefined : onAdd}
+          disabled={false}
+          onClick={completed ? onRemove : onAdd}
           style={
             {
               backgroundColor: colorData.color,

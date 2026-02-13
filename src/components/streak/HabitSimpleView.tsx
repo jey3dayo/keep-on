@@ -132,12 +132,12 @@ export function HabitSimpleView({
       return
     }
 
-    // 完了済みの場合は何もしない（ボタンは無効化されている）
+    // 完了済みの場合は削除、未完了の場合は追加
     if (isCompleted) {
-      return
-    }
-
-    if (onAddCheckin) {
+      if (onRemoveCheckin) {
+        onRemoveCheckin(habit.id)
+      }
+    } else if (onAddCheckin) {
       onAddCheckin(habit.id)
     }
   }
