@@ -267,12 +267,14 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
         return
       }
 
-      if (result && !ok && 'error' in result) {
+      // Server Actionから返されたエラーメッセージを表示（一度だけ）
+      if (result && 'error' in result) {
         appToast.error('チェックインの切り替えに失敗しました', result.error)
-        return
+      } else {
+        appToast.error('チェックインの切り替えに失敗しました', error)
       }
-      appToast.error('チェックインの切り替えに失敗しました', error)
     } catch (error) {
+      // 予期しないエラーのみキャッチ（Server Actionの結果ではない）
       appToast.error('チェックインの切り替えに失敗しました', error)
     } finally {
       if (shouldRollback && task.rollback) {
