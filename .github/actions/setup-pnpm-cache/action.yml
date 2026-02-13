@@ -1,30 +1,30 @@
-name: 'Setup pnpm and Cache'
+name: "Setup pnpm and Cache"
 
-description: 'Setup pnpm, restore pnpm store cache, and install dependencies'
+description: "Setup pnpm, restore pnpm store cache, and install dependencies"
 
 inputs:
   pnpm-version:
-    description: 'pnpm version to use'
+    description: "pnpm version to use"
     required: false
-    default: '10.29.2'
+    default: "10.29.3"
 
   lockfile:
-    description: 'Lockfile path used for cache key'
+    description: "Lockfile path used for cache key"
     required: false
-    default: 'pnpm-lock.yaml'
+    default: "pnpm-lock.yaml"
 
   install:
-    description: 'Install dependencies (pnpm install --frozen-lockfile)'
+    description: "Install dependencies (pnpm install --frozen-lockfile)"
     required: false
-    default: 'true'
+    default: "true"
 
 outputs:
   cache-hit:
-    description: 'Whether the pnpm store cache was restored'
+    description: "Whether the pnpm store cache was restored"
     value: ${{ steps.cache.outputs.cache-hit }}
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
