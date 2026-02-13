@@ -52,6 +52,19 @@ jobs:
           time pnpm build:cf
           echo "::endgroup::"
 
+      - name: Upload source maps to Sentry
+        if: ${{ secrets.SENTRY_AUTH_TOKEN != '' }}
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        run: |
+          # Sentry CLI でソースマップをアップロード
+          pnpm sentry-cli releases new "${{ github.sha }}"
+          pnpm sentry-cli releases files "${{ github.sha }}" upload-sourcemaps .open-next --url-prefix "~/"
+          pnpm sentry-cli releases finalize "${{ github.sha }}"
+          echo "✅ Source maps uploaded to Sentry"
+
       - name: Deploy to Cloudflare Workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
