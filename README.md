@@ -172,6 +172,8 @@ pnpm cf:build         # OpenNext ビルド
 pnpm cf:deploy        # Cloudflare デプロイ
 pnpm cf:preview       # ローカルプレビュー
 pnpm cf:logs          # ログ確認
+pnpm cf:metrics       # Workers メトリクス取得
+pnpm cf:alerts        # アラート設定ガイド
 pnpm deploy           # cf:build + cf:deploy
 
 ## デバッグ
