@@ -66,6 +66,13 @@ const nextConfig: NextConfig = {
           { key: 'Service-Worker-Allowed', value: '/' },
         ],
       },
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, must-revalidate' },
+          { key: 'CDN-Cache-Control', value: 'no-store' },
+        ],
+      },
     ]
   },
 }
