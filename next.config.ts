@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
   async headers() {
+    const isDev = process.env.NODE_ENV === 'development'
+
     return [
       {
         source: '/:path*',
@@ -27,7 +29,8 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'; " +
               "img-src 'self' data: blob: https://img.clerk.com; " +
               "font-src 'self' data:; " +
-              "connect-src 'self' https://clerk.com https://*.clerk.accounts.dev https://keep-on.j138cm.workers.dev; " +
+              `connect-src 'self' https://clerk.com https://*.clerk.accounts.dev https://keep-on.j138cm.workers.dev${isDev ? ' ws: wss:' : ''}; ` +
+              "worker-src 'self' blob:; " +
               "frame-ancestors 'none'; " +
               "base-uri 'self'; " +
               "form-action 'self';",
