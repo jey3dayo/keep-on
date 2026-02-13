@@ -172,6 +172,48 @@ git push origin main
 
 ---
 
+## PRプレビュー機能
+
+GitHub PR作成時に、自動的にプレビュー環境をデプロイします。
+
+### 自動デプロイ
+
+`.github/workflows/preview.yml` が以下を実行：
+
+1. **PR作成・更新時**: 自動ビルド＆デプロイ
+2. **固定URL**: `https://keep-on-pr-{PR番号}.j138cm.workers.dev`
+3. **PRコメント**: デプロイURLを自動投稿
+4. **PRクローズ時**: プレビュー環境を自動削除
+
+### プレビューURL例
+
+| PR番号 | プレビューURL                               |
+| ------ | ------------------------------------------- |
+| #123   | `https://keep-on-pr-123.j138cm.workers.dev` |
+| #456   | `https://keep-on-pr-456.j138cm.workers.dev` |
+
+### 注意事項
+
+⚠️ **プレビュー環境は本番と同じデータベースを共有します**
+
+- データ操作のテストは慎重に行ってください
+- 本番データを破壊しないように注意してください
+- テスト用ユーザーを使用してください（詳細は `.claude/rules/testing.md`）
+
+### 手動プレビューデプロイ
+
+ローカルからプレビューをデプロイ：
+
+```bash
+# PR番号を指定してデプロイ
+pnpm wrangler deploy --name "keep-on-pr-123" --env preview
+
+# プレビューを削除
+pnpm wrangler delete --name "keep-on-pr-123" --force
+```
+
+---
+
 ## バンドルサイズ監視
 
 Cloudflare Workers のバンドルサイズ制限（25MB gzipped）を超えないように、CI で自動監視しています。

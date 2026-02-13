@@ -1,0 +1,125 @@
+name: Deploy PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: "package.json"
+          cache: "pnpm"
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+            .open-next
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '!node_modules/**') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Drizzle migrations
+        run: pnpm db:generate
+
+      - name: Build for Cloudflare
+        env:
+          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
+        run: pnpm build:cf
+
+      - name: Deploy Preview
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          WORKER_NAME="keep-on-pr-${PR_NUMBER}"
+
+          echo "Deploying preview: ${WORKER_NAME}"
+
+          # Deploy with unique worker name for this PR
+          OUTPUT=$(pnpm wrangler deploy --name "${WORKER_NAME}" --env preview 2>&1)
+          echo "$OUTPUT"
+
+          # Extract the deployed URL from wrangler output
+          PREVIEW_URL=$(echo "$OUTPUT" | grep -oP 'https://[^\s]+workers\.dev' | head -1)
+
+          if [ -z "$PREVIEW_URL" ]; then
+            # Fallback to constructed URL
+            PREVIEW_URL="https://${WORKER_NAME}.j138cm.workers.dev"
+          fi
+
+          echo "preview_url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "✅ Preview deployed to: ${PREVIEW_URL}"
+
+      - name: Comment Preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = '${{ steps.deploy.outputs.preview_url }}';
+            const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
+
+            const body = `## 🚀 Preview Deployment
+
+            **Preview URL:** ${previewUrl}
+            **Commit:** \`${commitSha}\`
+            **Updated:** ${new Date().toISOString()}
+
+            This preview will be updated automatically when you push new commits to this PR.
+
+            > ⚠️ **Note**: Preview deployments use the same database as production. Be careful when testing data operations.`;
+
+            // 既存のプレビューコメントを検索
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('🚀 Preview Deployment')
+            );
+
+            if (botComment) {
+              // 既存のコメントを更新
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+              console.log('Updated existing preview comment');
+            } else {
+              // 新しいコメントを作成
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+              console.log('Created new preview comment');
+            }

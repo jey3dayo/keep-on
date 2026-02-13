@@ -30,5 +30,12 @@
       "database_name": "keep-on-db",
       "database_id": "763c22af-de35-49ef-8171-2ae5293491d5"
     }
-  ]
+  ],
+  "env": {
+    "preview": {
+      "vars": {
+        "NEXTJS_ENV": "preview"
+      }
+    }
+  }
 }
