@@ -12,8 +12,11 @@ export async function register() {
 }
 
 async function initSentryForEdge() {
-  const { CloudflareClient, getDefaultIntegrations } = await import('@sentry/cloudflare')
-  const { makeFetchTransport, defaultStackParser } = await import('@sentry/core')
+  const sentry = await import('@sentry/cloudflare')
+  // @ts-expect-error - Module exists but lacks type definitions
+  const { makeCloudflareTransport } = await import('@sentry/cloudflare/build/esm/transport.js')
+  // @ts-expect-error - Module exists but lacks type definitions
+  const { defaultStackParser } = await import('@sentry/cloudflare/build/esm/vendor/stacktrace.js')
 
   // SENTRY_DSN が設定されていない場合はスキップ
   if (!process.env.SENTRY_DSN) {
@@ -21,7 +24,7 @@ async function initSentryForEdge() {
     return
   }
 
-  const client = new CloudflareClient({
+  const client = new sentry.CloudflareClient({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NEXTJS_ENV || 'production',
 
@@ -30,10 +33,10 @@ async function initSentryForEdge() {
     tracesSampleRate: process.env.NEXTJS_ENV === 'production' ? 0.1 : 1.0,
 
     // デフォルトのインテグレーションを使用
-    integrations: getDefaultIntegrations({}),
+    integrations: sentry.getDefaultIntegrations({}),
 
-    // トランスポート（Fetch API を使用）
-    transport: makeFetchTransport,
+    // トランスポート（Cloudflare 専用）
+    transport: makeCloudflareTransport,
 
     // スタックパーサー
     stackParser: defaultStackParser,
@@ -55,8 +58,7 @@ async function initSentryForEdge() {
   })
 
   // グローバルクライアントとして設定
-  const { setCurrentClient } = await import('@sentry/cloudflare')
-  setCurrentClient(client)
+  sentry.setCurrentClient(client)
   client.init()
 
   console.log('✅ Sentry initialized for Edge Runtime')
