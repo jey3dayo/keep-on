@@ -66,3 +66,6 @@ tmp/
 
 # bundle size history
 .bundle-history/
+
+# cloudflare secrets (機密情報)
+.secrets.json

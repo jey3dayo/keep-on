@@ -154,21 +154,55 @@ git push origin main
 
 ---
 
-## Secrets自動設定スクリプト
+## Secrets登録方法
 
-初回セットアップやSecrets更新時に使用：
+### バルク登録（推奨）
+
+`wrangler secret bulk` を使った一括登録：
 
 ```bash
-# .env から読み込んで一括設定
-./scripts/setup-cloudflare-secrets.sh
+# バルク登録スクリプトを実行
+./scripts/setup-cloudflare-secrets-bulk.sh
 ```
+
+**仕組み:**
+
+1. `.env` から環境変数を読み込み
+2. `.secrets.json` を生成（一時ファイル、自動削除）
+3. `wrangler secret bulk` で一括登録
 
 **必要な環境変数:**
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
+- `DOTENV_PRIVATE_KEY`（dotenvx復号用）
 
-スクリプトは自動的に `.env` から `DATABASE_URL` と `CLERK_SECRET_KEY` を読み込みます。
+**登録されるSecrets:**
+
+- `DATABASE_URL`
+- `CLERK_SECRET_KEY`
+- `SENTRY_DSN`（設定されている場合）
+
+### 個別登録
+
+個別に設定する場合（既存スクリプト）：
+
+```bash
+./scripts/setup-cloudflare-secrets.sh
+```
+
+### GitHub Actions での自動同期
+
+`.github/workflows/sync-secrets.yml` で手動トリガー可能：
+
+1. GitHub リポジトリの **Actions** タブを開く
+2. **Sync Secrets to Cloudflare** ワークフローを選択
+3. **Run workflow** をクリック
+
+**注意事項:**
+
+- 既存のSecretsを上書きします
+- GitHub Secrets（`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `DOTENV_PRIVATE_KEY`）が必要
 
 ---
 
