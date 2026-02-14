@@ -5,7 +5,15 @@ import { SIGN_IN_PATH } from '@/constants/auth'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import { getHabitsCacheSnapshot } from '@/lib/cache/habit-cache'
 import { withDbRetry } from '@/lib/db-retry'
-import { createRequestMeta, formatError, isDatabaseError, isTimeoutError, logInfo, logWarn } from '@/lib/logging'
+import {
+  createRequestMeta,
+  formatError,
+  isDatabaseError,
+  isTimeoutError,
+  logInfo,
+  logSpanOptional,
+  logWarn,
+} from '@/lib/logging'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
 import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
@@ -37,7 +45,7 @@ export default async function DashboardPage() {
 
   logInfo('request.dashboard:start', requestMeta)
 
-  const user = await syncUser()
+  const user = await logSpanOptional('dashboard.syncUser', () => syncUser(), requestMeta, { timeoutMs })
 
   if (!user) {
     redirect(SIGN_IN_PATH)
