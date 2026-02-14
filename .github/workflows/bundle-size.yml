@@ -13,6 +13,9 @@ jobs:
     name: Check Bundle Size
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -57,17 +60,17 @@ jobs:
           echo "Bundle size: ${SIZE}MB (limit: ${LIMIT}MB)"
 
           # 環境変数に保存（後続ステップで使用）
-          echo "BUNDLE_SIZE=${SIZE}" >> $GITHUB_ENV
-          echo "BUNDLE_LIMIT=${LIMIT}" >> $GITHUB_ENV
+          echo "BUNDLE_SIZE=${SIZE}" >> "$GITHUB_ENV"
+          echo "BUNDLE_LIMIT=${LIMIT}" >> "$GITHUB_ENV"
 
           # 80%を超えたら警告
           THRESHOLD=$(echo "$LIMIT * 0.8" | bc)
           if (( $(echo "$SIZE > $THRESHOLD" | bc -l) )); then
             echo "⚠️ Warning: Bundle size is over 80% of the limit!"
             echo "Current: ${SIZE}MB / Limit: ${LIMIT}MB"
-            echo "WARNING=true" >> $GITHUB_ENV
+            echo "WARNING=true" >> "$GITHUB_ENV"
           else
-            echo "WARNING=false" >> $GITHUB_ENV
+            echo "WARNING=false" >> "$GITHUB_ENV"
           fi
 
           # 制限を超えたらエラー
