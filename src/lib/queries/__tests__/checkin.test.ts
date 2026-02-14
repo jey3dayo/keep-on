@@ -306,4 +306,43 @@ describe('createCheckinWithLimit', () => {
     expect(db.transaction).toHaveBeenCalledWith(expect.any(Function), { behavior: 'immediate' })
     expect(db.where).toHaveBeenCalledTimes(1)
   })
+
+  it('returns false when legacy UNIQUE constraint rejects same-day duplicate', async () => {
+    const db = getDb()
+    const targetDate = new Date(2024, 0, 3)
+
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 1 }])
+    vi.mocked(db.returning).mockRejectedValueOnce(new Error('UNIQUE constraint failed: Checkin.habitId, Checkin.date'))
+
+    const result = await createCheckinWithLimit({
+      habitId: 'habit-7',
+      date: targetDate,
+      period: 'daily',
+      frequency: 3,
+    })
+
+    expect(result).toEqual({
+      created: false,
+      currentCount: 1,
+      checkin: null,
+    })
+    expect(db.transaction).toHaveBeenCalledWith(expect.any(Function), { behavior: 'immediate' })
+  })
+
+  it('throws when insert fails for non-constraint reasons', async () => {
+    const db = getDb()
+    const targetDate = new Date(2024, 0, 4)
+
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 0 }])
+    vi.mocked(db.returning).mockRejectedValueOnce(new Error('database is locked'))
+
+    await expect(
+      createCheckinWithLimit({
+        habitId: 'habit-8',
+        date: targetDate,
+        period: 'daily',
+        frequency: 3,
+      })
+    ).rejects.toThrow('database is locked')
+  })
 })
