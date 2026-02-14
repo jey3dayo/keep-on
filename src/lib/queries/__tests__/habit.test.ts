@@ -252,6 +252,39 @@ describe('getHabitsWithProgress', () => {
     expect(result).toHaveLength(1)
     expect(result[0]?.currentProgress).toBe(1)
   })
+
+  it('不正なperiodとfrequencyでもフォールバックして返す', async () => {
+    const invalidDate = new Date(2024, 0, 20, 12, 0, 0)
+    const invalidHabits: Habit[] = [
+      {
+        id: 'habit-invalid',
+        userId: 'user-123',
+        name: '不正データ',
+        icon: 'footprints',
+        color: 'orange',
+        period: 'invalid-period' as unknown as Habit['period'],
+        frequency: 0,
+        createdAt: new Date('2024-01-03'),
+        updatedAt: new Date('2024-01-03'),
+      },
+    ]
+
+    const db = getDb()
+    vi.mocked(db.orderBy)
+      .mockResolvedValueOnce(invalidHabits)
+      .mockResolvedValueOnce([
+        { id: 'checkin-invalid', habitId: 'habit-invalid', date: new Date(2024, 0, 20), createdAt: invalidDate },
+      ])
+
+    const result = await getHabitsWithProgress('user-123', 'clerk-123', invalidDate)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]?.period).toBe('daily')
+    expect(result[0]?.frequency).toBe(1)
+    expect(result[0]?.currentProgress).toBe(1)
+    expect(result[0]?.streak).toBe(1)
+    expect(result[0]?.completionRate).toBe(100)
+  })
 })
 
 describe('getHabitById', () => {

@@ -19,6 +19,13 @@ interface CreateCheckinWithLimitInput {
   weekStartDay?: WeekStartDay
 }
 
+/**
+ * チェックイン作成結果
+ *
+ * @property created - チェックインが作成されたかどうか（UNIQUE制約違反や頻度上限で失敗した場合はfalse）
+ * @property currentCount - 期間内の現在のチェックイン数
+ * @property checkin - 作成されたチェックインレコード（失敗時はnull）
+ */
 export interface CreateCheckinWithLimitResult {
   created: boolean
   currentCount: number
@@ -113,14 +120,24 @@ export async function createCheckinWithLimit(
         return { created: false, currentCount, checkin: null }
       }
 
-      // 3. INSERT（同一日付の重複チェックインを許可）
-      const [checkin] = await db
-        .insert(checkins)
-        .values({
-          habitId: input.habitId,
-          date: dateKey,
-        })
-        .returning()
+      // 3. INSERT（UNIQUE制約により同一日付の重複は自動的に防止される）
+      let checkin
+      try {
+        ;[checkin] = await db
+          .insert(checkins)
+          .values({
+            habitId: input.habitId,
+            date: dateKey,
+          })
+          .returning()
+      } catch (error) {
+        // UNIQUE制約違反（同じ習慣の同じ日に既にチェックイン済み）
+        const errorMessage = String(error)
+        if (errorMessage.includes('UNIQUE') || errorMessage.includes('constraint')) {
+          return { created: false, currentCount, checkin: null }
+        }
+        throw error
+      }
 
       if (!checkin) {
         throw new Error('Failed to create checkin')

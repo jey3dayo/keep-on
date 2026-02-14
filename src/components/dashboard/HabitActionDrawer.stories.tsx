@@ -157,7 +157,7 @@ export const Archived: Story = {
       id: '5',
       name: 'アーカイブされた習慣',
       archived: true,
-      archivedAt: new Date('2025-01-15'),
+      archivedAt: new Date('2025-01-15').toISOString(),
     },
     onOpenChange: (open) => console.log('Drawer opened:', open),
   },

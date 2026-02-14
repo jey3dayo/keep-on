@@ -1,6 +1,13 @@
 import { startOfDay, startOfMonth, subDays, subMonths, subWeeks } from 'date-fns'
 import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
-import { COMPLETION_THRESHOLD, type Period, type WeekStart, type WeekStartDay, weekStartToDay } from '@/constants/habit'
+import {
+  COMPLETION_THRESHOLD,
+  DEFAULT_HABIT_PERIOD,
+  type Period,
+  type WeekStart,
+  type WeekStartDay,
+  weekStartToDay,
+} from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
 import { getHabitsCacheSnapshot, setHabitsCache } from '@/lib/cache/habit-cache'
 import { getDb } from '@/lib/db'
@@ -11,6 +18,49 @@ import { getUserWeekStart } from '@/lib/queries/user'
 import { formatDateKey, normalizeCheckinDate, parseDateKey } from '@/lib/utils/date'
 import type { HabitWithProgress } from '@/types/habit'
 import type { HabitInput } from '@/validators/habit'
+
+const MIN_HABIT_FREQUENCY = 1
+const MAX_STREAK_ITERATIONS = 50_000
+
+function normalizePeriod(
+  period: unknown,
+  options: {
+    habitId: string
+    context: string
+  }
+): Period {
+  if (period === 'daily' || period === 'weekly' || period === 'monthly') {
+    return period
+  }
+
+  logWarn('habit.period:invalid', {
+    habitId: options.habitId,
+    context: options.context,
+    period: typeof period === 'string' ? period : String(period),
+    fallback: DEFAULT_HABIT_PERIOD,
+  })
+  return DEFAULT_HABIT_PERIOD
+}
+
+function normalizeFrequency(
+  frequency: number,
+  options: {
+    habitId: string
+    context: string
+  }
+): number {
+  if (!Number.isFinite(frequency) || frequency < MIN_HABIT_FREQUENCY) {
+    logWarn('habit.frequency:invalid', {
+      habitId: options.habitId,
+      context: options.context,
+      frequency,
+      fallback: MIN_HABIT_FREQUENCY,
+    })
+    return MIN_HABIT_FREQUENCY
+  }
+
+  return Math.max(MIN_HABIT_FREQUENCY, Math.trunc(frequency))
+}
 
 /**
  * ユーザーの習慣一覧を取得
@@ -255,6 +305,14 @@ export async function calculateStreak(
       if (!habit) {
         return 0
       }
+      const normalizedPeriod = normalizePeriod(period, {
+        habitId,
+        context: 'calculateStreak',
+      })
+      const normalizedFrequency = normalizeFrequency(habit.frequency, {
+        habitId,
+        context: 'calculateStreak',
+      })
 
       // 全チェックイン履歴を取得（降順）
       const allCheckins = await db
@@ -268,37 +326,43 @@ export async function calculateStreak(
       }
 
       let streak = 0
-      let currentDate = startOfDay(new Date())
+      let currentDate = startOfDay(new Date().toISOString())
 
       // 期間ごとにチェックインをグループ化
       const checkinsByPeriod = new Map<string, number>()
       for (const checkin of allCheckins) {
-        const periodKey = getPeriodKey(normalizeCheckinDate(checkin.date), period, weekStartDay)
+        const periodKey = getPeriodKey(normalizeCheckinDate(checkin.date), normalizedPeriod, weekStartDay)
         checkinsByPeriod.set(periodKey, (checkinsByPeriod.get(periodKey) ?? 0) + 1)
       }
 
       // 現在の期間の達成状況を確認
-      const currentPeriodKey = getPeriodKey(currentDate, period, weekStartDay)
+      const currentPeriodKey = getPeriodKey(currentDate, normalizedPeriod, weekStartDay)
       const currentCount = checkinsByPeriod.get(currentPeriodKey) ?? 0
 
       // 現在の期間が未達成の場合、前の期間から開始
-      if (currentCount < habit.frequency) {
-        currentDate = getPreviousPeriod(currentDate, habit.period)
+      if (currentCount < normalizedFrequency) {
+        currentDate = getPreviousPeriod(currentDate, normalizedPeriod)
       }
 
       // 過去に向かってストリークをカウント
-      while (true) {
-        const periodKey = getPeriodKey(currentDate, period, weekStartDay)
+      for (let iteration = 0; iteration < MAX_STREAK_ITERATIONS; iteration += 1) {
+        const periodKey = getPeriodKey(currentDate, normalizedPeriod, weekStartDay)
         const count = checkinsByPeriod.get(periodKey) ?? 0
 
-        if (count >= habit.frequency) {
+        if (count >= normalizedFrequency) {
           streak++
           // 次の期間に移動
-          currentDate = getPreviousPeriod(currentDate, period)
+          currentDate = getPreviousPeriod(currentDate, normalizedPeriod)
         } else {
-          break
+          return streak
         }
       }
+
+      logWarn('habit.streak:iteration-limit', {
+        habitId,
+        period: normalizedPeriod,
+        maxIterations: MAX_STREAK_ITERATIONS,
+      })
 
       return streak
     },
@@ -327,7 +391,8 @@ function getPreviousPeriod(date: Date, period: Period): Date {
       return subMonths(startOfMonth(date), 1)
     }
     default:
-      return date
+      // 予期しない値でも日次として後退させ、無限ループを防ぐ
+      return subDays(date, 1)
   }
 }
 
@@ -342,7 +407,7 @@ function getPreviousPeriod(date: Date, period: Period): Date {
 export async function getHabitsWithProgress(
   userId: string,
   clerkId: string,
-  date: Date | string = new Date(),
+  date: Date | string = new Date().toISOString(),
   weekStart?: WeekStart
 ): Promise<HabitWithProgress[]> {
   const totalStart = nowMs()
@@ -412,25 +477,44 @@ export async function getHabitsWithProgress(
 
     // 各習慣の進捗とストリークを計算
     const habitsWithProgress = habitList.map((habit) => {
+      const normalizedPeriod = normalizePeriod(habit.period, {
+        habitId: habit.id,
+        context: 'getHabitsWithProgress',
+      })
+      const normalizedFrequency = normalizeFrequency(habit.frequency, {
+        habitId: habit.id,
+        context: 'getHabitsWithProgress',
+      })
       const habitCheckins = checkinsByHabit.get(habit.id) ?? []
 
       // 現在の期間の進捗を計算
-      const { start, end } = getPeriodDateRange(baseDate, habit.period, weekStartDay)
+      const { start, end } = getPeriodDateRange(baseDate, normalizedPeriod, weekStartDay)
       const currentProgress = habitCheckins.filter((c) => {
         const checkinDate = normalizeCheckinDate(c.date)
         return checkinDate >= start && checkinDate <= end
       }).length
 
       // ストリークを計算
-      const streak = calculateStreakFromCheckins(habit, habitCheckins, weekStartDay, baseDate)
+      const streak = calculateStreakFromCheckins(
+        {
+          id: habit.id,
+          period: normalizedPeriod,
+          frequency: normalizedFrequency,
+        },
+        habitCheckins,
+        weekStartDay,
+        baseDate
+      )
 
       const completionRate = Math.min(
         COMPLETION_THRESHOLD,
-        Math.round((currentProgress / habit.frequency) * COMPLETION_THRESHOLD)
+        Math.round((currentProgress / normalizedFrequency) * COMPLETION_THRESHOLD)
       )
 
       return {
         ...habit,
+        period: normalizedPeriod,
+        frequency: normalizedFrequency,
         currentProgress,
         streak,
         completionRate,
@@ -478,11 +562,19 @@ function calculateStreakFromCheckins(
   habit: { id: string; frequency: number; period: Period },
   checkins: Array<{ date: Date | string }>,
   weekStartDay: WeekStartDay = 1,
-  baseDate: Date = new Date()
+  baseDate: Date | string = new Date()
 ): number {
   if (checkins.length === 0) {
     return 0
   }
+  const normalizedPeriod = normalizePeriod(habit.period, {
+    habitId: habit.id,
+    context: 'calculateStreakFromCheckins',
+  })
+  const normalizedFrequency = normalizeFrequency(habit.frequency, {
+    habitId: habit.id,
+    context: 'calculateStreakFromCheckins',
+  })
 
   let streak = 0
   let currentDate = startOfDay(baseDate)
@@ -491,31 +583,37 @@ function calculateStreakFromCheckins(
   const checkinsByPeriod = new Map<string, number>()
   for (const checkin of checkins) {
     const checkinDate = normalizeCheckinDate(checkin.date)
-    const periodKey = getPeriodKey(checkinDate, habit.period, weekStartDay)
+    const periodKey = getPeriodKey(checkinDate, normalizedPeriod, weekStartDay)
     checkinsByPeriod.set(periodKey, (checkinsByPeriod.get(periodKey) ?? 0) + 1)
   }
 
   // 現在の期間の達成状況を確認
-  const currentPeriodKey = getPeriodKey(currentDate, habit.period, weekStartDay)
+  const currentPeriodKey = getPeriodKey(currentDate, normalizedPeriod, weekStartDay)
   const currentCount = checkinsByPeriod.get(currentPeriodKey) ?? 0
 
   // 現在の期間が未達成の場合、前の期間から開始
-  if (currentCount < habit.frequency) {
-    currentDate = getPreviousPeriod(currentDate, habit.period)
+  if (currentCount < normalizedFrequency) {
+    currentDate = getPreviousPeriod(currentDate, normalizedPeriod)
   }
 
   // 過去に向かってストリークをカウント
-  while (true) {
-    const periodKey = getPeriodKey(currentDate, habit.period, weekStartDay)
+  for (let iteration = 0; iteration < MAX_STREAK_ITERATIONS; iteration += 1) {
+    const periodKey = getPeriodKey(currentDate, normalizedPeriod, weekStartDay)
     const count = checkinsByPeriod.get(periodKey) ?? 0
 
-    if (count >= habit.frequency) {
+    if (count >= normalizedFrequency) {
       streak++
-      currentDate = getPreviousPeriod(currentDate, habit.period)
+      currentDate = getPreviousPeriod(currentDate, normalizedPeriod)
     } else {
-      break
+      return streak
     }
   }
+
+  logWarn('habit.streak:iteration-limit', {
+    habitId: habit.id,
+    period: normalizedPeriod,
+    maxIterations: MAX_STREAK_ITERATIONS,
+  })
 
   return streak
 }
