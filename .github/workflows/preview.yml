@@ -70,8 +70,8 @@ jobs:
             PREVIEW_URL="https://${WORKER_NAME}.j138cm.workers.dev"
           fi
 
-          echo "preview_url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
-          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "preview_url=${PREVIEW_URL}" >> "$GITHUB_OUTPUT"
+          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
           echo "✅ Preview deployed to: ${PREVIEW_URL}"
 
       - name: Comment Preview URL
@@ -123,4 +123,3 @@ jobs:
               });
               console.log('Created new preview comment');
             }
-
