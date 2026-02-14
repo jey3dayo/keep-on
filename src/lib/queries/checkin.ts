@@ -121,7 +121,7 @@ export async function createCheckinWithLimit(
       }
 
       // 3. INSERT（UNIQUE制約により同一日付の重複は自動的に防止される）
-      let checkin
+      let checkin: typeof checkins.$inferSelect
       try {
         ;[checkin] = await db
           .insert(checkins)
@@ -132,8 +132,24 @@ export async function createCheckinWithLimit(
           .returning()
       } catch (error) {
         // UNIQUE制約違反（同じ習慣の同じ日に既にチェックイン済み）
-        const errorMessage = String(error)
-        if (errorMessage.includes('UNIQUE') || errorMessage.includes('constraint')) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        const causeMessage = (() => {
+          if (!error || typeof error !== 'object' || !('cause' in error)) {
+            return ''
+          }
+          const cause = (error as { cause?: unknown }).cause
+          if (cause instanceof Error) {
+            return cause.message
+          }
+          if (cause && typeof cause === 'object' && 'message' in cause) {
+            return String((cause as { message: unknown }).message)
+          }
+          return String(cause)
+        })()
+
+        const combinedMessage = `${errorMessage} ${causeMessage}`.toLowerCase()
+
+        if (combinedMessage.includes('unique') || combinedMessage.includes('constraint')) {
           return { created: false, currentCount, checkin: null }
         }
         throw error

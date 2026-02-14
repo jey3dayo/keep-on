@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
-import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
@@ -133,6 +133,5 @@ export const checkins = sqliteTable(
   },
   (table) => ({
     habitDateIndex: index('Checkin_habitId_date_idx').on(table.habitId, table.date),
-    habitDateUnique: uniqueIndex('Checkin_habitId_date_unique').on(table.habitId, table.date),
   })
 )
