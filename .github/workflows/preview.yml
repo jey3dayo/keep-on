@@ -9,6 +9,9 @@ jobs:
     name: Deploy Preview
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout
