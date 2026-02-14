@@ -104,53 +104,53 @@ export async function updateUserSettings(
       const now = new Date().toISOString()
       let clerkId: string | null = null
 
-      const upserted = await db.transaction(async (tx) => {
-        const [nextSettings] = await tx
-          .insert(userSettings)
-          .values({
-            userId,
-            weekStart: settings.weekStart ?? DEFAULT_WEEK_START,
-            colorTheme: settings.colorTheme ?? DEFAULT_COLOR_THEME,
-            themeMode: settings.themeMode ?? DEFAULT_THEME_MODE,
-            createdAt: now,
+      // Upsert user settings
+      const [nextSettings] = await db
+        .insert(userSettings)
+        .values({
+          userId,
+          weekStart: settings.weekStart ?? DEFAULT_WEEK_START,
+          colorTheme: settings.colorTheme ?? DEFAULT_COLOR_THEME,
+          themeMode: settings.themeMode ?? DEFAULT_THEME_MODE,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: userSettings.userId,
+          set: {
+            ...settings,
             updatedAt: now,
-          })
-          .onConflictDoUpdate({
-            target: userSettings.userId,
-            set: {
-              ...settings,
-              updatedAt: now,
-            },
-          })
+          },
+        })
+        .returning()
+
+      if (!nextSettings) {
+        throw new Error('Failed to update user settings')
+      }
+
+      // Update weekStart in users table if provided
+      if (settings.weekStart !== undefined) {
+        const [user] = await db
+          .update(users)
+          .set({ weekStart: settings.weekStart })
+          .where(eq(users.id, userId))
           .returning()
 
-        if (!nextSettings) {
-          throw new Error('Failed to update user settings')
-        }
+        clerkId = user?.clerkId ?? null
+      }
 
-        if (settings.weekStart !== undefined) {
-          const [user] = await tx
-            .update(users)
-            .set({ weekStart: settings.weekStart })
-            .where(eq(users.id, userId))
-            .returning()
+      // Validate settings
+      const parsed = v.safeParse(UserSettingsSchema, nextSettings)
+      if (!parsed.success) {
+        throw new Error('Failed to update user settings: invalid data')
+      }
 
-          clerkId = user?.clerkId ?? null
-        }
-
-        const parsed = v.safeParse(UserSettingsSchema, nextSettings)
-        if (!parsed.success) {
-          throw new Error('Failed to update user settings: invalid data')
-        }
-
-        return parsed.output
-      })
-
+      // Invalidate cache if weekStart was updated
       if (settings.weekStart !== undefined && clerkId) {
         await invalidateUserCache(clerkId)
       }
 
-      return upserted
+      return parsed.output
     },
     { userId, settings }
   )

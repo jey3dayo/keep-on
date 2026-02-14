@@ -41,13 +41,7 @@ vi.mock('@/lib/db', () => {
   }
 
   return {
-    getDb: vi.fn().mockReturnValue({
-      ...mockDbMethods,
-      transaction: vi.fn(async (callback) => {
-        // トランザクション内では同じメソッドセットを返す
-        return await callback(mockDbMethods)
-      }),
-    }),
+    getDb: vi.fn().mockReturnValue(mockDbMethods),
   }
 })
 

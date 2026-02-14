@@ -1,6 +1,10 @@
+import type { InferSelectModel } from 'drizzle-orm'
 import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
 import type { Period, WeekStartDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
+
+type Checkin = InferSelectModel<typeof checkins>
+
 import { getDb } from '@/lib/db'
 import { getPeriodDateRange } from '@/lib/queries/period'
 import { profileQuery } from '@/lib/queries/profiler'
@@ -121,7 +125,7 @@ export async function createCheckinWithLimit(
       }
 
       // 3. INSERT（UNIQUE制約により同一日付の重複は自動的に防止される）
-      let checkin
+      let checkin: Checkin | undefined
       try {
         ;[checkin] = await db
           .insert(checkins)
