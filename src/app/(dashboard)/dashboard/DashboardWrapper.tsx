@@ -250,11 +250,14 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   }
 
   const runCheckinTask = async (task: CheckinTask) => {
+    console.log('[DEBUG] runCheckinTask called:', { habitId: task.habitId, isRemove: task.isRemove })
     let shouldRollback = Boolean(task.rollback)
 
     try {
       const action = task.isRemove ? runRemoveCheckin : runAddCheckin
+      console.log('[DEBUG] About to call Server Action:', action.name)
       const { ok, result, error } = await action(task.habitId, task.dateKey)
+      console.log('[DEBUG] Server Action returned:', { ok, result, error })
 
       if (ok) {
         shouldRollback = false
@@ -296,22 +299,33 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   }
 
   const drainCheckinQueue = () => {
+    console.log('[DEBUG] drainCheckinQueue called:', {
+      queueLength: checkinQueueRef.current.length,
+      activeCount: activeRequestCountRef.current,
+      maxConcurrent: MAX_CONCURRENT_CHECKINS,
+    })
     while (activeRequestCountRef.current < MAX_CONCURRENT_CHECKINS && checkinQueueRef.current.length > 0) {
       // まだ実行中でないhabitIdのタスクを優先的に選択
       const nextIndex = checkinQueueRef.current.findIndex((task) => !activeHabitsRef.current.has(task.habitId))
       if (nextIndex === -1) {
         // すべてのキュー内タスクが実行中の習慣 → 待機
+        console.log('[DEBUG] All queued tasks are for active habits, waiting')
         break
       }
       const next = checkinQueueRef.current.splice(nextIndex, 1)[0]
       if (!next) {
         return
       }
+      console.log('[DEBUG] Starting checkin task:', next.habitId)
       startCheckinTask(next)
     }
   }
 
   const enqueueCheckin = (task: CheckinTask) => {
+    console.log('[DEBUG] enqueueCheckin called:', {
+      habitId: task.habitId,
+      queueLength: checkinQueueRef.current.length,
+    })
     checkinQueueRef.current.push(task)
     drainCheckinQueue()
   }
@@ -408,15 +422,22 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
       isRemove: boolean
     }
   ) => {
+    console.log('[DEBUG] queueOptimisticCheckin called:', habitId)
     const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
     if (!targetHabit) {
+      console.log('[DEBUG] Target habit not found')
       return
     }
     if (!options.canApply(targetHabit)) {
+      console.log('[DEBUG] canApply returned false', {
+        currentProgress: targetHabit.currentProgress,
+        frequency: targetHabit.frequency,
+      })
       return
     }
 
     const dateKey = formatDateKey(new Date())
+    console.log('[DEBUG] Calling updateHabitProgress and enqueueCheckin')
     updateHabitProgress(habitId, options.delta)
     addPendingCheckin(habitId)
     enqueueCheckin({
@@ -428,6 +449,7 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   }
 
   const handleAddCheckin = (habitId: string): Promise<void> => {
+    console.log('[DEBUG] handleAddCheckin called:', habitId)
     queueOptimisticCheckin(habitId, {
       canApply: (habit) => habit.currentProgress < habit.frequency,
       delta: 1,

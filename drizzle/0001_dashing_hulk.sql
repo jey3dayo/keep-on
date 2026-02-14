@@ -1,1 +1,0 @@
-DROP INDEX `Checkin_habitId_date_unique`;

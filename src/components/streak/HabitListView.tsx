@@ -150,24 +150,12 @@ export function HabitListView({
                 dimmed={completed}
                 habit={habit}
                 key={habit.id}
-                onAdd={
-                  onAddCheckin
-                    ? async () => {
-                        await onAddCheckin(habit.id)
-                      }
-                    : undefined
-                }
+                onAdd={onAddCheckin ? () => onAddCheckin(habit.id) : undefined}
                 onLongPressOrContextMenu={() => {
                   setDrawerHabitId(habit.id)
                   setDrawerState({ open: true, habit })
                 }}
-                onRemove={
-                  onRemoveCheckin
-                    ? async () => {
-                        await onRemoveCheckin(habit.id)
-                      }
-                    : undefined
-                }
+                onRemove={onRemoveCheckin ? () => onRemoveCheckin(habit.id) : undefined}
               />
             ))
           )}

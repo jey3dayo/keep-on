@@ -130,10 +130,10 @@ export default async function AnalyticsPage() {
   const activityAverageLabel = averageFormatter.format(activityAverage)
   const activityActiveDays = activityData.filter((entry) => entry.count > 0).length
   const activityPeakFallback = { key: 'peak', label: '-', count: 0 }
-  const activityPeak = activityData.reduce(
-    (best, entry) => (entry.count > best.count ? entry : best),
-    activityData[0] ?? activityPeakFallback
-  )
+  const activityPeak =
+    activityData.length > 0
+      ? activityData.reduce((best, entry) => (entry.count > best.count ? entry : best), activityData[0])
+      : activityPeakFallback
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">

@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { boolean, index, integer, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
@@ -13,62 +13,74 @@ import { DEFAULT_COLOR_THEME, DEFAULT_THEME_MODE } from '@/constants/theme'
  * ユーザー情報テーブル
  * Clerkで認証されたユーザーのデータを管理
  */
-export const users = sqliteTable('User', {
-  /** ユーザーID (CUID2形式) */
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => createId()),
-  /** Clerk認証ID */
-  clerkId: text('clerkId').notNull().unique(),
-  /** メールアドレス */
-  email: text('email').notNull().unique(),
-  /** 週の開始曜日 (0: 日曜, 1: 月曜) */
-  weekStart: text('weekStart').default(DEFAULT_WEEK_START).notNull(),
-  /** レコード作成日時 (ISO8601形式) */
-  createdAt: text('createdAt')
-    .$defaultFn(() => new Date().toISOString())
-    .notNull(),
-  /** レコード更新日時 (ISO8601形式) */
-  updatedAt: text('updatedAt')
-    .$defaultFn(() => new Date().toISOString())
-    .notNull(),
-})
+export const users = pgTable(
+  'User',
+  {
+    /** ユーザーID (CUID2形式) */
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    /** Clerk認証ID */
+    clerkId: text('clerkId').notNull(),
+    /** メールアドレス */
+    email: text('email').notNull(),
+    /** 週の開始曜日 (0: 日曜, 1: 月曜) */
+    weekStart: text('weekStart').default(DEFAULT_WEEK_START).notNull(),
+    /** レコード作成日時 */
+    createdAt: timestamp('createdAt', { mode: 'date', withTimezone: true })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    /** レコード更新日時 */
+    updatedAt: timestamp('updatedAt', { mode: 'date', withTimezone: true })
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    clerkIdUnique: uniqueIndex('User_clerkId_unique').on(table.clerkId),
+    emailUnique: uniqueIndex('User_email_unique').on(table.email),
+  })
+)
 
 /**
  * ユーザー設定テーブル
  * ユーザーごとの設定情報を管理
  */
-export const userSettings = sqliteTable('UserSettings', {
-  /** 設定ID (CUID2形式) */
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => createId()),
-  /** ユーザーID (外部キー: users.id, UNIQUE) */
-  userId: text('userId')
-    .notNull()
-    .unique()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  /** 週の開始曜日 ('monday' | 'sunday') */
-  weekStart: text('weekStart').default(DEFAULT_WEEK_START).notNull(),
-  /** カラーテーマ ('teal' | 'lime' | ...) */
-  colorTheme: text('colorTheme').default(DEFAULT_COLOR_THEME).notNull(),
-  /** テーマモード ('light' | 'dark' | 'system') */
-  themeMode: text('themeMode').default(DEFAULT_THEME_MODE).notNull(),
-  /** レコード作成日時 (ISO8601形式) */
-  createdAt: text('createdAt')
-    .$defaultFn(() => new Date().toISOString())
-    .notNull(),
-  /** レコード更新日時 (ISO8601形式) */
-  updatedAt: text('updatedAt')
-    .$defaultFn(() => new Date().toISOString())
-    .notNull(),
-})
+export const userSettings = pgTable(
+  'UserSettings',
+  {
+    /** 設定ID (CUID2形式) */
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    /** ユーザーID (外部キー: users.id, UNIQUE) */
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** 週の開始曜日 ('monday' | 'sunday') */
+    weekStart: text('weekStart').default(DEFAULT_WEEK_START).notNull(),
+    /** カラーテーマ ('teal' | 'lime' | ...) */
+    colorTheme: text('colorTheme').default(DEFAULT_COLOR_THEME).notNull(),
+    /** テーマモード ('light' | 'dark' | 'system') */
+    themeMode: text('themeMode').default(DEFAULT_THEME_MODE).notNull(),
+    /** レコード作成日時 */
+    createdAt: timestamp('createdAt', { mode: 'date', withTimezone: true })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    /** レコード更新日時 */
+    updatedAt: timestamp('updatedAt', { mode: 'date', withTimezone: true })
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    userIdUnique: uniqueIndex('UserSettings_userId_unique').on(table.userId),
+  })
+)
 
 /**
  * 習慣テーブル
  * ユーザーが管理する習慣の情報を保存
  */
-export const habits = sqliteTable(
+export const habits = pgTable(
   'Habit',
   {
     /** 習慣ID (CUID2形式) */
@@ -92,16 +104,16 @@ export const habits = sqliteTable(
     /** 期間内の目標回数 */
     frequency: integer('frequency').default(DEFAULT_HABIT_FREQUENCY).notNull(),
     /** アーカイブ済みフラグ */
-    archived: integer('archived', { mode: 'boolean' }).default(false).notNull(),
-    /** アーカイブ日時 (ISO8601形式) */
-    archivedAt: text('archivedAt'),
-    /** レコード作成日時 (ISO8601形式) */
-    createdAt: text('createdAt')
-      .$defaultFn(() => new Date().toISOString())
+    archived: boolean('archived').default(false).notNull(),
+    /** アーカイブ日時 */
+    archivedAt: timestamp('archivedAt', { mode: 'date', withTimezone: true }),
+    /** レコード作成日時 */
+    createdAt: timestamp('createdAt', { mode: 'date', withTimezone: true })
+      .$defaultFn(() => new Date())
       .notNull(),
-    /** レコード更新日時 (ISO8601形式) */
-    updatedAt: text('updatedAt')
-      .$defaultFn(() => new Date().toISOString())
+    /** レコード更新日時 */
+    updatedAt: timestamp('updatedAt', { mode: 'date', withTimezone: true })
+      .$defaultFn(() => new Date())
       .notNull(),
   },
   (table) => ({
@@ -113,7 +125,7 @@ export const habits = sqliteTable(
  * チェックインテーブル
  * 習慣の実行記録を保存
  */
-export const checkins = sqliteTable(
+export const checkins = pgTable(
   'Checkin',
   {
     /** チェックインID (CUID2形式) */
@@ -126,12 +138,13 @@ export const checkins = sqliteTable(
       .references(() => habits.id, { onDelete: 'cascade' }),
     /** チェックイン日付 (YYYY-MM-DD形式) */
     date: text('date').notNull(),
-    /** レコード作成日時 (ISO8601形式) */
-    createdAt: text('createdAt')
-      .$defaultFn(() => new Date().toISOString())
+    /** レコード作成日時 */
+    createdAt: timestamp('createdAt', { mode: 'date', withTimezone: true })
+      .$defaultFn(() => new Date())
       .notNull(),
   },
   (table) => ({
     habitDateIndex: index('Checkin_habitId_date_idx').on(table.habitId, table.date),
+    habitDateUnique: uniqueIndex('Checkin_habitId_date_unique').on(table.habitId, table.date),
   })
 )
