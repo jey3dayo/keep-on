@@ -22,7 +22,7 @@ interface CreateCheckinWithLimitInput {
 /**
  * チェックイン作成結果
  *
- * @property created - チェックインが作成されたかどうか（UNIQUE制約違反や頻度上限で失敗した場合はfalse）
+ * @property created - チェックインが作成されたかどうか（頻度上限で失敗した場合はfalse）
  * @property currentCount - 期間内の現在のチェックイン数
  * @property checkin - 作成されたチェックインレコード（失敗時はnull）
  */
@@ -105,53 +105,39 @@ export async function createCheckinWithLimit(
       const db = getDb()
       const dateKey = normalizeDateKey(input.date)
       const { startKey, endKey } = getPeriodDateRange(dateKey, input.period, input.weekStartDay ?? 1)
+      return await db.transaction(
+        async (tx) => {
+          // BEGIN IMMEDIATE で同一習慣・同一期間の競合書き込みを直列化する
+          const countResult = await tx
+            .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
+            .from(checkins)
+            .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
-      // D1では通常のトランザクションAPIが使えないため、楽観的ロックパターンを使用
-      // 1. 現在の期間内カウントを取得
-      const countResult = await db
-        .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
-        .from(checkins)
-        .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+          const currentCount = countResult[0]?.count ?? 0
+          if (currentCount >= input.frequency) {
+            return { created: false, currentCount, checkin: null }
+          }
 
-      const currentCount = countResult[0]?.count ?? 0
+          const [checkin] = await tx
+            .insert(checkins)
+            .values({
+              habitId: input.habitId,
+              date: dateKey,
+            })
+            .returning()
 
-      // 2. 頻度上限チェック
-      if (currentCount >= input.frequency) {
-        return { created: false, currentCount, checkin: null }
-      }
+          if (!checkin) {
+            throw new Error('Failed to create checkin')
+          }
 
-      // 3. INSERT（楽観的ロックパターンで競合を検出）
-      const [checkin] = await db
-        .insert(checkins)
-        .values({
-          habitId: input.habitId,
-          date: dateKey,
-        })
-        .returning()
-
-      if (!checkin) {
-        throw new Error('Failed to create checkin')
-      }
-
-      // 4. INSERT後に再度カウントを確認（競合検出）
-      const finalCountResult = await db
-        .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
-        .from(checkins)
-        .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
-
-      const finalCount = finalCountResult[0]?.count ?? 0
-
-      // 5. 頻度上限を超えていたら、今回のINSERTを削除して失敗を返す
-      if (finalCount > input.frequency) {
-        await db.delete(checkins).where(eq(checkins.id, checkin.id))
-        return { created: false, currentCount: input.frequency, checkin: null }
-      }
-
-      return {
-        created: true,
-        currentCount: finalCount,
-        checkin: checkin ?? null,
-      }
+          return {
+            created: true,
+            currentCount: currentCount + 1,
+            checkin,
+          }
+        },
+        { behavior: 'immediate' }
+      )
     },
     { habitId: input.habitId, period: input.period }
   )

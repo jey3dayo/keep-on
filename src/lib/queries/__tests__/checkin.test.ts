@@ -264,8 +264,6 @@ describe('createCheckinWithLimit', () => {
     vi.mocked(db.where).mockResolvedValueOnce([{ count: 2 }])
     // Mock INSERT with RETURNING
     vi.mocked(db.returning).mockResolvedValueOnce([createdCheckin])
-    // Mock final COUNT query after INSERT (should return 3 = 2 + 1)
-    vi.mocked(db.where).mockResolvedValueOnce([{ count: 3 }])
 
     const result = await createCheckinWithLimit({
       habitId: 'habit-5',
@@ -281,6 +279,8 @@ describe('createCheckinWithLimit', () => {
     })
     expect(db.insert).toHaveBeenCalledTimes(1)
     expect(db.returning).toHaveBeenCalledTimes(1)
+    expect(db.transaction).toHaveBeenCalledWith(expect.any(Function), { behavior: 'immediate' })
+    expect(db.where).toHaveBeenCalledTimes(1)
   })
 
   it('returns false when frequency limit is reached', async () => {
@@ -303,5 +303,7 @@ describe('createCheckinWithLimit', () => {
       checkin: null,
     })
     expect(db.insert).not.toHaveBeenCalled()
+    expect(db.transaction).toHaveBeenCalledWith(expect.any(Function), { behavior: 'immediate' })
+    expect(db.where).toHaveBeenCalledTimes(1)
   })
 })
