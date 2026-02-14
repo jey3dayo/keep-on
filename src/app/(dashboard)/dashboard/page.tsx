@@ -48,7 +48,6 @@ export default async function DashboardPage() {
   const user = await logSpanOptional('dashboard.syncUser', () => syncUser(), requestMeta, { timeoutMs })
 
   if (!user) {
-    logInfo('dashboard.syncUser:missing', requestMeta)
     redirect(SIGN_IN_PATH)
   }
 

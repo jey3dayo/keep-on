@@ -4,7 +4,7 @@ import { Result } from '@praha/byethrow'
 import { weekStartToDay } from '@/constants/habit'
 import { toActionResult } from '@/lib/actions/result'
 import { UnauthorizedError } from '@/lib/errors/habit'
-import { createRequestMeta, logInfo, logSpanOptional } from '@/lib/logging'
+import { createRequestMeta, logSpanOptional } from '@/lib/logging'
 import { deleteLatestCheckinByHabitAndPeriod } from '@/lib/queries/checkin'
 import { getUserWeekStartById } from '@/lib/queries/user'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
@@ -80,7 +80,6 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
   )
 
   if (!deleted) {
-    logInfo('action.habits.removeCheckin.skip', deleteMeta)
     // 削除されなかった場合でもcurrentCountを取得して返す
     const { getCurrentCountForPeriod } = await import('@/lib/queries/checkin')
     const currentCount = await spans.runWithDbTimeout(

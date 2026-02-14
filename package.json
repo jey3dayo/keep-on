@@ -25,6 +25,7 @@
     "cf:deploy": "dotenvx run -- wrangler deploy",
     "cf:preview": "dotenvx run -- opennextjs-cloudflare preview",
     "cf:logs": "dotenvx run -- wrangler tail --format pretty",
+    "cf:secret": "dotenvx run -- wrangler secret",
     "cf:metrics": "./scripts/get-workers-metrics.sh",
     "cf:alerts": "./scripts/setup-cloudflare-alerts.sh",
     "db:generate": "drizzle-kit generate",

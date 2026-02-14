@@ -258,8 +258,6 @@ describe('createCheckinWithLimit', () => {
     vi.mocked(db.where).mockResolvedValueOnce([{ count: 2 }])
     // Mock INSERT with RETURNING
     vi.mocked(db.returning).mockResolvedValueOnce([createdCheckin])
-    // Mock final COUNT query after INSERT (should return 3 = 2 + 1)
-    vi.mocked(db.where).mockResolvedValueOnce([{ count: 3 }])
 
     const result = await createCheckinWithLimit({
       habitId: 'habit-5',
@@ -275,6 +273,7 @@ describe('createCheckinWithLimit', () => {
     })
     expect(db.insert).toHaveBeenCalledTimes(1)
     expect(db.returning).toHaveBeenCalledTimes(1)
+    expect(db.where).toHaveBeenCalledTimes(1)
   })
 
   it('returns false when frequency limit is reached', async () => {
@@ -297,5 +296,44 @@ describe('createCheckinWithLimit', () => {
       checkin: null,
     })
     expect(db.insert).not.toHaveBeenCalled()
+    expect(db.where).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns false when legacy UNIQUE constraint rejects same-day duplicate', async () => {
+    const db = getDb()
+    const targetDate = new Date(2024, 0, 3)
+
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 1 }])
+    vi.mocked(db.returning).mockRejectedValueOnce(new Error('UNIQUE constraint failed: Checkin.habitId, Checkin.date'))
+
+    const result = await createCheckinWithLimit({
+      habitId: 'habit-7',
+      date: targetDate,
+      period: 'daily',
+      frequency: 3,
+    })
+
+    expect(result).toEqual({
+      created: false,
+      currentCount: 1,
+      checkin: null,
+    })
+  })
+
+  it('throws when insert fails for non-constraint reasons', async () => {
+    const db = getDb()
+    const targetDate = new Date(2024, 0, 4)
+
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 0 }])
+    vi.mocked(db.returning).mockRejectedValueOnce(new Error('database is locked'))
+
+    await expect(
+      createCheckinWithLimit({
+        habitId: 'habit-8',
+        date: targetDate,
+        period: 'daily',
+        frequency: 3,
+      })
+    ).rejects.toThrow('database is locked')
   })
 })
