@@ -258,6 +258,8 @@ describe('createCheckinWithLimit', () => {
     vi.mocked(db.where).mockResolvedValueOnce([{ count: 2 }])
     // Mock INSERT with RETURNING
     vi.mocked(db.returning).mockResolvedValueOnce([createdCheckin])
+    // Mock final COUNT query after INSERT to return 3
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 3 }])
 
     const result = await createCheckinWithLimit({
       habitId: 'habit-5',
@@ -273,7 +275,7 @@ describe('createCheckinWithLimit', () => {
     })
     expect(db.insert).toHaveBeenCalledTimes(1)
     expect(db.returning).toHaveBeenCalledTimes(1)
-    expect(db.where).toHaveBeenCalledTimes(1)
+    expect(db.where).toHaveBeenCalledTimes(2)
   })
 
   it('returns false when frequency limit is reached', async () => {
@@ -303,8 +305,12 @@ describe('createCheckinWithLimit', () => {
     const db = getDb()
     const targetDate = new Date(2024, 0, 3)
 
+    // Mock initial COUNT query to return 1 (under limit)
     vi.mocked(db.where).mockResolvedValueOnce([{ count: 1 }])
+    // Mock INSERT to throw UNIQUE constraint error
     vi.mocked(db.returning).mockRejectedValueOnce(new Error('UNIQUE constraint failed: Checkin.habitId, Checkin.date'))
+    // Mock latest COUNT query in catch block to return 1
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 1 }])
 
     const result = await createCheckinWithLimit({
       habitId: 'habit-7',
