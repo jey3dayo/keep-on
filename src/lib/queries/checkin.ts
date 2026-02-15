@@ -2,13 +2,12 @@ import type { InferSelectModel } from 'drizzle-orm'
 import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
 import type { Period, WeekStartDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
-
-type Checkin = InferSelectModel<typeof checkins>
-
 import { getDb } from '@/lib/db'
 import { getPeriodDateRange } from '@/lib/queries/period'
 import { profileQuery } from '@/lib/queries/profiler'
 import { normalizeDateKey } from '@/lib/utils/date'
+
+type Checkin = InferSelectModel<typeof checkins>
 
 interface CreateCheckinInput {
   habitId: string

@@ -30,17 +30,25 @@ async function updateUsersWeekStartWithRetry(
     try {
       const [user] = await db.update(users).set({ weekStart }).where(eq(users.id, userId)).returning()
 
+      // User not found is not a transient error - fail immediately without retry
       if (!user) {
         throw new Error(`User not found: ${userId}`)
       }
 
       return user.clerkId ?? null
     } catch (error) {
+      // Don't retry non-transient errors (user existence, validation errors, etc.)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      if (errorMessage.includes('User not found')) {
+        console.error('updateUsersWeekStartWithRetry: non-retryable error', { userId, error: errorMessage })
+        throw error
+      }
+
       retryCount++
       console.error(`updateUsersWeekStartWithRetry: attempt ${retryCount}/${maxRetries} failed`, {
         userId,
         weekStart,
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
       })
 
       if (retryCount >= maxRetries) {
@@ -56,22 +64,44 @@ async function updateUsersWeekStartWithRetry(
 }
 
 /**
- * userSettings をロールバック（削除）
+ * userSettings をロールバック（復元または削除）
  *
  * @param userId - ユーザーID
- * @param settingsId - 削除する設定のID
+ * @param settingsId - 設定のID
+ * @param previousSettings - ロールバック前の設定（null = 新規作成だった）
  * @throws Error ロールバックに失敗した場合
  */
-async function rollbackUserSettings(userId: string, settingsId: string): Promise<void> {
+async function rollbackUserSettings(
+  userId: string,
+  settingsId: string,
+  previousSettings: typeof userSettings.$inferSelect | null
+): Promise<void> {
   const db = getDb()
 
   try {
-    await db.delete(userSettings).where(eq(userSettings.id, settingsId))
-    console.error('rollbackUserSettings: rollback successful', { userId, settingsId })
+    if (previousSettings) {
+      // UPDATE case: restore previous values
+      await db
+        .update(userSettings)
+        .set({
+          weekStart: previousSettings.weekStart,
+          colorTheme: previousSettings.colorTheme,
+          themeMode: previousSettings.themeMode,
+          updatedAt: previousSettings.updatedAt,
+        })
+        .where(eq(userSettings.id, settingsId))
+
+      console.error('rollbackUserSettings: restored previous settings', { userId, settingsId })
+    } else {
+      // INSERT case: delete the newly created record
+      await db.delete(userSettings).where(eq(userSettings.id, settingsId))
+      console.error('rollbackUserSettings: deleted newly created settings', { userId, settingsId })
+    }
   } catch (rollbackError) {
     console.error('rollbackUserSettings: rollback failed - manual intervention required', {
       userId,
       settingsId,
+      hadPreviousSettings: !!previousSettings,
       rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
     })
     throw new Error('Critical: Failed to rollback userSettings. Manual database intervention required.')
@@ -84,10 +114,20 @@ async function rollbackUserSettings(userId: string, settingsId: string): Promise
  * @param userId - ユーザーID
  * @param settings - 更新する設定
  * @param now - 現在のタイムスタンプ
- * @returns upsert されたsettings
+ * @returns { nextSettings, previousSettings } - upsert後の設定と、更新前の設定（新規作成の場合はnull）
  */
-async function upsertUserSettings(userId: string, settings: UpdateUserSettingsSchemaType, now: string) {
+async function upsertUserSettings(
+  userId: string,
+  settings: UpdateUserSettingsSchemaType,
+  now: string
+): Promise<{
+  nextSettings: typeof userSettings.$inferSelect
+  previousSettings: typeof userSettings.$inferSelect | null
+}> {
   const db = getDb()
+
+  // Get existing settings before upsert (for rollback)
+  const [existing] = await db.select().from(userSettings).where(eq(userSettings.userId, userId))
 
   const [nextSettings] = await db
     .insert(userSettings)
@@ -112,7 +152,7 @@ async function upsertUserSettings(userId: string, settings: UpdateUserSettingsSc
     throw new Error('Failed to update user settings')
   }
 
-  return nextSettings
+  return { nextSettings, previousSettings: existing ?? null }
 }
 
 /**
@@ -121,12 +161,14 @@ async function upsertUserSettings(userId: string, settings: UpdateUserSettingsSc
  * @param userId - ユーザーID
  * @param settingsId - userSettings のID（ロールバック用）
  * @param weekStart - 新しいweekStart値（"monday" | "sunday"）
+ * @param previousSettings - ロールバック用の以前の設定（null = 新規作成）
  * @returns clerkId または null
  */
 async function updateWeekStartAndCache(
   userId: string,
   settingsId: string,
-  weekStart: WeekStart
+  weekStart: WeekStart,
+  previousSettings: typeof userSettings.$inferSelect | null
 ): Promise<string | null> {
   try {
     const clerkId = await updateUsersWeekStartWithRetry(userId, weekStart)
@@ -150,7 +192,7 @@ async function updateWeekStartAndCache(
       userId,
       settingsId,
     })
-    await rollbackUserSettings(userId, settingsId)
+    await rollbackUserSettings(userId, settingsId, previousSettings)
     throw new Error('Failed to update users.weekStart. Settings have been rolled back.')
   }
 }
@@ -253,12 +295,12 @@ export async function updateUserSettings(
       const now = new Date().toISOString()
 
       try {
-        // Phase 1: Upsert user settings
-        const nextSettings = await upsertUserSettings(userId, settings, now)
+        // Phase 1: Upsert user settings (returns both next and previous settings for rollback)
+        const { nextSettings, previousSettings } = await upsertUserSettings(userId, settings, now)
 
         // Phase 2: Update weekStart in users table if provided (with retry, rollback, and cache invalidation)
         if (settings.weekStart !== undefined) {
-          await updateWeekStartAndCache(userId, nextSettings.id, settings.weekStart)
+          await updateWeekStartAndCache(userId, nextSettings.id, settings.weekStart, previousSettings)
         }
 
         // Phase 3: Validate settings
