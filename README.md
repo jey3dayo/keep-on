@@ -24,7 +24,7 @@ KeepOn は、習慣形成をサポートするモダンな Web アプリケー�
 - **フロントエンド**: Next.js 16 (App Router, Turbopack)
 - **デプロイ**: Cloudflare Workers (OpenNext)
 - **認証**: Clerk
-- **DB**: Supabase (PostgreSQL)
+- **DB**: Cloudflare D1 (SQLite)
 - **ORM**: Drizzle ORM + drizzle-kit
 - **環境変数**: dotenvx
 - **テスト**: Vitest + React Testing Library
@@ -98,7 +98,6 @@ pnpm install
 #### 認証情報の取得先
 
 - **Clerk**: https://dashboard.clerk.com/
-- **Supabase**: https://supabase.com/dashboard
 
 ### 3. DB スキーマの同期（Drizzle）
 
@@ -176,11 +175,6 @@ pnpm cf:metrics       # Workers メトリクス取得
 pnpm cf:alerts        # アラート設定ガイド
 pnpm deploy           # cf:build + cf:deploy
 
-## デバッグ
-pnpm test:supabase           # Supabase API 動作確認
-pnpm test:db-permissions     # DB 権限確認
-pnpm fix:db-permissions      # DB 権限自動修正
-
 # mise タスク
 mise run format       # Prettier 整形
 mise run lint         # 型チェック + ESLint
@@ -231,7 +225,6 @@ keep-on/
 または手動で設定：
 
 ```bash
-echo '<value>' | pnpm wrangler secret put DATABASE_URL
 echo '<value>' | pnpm wrangler secret put CLERK_SECRET_KEY
 ```
 
@@ -250,7 +243,6 @@ GitHub Secrets に以下を設定後、`main` ブランチへのプッシュで�
 ## 注意事項
 
 - **Drizzle ORM**: drizzle-kit でマイグレーション管理
-- **Supabase 接続**: Transaction Mode (port 6543) + `?pgbouncer=true` を使用
 - **Cloudflare Workers**: バンドルサイズ 25MB gzipped 制限に注意
 - **dotenvx**: 本番運用時は `.env` を暗号化してコミット
 
@@ -265,7 +257,7 @@ GitHub Secrets に以下を設定後、`main` ブランチへのプッシュで�
 - [x] プロジェクト初期セットアップ
 - [x] Next.js 16 + Drizzle + Wrangler 4 へのアップグレード
 - [x] Clerk 認証統合（開発環境）
-- [x] Supabase データベース接続
+- [x] Cloudflare D1 データベース接続
 - [x] Drizzle マイグレーション（開発環境）
 - [x] Infrastructure as Code 完全自動化
   - wrangler.jsonc: Workers 設定

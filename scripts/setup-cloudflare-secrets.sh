@@ -7,7 +7,6 @@
 # 必要な環境変数:
 #   CLOUDFLARE_API_TOKEN
 #   CLOUDFLARE_ACCOUNT_ID
-#   DATABASE_URL
 #   CLERK_SECRET_KEY
 
 set -euo pipefail
@@ -70,14 +69,12 @@ if command -v dotenvx &> /dev/null; then
   warn "dotenvx で .env を読み込みます..."
 
   # .env から環境変数を読み込む
-  eval "$(dotenvx run -- env | grep -E '^(DATABASE_URL|CLERK_SECRET_KEY)=')"
+  eval "$(dotenvx run -- env | grep -E '^(CLERK_SECRET_KEY)=')"
 fi
 
 # Secrets設定
-check_env "DATABASE_URL"
 check_env "CLERK_SECRET_KEY"
 
-set_secret "DATABASE_URL" "$DATABASE_URL"
 set_secret "CLERK_SECRET_KEY" "$CLERK_SECRET_KEY"
 
 echo ""

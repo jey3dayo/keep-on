@@ -2,8 +2,6 @@ import * as v from 'valibot'
 
 const envSchema = v.object({
   // Server
-  DATABASE_URL: v.pipe(v.string(), v.url()),
-  DIRECT_URL: v.optional(v.pipe(v.string(), v.url())),
   CLERK_SECRET_KEY: v.pipe(v.string(), v.minLength(1)),
   CLOUDFLARE_API_TOKEN: v.optional(v.string()),
   CLOUDFLARE_ACCOUNT_ID: v.optional(v.string()),
@@ -17,8 +15,6 @@ const envSchema = v.object({
 export type EnvSchema = v.InferOutput<typeof envSchema>
 
 interface EnvInput {
-  DATABASE_URL?: string
-  DIRECT_URL?: string
   CLERK_SECRET_KEY?: string
   CLOUDFLARE_API_TOKEN?: string
   CLOUDFLARE_ACCOUNT_ID?: string

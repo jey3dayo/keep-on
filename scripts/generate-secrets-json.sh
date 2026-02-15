@@ -42,13 +42,12 @@ echo ""
 # dotenvx で .env を読み込んで実行
 if command -v dotenvx &> /dev/null; then
   echo "dotenvx で .env を読み込みます..."
-  eval "$(dotenvx run -- env | grep -E '^(DATABASE_URL|CLERK_SECRET_KEY|SENTRY_DSN)=')"
+  eval "$(dotenvx run -- env | grep -E '^(CLERK_SECRET_KEY|SENTRY_DSN)=')"
 else
   error "dotenvx がインストールされていません"
 fi
 
 # 必須環境変数の確認
-check_env "DATABASE_URL"
 check_env "CLERK_SECRET_KEY"
 
 # SENTRY_DSN はオプション
@@ -57,7 +56,6 @@ SENTRY_DSN="${SENTRY_DSN:-}"
 # JSON 生成
 cat > .secrets.json <<EOF
 {
-  "DATABASE_URL": "${DATABASE_URL}",
   "CLERK_SECRET_KEY": "${CLERK_SECRET_KEY}"$(if [[ -n "$SENTRY_DSN" ]]; then echo ",
   \"SENTRY_DSN\": \"${SENTRY_DSN}\""; fi)
 }

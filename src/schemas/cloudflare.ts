@@ -1,13 +1,6 @@
 import * as v from 'valibot'
 
 /**
- * Hyperdrive バインディングのスキーマ
- */
-export const HyperdriveBindingSchema = v.object({
-  connectionString: v.pipe(v.string(), v.minLength(1)),
-})
-
-/**
  * KV Namespace バインディングのスキーマ（実行時検証用）
  *
  * 注: KVNamespace は実行時にメソッドが存在することのみを検証する
@@ -30,8 +23,6 @@ export const KVNamespaceBindingSchema = v.custom<unknown>((value) => {
  * Cloudflare Workers 環境変数のスキーマ
  */
 export const CloudflareEnvBindingsSchema = v.object({
-  HYPERDRIVE: v.optional(HyperdriveBindingSchema),
-  DATABASE_URL: v.optional(v.pipe(v.string(), v.minLength(1))),
   NEXT_INC_CACHE_KV: v.optional(KVNamespaceBindingSchema),
 })
 

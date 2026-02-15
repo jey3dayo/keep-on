@@ -32,7 +32,6 @@
 `wrangler secret` コマンドで Cloudflare に保存：
 
 ```bash
-echo '<value>' | pnpm wrangler secret put DATABASE_URL
 echo '<value>' | pnpm wrangler secret put CLERK_SECRET_KEY
 ```
 
@@ -65,9 +64,6 @@ pnpm wrangler kv namespace create NEXT_INC_CACHE_KV
 # Cloudflare API トークンと Account ID を環境変数に設定
 export CLOUDFLARE_API_TOKEN="your-token"
 export CLOUDFLARE_ACCOUNT_ID="your-account-id"
-
-# DATABASE_URL を設定
-echo 'postgresql://...' | pnpm wrangler secret put DATABASE_URL
 
 # CLERK_SECRET_KEY を設定
 echo 'sk_test_...' | pnpm wrangler secret put CLERK_SECRET_KEY
@@ -179,7 +175,6 @@ git push origin main
 
 **登録されるSecrets:**
 
-- `DATABASE_URL`
 - `CLERK_SECRET_KEY`
 - `SENTRY_DSN`（設定されている場合）
 
