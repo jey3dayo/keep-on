@@ -6,8 +6,6 @@ import { getPeriodDateRange } from '@/lib/queries/period'
 import { profileQuery } from '@/lib/queries/profiler'
 import { normalizeDateKey } from '@/lib/utils/date'
 
-type Checkin = InferSelectModel<typeof checkins>
-
 interface CreateCheckinInput {
   habitId: string
   date: Date | string
