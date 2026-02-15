@@ -53,7 +53,6 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 - `src/lib/db.ts` で接続ロジックを一元化し、`getCloudflareContext().env.DB` から D1 を取得して `drizzle()` を生成
 - D1 バインディングは `wrangler.jsonc` の `d1_databases` で `DB` として提供
 - 接続生成はモジュールスコープのキャッシュで再利用し、多重初期化を回避
-- `DATABASE_URL` / `HYPERDRIVE` は診断や将来拡張のために環境スキーマに残している（ランタイムの主経路は D1）
 
 ### デプロイ
 
@@ -90,7 +89,6 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 - Workers ネイティブの D1 を採用し、`drizzle-orm/d1` で接続
 - `getCloudflareContext().env.DB` を使った D1 バインディング取得を基本とする
 - 接続初期化はキャッシュで再利用して多重初期化を回避
-- `DATABASE_URL` / Hyperdrive は診断用途・将来の移行余地として保持
 
 ## 開発ツール
 

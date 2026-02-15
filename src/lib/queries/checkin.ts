@@ -106,8 +106,10 @@ export async function createCheckinWithLimit(
       const dateKey = normalizeDateKey(input.date)
       const { startKey, endKey } = getPeriodDateRange(dateKey, input.period, input.weekStartDay ?? 1)
 
-      // D1では通常のトランザクションAPIが使えないため、楽観的ロックパターンを使用
-      // 1. 現在の期間内カウントを取得
+      // D1では通常のトランザクションAPIが使えないため、UNIQUE制約に依存
+      // 頻度上限チェックは参考値として事前確認するが、最終的な制御はUNIQUE制約で行う
+
+      // 1. 現在の期間内カウントを取得（頻度上限の事前チェック用）
       const countResult = await db
         .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
         .from(checkins)
@@ -115,7 +117,7 @@ export async function createCheckinWithLimit(
 
       const currentCount = countResult[0]?.count ?? 0
 
-      // 2. 頻度上限チェック
+      // 2. 頻度上限チェック（早期リターンによる最適化）
       if (currentCount >= input.frequency) {
         return { created: false, currentCount, checkin: null }
       }
@@ -131,11 +133,18 @@ export async function createCheckinWithLimit(
           })
           .returning()
       } catch (error) {
-        // UNIQUE制約違反（同じ習慣の同じ日に既にチェックイン済み）
+        // UNIQUE制約違反のみをハンドリング（同じ習慣の同じ日に既にチェックイン済み）
         const errorMessage = String(error)
-        if (errorMessage.includes('UNIQUE') || errorMessage.includes('constraint')) {
-          return { created: false, currentCount, checkin: null }
+        if (errorMessage.includes('UNIQUE')) {
+          // UNIQUE制約違反の場合は最新のカウントを取得して返す
+          const latestCountResult = await db
+            .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
+            .from(checkins)
+            .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+          const latestCount = latestCountResult[0]?.count ?? 0
+          return { created: false, currentCount: latestCount, checkin: null }
         }
+        // その他のエラー（FOREIGN KEY制約違反など）は上位層に伝播
         throw error
       }
 
@@ -143,19 +152,13 @@ export async function createCheckinWithLimit(
         throw new Error('Failed to create checkin')
       }
 
-      // 4. INSERT後に再度カウントを確認（競合検出）
+      // 4. INSERT成功後のカウントを返す
       const finalCountResult = await db
         .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
         .from(checkins)
         .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
       const finalCount = finalCountResult[0]?.count ?? 0
-
-      // 5. 頻度上限を超えていたら、今回のINSERTを削除して失敗を返す
-      if (finalCount > input.frequency) {
-        await db.delete(checkins).where(eq(checkins.id, checkin.id))
-        return { created: false, currentCount: input.frequency, checkin: null }
-      }
 
       return {
         created: true,

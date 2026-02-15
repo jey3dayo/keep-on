@@ -33,7 +33,7 @@
 | `ETIMEDOUT`       | timeout    | TCP 接続タイムアウト | ネットワーク遅延 or DB 負荷を確認  |
 | `ESOCKETTIMEDOUT` | timeout    | ソケットタイムアウト | 同上                               |
 | `ECONNREFUSED`    | network    | 接続拒否             | DB が起動しているか確認            |
-| `ENOTFOUND`       | network    | DNS 解決失敗         | DATABASE_URL のホスト名を確認      |
+| `ENOTFOUND`       | network    | DNS 解決失敗         | DB ホスト名を確認                  |
 | `EHOSTUNREACH`    | network    | ホスト到達不能       | ネットワーク設定を確認             |
 | `ECONNRESET`      | connection | 接続リセット         | DB 側の接続切断。resetDb() で復帰  |
 | `EPIPE`           | connection | パイプ破損           | 接続が中断された。自動リトライ対象 |
