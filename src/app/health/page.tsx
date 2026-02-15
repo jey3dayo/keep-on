@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 
 type Status = 'ok' | 'warn' | 'error'
 
-type DbBinding = 'hyperdrive' | 'database_url' | 'missing'
+type DbBinding = 'd1' | 'missing'
 
 interface HealthCheck {
   id: string
@@ -28,8 +28,7 @@ interface EnvSnapshot {
   clerkSecretKey?: string
   signInUrl?: string
   signUpUrl?: string
-  databaseUrl?: string
-  hyperdriveConnection?: string
+  d1Binding: boolean
 }
 
 const STATUS_BADGE_STYLES: Record<Status, string> = {
@@ -79,23 +78,15 @@ function tailKey(value?: string): string {
 }
 
 function resolveDbBinding(envSnapshot: EnvSnapshot): DbBinding {
-  if (envSnapshot.hyperdriveConnection) {
-    return 'hyperdrive'
-  }
-  if (envSnapshot.databaseUrl) {
-    return 'database_url'
-  }
-  return 'missing'
+  return envSnapshot.d1Binding ? 'd1' : 'missing'
 }
 
 function describeDbBinding(binding: DbBinding): string {
   switch (binding) {
-    case 'hyperdrive':
-      return 'Hyperdrive 接続'
-    case 'database_url':
-      return 'DATABASE_URL 接続'
+    case 'd1':
+      return 'D1 バインディング接続'
     case 'missing':
-      return 'DB 接続設定が見つかりません'
+      return 'D1 バインディングが見つかりません'
     default: {
       const _exhaustive: never = binding
       return _exhaustive
@@ -115,7 +106,7 @@ async function getEnvSnapshot(): Promise<EnvSnapshot> {
       clerkSecretKey: process.env.CLERK_SECRET_KEY,
       signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
       signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
-      databaseUrl: process.env.DATABASE_URL,
+      d1Binding: false,
     }
   }
 
@@ -123,11 +114,7 @@ async function getEnvSnapshot(): Promise<EnvSnapshot> {
     const { getCloudflareContext } = await import('@opennextjs/cloudflare')
     const { env } = getCloudflareContext()
     const envRecord = env as Record<string, unknown>
-    const hyperdrive = envRecord.HYPERDRIVE
-    const hyperdriveConnection =
-      typeof hyperdrive === 'object' && hyperdrive && 'connectionString' in hyperdrive
-        ? getString(hyperdrive as Record<string, unknown>, 'connectionString')
-        : undefined
+    const d1Binding = 'DB' in envRecord && envRecord.DB !== null && envRecord.DB !== undefined
     return {
       runtime,
       nextjsEnv: getString(envRecord, 'NEXTJS_ENV'),
@@ -135,8 +122,7 @@ async function getEnvSnapshot(): Promise<EnvSnapshot> {
       clerkSecretKey: getString(envRecord, 'CLERK_SECRET_KEY'),
       signInUrl: getString(envRecord, 'NEXT_PUBLIC_CLERK_SIGN_IN_URL'),
       signUpUrl: getString(envRecord, 'NEXT_PUBLIC_CLERK_SIGN_UP_URL'),
-      databaseUrl: getString(envRecord, 'DATABASE_URL'),
-      hyperdriveConnection,
+      d1Binding,
     }
   } catch {
     return {
@@ -146,7 +132,7 @@ async function getEnvSnapshot(): Promise<EnvSnapshot> {
       clerkSecretKey: process.env.CLERK_SECRET_KEY,
       signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
       signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
-      databaseUrl: process.env.DATABASE_URL,
+      d1Binding: false,
     }
   }
 }

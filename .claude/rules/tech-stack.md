@@ -7,25 +7,25 @@ paths:
 
 ## 採用技術
 
-| カテゴリ       | 技術                           | バージョン/備考               |
-| -------------- | ------------------------------ | ----------------------------- |
-| フロントエンド | Next.js 15                     | App Router, Turbopack         |
-| エッジデプロイ | OpenNext + Cloudflare Workers  | @opennextjs/cloudflare        |
-| 認証           | Clerk                          | @clerk/nextjs (Edge対応)      |
-| ORM            | Drizzle ORM                    | postgres-js adapter           |
-| DB             | Supabase                       | PostgreSQL (Transaction Mode) |
-| バリデーション | Valibot                        | 軽量 (~5KB)、Tree-shakable    |
-| 環境変数       | dotenvx                        | 暗号化管理                    |
-| スタイリング   | Tailwind CSS                   | v4.x                          |
-| PWA            | manifest.json + Service Worker | iOS対応                       |
+| カテゴリ       | 技術                           | バージョン/備考            |
+| -------------- | ------------------------------ | -------------------------- |
+| フロントエンド | Next.js 15                     | App Router, Turbopack      |
+| エッジデプロイ | OpenNext + Cloudflare Workers  | @opennextjs/cloudflare     |
+| 認証           | Clerk                          | @clerk/nextjs (Edge対応)   |
+| ORM            | Drizzle ORM                    | d1 adapter                 |
+| DB             | Cloudflare D1                  | SQLite                     |
+| バリデーション | Valibot                        | 軽量 (~5KB)、Tree-shakable |
+| 環境変数       | dotenvx                        | 暗号化管理                 |
+| スタイリング   | Tailwind CSS                   | v4.x                       |
+| PWA            | manifest.json + Service Worker | iOS対応                    |
 
 ## Drizzle ORM 構成
 
 **構成:**
 
 - スキーマ定義: `src/db/schema.ts`
-- DB接続: `postgres-js` (Edge Runtime互換)
-- Supabase は Transaction Mode (port 6543) + `?pgbouncer=true` を使用
+- DB接続: `@cloudflare/d1` (Edge Runtime互換)
+- Cloudflare D1 は Workers バインディング経由で接続
 
 **特徴:**
 Cloudflare Workers で完全動作する軽量ORM。Prisma v7のWASM問題を回避。
@@ -42,4 +42,4 @@ Cloudflare Workers で完全動作する軽量ORM。Prisma v7のWASM問題を回
 
 - Edge Runtime 互換のコードのみ使用
 - `fs`, `path`, `crypto` などの Node.js API は避ける
-- Drizzle ORM + postgres-js を使用
+- Drizzle ORM + @cloudflare/d1 を使用

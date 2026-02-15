@@ -48,26 +48,6 @@ export async function GET() {
 }
 ```
 
-## DATABASE_URL 管理
-
-### service-role 権限での管理
-
-`DATABASE_URL` は Supabase の service-role 権限を持つ接続文字列を使用してください。
-この接続文字列はサーバーサイドでのみ使用し、クライアントに公開しないでください。
-
-**環境変数設定:**
-
-```env
-# Supabase Transaction Mode (Port 6543)
-DATABASE_URL="postgresql://postgres.[project-ref]:[password]@[host]:6543/postgres?pgbouncer=true"
-```
-
-**注意事項:**
-
-- Transaction Mode (Port 6543) を使用
-- `?pgbouncer=true` パラメータを必ず追加
-- パスワードは平文で保存せず、dotenvx で暗号化
-
 ## dotenvx 秘密鍵管理
 
 ### CI Secrets での秘密鍵管理
@@ -92,13 +72,11 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 ### 暗号化のベストプラクティス
 
 1. **機密情報のみ暗号化:**
-
    - API キー、シークレットトークン
    - データベース接続文字列
    - 認証プロバイダーの秘密鍵
 
 2. **非機密情報は平文OK:**
-
    - 公開API URL
    - フィーチャーフラグ
    - 環境識別子（development, production など）
@@ -139,12 +117,10 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 Clerk Dashboardで以下を設定してください：
 
 1. **Sign-in試行回数制限**
-
    - Clerk Dashboard → Settings → Security → Sign-in
    - 推奨設定: 5回失敗で15分間ロック
 
 2. **Sign-up試行回数制限**
-
    - 同一IPアドレスからの連続登録を制限
    - 推奨設定: 1時間あたり3回まで
 
@@ -159,13 +135,11 @@ Clerk Dashboardで以下を設定してください：
 **実装ステップ:**
 
 1. **Phase 1: Clerk MFA有効化**（工数: 1日）
-
    - Clerk Dashboard → Settings → Security → Multi-factor
    - TOTPアプリ（Google Authenticator、Authy等）対応を有効化
    - SMS OTPは追加コストのため保留
 
 2. **Phase 2: UIカスタマイズ**（工数: 0.5日）
-
    - ユーザー設定ページにMFA有効化トグルを追加
    - `/settings` ページに「セキュリティ」タブを追加
 

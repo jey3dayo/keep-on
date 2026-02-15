@@ -14,6 +14,4 @@ export interface KVNamespace {
 export interface CloudflareEnv {
   /** Incremental Cache用のKV Namespace */
   NEXT_INC_CACHE_KV?: KVNamespace
-  /** Hyperdrive接続情報 */
-  HYPERDRIVE?: { connectionString: string }
 }

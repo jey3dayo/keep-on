@@ -1,4 +1,3 @@
-import type { InferSelectModel } from 'drizzle-orm'
 import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
 import type { Period, WeekStartDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
@@ -6,8 +5,6 @@ import { getDb } from '@/lib/db'
 import { getPeriodDateRange } from '@/lib/queries/period'
 import { profileQuery } from '@/lib/queries/profiler'
 import { normalizeDateKey } from '@/lib/utils/date'
-
-type Checkin = InferSelectModel<typeof checkins>
 
 interface CreateCheckinInput {
   habitId: string
@@ -22,45 +19,10 @@ interface CreateCheckinWithLimitInput {
   weekStartDay?: WeekStartDay
 }
 
-function extractErrorMessage(value: unknown): string | null {
-  if (typeof value === 'string') {
-    return value
-  }
-
-  if (value instanceof Error) {
-    return value.message
-  }
-
-  if (typeof value === 'object' && value !== null) {
-    const message = Reflect.get(value, 'message')
-    if (typeof message === 'string') {
-      return message
-    }
-  }
-
-  return null
-}
-
-function isLegacyUniqueConstraintError(error: unknown): boolean {
-  const message = extractErrorMessage(error)
-  const cause = typeof error === 'object' && error !== null ? Reflect.get(error, 'cause') : null
-  const causeMessage = extractErrorMessage(cause)
-  const normalized = [message, causeMessage]
-    .filter((entry): entry is string => entry !== null)
-    .join(' ')
-    .toLowerCase()
-
-  return (
-    normalized.includes('unique constraint failed') ||
-    normalized.includes('sqlite_constraint_unique') ||
-    (normalized.includes('sqlite_constraint') && normalized.includes('unique'))
-  )
-}
-
 /**
  * チェックイン作成結果
  *
- * @property created - チェックインが作成されたかどうか（頻度上限または旧UNIQUE制約競合で失敗した場合はfalse）
+ * @property created - チェックインが作成されたかどうか（UNIQUE制約違反や頻度上限で失敗した場合はfalse）
  * @property currentCount - 期間内の現在のチェックイン数
  * @property checkin - 作成されたチェックインレコード（失敗時はnull）
  */
@@ -144,33 +106,45 @@ export async function createCheckinWithLimit(
       const dateKey = normalizeDateKey(input.date)
       const { startKey, endKey } = getPeriodDateRange(dateKey, input.period, input.weekStartDay ?? 1)
 
-      // 1. 頻度上限チェック
+      // D1では通常のトランザクションAPIが使えないため、UNIQUE制約に依存
+      // 頻度上限チェックは参考値として事前確認するが、最終的な制御はUNIQUE制約で行う
+
+      // 1. 現在の期間内カウントを取得（頻度上限の事前チェック用）
       const countResult = await db
         .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
         .from(checkins)
         .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
       const currentCount = countResult[0]?.count ?? 0
+
+      // 2. 頻度上限チェック（早期リターンによる最適化）
       if (currentCount >= input.frequency) {
         return { created: false, currentCount, checkin: null }
       }
 
-      // 2. INSERT（UNIQUE制約により同一日付の重複は自動的に防止される）
-      let checkin: Checkin | undefined
+      // 3. INSERT（UNIQUE制約により同一日付の重複は自動的に防止される）
+      let checkin: typeof checkins.$inferSelect | undefined
       try {
-        const inserted = await db
+        ;[checkin] = await db
           .insert(checkins)
           .values({
             habitId: input.habitId,
             date: dateKey,
           })
           .returning()
-        checkin = inserted[0]
       } catch (error) {
-        // 旧マイグレーション環境で残る UNIQUE(habitId, date) との互換対応
-        if (isLegacyUniqueConstraintError(error)) {
-          return { created: false, currentCount, checkin: null }
+        // UNIQUE制約違反のみをハンドリング（同じ習慣の同じ日に既にチェックイン済み）
+        const errorMessage = String(error)
+        if (errorMessage.includes('UNIQUE')) {
+          // UNIQUE制約違反の場合は最新のカウントを取得して返す
+          const latestCountResult = await db
+            .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
+            .from(checkins)
+            .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+          const latestCount = latestCountResult[0]?.count ?? 0
+          return { created: false, currentCount: latestCount, checkin: null }
         }
+        // その他のエラー（FOREIGN KEY制約違反など）は上位層に伝播
         throw error
       }
 
@@ -178,10 +152,18 @@ export async function createCheckinWithLimit(
         throw new Error('Failed to create checkin')
       }
 
+      // 4. INSERT成功後のカウントを返す
+      const finalCountResult = await db
+        .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
+        .from(checkins)
+        .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+
+      const finalCount = finalCountResult[0]?.count ?? 0
+
       return {
         created: true,
-        currentCount: currentCount + 1,
-        checkin,
+        currentCount: finalCount,
+        checkin: checkin ?? null,
       }
     },
     { habitId: input.habitId, period: input.period }
