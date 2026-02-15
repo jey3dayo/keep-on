@@ -41,13 +41,7 @@ vi.mock('@/lib/db', () => {
   }
 
   return {
-    getDb: vi.fn().mockReturnValue({
-      ...mockDbMethods,
-      transaction: vi.fn(async (callback) => {
-        // トランザクション内では同じメソッドセットを返す
-        return await callback(mockDbMethods)
-      }),
-    }),
+    getDb: vi.fn().mockReturnValue(mockDbMethods),
   }
 })
 
@@ -279,7 +273,6 @@ describe('createCheckinWithLimit', () => {
     })
     expect(db.insert).toHaveBeenCalledTimes(1)
     expect(db.returning).toHaveBeenCalledTimes(1)
-    expect(db.transaction).toHaveBeenCalledWith(expect.any(Function), { behavior: 'immediate' })
     expect(db.where).toHaveBeenCalledTimes(1)
   })
 
@@ -303,7 +296,6 @@ describe('createCheckinWithLimit', () => {
       checkin: null,
     })
     expect(db.insert).not.toHaveBeenCalled()
-    expect(db.transaction).toHaveBeenCalledWith(expect.any(Function), { behavior: 'immediate' })
     expect(db.where).toHaveBeenCalledTimes(1)
   })
 
@@ -326,7 +318,6 @@ describe('createCheckinWithLimit', () => {
       currentCount: 1,
       checkin: null,
     })
-    expect(db.transaction).toHaveBeenCalledWith(expect.any(Function), { behavior: 'immediate' })
   })
 
   it('throws when insert fails for non-constraint reasons', async () => {

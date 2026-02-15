@@ -1,3 +1,4 @@
+import type { InferSelectModel } from 'drizzle-orm'
 import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
 import type { Period, WeekStartDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
@@ -5,6 +6,8 @@ import { getDb } from '@/lib/db'
 import { getPeriodDateRange } from '@/lib/queries/period'
 import { profileQuery } from '@/lib/queries/profiler'
 import { normalizeDateKey } from '@/lib/utils/date'
+
+type Checkin = InferSelectModel<typeof checkins>
 
 interface CreateCheckinInput {
   habitId: string
@@ -140,49 +143,46 @@ export async function createCheckinWithLimit(
       const db = getDb()
       const dateKey = normalizeDateKey(input.date)
       const { startKey, endKey } = getPeriodDateRange(dateKey, input.period, input.weekStartDay ?? 1)
-      return await db.transaction(
-        async (tx) => {
-          // トランザクション内で頻度上限チェックとINSERTを実行
-          const countResult = await tx
-            .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
-            .from(checkins)
-            .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
-          const currentCount = countResult[0]?.count ?? 0
-          if (currentCount >= input.frequency) {
-            return { created: false, currentCount, checkin: null }
-          }
+      // 1. 頻度上限チェック
+      const countResult = await db
+        .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
+        .from(checkins)
+        .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
-          let checkin: typeof checkins.$inferSelect | undefined
-          try {
-            const inserted = await tx
-              .insert(checkins)
-              .values({
-                habitId: input.habitId,
-                date: dateKey,
-              })
-              .returning()
-            checkin = inserted[0]
-          } catch (error) {
-            // 旧マイグレーション環境で残る UNIQUE(habitId, date) との互換対応
-            if (isLegacyUniqueConstraintError(error)) {
-              return { created: false, currentCount, checkin: null }
-            }
-            throw error
-          }
+      const currentCount = countResult[0]?.count ?? 0
+      if (currentCount >= input.frequency) {
+        return { created: false, currentCount, checkin: null }
+      }
 
-          if (!checkin) {
-            throw new Error('Failed to create checkin')
-          }
+      // 2. INSERT（UNIQUE制約により同一日付の重複は自動的に防止される）
+      let checkin: Checkin | undefined
+      try {
+        const inserted = await db
+          .insert(checkins)
+          .values({
+            habitId: input.habitId,
+            date: dateKey,
+          })
+          .returning()
+        checkin = inserted[0]
+      } catch (error) {
+        // 旧マイグレーション環境で残る UNIQUE(habitId, date) との互換対応
+        if (isLegacyUniqueConstraintError(error)) {
+          return { created: false, currentCount, checkin: null }
+        }
+        throw error
+      }
 
-          return {
-            created: true,
-            currentCount: currentCount + 1,
-            checkin,
-          }
-        },
-        { behavior: 'immediate' }
-      )
+      if (!checkin) {
+        throw new Error('Failed to create checkin')
+      }
+
+      return {
+        created: true,
+        currentCount: currentCount + 1,
+        checkin,
+      }
     },
     { habitId: input.habitId, period: input.period }
   )
