@@ -69,7 +69,7 @@ export default defineConfig({
     // 注: E2Eテスト自体は環境変数を直接使用しないため、
     //     テスト実行時に `pnpm env:run -- playwright test` とする必要はない
     //     環境変数はすべてサーバー側（Next.js）で処理される
-    command: 'pnpm env:run -- pnpm dev',
+    command: 'dotenvx run -- pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000, // WSL2環境を考慮して2分に設定
