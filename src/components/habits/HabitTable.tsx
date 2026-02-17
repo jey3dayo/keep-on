@@ -15,9 +15,9 @@ import type { HabitWithProgress } from '@/types/habit'
 import { HabitTableClient } from './HabitTableClient'
 
 interface HabitTableProps {
-  userId: string
   clerkId: string
   requestMeta?: { route: string; requestId: string }
+  userId: string
 }
 
 export async function HabitTable({ userId, clerkId, requestMeta }: HabitTableProps) {

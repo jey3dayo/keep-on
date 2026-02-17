@@ -57,10 +57,10 @@ import {
 } from '../checkin'
 
 interface Condition {
-  op: 'and' | 'eq' | 'gte' | 'lte' | 'desc'
-  left?: unknown
-  right?: unknown
   conditions?: Condition[]
+  left?: unknown
+  op: 'and' | 'eq' | 'gte' | 'lte' | 'desc'
+  right?: unknown
 }
 
 describe('getCheckinsByUserAndDate', () => {

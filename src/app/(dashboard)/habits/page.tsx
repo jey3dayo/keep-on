@@ -51,7 +51,7 @@ export default async function HabitsPage() {
           <p className="text-muted-foreground">あなたの習慣を管理しましょう</p>
         </div>
         <Button asChild size="lg" variant="default">
-          <Link href="/habits/new">
+          <Link href="/habits/new?step=preset">
             <Icon className="mr-2" name="plus" size={20} />
             新しい習慣
           </Link>

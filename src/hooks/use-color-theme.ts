@@ -5,9 +5,9 @@ import { COLOR_THEME_COOKIE_KEY, type ColorThemeName, DEFAULT_COLOR_THEME, isCol
 import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
 
 interface UseColorTheme {
-  theme: ColorThemeName
-  setTheme: (theme: ColorThemeName) => void
   ready: boolean
+  setTheme: (theme: ColorThemeName) => void
+  theme: ColorThemeName
 }
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365

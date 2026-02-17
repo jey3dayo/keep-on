@@ -8,11 +8,11 @@ import { HabitArchiveDialog } from './HabitArchiveDialog'
 import { HabitDeleteDialog } from './HabitDeleteDialog'
 
 interface HabitTableActionsProps {
+  archived: boolean
   habitId: string
   habitName: string
-  archived: boolean
-  onEdit: (habitId: string) => void
   onArchiveOptimistic?: OptimisticHandler
+  onEdit: (habitId: string) => void
 }
 
 export function HabitTableActions({

@@ -3,8 +3,8 @@ import { Input as BaseInput } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
 export interface InputProps extends React.ComponentProps<'input'> {
-  error?: boolean
   disablePasswordManagers?: boolean
+  error?: boolean
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(

@@ -7,15 +7,15 @@ import { profileQuery } from '@/lib/queries/profiler'
 import { normalizeDateKey } from '@/lib/utils/date'
 
 interface CreateCheckinInput {
-  habitId: string
   date: Date | string
+  habitId: string
 }
 
 interface CreateCheckinWithLimitInput {
-  habitId: string
   date: Date | string
-  period: Period
   frequency: number
+  habitId: string
+  period: Period
   weekStartDay?: WeekStartDay
 }
 
@@ -27,9 +27,9 @@ interface CreateCheckinWithLimitInput {
  * @property checkin - 作成されたチェックインレコード（失敗時はnull）
  */
 export interface CreateCheckinWithLimitResult {
+  checkin: typeof checkins.$inferSelect | null
   created: boolean
   currentCount: number
-  checkin: typeof checkins.$inferSelect | null
 }
 
 export async function getCheckinsByUserAndDate(userId: string, date: Date | string) {

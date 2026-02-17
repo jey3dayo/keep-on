@@ -5,6 +5,7 @@ import {
   DEFAULT_HABIT_PERIOD,
   type Period,
 } from '@/constants/habit'
+import type { HabitPreset } from '@/constants/habit-data'
 import { type HabitInputSchemaType, safeParseHabitInput } from '@/schemas/habit'
 import type { Habit, HabitWithProgress } from '@/types/habit'
 
@@ -17,23 +18,35 @@ export type HabitFormValues = Omit<HabitInputSchemaType, 'period'> & {
   period: Period
 }
 
-export function getHabitFormDefaults(initialData?: Habit | HabitWithProgress): HabitFormValues {
-  if (initialData) {
+export function getHabitFormDefaults(initialData?: Habit | HabitWithProgress | HabitPreset): HabitFormValues {
+  if (!initialData) {
+    return {
+      name: '',
+      icon: DEFAULT_HABIT_ICON,
+      color: DEFAULT_HABIT_COLOR,
+      period: DEFAULT_HABIT_PERIOD,
+      frequency: DEFAULT_HABIT_FREQUENCY,
+    }
+  }
+
+  // HabitPreset の場合は iconId/colorId を使用
+  if ('category' in initialData) {
     return {
       name: initialData.name,
-      icon: initialData.icon ?? DEFAULT_HABIT_ICON,
-      color: initialData.color ?? DEFAULT_HABIT_COLOR,
+      icon: initialData.iconId,
+      color: initialData.colorId,
       period: initialData.period,
       frequency: initialData.frequency,
     }
   }
 
+  // 既存のHabitの場合（編集時）
   return {
-    name: '',
-    icon: DEFAULT_HABIT_ICON,
-    color: DEFAULT_HABIT_COLOR,
-    period: DEFAULT_HABIT_PERIOD,
-    frequency: DEFAULT_HABIT_FREQUENCY,
+    name: initialData.name,
+    icon: initialData.icon ?? DEFAULT_HABIT_ICON,
+    color: initialData.color ?? DEFAULT_HABIT_COLOR,
+    period: initialData.period,
+    frequency: initialData.frequency,
   }
 }
 

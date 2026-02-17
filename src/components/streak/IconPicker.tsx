@@ -5,13 +5,13 @@ import { Icon, type IconName } from '@/components/basics/Icon'
 import { cn } from '@/lib/utils'
 
 interface IconPickerProps {
-  selectedIcon: IconName
   onIconSelect: (iconName: IconName) => void
+  selectedIcon: IconName
 }
 
 interface IconCategory {
-  name: string
   icons: IconName[]
+  name: string
 }
 
 const categories: IconCategory[] = [

@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 interface RouteModalProps {
-  title: string
   children: React.ReactNode
+  title: string
 }
 
 export function RouteModal({ title, children }: RouteModalProps) {

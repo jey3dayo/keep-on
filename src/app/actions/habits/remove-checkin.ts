@@ -46,8 +46,8 @@ async function resolveWeekStartDay(
 }
 
 interface RemoveCheckinResultData {
-  deleted: boolean
   currentCount: number
+  deleted: boolean
 }
 
 async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveCheckinResultData> {

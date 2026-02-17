@@ -3,8 +3,8 @@ import { resetDb } from './db'
 
 interface RetryOptions {
   maxRetries?: number
-  retryOn?: (error: unknown) => boolean
   onRetry?: (attempt: number, error: unknown) => Promise<void>
+  retryOn?: (error: unknown) => boolean
   timeoutMs?: number
 }
 

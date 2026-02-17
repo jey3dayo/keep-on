@@ -3,10 +3,10 @@
 import { createContext, useContext, useRef, useState } from 'react'
 
 interface SyncContextValue {
-  pendingCount: number
-  startSync: (id: string) => void
   endSync: (id: string) => void
   isSyncing: boolean
+  pendingCount: number
+  startSync: (id: string) => void
 }
 
 const SyncContext = createContext<SyncContextValue | null>(null)

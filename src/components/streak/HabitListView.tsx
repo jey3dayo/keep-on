@@ -22,17 +22,17 @@ const HabitActionDrawer = dynamic(
 )
 
 interface HabitListViewProps {
-  habits: HabitWithProgress[]
-  filteredHabits: HabitWithProgress[]
   completedHabitIds: Set<string>
-  periodFilter: 'all' | Period
-  onPeriodChange: (filter: 'all' | Period) => void
+  filteredHabits: HabitWithProgress[]
+  habits: HabitWithProgress[]
   onAddCheckin?: (habitId: string) => Promise<void>
-  onRemoveCheckin?: (habitId: string) => Promise<void>
   onAddHabit: () => void
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
+  onPeriodChange: (filter: 'all' | Period) => void
+  onRemoveCheckin?: (habitId: string) => Promise<void>
   onResetOptimistic?: (habitId: string) => OptimisticRollback
+  periodFilter: 'all' | Period
   todayActive: number
   todayLabel: string
   totalDaily: number

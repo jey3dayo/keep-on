@@ -13,10 +13,6 @@ export interface ConcurrencyParams {
 }
 
 export interface ConcurrencyResult {
-  concurrency: number
-  iterations: number
-  startedAt: string
-  finishedAt: string
   batches: Array<{
     index: number
     ok: number
@@ -26,18 +22,22 @@ export interface ConcurrencyResult {
     avgMs: number
     errors: string[]
   }>
+  concurrency: number
+  finishedAt: string
+  iterations: number
+  startedAt: string
 }
 
 interface TaskResult {
-  ok: boolean
   durationMs: number
   errors: string[]
+  ok: boolean
 }
 
 interface TimedCheck {
-  ok: boolean
   durationMs: number
   error?: string
+  ok: boolean
 }
 
 function clampNumber(value: number, min: number, max: number, fallback: number): number {

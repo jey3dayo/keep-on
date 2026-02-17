@@ -23,8 +23,8 @@ import type { IconName } from '@/components/basics/Icon'
 import type { Period } from '@/constants/habit'
 
 export interface HabitIcon {
-  id: IconName
   icon: LucideIcon
+  id: IconName
   label: string
 }
 
@@ -76,10 +76,10 @@ export const oldHabitColors = [
 ]
 
 export interface TaskPeriodOption {
+  frequencyLabel: string
   id: Period
   label: string
   sublabel: string
-  frequencyLabel: string
 }
 
 export const taskPeriods: TaskPeriodOption[] = [
@@ -89,15 +89,15 @@ export const taskPeriods: TaskPeriodOption[] = [
 ]
 
 export interface Habit {
+  colorId: string
+  createdAt: Date
+  currentProgress: number
+  frequency: number
+  iconId: string
   id: string
   name: string
-  iconId: string
-  colorId: string
   period: Period
-  frequency: number
   streak: number
-  currentProgress: number
-  createdAt: Date
 }
 
 export const sampleHabits: Habit[] = [
@@ -172,9 +172,9 @@ export const sampleHabits: Habit[] = [
 export type PresetCategory = 'all' | 'health' | 'productivity' | 'lifestyle' | 'learning'
 
 export interface PresetCategoryOption {
+  icon: LucideIcon
   id: PresetCategory
   label: string
-  icon: LucideIcon
 }
 
 export const presetCategories: PresetCategoryOption[] = [
@@ -186,13 +186,13 @@ export const presetCategories: PresetCategoryOption[] = [
 ]
 
 export interface HabitPreset {
+  category: PresetCategory
+  colorId: string
+  frequency: number
+  iconId: IconName
   id: string
   name: string
-  iconId: IconName
-  colorId: string
   period: Period
-  frequency: number
-  category: PresetCategory
 }
 
 export const habitPresets: HabitPreset[] = [

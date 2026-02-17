@@ -15,8 +15,8 @@ import { cn } from '@/lib/utils'
 
 interface HabitPresetSelectorProps {
   onClose: () => void
-  onSelectPreset: (preset: HabitPreset) => void
   onCreateCustom: () => void
+  onSelectPreset: (preset: HabitPreset) => void
 }
 
 export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }: HabitPresetSelectorProps) {

@@ -5,10 +5,10 @@ import type { CloudflareEnv, KVNamespace } from '@/types/cloudflare'
 import type { HabitWithProgress } from '@/types/habit'
 
 export interface HabitsCacheData {
-  habits: HabitWithProgress[]
   dateKey: string
-  timestamp: number
+  habits: HabitWithProgress[]
   staleAt?: number
+  timestamp: number
 }
 
 const CACHE_TTL_SECONDS = 180 // 3分（チェックイン更新頻度を考慮）

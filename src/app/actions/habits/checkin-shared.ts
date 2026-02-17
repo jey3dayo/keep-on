@@ -6,28 +6,28 @@ import { getHabitById } from '@/lib/queries/habit'
 export type SpanRunner = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) => Promise<T>
 
 export interface HabitCheckinSpans {
-  timeoutMs: number
   dbTimeoutMs: number
   runWithDbTimeout: SpanRunner
-  runWithRetry: SpanRunner
   runWithRequestTimeout: SpanRunner
+  runWithRetry: SpanRunner
+  timeoutMs: number
 }
 
 export interface HabitCheckinParams {
-  habitId: string
-  dateKey?: string
   baseMeta: Record<string, unknown>
+  dateKey?: string
+  habitId: string
   spans: HabitCheckinSpans
 }
 
 export type HabitRecord = NonNullable<Awaited<ReturnType<typeof getHabitById>>>
 
 interface RequireHabitForUserParams {
+  actionName: string
   habitId: string
-  userId: string
   meta: Record<string, unknown>
   runWithRetry: SpanRunner
-  actionName: string
+  userId: string
 }
 
 export function createHabitCheckinSpans(timeoutMs: number): HabitCheckinSpans {

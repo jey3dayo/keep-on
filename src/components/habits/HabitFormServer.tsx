@@ -11,7 +11,15 @@ import { createHabit } from '@/app/actions/habits/create'
 import { updateHabitAction } from '@/app/actions/habits/update'
 import { Button } from '@/components/basics/Button'
 import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, DEFAULT_HABIT_PERIOD } from '@/constants/habit'
-import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
+import {
+  getColorById,
+  getIconById,
+  getPeriodById,
+  type HabitPreset,
+  habitColors,
+  habitIcons,
+  taskPeriods,
+} from '@/constants/habit-data'
 import { formatSerializableError } from '@/lib/errors/serializable'
 import { cn } from '@/lib/utils'
 import { HabitInputSchema } from '@/schemas/habit'
@@ -19,11 +27,11 @@ import { buildHabitFormData, getHabitFormDefaults, type HabitFormValues } from '
 import type { Habit, HabitWithProgress } from '@/types/habit'
 
 interface HabitFormServerProps {
-  initialData?: Habit | HabitWithProgress
+  hideHeader?: boolean
+  initialData?: Habit | HabitWithProgress | HabitPreset
   onSubmit?: (data: FormValues) => Promise<void> | void
   onSuccess?: 'close' | 'redirect'
   submitLabel?: string
-  hideHeader?: boolean
 }
 
 type FormValues = HabitFormValues

@@ -7,18 +7,18 @@ import { COMPLETION_ACTION_LABEL, DEFAULT_HABIT_ICON } from '@/constants/habit'
 import { cn } from '@/lib/utils'
 
 export interface HabitCircleProps {
+  /** カスタムクラス名 */
+  className?: string
+  /** 完了状態 */
+  completed: boolean
   /** 習慣名 */
   habitName: string
   /** アイコン */
   icon?: IconName | null
-  /** 完了状態 */
-  completed: boolean
   /** クリックハンドラー */
   onClick?: () => void
   /** サイズバリアント */
   size?: 'sm' | 'md' | 'lg'
-  /** カスタムクラス名 */
-  className?: string
 }
 
 const sizeMap = {

@@ -85,7 +85,6 @@
 }
 
 :root {
-  color-scheme: light;
   --radius: 0.625rem;
 
   /* shadcn/ui 互換マッピング */
@@ -120,13 +119,14 @@
   --sidebar-accent-foreground: var(--slate-11);
   --sidebar-border: var(--slate-6);
   --sidebar-ring: var(--ring);
+  color-scheme: light;
 }
 
 .dark {
-  color-scheme: dark;
   --primary-foreground: var(--teal-12);
   --destructive-foreground: var(--red-12);
   --success-foreground: var(--teal-12);
+  color-scheme: dark;
 }
 
 /* テーマバリエーション（data-theme属性で切替）- Radix Colors */

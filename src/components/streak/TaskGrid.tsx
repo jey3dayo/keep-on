@@ -8,10 +8,10 @@ import type { HabitWithProgress } from '@/types/habit'
 import { TaskCircle } from './TaskCircle'
 
 interface TaskGridProps {
-  habits: HabitWithProgress[]
   completedHabitIds: Set<string>
-  onToggleHabit: (habitId: string) => void
+  habits: HabitWithProgress[]
   onAddClick: () => void
+  onToggleHabit: (habitId: string) => void
 }
 
 export function TaskGrid({ habits, completedHabitIds, onToggleHabit, onAddClick }: TaskGridProps) {

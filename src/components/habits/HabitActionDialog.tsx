@@ -21,20 +21,20 @@ import { formatSerializableError, type SerializableHabitError } from '@/lib/erro
 import type { OptimisticHandler } from './types'
 
 interface HabitActionDialogProps {
-  habitId: string
-  trigger?: ReactNode | null
-  onOptimistic?: OptimisticHandler
-  title: string
-  description: ReactNode
-  confirmLabel: string
-  confirmClassName?: string
-  successMessage: string
-  errorMessage: string
   action: (habitId: string) => ServerActionResultAsync<unknown, SerializableHabitError>
-  retryOnError?: boolean
-  open?: boolean
+  confirmClassName?: string
+  confirmLabel: string
   defaultOpen?: boolean
+  description: ReactNode
+  errorMessage: string
+  habitId: string
   onOpenChange?: (open: boolean) => void
+  onOptimistic?: OptimisticHandler
+  open?: boolean
+  retryOnError?: boolean
+  successMessage: string
+  title: string
+  trigger?: ReactNode | null
 }
 
 const waitForRetry = (delayMs: number) =>

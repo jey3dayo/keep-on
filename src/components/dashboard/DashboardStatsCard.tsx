@@ -5,11 +5,11 @@ import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 export interface DashboardStatsCardProps {
+  className?: string
+  suffix?: string
+  total?: number
   type: 'progress' | 'streak'
   value: number | string
-  total?: number
-  suffix?: string
-  className?: string
 }
 
 export function DashboardStatsCard({ type, value, total, suffix, className }: DashboardStatsCardProps) {

@@ -11,11 +11,11 @@ import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
 
 interface HabitCardProps {
-  habit: HabitWithProgress
   completed: boolean
-  onToggle: () => void
-  onEdit?: () => void
+  habit: HabitWithProgress
   onDelete?: () => void
+  onEdit?: () => void
+  onToggle: () => void
 }
 
 export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: HabitCardProps) {

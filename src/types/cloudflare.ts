@@ -4,10 +4,10 @@
 
 /** KV Namespace インターフェース */
 export interface KVNamespace {
+  delete(key: string): Promise<void>
   get(key: string, type?: 'text'): Promise<string | null>
   get(key: string, type: 'json'): Promise<unknown>
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>
-  delete(key: string): Promise<void>
 }
 
 /** Cloudflare Workers 環境変数 */

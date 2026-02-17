@@ -11,8 +11,8 @@ import type { HabitWithProgress } from '@/types/habit'
 interface HabitEditModalProps {
   habit: HabitWithProgress
   onClose: () => void
-  onSave: (updatedHabit: Partial<HabitWithProgress>) => void
   onDelete: (habitId: string) => void
+  onSave: (updatedHabit: Partial<HabitWithProgress>) => void
 }
 
 export function HabitEditModal({ habit, onClose, onSave, onDelete }: HabitEditModalProps) {

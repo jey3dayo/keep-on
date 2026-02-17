@@ -6,11 +6,11 @@ import { COMPLETION_STATUS_LABEL } from '@/constants/habit'
 import { cn } from '@/lib/utils'
 
 interface TaskCircleProps {
+  color?: string | null
+  completed: boolean
   habitId: string
   habitName: string
   icon?: IconName
-  color?: string | null
-  completed: boolean
   onToggle: (habitId: string) => void
   size?: 'sm' | 'md' | 'lg'
 }

@@ -11,12 +11,12 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } f
 import type { HabitWithProgress } from '@/types/habit'
 
 interface HabitActionDrawerProps {
-  open: boolean
   habit: HabitWithProgress | null
-  onOpenChange: (open: boolean) => void
   onArchiveOptimistic?: OptimisticHandler
   onDeleteOptimistic?: OptimisticHandler
+  onOpenChange: (open: boolean) => void
   onResetOptimistic?: OptimisticHandler
+  open: boolean
 }
 
 export function HabitActionDrawer({
