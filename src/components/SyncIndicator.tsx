@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, CloudUpload } from 'lucide-react'
+import { CheckCircle2, CloudUpload } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSyncContext } from '@/contexts/SyncContext'
 
@@ -52,7 +52,7 @@ export function SyncIndicator() {
           {isSyncing ? (
             <CloudUpload className="h-5 w-5 text-muted-foreground" />
           ) : (
-            <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
           )}
         </div>
       )}
