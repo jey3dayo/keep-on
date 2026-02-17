@@ -11,14 +11,12 @@
 
 set -euo pipefail
 
-# カラー定義
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# 共通ライブラリを読み込む
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # プロジェクトルートディレクトリ
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT=$(get_project_root)
 STORAGE_STATE="${PROJECT_ROOT}/e2e/storage-state.json"
 
 echo "📋 Clerk認証状態生成スクリプト"

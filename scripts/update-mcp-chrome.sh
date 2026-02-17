@@ -3,6 +3,10 @@
 
 set -euo pipefail
 
+# 共通ライブラリを読み込む
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/lib/common.sh"
+
 # WSL2 の IP アドレスを取得
 WSL_IP=$(ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1)
 
