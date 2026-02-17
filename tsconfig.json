@@ -41,6 +41,8 @@
     "vitest.config.ts",
     "vitest.setup.ts",
     ".storybook",
-    "tmp"
+    "tmp",
+    "e2e",
+    "playwright.config.ts"
   ]
 }
