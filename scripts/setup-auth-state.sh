@@ -11,14 +11,12 @@
 
 set -euo pipefail
 
-# カラー定義
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# 共通ライブラリを読み込む
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # プロジェクトルートディレクトリ
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT=$(get_project_root)
 STORAGE_STATE="${PROJECT_ROOT}/e2e/storage-state.json"
 
 echo "📋 Clerk認証状態生成スクリプト"
@@ -28,29 +26,28 @@ echo ""
 # Step 1: Playwrightインストール確認
 echo "🔍 Step 1: Playwrightインストールを確認中..."
 if ! pnpm exec playwright --version &>/dev/null; then
-  echo -e "${RED}✗ Playwrightがインストールされていません${NC}"
   echo ""
   echo "以下のコマンドでインストールしてください:"
   echo "  pnpm exec playwright install chromium"
-  exit 1
+  error "Playwrightがインストールされていません"
 fi
-echo -e "${GREEN}✓ Playwright installed${NC}"
+success "Playwright installed"
 echo ""
 
 # Step 2: Chromiumブラウザインストール確認
 echo "🔍 Step 2: Chromiumブラウザを確認中..."
 # Chromiumをインストール（既にインストール済みの場合は自動的にスキップされる）
 pnpm exec playwright install chromium > /dev/null 2>&1 || true
-echo -e "${GREEN}✓ Chromium browser ready${NC}"
+success "Chromium browser ready"
 echo ""
 
 # Step 3: 開発サーバー起動確認
 echo "🔍 Step 3: 開発サーバーの起動を確認中..."
 if ! curl -s --max-time 3 --fail http://localhost:3000/sign-in > /dev/null 2>&1; then
-  echo -e "${YELLOW}⚠ 開発サーバーが起動していません${NC}"
-  echo -e "${YELLOW}  → Playwrightが自動的にサーバーを起動します${NC}"
+  warn "開発サーバーが起動していません"
+  warn "  → Playwrightが自動的にサーバーを起動します"
 else
-  echo -e "${GREEN}✓ Development server is running${NC}"
+  success "Development server is running"
 fi
 echo ""
 
@@ -58,7 +55,7 @@ echo ""
 if [ -f "${STORAGE_STATE}" ]; then
   echo "🗑️  Step 4: 既存の認証状態ファイルを削除中..."
   rm "${STORAGE_STATE}"
-  echo -e "${GREEN}✓ Removed existing storage-state.json${NC}"
+  success "Removed existing storage-state.json"
   echo ""
 else
   echo "ℹ️  Step 4: 既存の認証状態ファイルは存在しません"
@@ -73,10 +70,10 @@ cd "${PROJECT_ROOT}"
 # setup プロジェクトのみを実行
 if pnpm exec playwright test --project=setup; then
   echo ""
-  echo -e "${GREEN}✓ Authentication state generated successfully!${NC}"
+  success "Authentication state generated successfully!"
 else
   echo ""
-  echo -e "${RED}✗ Failed to generate authentication state${NC}"
+  error "Failed to generate authentication state"
   echo ""
   echo "トラブルシューティング:"
   echo "  1. Clerkテストモードが有効か確認してください"
@@ -89,7 +86,7 @@ echo ""
 # Step 6: 認証状態ファイル生成確認
 echo "🔍 Step 6: 認証状態ファイルを確認中..."
 if [ ! -f "${STORAGE_STATE}" ]; then
-  echo -e "${RED}✗ storage-state.json が生成されていません${NC}"
+  error "storage-state.json が生成されていません"
   exit 1
 fi
 
@@ -97,14 +94,14 @@ fi
 FILE_SIZE=$(du -h "${STORAGE_STATE}" | cut -f1)
 COOKIE_COUNT=$(jq '.cookies | length' "${STORAGE_STATE}")
 
-echo -e "${GREEN}✓ storage-state.json generated${NC}"
+success "storage-state.json generated"
 echo "  📁 ファイルサイズ: ${FILE_SIZE}"
 echo "  🍪 Cookie数: ${COOKIE_COUNT}"
 echo ""
 
 # 完了メッセージ
 echo "================================"
-echo -e "${GREEN}✅ 認証状態の生成が完了しました！${NC}"
+success "✅ 認証状態の生成が完了しました！"
 echo ""
 echo "次のステップ:"
 echo "  1. agent-browserで認証状態を使用:"

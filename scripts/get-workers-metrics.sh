@@ -17,36 +17,9 @@
 
 set -euo pipefail
 
-# カラー出力
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# 関数: エラーメッセージ
-error() {
-  echo -e "${RED}✘ Error: $1${NC}" >&2
-  exit 1
-}
-
-# 関数: 成功メッセージ
-success() {
-  echo -e "${GREEN}✔ $1${NC}"
-}
-
-# 関数: 情報メッセージ
-info() {
-  echo -e "${BLUE}ℹ $1${NC}"
-}
-
-# 環境変数チェック
-check_env() {
-  local var_name=$1
-  if [[ -z "${!var_name:-}" ]]; then
-    error "環境変数 $var_name が設定されていません"
-  fi
-}
+# 共通ライブラリを読み込む
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # 必須環境変数の確認
 check_env "CLOUDFLARE_API_TOKEN"
@@ -115,7 +88,7 @@ echo "  P99: ${CPU_P99}"
 
 # P99が警告閾値を超えているか
 if (( $(echo "$CPU_P99 > 50" | bc -l) )); then
-  echo -e "  ${RED}⚠ 警告: P99 CPU Time が 50ms を超えています${NC}"
+  warn "  ⚠ 警告: P99 CPU Time が 50ms を超えています"
 fi
 echo ""
 
@@ -131,7 +104,7 @@ echo "  P99: ${DURATION_P99}"
 
 # P99が警告閾値を超えているか
 if (( $(echo "$DURATION_P99 > 500" | bc -l) )); then
-  echo -e "  ${RED}⚠ 警告: P99 Duration が 500ms を超えています${NC}"
+  warn "  ⚠ 警告: P99 Duration が 500ms を超えています"
 fi
 echo ""
 
