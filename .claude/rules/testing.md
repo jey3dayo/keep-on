@@ -58,15 +58,15 @@ Clerk の開発インスタンスでは、デフォルトで**テストモード
 
 #### メールアドレス
 
-**ルール**: ローカルパートの末尾に `+clerk_test` を追加
+#### ルール
 
-**例**:
+#### 例
 
 - `test+clerk_test@example.com`
 - `sample+clerk_test@example.com`
 - `user123+clerk_test@domain.org`
 
-**形式**:
+#### 形式
 
 ```text
 <username>+clerk_test@<domain>
@@ -74,15 +74,15 @@ Clerk の開発インスタンスでは、デフォルトで**テストモード
 
 #### 電話番号
 
-**ルール**: 下4桁が `0100` 〜 `0199` の範囲
+#### ルール
 
-**例**:
+#### 例
 
 - `+1 (201) 555-0100`
 - `+1 (973) 555-0133`
 - `+12015550199`
 
-**形式**:
+#### 形式
 
 ```text
 +1<area code>555-01<00-99>
@@ -114,7 +114,7 @@ Clerk の開発インスタンスでは、デフォルトで**テストモード
 5. 認証コード（OTP）画面に遷移したら `<TEST_OTP>` を入力
 6. `Continue` を押してダッシュボードへ遷移することを確認
 
-**補足**:
+#### 補足
 
 - パスワード送信後に `sign-in/factor-two` へ遷移する場合があります
 - 認証コード欄が表示されたら `<TEST_OTP>` を入力してください
@@ -352,9 +352,9 @@ pnpm exec tsx scripts/agent-browser-playwright.ts https://keep-on.j138cm.workers
 
 #### 認証状態ファイルが見つからない
 
-**エラー**: `❌ エラー: e2e/storage-state.json が見つかりません`
+#### エラー
 
-**解決方法**:
+#### 解決方法
 
 ```bash
 # 認証状態を生成
@@ -363,9 +363,9 @@ pnpm exec tsx scripts/agent-browser-playwright.ts https://keep-on.j138cm.workers
 
 #### agent-browserでログインフォームが表示される
 
-**原因**: セッション期限切れまたは認証状態が無効
+#### 原因
 
-**解決方法**:
+#### 解決方法
 
 ```bash
 # 既存の認証状態を削除
@@ -377,9 +377,9 @@ rm e2e/storage-state.json
 
 #### 開発サーバーが起動していない
 
-**エラー**: `✗ 開発サーバーが起動していません`
+#### エラー
 
-**解決方法**:
+#### 解決方法
 
 ```bash
 # 別のターミナルで開発サーバーを起動
@@ -388,9 +388,9 @@ pnpm env:run -- pnpm dev
 
 #### Chromiumブラウザがインストールされていない
 
-**エラー**: Playwrightがブラウザを見つけられない
+#### エラー
 
-**解決方法**:
+#### 解決方法
 
 ```bash
 # Chromiumブラウザをインストール
@@ -426,7 +426,7 @@ pnpm exec tsx scripts/agent-browser-playwright.ts http://localhost:3000/habits
 pnpm exec tsx scripts/agent-browser-playwright.ts https://keep-on.j138cm.workers.dev
 ```
 
-**注意**: 本番環境の認証状態は開発環境とは別のため、本番用の認証状態を別途生成する必要があります。
+#### 注意
 
 ### package.jsonスクリプト
 
@@ -460,18 +460,18 @@ pnpm agent:browser
 
 ### 認証コードが受け付けられない
 
-**原因**: プロダクション環境でテスト識別子を使用している
+#### 原因
 
-**解決方法**:
+#### 解決方法
 
 1. Clerk Dashboard で「Development」インスタンスを使用しているか確認
 2. 環境変数 `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` が開発用キーか確認
 
 ### テストメールアドレスでサインアップできない
 
-**原因**: `+clerk_test` サブアドレスの形式が間違っている
+#### 原因
 
-**解決方法**:
+#### 解決方法
 
 ```text
 ❌ 誤: clerk_test@example.com
@@ -481,9 +481,9 @@ pnpm agent:browser
 
 ### E2E テストでセッションが保持されない
 
-**原因**: `storageState` のパスが間違っている
+#### 原因
 
-**解決方法**:
+#### 解決方法
 
 ```typescript
 // playwright.config.ts

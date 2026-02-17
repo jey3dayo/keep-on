@@ -53,7 +53,7 @@ DB エラーの場合、`code`, `severity`, `constraint_name`, `table_name`, `ca
 
 ## 診断フロー
 
-**エラー発生時の切り分け手順:**
+### エラー発生時の切り分け手順:
 
 1. **ログのサフィックスを確認** → `:timeout` なら タイムアウト階層を確認
 2. **error.code を確認** → PostgreSQL コードなら `references/error-codes.md` を参照
