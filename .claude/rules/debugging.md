@@ -63,9 +63,9 @@ WIN_HOST_IP=$(ip route show default | grep -oP '(?<=via )\d+(\.\d+){3}')
 wget -qO- "http://${WIN_HOST_IP}:9222/json/version"
 ```
 
-#### 重要
+**重要**: WSL2 では `localhost` ではなく Windows ホスト IP（デフォルトゲートウェイ）を使う。
 
-### agent-browser with storageState
+## agent-browser with storageState
 
 Playwright認証状態を使用して、ログイン済み状態でagent-browserを起動できます。
 
