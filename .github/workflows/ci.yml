@@ -76,7 +76,7 @@ jobs:
         uses: ./.github/actions/setup-node-env
 
       - name: Run tests
-        run: pnpm env:run pnpm test:run
+        run: pnpm test:run
         env:
           DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
 
@@ -95,7 +95,7 @@ jobs:
         uses: ./.github/actions/setup-node-env
 
       - name: Run build
-        run: pnpm env:run pnpm build:cf
+        run: pnpm build:cf
         env:
           DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
 

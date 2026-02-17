@@ -33,7 +33,7 @@ interface HabitListViewProps {
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
   onResetOptimistic?: (habitId: string) => OptimisticRollback
-  todayCompleted: number
+  todayActive: number
   todayLabel: string
   totalDaily: number
   totalStreak: number
@@ -51,7 +51,7 @@ export function HabitListView({
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
-  todayCompleted,
+  todayActive,
   todayLabel,
   totalDaily,
   totalStreak,
@@ -80,18 +80,12 @@ export function HabitListView({
   }, [habits])
 
   const sortedHabits = useMemo(() => {
-    return filteredHabits
-      .map((habit, index) => ({
-        habit,
-        index,
-        completed: completedHabitIds.has(habit.id),
-      }))
-      .sort((a, b) => {
-        if (a.completed !== b.completed) {
-          return Number(a.completed) - Number(b.completed)
-        }
-        return a.index - b.index
-      })
+    return filteredHabits.map((habit, index) => ({
+      habit,
+      index,
+      completed: completedHabitIds.has(habit.id),
+    }))
+    // 完了状態によるソートを無効化（位置を保持してガタつきを防止）
   }, [filteredHabits, completedHabitIds])
 
   return (
@@ -108,7 +102,7 @@ export function HabitListView({
               className="border-border/60 bg-card/90 shadow-sm"
               total={totalDaily}
               type="progress"
-              value={todayCompleted}
+              value={todayActive}
             />
             <DashboardStatsCard
               className="border-border/60 bg-card/90 shadow-sm"

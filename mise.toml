@@ -17,7 +17,7 @@ MD_EXCLUDE_WORKTREES = "#**/.worktrees/**"
 
 [tools]
 node = "24.13.0"
-pnpm = "10.29.2"
+pnpm = "10.29.3"
 taplo = "0.10.0"
 "pipx:yamllint" = "latest"
 
@@ -49,6 +49,14 @@ run = "pnpm markdownlint-cli2 '${MD_GLOB}' ${MD_EXCLUDE_NODE_MODULES} ${MD_EXCLU
 description = "YAMLのチェック"
 run = "yamllint -c .yamllint .github/"
 
+[tasks."test:ci"]
+description = "CI向けテスト実行"
+run = "pnpm test:run"
+
+[tasks."build:ci"]
+description = "CI向けCloudflareビルド実行"
+run = "pnpm build:cf"
+
 # ========================================
 # エイリアス（まとめ実行）
 # ========================================
@@ -66,8 +74,8 @@ description = "クイックチェック（型 + Biome）"
 depends = ["lint:types", "lint:biome"]
 
 [tasks.ci]
-description = "CI相当のチェック（format + 型チェック + Markdown + YAML + DBML生成）"
-depends = ["format", "lint:types", "lint:md", "lint:yaml", "db:docs:generate"]
+description = "CI相当のチェック（型 + Biome + Test + Build）"
+depends = ["lint:types", "lint:biome", "test:ci", "build:ci"]
 
 # ========================================
 # デプロイ関連

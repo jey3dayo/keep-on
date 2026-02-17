@@ -192,12 +192,6 @@ export function HabitListCard({
           <span className="text-muted-foreground text-xs">日連続</span>
         </div>
       </div>
-
-      {!completed && habit.frequency > 1 && (
-        <div className="mt-3 flex items-center justify-end gap-2 border-border border-t pt-3 text-muted-foreground text-xs">
-          次のチェックインで完了
-        </div>
-      )}
     </div>
   )
 }

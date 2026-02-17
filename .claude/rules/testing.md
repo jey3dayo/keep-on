@@ -272,6 +272,190 @@ export async function signOut(page: Page) {
 }
 ```
 
+## agent-browser StorageState 統合
+
+Playwright認証状態の再利用により、agent-browserでのデバッグ時にログイン操作を省略できます。
+
+### 概要
+
+E2Eテストで生成した認証状態（`e2e/storage-state.json`）をagent-browserで再利用することで、以下のメリットがあります：
+
+- **高速化**: ログイン操作（メール→パスワード→OTP）を毎回実行する必要がない
+- **信頼性向上**: 認証フローのエラーでデバッグ作業が中断されない
+- **効率化**: デバッグ作業に集中できる
+
+### セットアップ手順
+
+#### 1. Playwrightインストール
+
+```bash
+# Playwright本体とChromiumブラウザをインストール
+pnpm exec playwright install chromium
+```
+
+#### 2. 認証状態生成
+
+初回のみ、Clerk認証状態を生成します：
+
+```bash
+# 開発サーバーを起動（別ターミナル）
+pnpm env:run -- pnpm dev
+
+# 認証状態を生成
+./scripts/setup-auth-state.sh
+```
+
+このスクリプトは以下の処理を自動化します：
+
+1. Playwrightとブラウザのインストール確認
+2. 開発サーバー起動確認
+3. Clerkログインフロー実行
+4. 認証状態を`e2e/storage-state.json`に保存
+5. Cookie数とファイルサイズの検証
+
+#### 3. agent-browserで使用
+
+認証状態を読み込んだChromeを起動します：
+
+```bash
+# ダッシュボードをログイン済み状態で開く
+pnpm exec tsx scripts/agent-browser-playwright.ts
+
+# 任意のURLを指定することも可能
+pnpm exec tsx scripts/agent-browser-playwright.ts http://localhost:3000/habits
+pnpm exec tsx scripts/agent-browser-playwright.ts https://keep-on.j138cm.workers.dev
+```
+
+起動後、以下の状態で利用できます：
+
+- リモートデバッグポート: `9222`
+- ログイン済み状態でページが開かれている
+- MCP Chrome DevToolsが自動的に接続
+
+### 認証状態の更新タイミング
+
+以下の場合は認証状態を再生成する必要があります：
+
+1. Clerk設定変更時:
+   - 認証方式の変更（2FA有効化/無効化など）
+   - テストユーザーのパスワード変更
+
+2. セッション期限切れ時:
+   - Clerkセッションは通常30日で期限切れ
+   - 期限切れ後に`./scripts/setup-auth-state.sh`を再実行
+
+3. 認証エラー発生時:
+   - ログインフォームが表示される
+   - 認証状態が無効になっている
+
+### トラブルシューティング
+
+#### 認証状態ファイルが見つからない
+
+**エラー**: `❌ エラー: e2e/storage-state.json が見つかりません`
+
+**解決方法**:
+
+```bash
+# 認証状態を生成
+./scripts/setup-auth-state.sh
+```
+
+#### agent-browserでログインフォームが表示される
+
+**原因**: セッション期限切れまたは認証状態が無効
+
+**解決方法**:
+
+```bash
+# 既存の認証状態を削除
+rm e2e/storage-state.json
+
+# 認証状態を再生成
+./scripts/setup-auth-state.sh
+```
+
+#### 開発サーバーが起動していない
+
+**エラー**: `✗ 開発サーバーが起動していません`
+
+**解決方法**:
+
+```bash
+# 別のターミナルで開発サーバーを起動
+pnpm env:run -- pnpm dev
+```
+
+#### Chromiumブラウザがインストールされていない
+
+**エラー**: Playwrightがブラウザを見つけられない
+
+**解決方法**:
+
+```bash
+# Chromiumブラウザをインストール
+pnpm exec playwright install chromium
+```
+
+### 使用例
+
+#### ダッシュボードのデバッグ
+
+```bash
+# 認証状態を生成（初回のみ）
+./scripts/setup-auth-state.sh
+
+# ログイン済み状態でダッシュボードを開く
+pnpm exec tsx scripts/agent-browser-playwright.ts
+
+# agent-browserでスクリーンショット取得
+# MCP Chrome DevToolsが自動的に接続されています
+```
+
+#### 習慣ページのデバッグ
+
+```bash
+# ログイン済み状態で習慣ページを開く
+pnpm exec tsx scripts/agent-browser-playwright.ts http://localhost:3000/habits
+```
+
+#### Cloudflare Workers 環境のデバッグ
+
+```bash
+# 本番環境をログイン済み状態で開く
+pnpm exec tsx scripts/agent-browser-playwright.ts https://keep-on.j138cm.workers.dev
+```
+
+**注意**: 本番環境の認証状態は開発環境とは別のため、本番用の認証状態を別途生成する必要があります。
+
+### package.jsonスクリプト
+
+便利なスクリプトがpackage.jsonに追加されています：
+
+```bash
+# E2Eテスト実行
+pnpm test:e2e
+
+# E2EテストUIモード
+pnpm test:e2e:ui
+
+# 認証状態生成のみ
+pnpm test:e2e:setup
+
+# 認証状態生成スクリプト
+pnpm agent:setup
+
+# agent-browser起動
+pnpm agent:browser
+```
+
+### 参考情報
+
+- Playwright認証ガイド: https://playwright.dev/docs/auth
+- Playwrightセットアップスクリプト: `e2e/auth.setup.ts`
+- agent-browser起動スクリプト: `scripts/agent-browser-playwright.ts`
+- 認証状態自動生成: `scripts/setup-auth-state.sh`
+
 ## トラブルシューティング
 
 ### 認証コードが受け付けられない

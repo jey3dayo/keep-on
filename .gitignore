@@ -64,6 +64,11 @@ tmp/
 # next-agents-md
 .next-docs/
 
+# E2E testing
+e2e/storage-state.json
+playwright-report/
+test-results/
+
 # bundle size history
 .bundle-history/
 

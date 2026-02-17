@@ -17,7 +17,7 @@ type Story = StoryObj<typeof meta>
 export const Mobile: Story = {
   args: {
     variant: 'mobile',
-    todayCompleted: 5,
+    todayActive: 5,
     totalDaily: 8,
     totalStreak: 12,
   },
@@ -26,7 +26,7 @@ export const Mobile: Story = {
 export const Desktop: Story = {
   args: {
     variant: 'desktop',
-    todayCompleted: 5,
+    todayActive: 5,
     totalDaily: 8,
     totalStreak: 12,
     onAddClick: () => {
@@ -38,7 +38,7 @@ export const Desktop: Story = {
 export const DesktopCompleted: Story = {
   args: {
     variant: 'desktop',
-    todayCompleted: 8,
+    todayActive: 8,
     totalDaily: 8,
     totalStreak: 30,
     onAddClick: () => {
@@ -50,7 +50,7 @@ export const DesktopCompleted: Story = {
 export const MobileZero: Story = {
   args: {
     variant: 'mobile',
-    todayCompleted: 0,
+    todayActive: 0,
     totalDaily: 5,
     totalStreak: 0,
   },

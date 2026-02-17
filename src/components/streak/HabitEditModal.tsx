@@ -166,7 +166,7 @@ export function HabitEditModal({ habit, onClose, onSave, onDelete }: HabitEditMo
 
           {/* Period Selection */}
           <div className="space-y-2">
-            <span className="font-medium text-muted-foreground text-sm uppercase tracking-wide">タスクの種類</span>
+            <span className="font-medium text-muted-foreground text-sm uppercase tracking-wide">頻度</span>
             <div className="grid grid-cols-3 gap-2">
               {taskPeriods.map((period) => {
                 const isSelected = selectedPeriod === period.id

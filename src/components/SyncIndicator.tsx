@@ -1,61 +1,77 @@
 'use client'
 
-import { Check, CloudUpload } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { CheckCircle2, CloudUpload } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { SYNC_INDICATOR_DELAY_MS, SYNC_INDICATOR_MIN_DISPLAY_MS } from '@/constants/sync'
 import { useSyncContext } from '@/contexts/SyncContext'
 
 export function SyncIndicator() {
   const { isSyncing } = useSyncContext()
-  const [showCompleted, setShowCompleted] = useState(false)
-  const [wasJustSyncing, setWasJustSyncing] = useState(false)
+  const [showSyncIcon, setShowSyncIcon] = useState(false)
+  const delayTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const minDisplayTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const isDisplayingRef = useRef(false)
 
-  // 同期開始時の状態更新
   useEffect(() => {
     if (isSyncing) {
-      setWasJustSyncing(true)
-      setShowCompleted(false)
-    }
-  }, [isSyncing])
+      // 既存の最低表示時間タイマーをクリア
+      if (minDisplayTimerRef.current) {
+        clearTimeout(minDisplayTimerRef.current)
+        minDisplayTimerRef.current = null
+      }
 
-  // 同期完了時のチェックマーク表示
-  useEffect(() => {
-    if (!isSyncing && wasJustSyncing) {
-      setShowCompleted(true)
-      const timer = setTimeout(() => {
-        setShowCompleted(false)
-        setWasJustSyncing(false)
-      }, 1500)
+      // 既存の遅延タイマーもクリア（短時間で開始→終了→再開始した場合）
+      if (delayTimerRef.current) {
+        clearTimeout(delayTimerRef.current)
+        delayTimerRef.current = null
+      }
 
-      return () => {
-        clearTimeout(timer)
+      // 遅延してから同期アイコンを表示
+      delayTimerRef.current = setTimeout(() => {
+        setShowSyncIcon(true)
+        isDisplayingRef.current = true
+      }, SYNC_INDICATOR_DELAY_MS)
+    } else {
+      // 同期終了時
+      if (delayTimerRef.current) {
+        // まだ表示前なら表示をキャンセル
+        clearTimeout(delayTimerRef.current)
+        delayTimerRef.current = null
+      }
+
+      if (isDisplayingRef.current) {
+        // 既に表示中の場合は最低表示時間を確保してから非表示
+        minDisplayTimerRef.current = setTimeout(() => {
+          setShowSyncIcon(false)
+          isDisplayingRef.current = false
+        }, SYNC_INDICATOR_MIN_DISPLAY_MS)
       }
     }
-  }, [isSyncing, wasJustSyncing])
 
-  if (!(isSyncing || showCompleted)) {
-    return null
-  }
+    return () => {
+      if (delayTimerRef.current) {
+        clearTimeout(delayTimerRef.current)
+      }
+      if (minDisplayTimerRef.current) {
+        clearTimeout(minDisplayTimerRef.current)
+      }
+    }
+  }, [isSyncing])
 
   return (
     <div
       aria-atomic="true"
-      aria-label={isSyncing ? '同期中' : '同期完了'}
+      aria-label={showSyncIcon ? '同期中' : '最新'}
       aria-live="polite"
       className="flex min-h-[44px] min-w-[44px] items-center justify-center"
       role="status"
-      title={isSyncing ? '同期中' : '同期完了'}
+      title={showSyncIcon ? '同期中' : '最新'}
     >
-      <div
-        className={`transition-all duration-200 ease-in-out ${showCompleted && !isSyncing ? 'fade-in zoom-in-95 animate-in' : ''}
-          ${isSyncing ? 'motion-safe:animate-spin motion-reduce:animate-pulse' : ''}
-        `}
-      >
-        {isSyncing ? (
-          <CloudUpload className="h-5 w-5 text-muted-foreground" />
-        ) : (
-          <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-        )}
-      </div>
+      {showSyncIcon ? (
+        <CloudUpload className="h-6 w-6 text-secondary-foreground" />
+      ) : (
+        <CheckCircle2 className="h-6 w-6 text-secondary-foreground" />
+      )}
     </div>
   )
 }

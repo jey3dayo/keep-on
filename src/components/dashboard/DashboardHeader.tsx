@@ -6,20 +6,14 @@ import { cn } from '@/lib/utils'
 import { DashboardStatsCard } from './DashboardStatsCard'
 
 interface DashboardHeaderProps {
-  todayCompleted: number
+  todayActive: number
   totalDaily: number
   totalStreak: number
   onAddClick?: () => void
   variant: 'mobile' | 'desktop'
 }
 
-export function DashboardHeader({
-  todayCompleted,
-  totalDaily,
-  totalStreak,
-  onAddClick,
-  variant,
-}: DashboardHeaderProps) {
+export function DashboardHeader({ todayActive, totalDaily, totalStreak, onAddClick, variant }: DashboardHeaderProps) {
   const today = new Date()
   const dayNames = ['日', '月', '火', '水', '木', '金', '土']
   const currentDayName = dayNames[today.getDay()]
@@ -43,7 +37,7 @@ export function DashboardHeader({
 
       {/* 統計カード */}
       <div className={cn('gap-3', variant === 'mobile' ? 'grid grid-cols-2' : 'flex')}>
-        <DashboardStatsCard total={totalDaily} type="progress" value={todayCompleted} />
+        <DashboardStatsCard total={totalDaily} type="progress" value={todayActive} />
         <DashboardStatsCard suffix="日" type="streak" value={totalStreak} />
       </div>
     </>
