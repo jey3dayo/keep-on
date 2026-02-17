@@ -140,7 +140,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
         </div>
 
         <div className="space-y-3">
-          <p className="font-medium text-muted-foreground text-sm uppercase tracking-wide">タスクの種類</p>
+          <p className="font-medium text-muted-foreground text-sm uppercase tracking-wide">頻度</p>
           <div className="grid grid-cols-3 gap-2">
             {taskPeriods.map((period) => {
               const isSelected = selectedPeriod === period.id

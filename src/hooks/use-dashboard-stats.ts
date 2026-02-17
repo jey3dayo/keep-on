@@ -23,7 +23,9 @@ export function useDashboardStats(habits: HabitWithProgress[]): DashboardStats {
 
       if (habit.period === 'daily') {
         dailyTotal += 1
-        if (isCompleted) {
+        // 進行中または完了の習慣をカウント（チェックインが即座に反映される）
+        const hasProgress = habit.currentProgress > 0
+        if (hasProgress) {
           dailyCompleted += 1
         }
       }

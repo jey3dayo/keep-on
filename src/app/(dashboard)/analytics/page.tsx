@@ -93,13 +93,15 @@ export default async function AnalyticsPage() {
   })
 
   const totalHabits = habits.length
-  const completedHabits = habits.filter((habit) => habit.currentProgress >= habit.frequency).length
+  // 進行中または完了の習慣をカウント（部分的な進捗も反映）
+  const completedHabits = habits.filter((habit) => habit.currentProgress > 0).length
   const completionRate = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0
   const totalStreak = habits.reduce((sum, habit) => sum + habit.streak, 0)
 
   const periodBreakdown = PERIODS.map((period) => {
     const periodHabits = habits.filter((habit) => habit.period === period)
-    const completed = periodHabits.filter((habit) => habit.currentProgress >= habit.frequency).length
+    // 進行中または完了の習慣をカウント（部分的な進捗も反映）
+    const completed = periodHabits.filter((habit) => habit.currentProgress > 0).length
     const rate = periodHabits.length > 0 ? Math.round((completed / periodHabits.length) * 100) : 0
 
     return {

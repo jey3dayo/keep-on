@@ -47,7 +47,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
           <X className="h-5 w-5 text-white" />
         </Button>
 
-        <h1 className="font-semibold text-lg text-white">タスクを追加</h1>
+        <h1 className="font-semibold text-lg text-white">習慣を追加</h1>
 
         <Button
           className="h-10 w-10 rounded-full p-0"
@@ -102,7 +102,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
 
       <div className="px-4 pb-4">
         <p className="text-sm text-white/80 leading-relaxed">
-          プリセットを選択するか、自身でカスタムタスクを作成できます。
+          プリセットを選択するか、自身でカスタム習慣を作成できます。
         </p>
       </div>
 
@@ -115,7 +115,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
           type="button"
           variant="ghost"
         >
-          タスクのタイトルを入力...
+          習慣の名前を入力...
         </Button>
       </div>
 

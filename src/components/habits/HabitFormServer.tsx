@@ -227,7 +227,7 @@ export function HabitFormServer({
           name="period"
           render={({ field }) => (
             <div className="space-y-3">
-              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">タスクの種類</div>
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">頻度</div>
               <div className="grid grid-cols-3 gap-2">
                 {taskPeriods.map((period) => {
                   const isSelected = field.value === period.id
