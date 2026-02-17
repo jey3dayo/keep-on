@@ -336,15 +336,15 @@ pnpm exec tsx scripts/agent-browser-playwright.ts https://keep-on.j138cm.workers
 
 以下の場合は認証状態を再生成する必要があります：
 
-1. **Clerk設定変更時**:
+1. Clerk設定変更時:
    - 認証方式の変更（2FA有効化/無効化など）
    - テストユーザーのパスワード変更
 
-2. **セッション期限切れ時**:
+2. セッション期限切れ時:
    - Clerkセッションは通常30日で期限切れ
    - 期限切れ後に`./scripts/setup-auth-state.sh`を再実行
 
-3. **認証エラー発生時**:
+3. 認証エラー発生時:
    - ログインフォームが表示される
    - 認証状態が無効になっている
 
