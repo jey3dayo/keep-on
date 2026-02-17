@@ -91,7 +91,8 @@ export default defineConfig({
   webServer: (() => {
     const key = loadDotenvPrivateKey()
     const command = `DOTENV_PRIVATE_KEY="${key || ''}" pnpm dev`
-    console.log('[playwright.config] webServer command:', `${command.substring(0, 50)}...`)
+    const commandForLog = key ? 'DOTENV_PRIVATE_KEY="[REDACTED]" pnpm dev' : 'DOTENV_PRIVATE_KEY="[MISSING]" pnpm dev'
+    console.log('[playwright.config] webServer command:', commandForLog)
 
     return {
       // Next.js開発サーバーを起動（dotenvxに環境変数を渡す）
