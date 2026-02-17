@@ -18,11 +18,11 @@ source "${SCRIPT_DIR}/lib/common.sh"
 cleanup() {
   if [[ -f .secrets.json ]]; then
     rm -f .secrets.json
-    echo "✔ .secrets.json を削除しました"
+    success ".secrets.json を削除しました"
   fi
 }
 
-trap cleanup EXIT
+register_cleanup cleanup
 
 echo "========================================="
 echo "Cloudflare Workers Secrets バルク登録"

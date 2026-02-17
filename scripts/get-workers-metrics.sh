@@ -88,7 +88,7 @@ echo "  P99: ${CPU_P99}"
 
 # P99が警告閾値を超えているか
 if (( $(echo "$CPU_P99 > 50" | bc -l) )); then
-  echo -e "  ${RED}⚠ 警告: P99 CPU Time が 50ms を超えています${NC}"
+  warn "  ⚠ 警告: P99 CPU Time が 50ms を超えています"
 fi
 echo ""
 
@@ -104,7 +104,7 @@ echo "  P99: ${DURATION_P99}"
 
 # P99が警告閾値を超えているか
 if (( $(echo "$DURATION_P99 > 500" | bc -l) )); then
-  echo -e "  ${RED}⚠ 警告: P99 Duration が 500ms を超えています${NC}"
+  warn "  ⚠ 警告: P99 Duration が 500ms を超えています"
 fi
 echo ""
 
