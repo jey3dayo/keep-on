@@ -70,7 +70,7 @@ export default defineConfig({
     // 認証状態生成プロジェクト
     {
       name: 'setup',
-      testMatch: /.*\.setup\.ts/,
+      testMatch: /.*\.setup\.(ts|cjs)/,
       // setupプロジェクトはstorageStateを読み込まない
     },
 
@@ -91,13 +91,15 @@ export default defineConfig({
   webServer: (() => {
     const key = loadDotenvPrivateKey()
     const command = `DOTENV_PRIVATE_KEY="${key || ''}" pnpm dev`
-    console.log('[playwright.config] webServer command:', command.substring(0, 50) + '...')
+    console.log('[playwright.config] webServer command:', `${command.substring(0, 50)}...`)
 
     return {
       // Next.js開発サーバーを起動（dotenvxに環境変数を渡す）
       // シェル経由で環境変数を設定してからpnpm devを実行
       command,
-      url: 'http://localhost:3000',
+      // "/" は /dashboard へリダイレクトし 404 終端になるため、
+      // Playwright の webServer 判定が失敗する。200 を返す /sign-in を使用する。
+      url: 'http://localhost:3000/sign-in',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000, // WSL2環境を考慮して2分に設定
     }

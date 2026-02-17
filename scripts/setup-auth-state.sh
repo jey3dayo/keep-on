@@ -46,7 +46,7 @@ echo ""
 
 # Step 3: 開発サーバー起動確認
 echo "🔍 Step 3: 開発サーバーの起動を確認中..."
-if ! curl -s http://localhost:3000 > /dev/null 2>&1; then
+if ! curl -s --max-time 3 --fail http://localhost:3000/sign-in > /dev/null 2>&1; then
   echo -e "${YELLOW}⚠ 開発サーバーが起動していません${NC}"
   echo -e "${YELLOW}  → Playwrightが自動的にサーバーを起動します${NC}"
 else

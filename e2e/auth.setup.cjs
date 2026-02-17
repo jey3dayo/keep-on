@@ -1,6 +1,7 @@
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { test as setup } from '@playwright/test'
+'use strict'
+
+const { join } = require('node:path')
+const { expect, test: setup } = require('@playwright/test')
 
 /**
  * Clerk認証状態生成セットアップ
@@ -14,15 +15,20 @@ import { test as setup } from '@playwright/test'
  * - OTP: 424242
  */
 
-// ファイルパス解決（ESM対応）
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+// ファイルパス解決（CJS）
 const STORAGE_STATE = join(__dirname, 'storage-state.json')
 
 // テストユーザー情報（testing.mdクイックリファレンスより）
 const TEST_EMAIL = 'jane+clerk_test@example.com'
 const TEST_PASSWORD = 'dyc.PBR3pjc.cmh!fmx'
 const TEST_OTP = '424242'
+
+async function clickContinue(page) {
+  await page
+    .getByRole('button', { name: /^Continue$/ })
+    .first()
+    .click()
+}
 
 setup('authenticate with Clerk', async ({ page }) => {
   console.log('[auth.setup] Starting Clerk authentication...')
@@ -38,7 +44,7 @@ setup('authenticate with Clerk', async ({ page }) => {
   console.log('[auth.setup] Email entered:', TEST_EMAIL)
 
   // Continue ボタンをクリック
-  await page.click('button[type="submit"]')
+  await clickContinue(page)
   console.log('[auth.setup] Clicked Continue button')
 
   // パスワード入力画面を待機
@@ -48,33 +54,43 @@ setup('authenticate with Clerk', async ({ page }) => {
   console.log('[auth.setup] Password entered')
 
   // Continue ボタンをクリック
-  await page.click('button[type="submit"]')
+  await clickContinue(page)
   console.log('[auth.setup] Clicked Continue button')
 
   // OTP入力画面またはダッシュボードへの遷移を待機
   try {
-    // OTP入力画面が表示される場合（2FA有効時）
-    const otpInput = page.locator('input[name="code"]')
-    await otpInput.waitFor({ state: 'visible', timeout: 5000 })
-    console.log('[auth.setup] OTP input detected, entering code...')
+    // 2FA/メール認証コード入力画面が表示される場合
+    const otpInput = page
+      .locator('input[name="code"], input[autocomplete="one-time-code"], input[placeholder*="verification code" i]')
+      .first()
+    await otpInput.waitFor({ state: 'visible', timeout: 10_000 })
+    console.log('[auth.setup] Verification code input detected, entering code...')
 
     await otpInput.fill(TEST_OTP)
-    console.log('[auth.setup] OTP entered:', TEST_OTP)
+    console.log('[auth.setup] Verification code entered:', TEST_OTP)
 
     // Continue ボタンをクリック
-    await page.click('button[type="submit"]')
+    await clickContinue(page)
     console.log('[auth.setup] Clicked Continue button')
   } catch (_error) {
     // OTP入力画面が表示されない場合はスキップ
     console.log('[auth.setup] OTP input not required, skipping...')
   }
 
-  // ダッシュボードへのリダイレクトを待機
-  await page.waitForURL('/dashboard', { timeout: 10_000 })
-  console.log('[auth.setup] Successfully redirected to /dashboard')
+  // URL遷移ではなく、ClerkセッションCookieの確立を認証完了条件にする
+  await expect
+    .poll(
+      async () => {
+        const cookies = await page.context().cookies()
+        return cookies.some((cookie) => cookie.name.startsWith('__session'))
+      },
+      { timeout: 20_000 }
+    )
+    .toBeTruthy()
+  console.log('[auth.setup] Clerk session cookie detected')
 
-  // ページが完全にロードされるのを待機
-  await page.waitForLoadState('networkidle')
+  // 少なくともDOMが読み込み済みであることを確認
+  await page.waitForLoadState('domcontentloaded')
 
   // 認証状態をファイルに保存
   await page.context().storageState({ path: STORAGE_STATE })
@@ -86,7 +102,7 @@ setup('authenticate with Clerk', async ({ page }) => {
   if (clerkSessionCookie) {
     console.log('[auth.setup] Clerk session cookie found:', clerkSessionCookie.name)
   } else {
-    console.log('[auth.setup] Warning: __session cookie not found, but /dashboard redirect succeeded')
+    console.log('[auth.setup] Warning: __session cookie not found after authentication flow')
   }
 
   console.log('[auth.setup] Authentication setup completed successfully!')
