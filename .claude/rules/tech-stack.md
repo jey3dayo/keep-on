@@ -21,24 +21,24 @@ paths:
 
 ## Drizzle ORM 構成
 
-### 構成:
+**構成:**
 
 - スキーマ定義: `src/db/schema.ts`
 - DB接続: `@cloudflare/d1` (Edge Runtime互換)
 - Cloudflare D1 は Workers バインディング経由で接続
 
-### 特徴:
+**特徴:**
 Cloudflare Workers で完全動作する軽量ORM。Prisma v7のWASM問題を回避。
 
 ## Cloudflare Workers 制約
 
-### 制限事項:
+**制限事項:**
 
 - バンドルサイズ: 25MB gzipped 制限
 - nodejs_compat フラグ必須（wrangler.jsonc）
 - Node.js 固有 API は使用不可
 
-### 対応方法:
+**対応方法:**
 
 - Edge Runtime 互換のコードのみ使用
 - `fs`, `path`, `crypto` などの Node.js API は避ける

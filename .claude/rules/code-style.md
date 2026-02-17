@@ -27,7 +27,7 @@ paths:
 Next.js 15 App Router では、すべてのコンポーネントはデフォルトで Server Component として扱われます。
 Client Component が必要な場合のみ `"use client"` ディレクティブを使用してください。
 
-### 良い例:
+**良い例:**
 
 ```tsx
 // Server Component (デフォルト)
@@ -36,7 +36,7 @@ export default function Page() {
 }
 ```
 
-### Client Component が必要な場合:
+**Client Component が必要な場合:**
 
 ```tsx
 "use client";
@@ -52,7 +52,7 @@ export default function InteractiveComponent() {
 Clerk の `auth()` 関数は Server Components または Server Actions でのみ使用可能です。
 Client Components では `useAuth()` フックを使用してください。
 
-### サーバー側:
+**サーバー側:**
 
 ```tsx
 import { auth } from "@clerk/nextjs/server";
@@ -63,7 +63,7 @@ export default async function Page() {
 }
 ```
 
-### クライアント側:
+**クライアント側:**
 
 ```tsx
 "use client";
@@ -79,7 +79,7 @@ export default function Component() {
 
 Drizzle DB インスタンスは必ず `src/lib/db.ts` の `getDb()` 関数を使用してください。
 
-### 正しい使い方:
+**正しい使い方:**
 
 ```tsx
 import { getDb } from "@/lib/db";
@@ -90,7 +90,7 @@ const db = await getDb();
 const userList = await db.select().from(users).where(eq(users.id, userId));
 ```
 
-### 誤った使い方:
+**誤った使い方:**
 
 ```tsx
 // ❌ 直接インスタンス化しない
@@ -100,13 +100,13 @@ const db = drizzle(...);
 
 #### データベース接続のベストプラクティス
 
-### 接続プールの管理:
+**接続プールの管理:**
 
 - `getDb()` は内部で接続プールを管理し、自動的にリトライを実行
 - グローバルシングルトンパターンで接続を共有
 - Cloudflare Workers環境では最大2接続（並行RSCリクエスト対応）
 
-### エラーハンドリング:
+**エラーハンドリング:**
 
 ```tsx
 // ✅ getDb() が自動的にリトライとエラー分類を処理
@@ -119,7 +119,7 @@ try {
 }
 ```
 
-### タイムアウト制御:
+**タイムアウト制御:**
 
 - クエリタイムアウト: 5秒（`DB_STATEMENT_TIMEOUT`）
 - 接続タイムアウト: 3秒（`DB_CONNECT_TIMEOUT`）
@@ -131,13 +131,13 @@ try {
 
 機密情報を含む環境変数は `.env` ファイルに平文で保存せず、dotenvx で暗号化してください。
 
-### 暗号化:
+**暗号化:**
 
 ```bash
 pnpm env:encrypt
 ```
 
-### 復号して実行:
+**復号して実行:**
 
 ```bash
 pnpm env:run -- pnpm dev
@@ -147,14 +147,14 @@ pnpm env:run -- pnpm dev
 
 マジックナンバーや設定値は定数として抽出し、`src/constants/` で管理してください。
 
-### 定数ファイルの配置:
+**定数ファイルの配置:**
 
 - `src/constants/db.ts` - データベース接続設定
 - `src/constants/cache.ts` - キャッシュ設定
 - `src/constants/habit.ts` - 習慣関連の定数
 - `src/constants/habit-data.ts` - 習慣関連の静的データ
 
-### 良い例:
+**良い例:**
 
 ```tsx
 // src/constants/db.ts
@@ -171,7 +171,7 @@ const client = postgres(connectionString, {
 });
 ```
 
-### 悪い例:
+**悪い例:**
 
 ```tsx
 // ❌ ハードコードされた値
@@ -186,14 +186,14 @@ const client = postgres(connectionString, {
 Cloudflare Workers 環境では Node.js 固有 API が使用できません。
 Edge Runtime 互換のコードのみを使用してください。
 
-### 使用不可:
+**使用不可:**
 
 - `fs` (ファイルシステム)
 - `path` (Node.js の path モジュール)
 - `crypto` (Node.js の crypto モジュール)
 - その他の Node.js 組み込みモジュール
 
-### 代替手段:
+**代替手段:**
 
 - Web標準APIを使用（Fetch API, Web Crypto API など）
 - Edge Runtime 互換のライブラリを選択

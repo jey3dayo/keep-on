@@ -114,9 +114,9 @@ Duration: 5 minutes
 ### API トークンの作成
 
 1. [API Tokens](https://dash.cloudflare.com/profile/api-tokens) → **Create Token**
-2. Template: Analytics Read
-3. Permissions: `Analytics:Read`
-4. Account Resources: 該当アカウント
+2. **Template**: Analytics Read
+3. **Permissions**: `Analytics:Read`
+4. **Account Resources**: 該当アカウント
 5. トークンをコピー
 
 ### サンプルクエリ
@@ -195,8 +195,8 @@ curl -X POST https://api.cloudflare.com/client/v4/graphql \
 
 1. Grafana → **Configuration** → **Data Sources** → **Add data source**
 2. **JSON API** を選択（プラグインが必要な場合はインストール）
-3. URL: `https://api.cloudflare.com/client/v4/graphql`
-4. Custom HTTP Headers:
+3. **URL**: `https://api.cloudflare.com/client/v4/graphql`
+4. **Custom HTTP Headers**:
    - `Authorization: Bearer YOUR_API_TOKEN`
 
 ### パネル構成例
@@ -317,16 +317,16 @@ Cloudflare Workers は CPU Time で課金されます。
 
 ### コスト最適化
 
-1. P99 CPU Time を監視
+1. **P99 CPU Time を監視**
    - 目標: < 50ms
    - 警告: > 100ms
 
-2. 重い処理を最適化
+2. **重い処理を最適化**
    - DB クエリの最適化
    - 不要な処理の削減
    - キャッシュの活用
 
-3. サンプリングレートの調整
+3. **サンプリングレートの調整**
    - Sentry のサンプリングレート: 10%
    - Analytics Engine のサンプリング: 100%（軽量）
 
@@ -366,12 +366,12 @@ Cloudflare Workers は CPU Time で課金されます。
 
 ### メトリクスが表示されない
 
-### 原因:
+**原因:**
 
 - `observability: { enabled: true }` が設定されていない
 - Worker がデプロイされていない
 
-### 解決方法:
+**解決方法:**
 
 ```bash
 # wrangler.jsonc を確認
@@ -384,13 +384,13 @@ pnpm wrangler deploy
 
 ### CPU Time が高い
 
-### 調査方法:
+**調査方法:**
 
 1. Cloudflare Dashboard で P99 CPU Time を確認
 2. Sentry でスロークエリを特定
 3. `wrangler tail` でリアルタイムログを確認
 
-### 最適化:
+**最適化:**
 
 - DB クエリのインデックス追加
 - 不要な処理の削減
@@ -398,13 +398,13 @@ pnpm wrangler deploy
 
 ### エラー率が高い
 
-### 調査方法:
+**調査方法:**
 
 1. Sentry でエラー内容を確認
 2. `wrangler tail` でエラーログを確認
 3. Cloudflare Dashboard でエラー種別を確認
 
-### 対処:
+**対処:**
 
 - エラーハンドリングの改善
 - リトライロジックの追加
