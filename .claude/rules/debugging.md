@@ -63,7 +63,7 @@ WIN_HOST_IP=$(ip route show default | grep -oP '(?<=via )\d+(\.\d+){3}')
 wget -qO- "http://${WIN_HOST_IP}:9222/json/version"
 ```
 
-**重要**: WSL2 では `localhost` ではなく Windows ホスト IP（デフォルトゲートウェイ）を使う。
+#### 重要
 
 ## agent-browser with storageState
 
@@ -122,45 +122,3 @@ pnpm cf:logs
 - `request.dashboard:start` / `request.dashboard:end` が出るか
 - `:timeout` / `TimeoutError` が出ていないか
 - `db.connection` が毎回出続けないか（過剰再接続）
-
-## シェルスクリプト開発
-
-### 共通ライブラリの使用
-
-プロジェクト内のシェルスクリプト開発時は、`scripts/lib/common.sh` を使用してください。
-
-#### 基本テンプレート
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-# 共通ライブラリを読み込む
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
-
-# 環境変数チェック
-check_env "REQUIRED_VAR"
-
-# プロジェクトルート取得
-PROJECT_ROOT=$(get_project_root)
-
-# 処理開始
-info "処理を開始します..."
-
-# エラー時
-if [[ ! -f "required-file.txt" ]]; then
-  error "必須ファイルが見つかりません"
-fi
-
-# 成功時
-success "処理が完了しました"
-```
-
-#### 提供される機能
-
-- **カラー定義**: `RED`, `GREEN`, `YELLOW`, `BLUE`, `NC`
-- **出力関数**: `error()`, `success()`, `warn()`, `info()`
-- **ユーティリティ**: `check_env()`, `get_project_root()`
-
-詳細は `scripts/lib/README.md` を参照してください。
