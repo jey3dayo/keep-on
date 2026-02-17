@@ -47,14 +47,11 @@ echo ""
 # Step 3: 開発サーバー起動確認
 echo "🔍 Step 3: 開発サーバーの起動を確認中..."
 if ! curl -s http://localhost:3000 > /dev/null 2>&1; then
-  echo -e "${RED}✗ 開発サーバーが起動していません${NC}"
-  echo ""
-  echo "別のターミナルで開発サーバーを起動してください:"
-  echo "  pnpm env:run -- pnpm dev"
-  echo ""
-  exit 1
+  echo -e "${YELLOW}⚠ 開発サーバーが起動していません${NC}"
+  echo -e "${YELLOW}  → Playwrightが自動的にサーバーを起動します${NC}"
+else
+  echo -e "${GREEN}✓ Development server is running${NC}"
 fi
-echo -e "${GREEN}✓ Development server is running${NC}"
 echo ""
 
 # Step 4: 既存の認証状態ファイル削除
