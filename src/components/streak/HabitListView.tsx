@@ -80,18 +80,12 @@ export function HabitListView({
   }, [habits])
 
   const sortedHabits = useMemo(() => {
-    return filteredHabits
-      .map((habit, index) => ({
-        habit,
-        index,
-        completed: completedHabitIds.has(habit.id),
-      }))
-      .sort((a, b) => {
-        if (a.completed !== b.completed) {
-          return Number(a.completed) - Number(b.completed)
-        }
-        return a.index - b.index
-      })
+    return filteredHabits.map((habit, index) => ({
+      habit,
+      index,
+      completed: completedHabitIds.has(habit.id),
+    }))
+    // 完了状態によるソートを無効化（位置を保持してガタつきを防止）
   }, [filteredHabits, completedHabitIds])
 
   return (
