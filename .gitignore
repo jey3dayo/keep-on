@@ -68,3 +68,9 @@ tmp/
 e2e/storage-state.json
 playwright-report/
 test-results/
+
+# bundle size history
+.bundle-history/
+
+# cloudflare secrets (機密情報)
+.secrets.json

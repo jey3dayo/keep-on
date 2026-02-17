@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-# Cloudflare Workers Secrets セットアップスクリプト
+# Cloudflare Workers Secrets バルク登録スクリプト
 #
 # 使い方:
-#   ./scripts/setup-cloudflare-secrets.sh
+#   ./scripts/setup-cloudflare-secrets-bulk.sh
 #
 # 必要な環境変数:
 #   CLOUDFLARE_API_TOKEN
 #   CLOUDFLARE_ACCOUNT_ID
-#   CLERK_SECRET_KEY
 
 set -euo pipefail
 
@@ -41,22 +40,18 @@ check_env() {
   fi
 }
 
-# Secrets設定
-set_secret() {
-  local secret_name=$1
-  local secret_value=$2
-
-  echo "Setting secret: $secret_name"
-
-  if echo "$secret_value" | pnpm wrangler secret put "$secret_name" --quiet 2>/dev/null; then
-    success "Secret '$secret_name' を設定しました"
-  else
-    error "Secret '$secret_name' の設定に失敗しました"
+# クリーンアップ（終了時に実行）
+cleanup() {
+  if [[ -f .secrets.json ]]; then
+    rm -f .secrets.json
+    echo "✔ .secrets.json を削除しました"
   fi
 }
 
+trap cleanup EXIT
+
 echo "========================================="
-echo "Cloudflare Workers Secrets セットアップ"
+echo "Cloudflare Workers Secrets バルク登録"
 echo "========================================="
 echo ""
 
@@ -64,21 +59,28 @@ echo ""
 check_env "CLOUDFLARE_API_TOKEN"
 check_env "CLOUDFLARE_ACCOUNT_ID"
 
-# dotenvx で .env を読み込んで実行
-if command -v dotenvx &> /dev/null; then
-  warn "dotenvx で .env を読み込みます..."
-
-  # .env から環境変数を読み込む
-  eval "$(dotenvx run -- env | grep -E '^(CLERK_SECRET_KEY)=')"
+# JSON ファイルを生成
+if [[ ! -f ./scripts/generate-secrets-json.sh ]]; then
+  error "generate-secrets-json.sh が見つかりません"
 fi
 
-# Secrets設定
-check_env "CLERK_SECRET_KEY"
+echo "1. Secrets JSON を生成中..."
+./scripts/generate-secrets-json.sh
 
-set_secret "CLERK_SECRET_KEY" "$CLERK_SECRET_KEY"
+if [[ ! -f .secrets.json ]]; then
+  error ".secrets.json の生成に失敗しました"
+fi
 
 echo ""
-success "全てのSecretsを設定しました！"
+echo "2. Secrets をバルク登録中..."
+
+# wrangler secret bulk を使用
+if pnpm wrangler secret bulk .secrets.json; then
+  success "全ての Secrets を登録しました！"
+else
+  error "Secrets の登録に失敗しました"
+fi
+
 echo ""
 echo "確認コマンド:"
 echo "  pnpm wrangler secret list"

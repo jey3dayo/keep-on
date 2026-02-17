@@ -2,7 +2,7 @@
 
 ## プロジェクト概要
 
-KeepOn は、Next.js 15 + Cloudflare Workers + Drizzle ORM + Supabase + Clerk で構築された PWA アプリケーションです。
+KeepOn は、Next.js 15 + Cloudflare Workers + Drizzle ORM + Clerk で構築された PWA アプリケーションです。
 
 ## コンテキスト参照
 

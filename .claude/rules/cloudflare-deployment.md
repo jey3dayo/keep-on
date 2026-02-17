@@ -16,8 +16,8 @@
     "NEXTJS_ENV": "production",
     "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "...",
     "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
-    "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up"
-  }
+    "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up",
+  },
 }
 ```
 
@@ -32,7 +32,6 @@
 `wrangler secret` コマンドで Cloudflare に保存：
 
 ```bash
-echo '<value>' | pnpm wrangler secret put DATABASE_URL
 echo '<value>' | pnpm wrangler secret put CLERK_SECRET_KEY
 ```
 
@@ -65,9 +64,6 @@ pnpm wrangler kv namespace create NEXT_INC_CACHE_KV
 # Cloudflare API トークンと Account ID を環境変数に設定
 export CLOUDFLARE_API_TOKEN="your-token"
 export CLOUDFLARE_ACCOUNT_ID="your-account-id"
-
-# DATABASE_URL を設定
-echo 'postgresql://...' | pnpm wrangler secret put DATABASE_URL
 
 # CLERK_SECRET_KEY を設定
 echo 'sk_test_...' | pnpm wrangler secret put CLERK_SECRET_KEY
@@ -139,11 +135,11 @@ pnpm wrangler secret list
 
 GitHub リポジトリの Settings → Secrets and variables → Actions で設定：
 
-| Secret名 | 説明 | 取得方法 |
-| --- | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API トークン | [API Tokens](https://dash.cloudflare.com/profile/api-tokens) |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウントID | Dashboard 右サイドバー |
-| `DOTENV_PRIVATE_KEY` | dotenvx 秘密鍵 | `.env.keys` ファイル |
+| Secret名                | 説明                    | 取得方法                                                     |
+| ----------------------- | ----------------------- | ------------------------------------------------------------ |
+| `CLOUDFLARE_API_TOKEN`  | Cloudflare API トークン | [API Tokens](https://dash.cloudflare.com/profile/api-tokens) |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウントID | Dashboard 右サイドバー                                       |
+| `DOTENV_PRIVATE_KEY`    | dotenvx 秘密鍵          | `.env.keys` ファイル                                         |
 
 #### ワークフロー有効化
 
@@ -154,21 +150,144 @@ git push origin main
 
 ---
 
-## Secrets自動設定スクリプト
+## Secrets登録方法
 
-初回セットアップやSecrets更新時に使用：
+### バルク登録（推奨）
+
+`wrangler secret bulk` を使った一括登録：
 
 ```bash
-# .env から読み込んで一括設定
-./scripts/setup-cloudflare-secrets.sh
+# バルク登録スクリプトを実行
+./scripts/setup-cloudflare-secrets-bulk.sh
 ```
+
+**仕組み:**
+
+1. `.env` から環境変数を読み込み
+2. `.secrets.json` を生成（一時ファイル、自動削除）
+3. `wrangler secret bulk` で一括登録
 
 **必要な環境変数:**
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
+- `DOTENV_PRIVATE_KEY`（dotenvx復号用）
 
-スクリプトは自動的に `.env` から `DATABASE_URL` と `CLERK_SECRET_KEY` を読み込みます。
+**登録されるSecrets:**
+
+- `CLERK_SECRET_KEY`
+- `SENTRY_DSN`（設定されている場合）
+
+### 個別登録
+
+個別に設定する場合（既存スクリプト）：
+
+```bash
+./scripts/setup-cloudflare-secrets.sh
+```
+
+### GitHub Actions での自動同期
+
+`.github/workflows/sync-secrets.yml` で手動トリガー可能：
+
+1. GitHub リポジトリの **Actions** タブを開く
+2. **Sync Secrets to Cloudflare** ワークフローを選択
+3. **Run workflow** をクリック
+
+**注意事項:**
+
+- 既存のSecretsを上書きします
+- GitHub Secrets（`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `DOTENV_PRIVATE_KEY`）が必要
+
+---
+
+## PRプレビュー機能
+
+GitHub PR作成時に、自動的にプレビュー環境をデプロイします。
+
+### 自動デプロイ
+
+`.github/workflows/preview.yml` が以下を実行：
+
+1. **PR作成・更新時**: 自動ビルド＆デプロイ
+2. **固定URL**: `https://keep-on-pr-{PR番号}.j138cm.workers.dev`
+3. **PRコメント**: デプロイURLを自動投稿
+4. **PRクローズ時**: プレビュー環境を自動削除
+
+### プレビューURL例
+
+| PR番号 | プレビューURL                               |
+| ------ | ------------------------------------------- |
+| #123   | `https://keep-on-pr-123.j138cm.workers.dev` |
+| #456   | `https://keep-on-pr-456.j138cm.workers.dev` |
+
+### 注意事項
+
+⚠️ **プレビュー環境は本番と同じデータベースを共有します**
+
+- データ操作のテストは慎重に行ってください
+- 本番データを破壊しないように注意してください
+- テスト用ユーザーを使用してください（詳細は `.claude/rules/testing.md`）
+
+### 手動プレビューデプロイ
+
+ローカルからプレビューをデプロイ：
+
+```bash
+# PR番号を指定してデプロイ
+pnpm wrangler deploy --name "keep-on-pr-123" --env preview
+
+# プレビューを削除
+pnpm wrangler delete --name "keep-on-pr-123" --force
+```
+
+---
+
+## バンドルサイズ監視
+
+Cloudflare Workers のバンドルサイズ制限（25MB gzipped）を超えないように、CI で自動監視しています。
+
+### 自動チェック
+
+`.github/workflows/bundle-size.yml` で以下を実行：
+
+1. **PR作成時**: バンドルサイズをチェックしてコメント
+2. **main ブランチ**: サイズ履歴を記録（`.bundle-history/history.txt`）
+
+### 警告・エラー基準
+
+| 状態      | サイズ            | 動作              |
+| --------- | ----------------- | ----------------- |
+| ✅ 正常   | < 20MB (80%)      | CI 成功           |
+| ⚠️ 警告   | 20-25MB (80-100%) | CI 成功、警告表示 |
+| ❌ エラー | > 25MB (100%)     | CI 失敗           |
+
+### 手動確認
+
+ローカルでバンドルサイズを確認：
+
+```bash
+# ビルド実行
+pnpm build:cf
+
+# Dry-run でサイズ確認
+pnpm wrangler deploy --dry-run
+```
+
+出力例：
+
+```
+Total Upload: 12.34 MB / gzip: 4.56 MB
+```
+
+### サイズ削減方法
+
+バンドルサイズが大きい場合の対処法：
+
+1. **未使用依存の削除**: `pnpm dlx depcheck` で検出
+2. **Dynamic Import**: 大きなライブラリを遅延ロード
+3. **Tree Shaking**: 未使用エクスポートを削除
+4. **WASM 除外**: 不要な WASM ファイルを Webpack で除外
 
 ---
 

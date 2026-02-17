@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `Checkin_habitId_date_unique` ON `Checkin` (`habitId`,`date`);

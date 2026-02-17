@@ -88,7 +88,7 @@ pnpm env:run -- pnpm db:migrate
 # Drizzle Studio で確認
 pnpm env:run -- pnpm db:studio
 
-# または Supabase Dashboard で確認
+# または Cloudflare Dashboard → D1 で確認
 ```
 
 #### 3. PRマージと自動デプロイ
@@ -106,11 +106,11 @@ gh pr merge <PR番号> --squash
 ```bash
 # スクリプトを作成
 cat > scripts/migrate-example.mjs << 'EOF'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/cloudflare-d1'
+import { getCloudflareContext } from '@opennextjs/cloudflare'
 
-const client = postgres(process.env.DATABASE_URL)
-const db = drizzle(client)
+const { env } = getCloudflareContext()
+const db = drizzle(env.DB)
 
 // データマイグレーション処理
 await db.update(users).set({ newField: 'default' })
@@ -349,11 +349,10 @@ pnpm fix:db-permissions
 ## 参考リンク
 
 - [Drizzle ORM Migrations](https://orm.drizzle.team/docs/migrations)
-- [Supabase Database Guide](https://supabase.com/docs/guides/database)
-- [PostgreSQL Migration Best Practices](https://www.postgresql.org/docs/current/ddl-alter.html)
+- [Cloudflare D1 Documentation](https://developers.cloudflare.com/d1/)
+- [D1 Migration Best Practices](https://developers.cloudflare.com/d1/learning/migrations/)
 
 ## 関連ドキュメント
 
-- [トラブルシューティング](./troubleshooting.md) - DB権限エラーの解決方法
-- [セキュリティガイドライン](./security.md) - 本番DB接続の認証情報管理
-- [テスト](./testing.md) - Supabase Logs を使ったデバッグ手順
+- [トラブルシューティング](./troubleshooting.md) - デプロイエラーの解決方法
+- [セキュリティガイドライン](./security.md) - 本番環境の認証情報管理

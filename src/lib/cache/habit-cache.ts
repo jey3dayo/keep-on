@@ -73,31 +73,16 @@ export async function getHabitsFromCache(userId: string, dateKey: string): Promi
 
   const snapshot = await getHabitsCacheSnapshot(userId)
   if (!snapshot) {
-    logInfo('habit-cache:miss', { userId })
     return null
   }
 
   if (snapshot.staleAt) {
-    logInfo('habit-cache:stale', {
-      userId,
-      cachedDateKey: snapshot.dateKey,
-      requestedDateKey: dateKey,
-      reason: 'invalidated',
-    })
     return null
   }
 
   if (snapshot.dateKey !== dateKey) {
-    logInfo('habit-cache:stale', {
-      userId,
-      cachedDateKey: snapshot.dateKey,
-      requestedDateKey: dateKey,
-      reason: 'date-key',
-    })
     return null
   }
-
-  logInfo('habit-cache:hit', { userId, habitCount: snapshot.habits.length })
   return snapshot.habits as HabitWithProgress[]
 }
 

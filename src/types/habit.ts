@@ -35,7 +35,6 @@ export interface HabitWithProgress extends Habit {
 export interface HabitCheckin {
   id: string
   habitId: string
-  userId: string
-  checkedAt: string
+  date: string
   createdAt: string
 }

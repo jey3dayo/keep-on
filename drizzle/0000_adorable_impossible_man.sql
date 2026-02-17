@@ -7,7 +7,6 @@ CREATE TABLE `Checkin` (
 );
 --> statement-breakpoint
 CREATE INDEX `Checkin_habitId_date_idx` ON `Checkin` (`habitId`,`date`);--> statement-breakpoint
-CREATE UNIQUE INDEX `Checkin_habitId_date_unique` ON `Checkin` (`habitId`,`date`);--> statement-breakpoint
 CREATE TABLE `Habit` (
 	`id` text PRIMARY KEY NOT NULL,
 	`userId` text NOT NULL,
@@ -24,6 +23,18 @@ CREATE TABLE `Habit` (
 );
 --> statement-breakpoint
 CREATE INDEX `Habit_userId_idx` ON `Habit` (`userId`);--> statement-breakpoint
+CREATE TABLE `UserSettings` (
+	`id` text PRIMARY KEY NOT NULL,
+	`userId` text NOT NULL,
+	`weekStart` text DEFAULT 'monday' NOT NULL,
+	`colorTheme` text DEFAULT 'teal' NOT NULL,
+	`themeMode` text DEFAULT 'system' NOT NULL,
+	`createdAt` text NOT NULL,
+	`updatedAt` text NOT NULL,
+	FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `UserSettings_userId_unique` ON `UserSettings` (`userId`);--> statement-breakpoint
 CREATE TABLE `User` (
 	`id` text PRIMARY KEY NOT NULL,
 	`clerkId` text NOT NULL,
