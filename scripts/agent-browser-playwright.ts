@@ -135,8 +135,13 @@ async function main() {
   })
 
   // ブラウザが閉じられるまで待機
-  await page.waitForEvent('close', { timeout: 0 })
-  await browser.close()
+  // browser.on('disconnected')を使用してブラウザ全体の終了を確実に検出
+  await new Promise<void>((resolve) => {
+    browser.on('disconnected', () => {
+      resolve()
+    })
+  })
+
   console.log('')
   console.log('✅ Chrome closed')
   console.log('👋 終了します')
