@@ -28,6 +28,11 @@ function loadDotenvPrivateKey(): string | undefined {
  *
  * WSL2環境対応: localhost:3000へのアクセスが可能
  */
+
+// デバッグ用: 鍵の読み込み状態を確認
+const privateKey = loadDotenvPrivateKey()
+console.log('[playwright.config] DOTENV_PRIVATE_KEY loaded:', !!privateKey, 'length:', privateKey?.length)
+
 export default defineConfig({
   // テストファイルの配置ディレクトリ
   testDir: './e2e',
@@ -83,12 +88,18 @@ export default defineConfig({
   ],
 
   // 開発サーバー自動起動設定
-  webServer: {
-    // Next.js開発サーバーを起動（dotenvxに環境変数を渡す）
-    // シェル経由で環境変数を設定してからpnpm devを実行
-    command: `DOTENV_PRIVATE_KEY="${loadDotenvPrivateKey() || ''}" pnpm dev`,
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000, // WSL2環境を考慮して2分に設定
-  },
+  webServer: (() => {
+    const key = loadDotenvPrivateKey()
+    const command = `DOTENV_PRIVATE_KEY="${key || ''}" pnpm dev`
+    console.log('[playwright.config] webServer command:', command.substring(0, 50) + '...')
+
+    return {
+      // Next.js開発サーバーを起動（dotenvxに環境変数を渡す）
+      // シェル経由で環境変数を設定してからpnpm devを実行
+      command,
+      url: 'http://localhost:3000',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000, // WSL2環境を考慮して2分に設定
+    }
+  })(),
 })
