@@ -65,11 +65,11 @@ export default defineConfig({
 
   // 開発サーバー自動起動設定
   webServer: {
-    // dotenvx経由でNext.js開発サーバーを起動
+    // Next.js開発サーバーを起動（pnpm devスクリプトが内部でdotenvxを実行）
     // 注: E2Eテスト自体は環境変数を直接使用しないため、
     //     テスト実行時に `pnpm env:run -- playwright test` とする必要はない
     //     環境変数はすべてサーバー側（Next.js）で処理される
-    command: 'dotenvx run -- pnpm dev',
+    command: 'pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000, // WSL2環境を考慮して2分に設定
