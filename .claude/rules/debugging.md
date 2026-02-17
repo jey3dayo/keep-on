@@ -63,19 +63,19 @@ WIN_HOST_IP=$(ip route show default | grep -oP '(?<=via )\d+(\.\d+){3}')
 wget -qO- "http://${WIN_HOST_IP}:9222/json/version"
 ```
 
-**重要**: WSL2 では `localhost` ではなく Windows ホスト IP（デフォルトゲートウェイ）を使う。
+#### 重要
 
 ### agent-browser with storageState
 
 Playwright認証状態を使用して、ログイン済み状態でagent-browserを起動できます。
 
-**メリット**:
+#### メリット
 
 - ログイン操作（メール→パスワード→OTP）を省略
 - デバッグ作業の高速化（起動時間が2-3分 → 30秒以内）
 - 認証フローのエラーを回避
 
-**セットアップ** (初回のみ):
+#### セットアップ (初回のみ)
 
 ```bash
 # 1. 開発サーバーを起動（別ターミナル）
@@ -85,7 +85,7 @@ pnpm env:run -- pnpm dev
 ./scripts/setup-auth-state.sh
 ```
 
-**使用方法**:
+#### 使用方法
 
 ```bash
 # ログイン済み状態でダッシュボードを開く
@@ -95,7 +95,7 @@ pnpm exec tsx scripts/agent-browser-playwright.ts
 pnpm exec tsx scripts/agent-browser-playwright.ts http://localhost:3000/habits
 ```
 
-**注意事項**:
+#### 注意事項
 
 - 認証状態の有効期限: 約30日
 - 期限切れ時は `./scripts/setup-auth-state.sh` を再実行
