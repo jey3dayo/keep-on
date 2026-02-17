@@ -14,6 +14,12 @@ export function SyncIndicator() {
 
   useEffect(() => {
     if (isSyncing) {
+      // 既存の最低表示時間タイマーをクリア
+      if (minDisplayTimerRef.current) {
+        clearTimeout(minDisplayTimerRef.current)
+        minDisplayTimerRef.current = null
+      }
+
       // 遅延してから同期アイコンを表示
       delayTimerRef.current = setTimeout(() => {
         setShowSyncIcon(true)
