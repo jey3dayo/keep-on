@@ -93,21 +93,21 @@ export default async function AnalyticsPage() {
   })
 
   const totalHabits = habits.length
-  // 進行中または完了の習慣をカウント（部分的な進捗も反映）
-  const completedHabits = habits.filter((habit) => habit.currentProgress > 0).length
-  const completionRate = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0
+  // 進行中の習慣をカウント（少しでも進捗がある習慣）
+  const activeHabits = habits.filter((habit) => habit.currentProgress > 0).length
+  const activeRate = totalHabits > 0 ? Math.round((activeHabits / totalHabits) * 100) : 0
   const totalStreak = habits.reduce((sum, habit) => sum + habit.streak, 0)
 
   const periodBreakdown = PERIODS.map((period) => {
     const periodHabits = habits.filter((habit) => habit.period === period)
-    // 進行中または完了の習慣をカウント（部分的な進捗も反映）
-    const completed = periodHabits.filter((habit) => habit.currentProgress > 0).length
-    const rate = periodHabits.length > 0 ? Math.round((completed / periodHabits.length) * 100) : 0
+    // 進行中の習慣をカウント（少しでも進捗がある習慣）
+    const active = periodHabits.filter((habit) => habit.currentProgress > 0).length
+    const rate = periodHabits.length > 0 ? Math.round((active / periodHabits.length) * 100) : 0
 
     return {
       period,
       total: periodHabits.length,
-      completed,
+      active,
       rate,
     }
   })
@@ -179,10 +179,10 @@ export default async function AnalyticsPage() {
               accentBar="bg-emerald-500 dark:bg-emerald-400"
               accentBg="bg-emerald-500/15 dark:bg-emerald-400/15"
               icon="target"
-              label="達成率"
-              note={`${numberFormatter.format(completedHabits)} / ${numberFormatter.format(totalHabits)} 完了`}
-              progress={completionRate}
-              value={`${numberFormatter.format(completionRate)}%`}
+              label="活動率"
+              note={`${numberFormatter.format(activeHabits)} / ${numberFormatter.format(totalHabits)} 進行中`}
+              progress={activeRate}
+              value={`${numberFormatter.format(activeRate)}%`}
             />
             <StatCard
               accent="text-orange-500 dark:text-orange-400"
@@ -267,8 +267,8 @@ export default async function AnalyticsPage() {
 
             <Card className="border-border/60 bg-card/80 shadow-sm">
               <CardHeader className="pb-3">
-                <h2 className="text-balance font-semibold leading-none tracking-tight">期間別達成率</h2>
-                <CardDescription>現在の期間における完了状況</CardDescription>
+                <h2 className="text-balance font-semibold leading-none tracking-tight">期間別活動率</h2>
+                <CardDescription>現在の期間における進行状況</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {periodBreakdown.map((entry) => (
@@ -280,7 +280,7 @@ export default async function AnalyticsPage() {
                       </span>
                     </div>
                     <p className="text-muted-foreground text-xs">
-                      {numberFormatter.format(entry.completed)}/{numberFormatter.format(entry.total)} 完了
+                      {numberFormatter.format(entry.active)}/{numberFormatter.format(entry.total)} 進行中
                     </p>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-muted/60">
                       <div

@@ -32,7 +32,7 @@ export function DesktopDashboard({
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
 
   const { selectedPreset, selectPreset, clearPreset } = usePresetSelection()
-  const { completedHabitIds, todayCompleted, totalDaily, totalStreak } = useDashboardStats(habits)
+  const { completedHabitIds, todayActive, totalDaily, totalStreak } = useDashboardStats(habits)
 
   const filteredHabits = useMemo(() => filterHabitsByPeriod(habits, periodFilter), [habits, periodFilter])
 
@@ -89,7 +89,7 @@ export function DesktopDashboard({
         onRemoveCheckin={onRemoveCheckin}
         onResetOptimistic={onResetOptimistic}
         periodFilter={periodFilter}
-        todayCompleted={todayCompleted}
+        todayActive={todayActive}
         todayLabel={todayLabel}
         totalDaily={totalDaily}
         totalStreak={totalStreak}

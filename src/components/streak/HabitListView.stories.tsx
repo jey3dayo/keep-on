@@ -103,7 +103,7 @@ export const Default: Story = {
     onAddHabit: () => {
       storybookToast.success('習慣を追加', 'Storybookでのデモです')
     },
-    todayCompleted: 1,
+    todayActive: 1,
     todayLabel: '1月29日（木）',
     totalDaily: 3,
     totalStreak: 30,
@@ -121,7 +121,7 @@ export const Empty: Story = {
     onAddHabit: () => {
       storybookToast.success('習慣を追加', 'Storybookでのデモです')
     },
-    todayCompleted: 0,
+    todayActive: 0,
     todayLabel: '1月29日（木）',
     totalDaily: 0,
     totalStreak: 0,

@@ -3,7 +3,7 @@ import type { HabitWithProgress } from '@/types/habit'
 
 export interface DashboardStats {
   completedHabitIds: Set<string>
-  todayCompleted: number
+  todayActive: number
   totalDaily: number
   totalStreak: number
 }
@@ -12,7 +12,7 @@ export function useDashboardStats(habits: HabitWithProgress[]): DashboardStats {
   return useMemo(() => {
     const completedIds = new Set<string>()
     let dailyTotal = 0
-    let dailyCompleted = 0
+    let dailyActive = 0
     let streakTotal = 0
 
     for (const habit of habits) {
@@ -23,10 +23,10 @@ export function useDashboardStats(habits: HabitWithProgress[]): DashboardStats {
 
       if (habit.period === 'daily') {
         dailyTotal += 1
-        // 進行中または完了の習慣をカウント（チェックインが即座に反映される）
+        // 進行中の習慣をカウント（少しでも進捗がある習慣）
         const hasProgress = habit.currentProgress > 0
         if (hasProgress) {
-          dailyCompleted += 1
+          dailyActive += 1
         }
       }
 
@@ -35,7 +35,7 @@ export function useDashboardStats(habits: HabitWithProgress[]): DashboardStats {
 
     return {
       completedHabitIds: completedIds,
-      todayCompleted: dailyCompleted,
+      todayActive: dailyActive,
       totalDaily: dailyTotal,
       totalStreak: streakTotal,
     }

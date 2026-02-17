@@ -39,11 +39,12 @@ echo ""
 
 # Step 2: Chromiumブラウザインストール確認
 echo "🔍 Step 2: Chromiumブラウザを確認中..."
-if ! pnpm exec playwright install chromium --dry-run 2>&1 | grep -q "is already installed"; then
-  echo -e "${YELLOW}⚠ Chromiumブラウザをインストールします...${NC}"
-  pnpm exec playwright install chromium
+# Chromiumをインストール（既にインストール済みの場合はスキップされる）
+if pnpm exec playwright install chromium 2>&1 | grep -q "is already installed"; then
+  echo -e "${GREEN}✓ Chromium browser is already installed${NC}"
+else
+  echo -e "${GREEN}✓ Chromium browser installed${NC}"
 fi
-echo -e "${GREEN}✓ Chromium browser installed${NC}"
 echo ""
 
 # Step 3: 開発サーバー起動確認

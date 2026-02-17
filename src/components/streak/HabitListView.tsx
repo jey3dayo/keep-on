@@ -33,7 +33,7 @@ interface HabitListViewProps {
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
   onResetOptimistic?: (habitId: string) => OptimisticRollback
-  todayCompleted: number
+  todayActive: number
   todayLabel: string
   totalDaily: number
   totalStreak: number
@@ -51,7 +51,7 @@ export function HabitListView({
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
-  todayCompleted,
+  todayActive,
   todayLabel,
   totalDaily,
   totalStreak,
@@ -102,7 +102,7 @@ export function HabitListView({
               className="border-border/60 bg-card/90 shadow-sm"
               total={totalDaily}
               type="progress"
-              value={todayCompleted}
+              value={todayActive}
             />
             <DashboardStatsCard
               className="border-border/60 bg-card/90 shadow-sm"

@@ -32,6 +32,9 @@ const DEFAULT_URL = 'http://localhost:3000/dashboard'
 // コマンドライン引数からURLを取得
 const targetUrl = process.argv[2] || DEFAULT_URL
 
+// 認証状態のオリジン（e2e/auth.setup.tsで生成された認証状態のオリジン）
+const AUTH_STATE_ORIGIN = 'http://localhost:3000'
+
 // リモートデバッグポート
 const REMOTE_DEBUGGING_PORT = 9222
 
@@ -53,11 +56,30 @@ async function main() {
   console.log('✅ storage-state.json found')
   console.log('')
 
+  // オリジン検証
+  try {
+    const targetOrigin = new URL(targetUrl).origin
+    if (targetOrigin !== AUTH_STATE_ORIGIN) {
+      console.log('⚠️  警告: 認証状態と異なるオリジンを指定しています')
+      console.log(`   認証状態オリジン: ${AUTH_STATE_ORIGIN}`)
+      console.log(`   指定されたオリジン: ${targetOrigin}`)
+      console.log('')
+      console.log('   異なるオリジンではクッキーが共有されないため、ログアウト状態になります。')
+      console.log('   本番環境など異なるオリジンをテストする場合は、そのオリジン用の認証状態を別途生成してください。')
+      console.log('')
+    }
+  } catch (_error) {
+    console.error('❌ URLの解析に失敗しました:', targetUrl)
+    console.error('')
+    process.exit(1)
+  }
+
   // Step 2: Chrome起動（リモートデバッグ有効）
   console.log('🔍 Step 2: Chromeを起動中...')
   const browser = await chromium.launch({
     headless: false,
-    args: [`--remote-debugging-port=${REMOTE_DEBUGGING_PORT}`, '--remote-debugging-address=0.0.0.0'],
+    // セキュリティのため127.0.0.1にバインド（WSL2の場合は0.0.0.0が必要な場合がある）
+    args: [`--remote-debugging-port=${REMOTE_DEBUGGING_PORT}`, '--remote-debugging-address=127.0.0.1'],
   })
   console.log('✅ Chrome launched with remote debugging')
   console.log(`   📡 Remote debugging port: ${REMOTE_DEBUGGING_PORT}`)
