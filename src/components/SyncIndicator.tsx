@@ -20,6 +20,12 @@ export function SyncIndicator() {
         minDisplayTimerRef.current = null
       }
 
+      // 既存の遅延タイマーもクリア（短時間で開始→終了→再開始した場合）
+      if (delayTimerRef.current) {
+        clearTimeout(delayTimerRef.current)
+        delayTimerRef.current = null
+      }
+
       // 遅延してから同期アイコンを表示
       delayTimerRef.current = setTimeout(() => {
         setShowSyncIcon(true)
