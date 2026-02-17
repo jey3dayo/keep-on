@@ -15,7 +15,11 @@ export function SyncIndicator() {
       role="status"
       title={isSyncing ? '同期中' : '最新'}
     >
-      {isSyncing ? <CloudUpload className="h-6 w-6" /> : <CheckCircle2 className="h-6 w-6" />}
+      {isSyncing ? (
+        <CloudUpload className="h-6 w-6 text-secondary-foreground" />
+      ) : (
+        <CheckCircle2 className="h-6 w-6 text-secondary-foreground" />
+      )}
     </div>
   )
 }
