@@ -84,15 +84,11 @@ export default defineConfig({
 
   // 開発サーバー自動起動設定
   webServer: {
-    // Next.js開発サーバーを起動（pnpm devスクリプトが内部でdotenvxを実行）
-    // 注: dotenvxは.env.keysを自動読み込みしないため、DOTENV_PRIVATE_KEYを環境変数として渡す
-    command: 'pnpm dev',
+    // Next.js開発サーバーを起動（dotenvxに環境変数を渡す）
+    // シェル経由で環境変数を設定してからpnpm devを実行
+    command: `DOTENV_PRIVATE_KEY="${loadDotenvPrivateKey() || ''}" pnpm dev`,
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000, // WSL2環境を考慮して2分に設定
-    // .env.keysファイルからDOTENV_PRIVATE_KEYを読み込んで環境変数として設定
-    env: {
-      DOTENV_PRIVATE_KEY: loadDotenvPrivateKey() || '',
-    },
   },
 })
