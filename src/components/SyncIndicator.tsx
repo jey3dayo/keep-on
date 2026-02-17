@@ -1,60 +1,24 @@
 'use client'
 
 import { CheckCircle2, CloudUpload } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { useSyncContext } from '@/contexts/SyncContext'
 
 export function SyncIndicator() {
   const { isSyncing } = useSyncContext()
-  const [showCompleted, setShowCompleted] = useState(false)
-  const [wasJustSyncing, setWasJustSyncing] = useState(false)
-
-  // 同期開始時の状態更新
-  useEffect(() => {
-    if (isSyncing) {
-      setWasJustSyncing(true)
-      setShowCompleted(false)
-    }
-  }, [isSyncing])
-
-  // 同期完了時のチェックマーク表示
-  useEffect(() => {
-    if (!isSyncing && wasJustSyncing) {
-      setShowCompleted(true)
-      const timer = setTimeout(() => {
-        setShowCompleted(false)
-        setWasJustSyncing(false)
-      }, 1500)
-
-      return () => {
-        clearTimeout(timer)
-      }
-    }
-  }, [isSyncing, wasJustSyncing])
-
-  const showIcon = isSyncing || showCompleted
 
   return (
     <div
       aria-atomic="true"
-      aria-label={isSyncing ? '同期中' : showCompleted ? '同期完了' : ''}
+      aria-label={isSyncing ? '同期中' : '最新'}
       aria-live="polite"
       className="flex min-h-[44px] min-w-[44px] items-center justify-center"
       role="status"
-      title={isSyncing ? '同期中' : showCompleted ? '同期完了' : ''}
+      title={isSyncing ? '同期中' : '最新'}
     >
-      {showIcon && (
-        <div
-          className={`transition-all duration-200 ease-in-out ${showCompleted && !isSyncing ? 'fade-in zoom-in-95 animate-in' : ''}
-            ${isSyncing ? 'motion-safe:animate-spin motion-reduce:animate-pulse' : ''}
-          `}
-        >
-          {isSyncing ? (
-            <CloudUpload className="h-5 w-5 text-muted-foreground" />
-          ) : (
-            <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
-          )}
-        </div>
+      {isSyncing ? (
+        <CloudUpload className="h-5 w-5 text-muted-foreground" />
+      ) : (
+        <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
       )}
     </div>
   )
