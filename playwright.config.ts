@@ -1,4 +1,23 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
+
+/**
+ * .env.keysファイルからDOTENV_PRIVATE_KEYを読み込む
+ * dotenvxは.env.keysファイルを自動的に読み込まないため、
+ * 環境変数として明示的に渡す必要がある
+ */
+function loadDotenvPrivateKey(): string | undefined {
+  try {
+    const envKeysPath = join(process.cwd(), '.env.keys')
+    const envKeysContent = readFileSync(envKeysPath, 'utf-8')
+    const match = envKeysContent.match(/^DOTENV_PRIVATE_KEY=(.+)$/m)
+    return match ? match[1] : undefined
+  } catch {
+    // .env.keysファイルが存在しない場合はundefinedを返す
+    return undefined
+  }
+}
 
 /**
  * Playwright E2E テスト設定
@@ -66,12 +85,14 @@ export default defineConfig({
   // 開発サーバー自動起動設定
   webServer: {
     // Next.js開発サーバーを起動（pnpm devスクリプトが内部でdotenvxを実行）
-    // 注: E2Eテスト自体は環境変数を直接使用しないため、
-    //     テスト実行時に `pnpm env:run -- playwright test` とする必要はない
-    //     環境変数はすべてサーバー側（Next.js）で処理される
+    // 注: dotenvxは.env.keysを自動読み込みしないため、DOTENV_PRIVATE_KEYを環境変数として渡す
     command: 'pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000, // WSL2環境を考慮して2分に設定
+    // .env.keysファイルからDOTENV_PRIVATE_KEYを読み込んで環境変数として設定
+    env: {
+      DOTENV_PRIVATE_KEY: loadDotenvPrivateKey() || '',
+    },
   },
 })
