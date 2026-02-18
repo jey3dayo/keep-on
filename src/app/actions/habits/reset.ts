@@ -47,7 +47,7 @@ export async function resetHabitProgressAction(habitId: string, dateKey?: string
           return
         },
         catch: (error) => error,
-      })()
+      })
     }),
     Result.mapError((error) => serializeActionError(error, '進捗のリセットに失敗しました'))
   )

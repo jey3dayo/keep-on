@@ -44,10 +44,8 @@ export default async function NewHabitModalPage({
 
   logInfo('request.habits.new.modal:end', requestMeta)
 
-  const title = step === 'preset' ? '習慣を追加' : '新しい習慣を追加'
-
   return (
-    <RouteModal title={title}>
+    <RouteModal compact={step === 'preset'} title={step === 'preset' ? undefined : '新しい習慣を追加'}>
       {step === 'preset' ? (
         <HabitPresetSelectorWrapper />
       ) : (
