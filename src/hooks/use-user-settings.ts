@@ -8,10 +8,10 @@ import type { UpdateUserSettingsSchemaType } from '@/schemas/user-settings'
 import type { UserSettings } from '@/types/user-settings'
 
 interface UseUserSettings {
-  settings: UserSettings | null
-  updateSettings: (settings: UpdateUserSettingsSchemaType) => Promise<void>
   ready: boolean
+  settings: UserSettings | null
   syncing: boolean
+  updateSettings: (settings: UpdateUserSettingsSchemaType) => Promise<void>
 }
 
 /**

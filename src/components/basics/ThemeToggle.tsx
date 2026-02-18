@@ -15,8 +15,8 @@ import { DEFAULT_THEME_MODE } from '@/constants/theme'
 import { cn } from '@/lib/utils'
 
 interface ThemeToggleProps {
-  buttonVariant?: ButtonProps['variant']
   buttonClassName?: string
+  buttonVariant?: ButtonProps['variant']
 }
 
 export function ThemeToggle({ buttonVariant = 'secondary', buttonClassName }: ThemeToggleProps) {

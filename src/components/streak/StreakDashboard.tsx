@@ -1,19 +1,17 @@
 'use client'
 
 import { Circle, LayoutGrid } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import type { Period } from '@/constants/habit'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
-import { usePresetSelection } from '@/hooks/use-preset-selection'
 import { cn } from '@/lib/utils'
 import { setClientCookie } from '@/lib/utils/cookies'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
-import { HabitForm } from './HabitForm'
 import { HabitListView } from './HabitListView'
-import { HabitPresetSelector } from './HabitPresetSelector'
 import { HabitSimpleView } from './HabitSimpleView'
 import type { DashboardBaseProps } from './types'
 
@@ -22,7 +20,7 @@ interface StreakDashboardProps extends DashboardBaseProps {
 }
 
 type PeriodFilter = 'all' | Period
-type View = 'dashboard' | 'simple' | 'preset-selector' | 'add'
+type View = 'dashboard' | 'simple'
 type MainView = 'dashboard' | 'simple'
 
 const VIEW_COOKIE_KEY = 'ko_dashboard_view'
@@ -37,7 +35,6 @@ const persistMainView = (view: MainView) => {
 
 export function StreakDashboard({
   habits,
-  onAddHabit,
   onAddCheckin,
   onRemoveCheckin,
   onArchiveOptimistic,
@@ -46,14 +43,14 @@ export function StreakDashboard({
   todayLabel,
   initialView = DEFAULT_DASHBOARD_VIEW,
 }: StreakDashboardProps) {
+  const router = useRouter()
   const [currentView, setCurrentView] = useState<View>(initialView)
-  const [returnView, setReturnView] = useState<MainView>(initialView)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
 
-  const { selectedPreset, selectPreset, clearPreset } = usePresetSelection()
   const { completedHabitIds, todayActive, totalDaily, totalStreak } = useDashboardStats(habits)
 
   const filteredHabits = useMemo(() => filterHabitsByPeriod(habits, periodFilter), [habits, periodFilter])
+
   useEffect(() => {
     const root = document.documentElement
     const shouldApply = currentView === 'dashboard' || currentView === 'simple'
@@ -69,55 +66,9 @@ export function StreakDashboard({
     }
   }, [currentView])
 
-  const openPresetSelector = () => {
-    const nextReturnView = currentView === 'simple' ? 'simple' : 'dashboard'
-    setReturnView(nextReturnView)
-    setCurrentView('preset-selector')
-  }
-
   const handleViewChange = (view: View) => {
     setCurrentView(view)
-    if (view === 'dashboard' || view === 'simple') {
-      setReturnView(view)
-      persistMainView(view)
-    }
-  }
-
-  if (currentView === 'preset-selector') {
-    return (
-      <HabitPresetSelector
-        onClose={() => {
-          clearPreset()
-          setCurrentView(returnView)
-        }}
-        onCreateCustom={() => {
-          clearPreset()
-          setCurrentView('add')
-        }}
-        onSelectPreset={(preset) => {
-          selectPreset(preset)
-          setCurrentView('add')
-        }}
-      />
-    )
-  }
-
-  if (currentView === 'add') {
-    return (
-      <HabitForm
-        onBack={() => setCurrentView('preset-selector')}
-        onSubmit={async (input) => {
-          await onAddHabit(input.name, input.icon, {
-            color: input.color,
-            period: input.period,
-            frequency: input.frequency,
-          })
-          clearPreset()
-          setCurrentView(returnView)
-        }}
-        preset={selectedPreset}
-      />
-    )
+    persistMainView(view)
   }
 
   return (
@@ -128,7 +79,7 @@ export function StreakDashboard({
           completedHabitIds={completedHabitIds}
           habits={habits}
           onAddCheckin={onAddCheckin}
-          onAddHabit={openPresetSelector}
+          onAddHabit={() => router.push('/habits/new?step=preset')}
           onArchiveOptimistic={onArchiveOptimistic}
           onDeleteOptimistic={onDeleteOptimistic}
           onRemoveCheckin={onRemoveCheckin}
@@ -142,7 +93,7 @@ export function StreakDashboard({
             filteredHabits={filteredHabits}
             habits={habits}
             onAddCheckin={onAddCheckin}
-            onAddHabit={openPresetSelector}
+            onAddHabit={() => router.push('/habits/new?step=preset')}
             onArchiveOptimistic={onArchiveOptimistic}
             onDeleteOptimistic={onDeleteOptimistic}
             onPeriodChange={setPeriodFilter}

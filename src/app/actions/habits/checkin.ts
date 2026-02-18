@@ -108,7 +108,7 @@ export async function addCheckinAction(habitId: string, dateKey?: string): Habit
           )
         },
         catch: (error) => error,
-      })()
+      })
     }),
     Result.mapError((error) => serializeActionError(error, 'チェックインの切り替えに失敗しました'))
   )

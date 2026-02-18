@@ -1,10 +1,10 @@
 import type { WeekStart } from '@/constants/habit'
 
 export interface User {
-  id: string
   clerkId: string
-  email: string
-  weekStart: WeekStart
   createdAt: Date
+  email: string
+  id: string
   updatedAt: Date
+  weekStart: WeekStart
 }

@@ -1,14 +1,12 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import type { Period } from '@/constants/habit'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
-import { usePresetSelection } from '@/hooks/use-preset-selection'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import type { User } from '@/types/user'
-import { HabitForm } from './HabitForm'
 import { HabitListView } from './HabitListView'
-import { HabitPresetSelector } from './HabitPresetSelector'
 import type { DashboardBaseProps } from './types'
 
 interface DesktopDashboardProps extends DashboardBaseProps {
@@ -16,11 +14,9 @@ interface DesktopDashboardProps extends DashboardBaseProps {
 }
 
 type PeriodFilter = 'all' | Period
-type View = 'dashboard' | 'preset-selector' | 'add'
 
 export function DesktopDashboard({
   habits,
-  onAddHabit,
   onAddCheckin,
   onRemoveCheckin,
   onArchiveOptimistic,
@@ -28,52 +24,12 @@ export function DesktopDashboard({
   onResetOptimistic,
   todayLabel,
 }: DesktopDashboardProps) {
-  const [currentView, setCurrentView] = useState<View>('dashboard')
+  const router = useRouter()
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
 
-  const { selectedPreset, selectPreset, clearPreset } = usePresetSelection()
   const { completedHabitIds, todayActive, totalDaily, totalStreak } = useDashboardStats(habits)
 
   const filteredHabits = useMemo(() => filterHabitsByPeriod(habits, periodFilter), [habits, periodFilter])
-
-  if (currentView === 'preset-selector') {
-    return (
-      <div className="space-y-6 p-6">
-        <HabitPresetSelector
-          onClose={() => {
-            clearPreset()
-            setCurrentView('dashboard')
-          }}
-          onCreateCustom={() => {
-            clearPreset()
-            setCurrentView('add')
-          }}
-          onSelectPreset={(preset) => {
-            selectPreset(preset)
-            setCurrentView('add')
-          }}
-        />
-      </div>
-    )
-  }
-
-  if (currentView === 'add') {
-    return (
-      <HabitForm
-        onBack={() => setCurrentView('preset-selector')}
-        onSubmit={async (input) => {
-          await onAddHabit(input.name, input.icon, {
-            color: input.color,
-            period: input.period,
-            frequency: input.frequency,
-          })
-          clearPreset()
-          setCurrentView('dashboard')
-        }}
-        preset={selectedPreset}
-      />
-    )
-  }
 
   return (
     <div className="space-y-6 p-6">
@@ -82,7 +38,7 @@ export function DesktopDashboard({
         filteredHabits={filteredHabits}
         habits={habits}
         onAddCheckin={onAddCheckin}
-        onAddHabit={() => setCurrentView('preset-selector')}
+        onAddHabit={() => router.push('/habits/new?step=preset')}
         onArchiveOptimistic={onArchiveOptimistic}
         onDeleteOptimistic={onDeleteOptimistic}
         onPeriodChange={setPeriodFilter}

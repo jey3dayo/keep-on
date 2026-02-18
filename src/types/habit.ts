@@ -4,37 +4,37 @@
 import type { Period } from '@/constants/habit'
 
 export interface Habit {
-  id: string
-  name: string
-  icon: string | null
-  color: string | null
-  period: Period
-  frequency: number
-  userId: string
   archived: boolean
   archivedAt: string | null
+  color: string | null
   createdAt: string
+  frequency: number
+  icon: string | null
+  id: string
+  name: string
+  period: Period
   updatedAt: string
+  userId: string
 }
 
 /**
  * 進捗情報を含む習慣型
  */
 export interface HabitWithProgress extends Habit {
+  /** 目標達成率（0-100） */
+  completionRate: number
   /** 現在の期間での達成回数 */
   currentProgress: number
   /** 連続達成日数 */
   streak: number
-  /** 目標達成率（0-100） */
-  completionRate: number
 }
 
 /**
  * チェックイン記録
  */
 export interface HabitCheckin {
-  id: string
-  habitId: string
-  date: string
   createdAt: string
+  date: string
+  habitId: string
+  id: string
 }

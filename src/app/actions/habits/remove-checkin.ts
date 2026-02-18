@@ -46,8 +46,8 @@ async function resolveWeekStartDay(
 }
 
 interface RemoveCheckinResultData {
-  deleted: boolean
   currentCount: number
+  deleted: boolean
 }
 
 async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveCheckinResultData> {
@@ -129,7 +129,7 @@ export async function removeCheckinAction(
           )
         },
         catch: (error) => error,
-      })()
+      })
     }),
     Result.mapError((error) => serializeActionError(error, 'チェックインの削除に失敗しました'))
   )

@@ -183,7 +183,7 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
 
         <div className="space-y-3">
           <p className="font-medium text-muted-foreground text-sm uppercase tracking-wide">カラー</p>
-          <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
+          <div className="scrollbar-hide flex gap-3 overflow-x-auto px-1 pb-2">
             {habitColors.map((color) => {
               const isSelected = selectedColor === color.id
               return (

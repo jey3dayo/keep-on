@@ -3,7 +3,7 @@
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import { Check, ChevronLeft, Clock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -11,7 +11,15 @@ import { createHabit } from '@/app/actions/habits/create'
 import { updateHabitAction } from '@/app/actions/habits/update'
 import { Button } from '@/components/basics/Button'
 import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, DEFAULT_HABIT_PERIOD } from '@/constants/habit'
-import { getColorById, getIconById, getPeriodById, habitColors, habitIcons, taskPeriods } from '@/constants/habit-data'
+import {
+  getColorById,
+  getIconById,
+  getPeriodById,
+  type HabitPreset,
+  habitColors,
+  habitIcons,
+  taskPeriods,
+} from '@/constants/habit-data'
 import { formatSerializableError } from '@/lib/errors/serializable'
 import { cn } from '@/lib/utils'
 import { HabitInputSchema } from '@/schemas/habit'
@@ -19,11 +27,11 @@ import { buildHabitFormData, getHabitFormDefaults, type HabitFormValues } from '
 import type { Habit, HabitWithProgress } from '@/types/habit'
 
 interface HabitFormServerProps {
-  initialData?: Habit | HabitWithProgress
+  hideHeader?: boolean
+  initialData?: Habit | HabitWithProgress | HabitPreset
   onSubmit?: (data: FormValues) => Promise<void> | void
   onSuccess?: 'close' | 'redirect'
   submitLabel?: string
-  hideHeader?: boolean
 }
 
 type FormValues = HabitFormValues
@@ -39,8 +47,11 @@ export function HabitFormServer({
   const [isSaving, setIsSaving] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
-  // 初期値を設定
-  const defaultValues: HabitFormValues = getHabitFormDefaults(initialData)
+  // 初期値を設定（メモ化して不要な再計算を防ぐ）
+  const defaultValues: HabitFormValues = useMemo(() => getHabitFormDefaults(initialData), [initialData])
+
+  // 編集モードかどうかを判定（HabitPresetの場合は新規作成扱い）
+  const isEdit = useMemo(() => Boolean(initialData && !('category' in initialData)), [initialData])
 
   const form = useForm<FormValues>({
     resolver: valibotResolver(HabitInputSchema) as Resolver<FormValues>,
@@ -62,8 +73,10 @@ export function HabitFormServer({
   const watchedName = form.watch('name')
 
   const selectedColorValue = getColorById(watchedColor || DEFAULT_HABIT_COLOR).color
+  const selectedColorForeground = getColorById(watchedColor || DEFAULT_HABIT_COLOR).foreground
   const SelectedIconComponent = getIconById(watchedIcon || DEFAULT_HABIT_ICON).icon
   const currentPeriod = getPeriodById(watchedPeriod || DEFAULT_HABIT_PERIOD)
+  const submitContent = isSaving ? <Check className="h-5 w-5" /> : submitLabel
 
   async function handleExternalSubmit(data: FormValues) {
     if (!onSubmit) {
@@ -81,13 +94,16 @@ export function HabitFormServer({
     setIsSaving(true)
 
     const formData = buildHabitFormData(data)
-    const result = initialData ? await updateHabitAction(initialData.id, formData) : await createHabit(formData)
+    // HabitPresetの場合は新規作成、既存のHabitの場合は更新
+    const result = isEdit
+      ? await updateHabitAction((initialData as Habit | HabitWithProgress).id, formData)
+      : await createHabit(formData)
 
     setIsSaving(false)
 
     if (result.ok) {
-      toast.success(initialData ? '習慣を更新しました' : '習慣を作成しました', {
-        description: initialData ? `「${data.name}」を更新しました` : `「${data.name}」が追加されました`,
+      toast.success(isEdit ? '習慣を更新しました' : '習慣を作成しました', {
+        description: isEdit ? `「${data.name}」を更新しました` : `「${data.name}」が追加されました`,
       })
       form.reset()
 
@@ -97,7 +113,7 @@ export function HabitFormServer({
         router.push('/dashboard')
       }
     } else {
-      toast.error(initialData ? '習慣の更新に失敗しました' : '習慣の作成に失敗しました', {
+      toast.error(isEdit ? '習慣の更新に失敗しました' : '習慣の作成に失敗しました', {
         description: formatSerializableError(result.error),
       })
     }
@@ -106,9 +122,9 @@ export function HabitFormServer({
   async function handleSubmit(data: FormValues) {
     if (onSubmit) {
       await handleExternalSubmit(data)
-    } else {
-      await handleDefaultSubmit(data)
+      return
     }
+    await handleDefaultSubmit(data)
   }
 
   return (
@@ -125,7 +141,7 @@ export function HabitFormServer({
             <ChevronLeft className="h-5 w-5" />
             <span className="text-sm">戻る</span>
           </Button>
-          <h1 className="font-semibold text-foreground text-lg">{initialData ? '習慣を編集' : '新しい習慣'}</h1>
+          <h1 className="font-semibold text-foreground text-lg">{isEdit ? '習慣を編集' : '新しい習慣'}</h1>
           <Button
             className={cn(
               'h-auto p-0 hover:bg-transparent',
@@ -139,7 +155,7 @@ export function HabitFormServer({
             type="button"
             variant="ghost"
           >
-            {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
+            {submitContent}
           </Button>
         </header>
       )}
@@ -277,7 +293,7 @@ export function HabitFormServer({
           render={({ field }) => (
             <div className="space-y-3">
               <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">カラー</div>
-              <div className="scrollbar-hide flex justify-center gap-3 overflow-x-auto pt-1 pb-2">
+              <div className="scrollbar-hide flex gap-3 overflow-x-auto px-1 pt-1 pb-2">
                 {habitColors.map((color) => {
                   const isSelected = field.value === color.id
                   return (
@@ -416,17 +432,18 @@ export function HabitFormServer({
 
         {/* Submit Button for Modal */}
         {hideHeader && (
-          <div className="mt-8">
+          <div className="sticky bottom-0 mt-8 bg-background pt-2 pb-4">
             <Button
               className="w-full"
               disabled={!watchedName?.trim() || isSaving}
               onClick={form.handleSubmit(handleSubmit)}
               style={{
                 backgroundColor: watchedName?.trim() && !isSaving ? selectedColorValue : undefined,
+                color: watchedName?.trim() && !isSaving ? selectedColorForeground : undefined,
               }}
               type="button"
             >
-              {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
+              {submitContent}
             </Button>
           </div>
         )}

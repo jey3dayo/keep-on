@@ -3,9 +3,9 @@ import { BarChart3, HelpCircle, LayoutDashboard, ListChecks, Settings } from 'lu
 import type { IconName } from '@/components/basics/Icon'
 
 export interface NavItem {
+  icon: LucideIcon
   title: string
   url: string
-  icon: LucideIcon
 }
 
 export const NAV_ITEMS: {
@@ -46,8 +46,8 @@ export const NAV_ITEMS: {
 // Appbar用のシンプルなナビゲーションリンク
 export interface AppbarNavLink {
   href: string
-  label: string
   icon: IconName
+  label: string
 }
 
 export const APPBAR_NAV_LINKS: AppbarNavLink[] = [

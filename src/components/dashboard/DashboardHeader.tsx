@@ -6,10 +6,10 @@ import { cn } from '@/lib/utils'
 import { DashboardStatsCard } from './DashboardStatsCard'
 
 interface DashboardHeaderProps {
+  onAddClick?: () => void
   todayActive: number
   totalDaily: number
   totalStreak: number
-  onAddClick?: () => void
   variant: 'mobile' | 'desktop'
 }
 

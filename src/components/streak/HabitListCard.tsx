@@ -10,13 +10,13 @@ import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
 
 interface HabitListCardProps {
-  habit: HabitWithProgress
   completed: boolean
   dimmed?: boolean
   dimmedOpacity?: number
+  habit: HabitWithProgress
   onAdd?: () => void
-  onRemove?: () => void
   onLongPressOrContextMenu: () => void
+  onRemove?: () => void
 }
 
 export function HabitListCard({

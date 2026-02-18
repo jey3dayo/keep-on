@@ -25,9 +25,9 @@ export const UserSchema = v.object({
 })
 
 export interface ClerkApiResponseErrorPayload extends Record<string, unknown> {
-  status?: number
   clerkTraceId?: string
   errors?: Array<{ code?: string; message?: string }>
+  status?: number
 }
 
 export type UserSchemaType = v.InferOutput<typeof UserSchema>

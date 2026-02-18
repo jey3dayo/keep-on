@@ -8,11 +8,11 @@ export type ThemeMode = 'light' | 'dark' | 'system'
  * タイムスタンプは ISO 文字列として扱う
  */
 export interface UserSettings {
+  colorTheme: ColorThemeName
+  createdAt: string
   id: string
+  themeMode: ThemeMode
+  updatedAt: string
   userId: string
   weekStart: WeekStart
-  colorTheme: ColorThemeName
-  themeMode: ThemeMode
-  createdAt: string
-  updatedAt: string
 }

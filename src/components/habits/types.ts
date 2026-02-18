@@ -4,11 +4,11 @@ export type OptimisticRollback = () => void
 export type OptimisticHandler = () => OptimisticRollback | undefined
 
 export interface HabitDialogProps {
+  defaultOpen?: boolean
   habitId: string
   habitName: string
-  trigger?: ReactNode | null
+  onOpenChange?: (open: boolean) => void
   onOptimistic?: OptimisticHandler
   open?: boolean
-  defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
+  trigger?: ReactNode | null
 }

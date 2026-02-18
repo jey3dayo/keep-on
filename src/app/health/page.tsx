@@ -14,21 +14,21 @@ type Status = 'ok' | 'warn' | 'error'
 type DbBinding = 'd1' | 'missing'
 
 interface HealthCheck {
+  description: string
   id: string
   label: string
-  status: Status
-  description: string
   meta?: string
+  status: Status
 }
 
 interface EnvSnapshot {
-  runtime: 'workers' | 'node'
-  nextjsEnv?: string
   clerkPublishableKey?: string
   clerkSecretKey?: string
+  d1Binding: boolean
+  nextjsEnv?: string
+  runtime: 'workers' | 'node'
   signInUrl?: string
   signUpUrl?: string
-  d1Binding: boolean
 }
 
 const STATUS_BADGE_STYLES: Record<Status, string> = {

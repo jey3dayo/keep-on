@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 
 interface ClerkUser {
-  id: string
   emailAddresses: Array<{ emailAddress: string }>
+  id: string
 }
 
 export function ClerkProvider({ children }: { children: ReactNode }) {

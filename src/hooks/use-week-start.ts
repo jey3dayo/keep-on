@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { DEFAULT_WEEK_START, type WeekStart } from '@/constants/habit'
 
 interface UseWeekStart {
-  weekStart: WeekStart
-  setWeekStart: (weekStart: WeekStart) => void
   ready: boolean
+  setWeekStart: (weekStart: WeekStart) => void
+  weekStart: WeekStart
 }
 
 const STORAGE_KEY = 'week-start'

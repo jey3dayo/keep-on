@@ -2,13 +2,15 @@
 
 import { useRouter } from 'next/navigation'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { cn } from '@/lib/utils'
 
 interface RouteModalProps {
-  title: string
   children: React.ReactNode
+  compact?: boolean
+  title?: string
 }
 
-export function RouteModal({ title, children }: RouteModalProps) {
+export function RouteModal({ title, children, compact }: RouteModalProps) {
   const router = useRouter()
 
   const handleOpenChange = (open: boolean) => {
@@ -24,12 +26,24 @@ export function RouteModal({ title, children }: RouteModalProps) {
 
   return (
     <Sheet onOpenChange={handleOpenChange} open={true}>
-      <SheetContent className="mt-2 h-[90vh] p-6 sm:mx-auto sm:h-auto sm:max-w-xl" side="bottom">
+      <SheetContent
+        className={cn(
+          'mt-2 h-[90vh] sm:mx-auto sm:h-[85vh] sm:max-w-xl',
+          compact ? 'overflow-hidden p-0 [&>button:first-child]:hidden' : 'p-6'
+        )}
+        side="bottom"
+      >
         <div className="flex h-full flex-col overflow-hidden">
-          <SheetHeader className="flex-shrink-0 pb-2">
-            <SheetTitle>{title}</SheetTitle>
-          </SheetHeader>
-          <div className="-mx-6 flex-1 overflow-y-auto overflow-x-hidden px-6">{children}</div>
+          {compact ? (
+            <SheetTitle className="sr-only">{title ?? '習慣を追加'}</SheetTitle>
+          ) : (
+            title && (
+              <SheetHeader className="flex-shrink-0 pb-2">
+                <SheetTitle>{title}</SheetTitle>
+              </SheetHeader>
+            )
+          )}
+          <div className={cn('flex-1 overflow-y-auto overflow-x-hidden', !compact && '-mx-6 px-6')}>{children}</div>
         </div>
       </SheetContent>
     </Sheet>

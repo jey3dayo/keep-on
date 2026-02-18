@@ -23,8 +23,8 @@ import type { IconName } from '@/components/basics/Icon'
 import type { Period } from '@/constants/habit'
 
 export interface HabitIcon {
-  id: IconName
   icon: LucideIcon
+  id: IconName
   label: string
 }
 
@@ -50,16 +50,16 @@ export const habitIcons: HabitIcon[] = [
 ]
 
 export const habitColors = [
-  { id: 'orange', color: 'var(--orange-9)', label: 'オレンジ' },
-  { id: 'red', color: 'var(--red-9)', label: 'レッド' },
-  { id: 'pink', color: 'var(--pink-9)', label: 'ピンク' },
-  { id: 'purple', color: 'var(--purple-9)', label: 'パープル' },
-  { id: 'blue', color: 'var(--blue-9)', label: 'ブルー' },
-  { id: 'cyan', color: 'var(--cyan-9)', label: 'シアン' },
-  { id: 'teal', color: 'var(--teal-9)', label: 'ティール' },
-  { id: 'green', color: 'var(--green-9)', label: 'グリーン' },
-  { id: 'lime', color: 'var(--lime-9)', label: 'ライム' },
-  { id: 'yellow', color: 'var(--yellow-9)', label: 'イエロー' },
+  { id: 'orange', color: 'var(--orange-9)', foreground: 'var(--orange-12)', label: 'オレンジ' },
+  { id: 'red', color: 'var(--red-9)', foreground: 'var(--red-12)', label: 'レッド' },
+  { id: 'pink', color: 'var(--pink-9)', foreground: 'var(--pink-12)', label: 'ピンク' },
+  { id: 'purple', color: 'var(--purple-9)', foreground: 'var(--purple-12)', label: 'パープル' },
+  { id: 'blue', color: 'var(--blue-9)', foreground: 'var(--blue-12)', label: 'ブルー' },
+  { id: 'cyan', color: 'var(--cyan-9)', foreground: 'var(--cyan-12)', label: 'シアン' },
+  { id: 'teal', color: 'var(--teal-9)', foreground: 'var(--teal-12)', label: 'ティール' },
+  { id: 'green', color: 'var(--green-9)', foreground: 'var(--green-12)', label: 'グリーン' },
+  { id: 'lime', color: 'var(--lime-9)', foreground: 'var(--lime-1)', label: 'ライム' },
+  { id: 'yellow', color: 'var(--yellow-9)', foreground: 'var(--yellow-1)', label: 'イエロー' },
 ]
 
 export const oldHabitColors = [
@@ -76,10 +76,10 @@ export const oldHabitColors = [
 ]
 
 export interface TaskPeriodOption {
+  frequencyLabel: string
   id: Period
   label: string
   sublabel: string
-  frequencyLabel: string
 }
 
 export const taskPeriods: TaskPeriodOption[] = [
@@ -89,15 +89,15 @@ export const taskPeriods: TaskPeriodOption[] = [
 ]
 
 export interface Habit {
+  colorId: string
+  createdAt: Date
+  currentProgress: number
+  frequency: number
+  iconId: string
   id: string
   name: string
-  iconId: string
-  colorId: string
   period: Period
-  frequency: number
   streak: number
-  currentProgress: number
-  createdAt: Date
 }
 
 export const sampleHabits: Habit[] = [
@@ -172,27 +172,27 @@ export const sampleHabits: Habit[] = [
 export type PresetCategory = 'all' | 'health' | 'productivity' | 'lifestyle' | 'learning'
 
 export interface PresetCategoryOption {
+  icon: LucideIcon
   id: PresetCategory
   label: string
-  icon: LucideIcon
 }
 
 export const presetCategories: PresetCategoryOption[] = [
   { id: 'all', label: 'すべて', icon: Sparkles },
   { id: 'health', label: '健康', icon: Heart },
-  { id: 'productivity', label: '生産性', icon: Target },
   { id: 'lifestyle', label: '生活', icon: Coffee },
   { id: 'learning', label: '学習', icon: BookOpen },
+  { id: 'productivity', label: '生産性', icon: Target },
 ]
 
 export interface HabitPreset {
+  category: PresetCategory
+  colorId: string
+  frequency: number
+  iconId: IconName
   id: string
   name: string
-  iconId: IconName
-  colorId: string
   period: Period
-  frequency: number
-  category: PresetCategory
 }
 
 export const habitPresets: HabitPreset[] = [

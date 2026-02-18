@@ -24,16 +24,16 @@ const HabitActionDrawer = dynamic(
 )
 
 interface HabitSimpleViewProps {
-  habits: HabitWithProgress[]
+  backgroundColor?: string
   completedHabitIds: Set<string>
+  habits: HabitWithProgress[]
   onAddCheckin?: (habitId: string) => Promise<void>
-  onRemoveCheckin?: (habitId: string) => Promise<void>
   onAddHabit: () => void
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
+  onRemoveCheckin?: (habitId: string) => Promise<void>
   onResetOptimistic?: (habitId: string) => OptimisticRollback
   onSettings?: () => void
-  backgroundColor?: string
 }
 
 function ProgressRing({

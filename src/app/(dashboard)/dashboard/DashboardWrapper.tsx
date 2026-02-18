@@ -1,22 +1,13 @@
 'use client'
 
-import { createId } from '@paralleldrive/cuid2'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { addCheckinAction } from '@/app/actions/habits/checkin'
-import { createHabit } from '@/app/actions/habits/create'
 import { removeCheckinAction } from '@/app/actions/habits/remove-checkin'
-import type { IconName } from '@/components/basics/Icon'
 import { DesktopDashboard } from '@/components/streak/DesktopDashboard'
 import { StreakDashboard } from '@/components/streak/StreakDashboard'
 import { MAX_CONCURRENT_CHECKINS } from '@/constants/dashboard'
-import {
-  COMPLETION_THRESHOLD,
-  DEFAULT_HABIT_COLOR,
-  DEFAULT_HABIT_FREQUENCY,
-  DEFAULT_HABIT_PERIOD,
-  type Period,
-} from '@/constants/habit'
+import { COMPLETION_THRESHOLD } from '@/constants/habit'
 import { useSyncContext } from '@/contexts/SyncContext'
 import { useBeforeUnload } from '@/hooks/useBeforeUnload'
 import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
@@ -27,14 +18,14 @@ import type { User } from '@/types/user'
 
 interface DashboardWrapperProps {
   habits: HabitWithProgress[]
+  initialView?: 'dashboard' | 'simple'
   todayLabel: string
   user: User
-  initialView?: 'dashboard' | 'simple'
 }
 
 interface CheckinTask {
-  habitId: string
   dateKey: string
+  habitId: string
   isRemove?: boolean
   rollback?: () => void
 }
@@ -362,58 +353,6 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
     }
   }, [])
 
-  const handleAddHabit = async (
-    name: string,
-    icon: IconName,
-    options?: { color?: string | null; period?: Period; frequency?: number }
-  ) => {
-    const nextPeriod = options?.period ?? DEFAULT_HABIT_PERIOD
-    const nextColor = options?.color ?? DEFAULT_HABIT_COLOR
-    const nextFrequency = options?.frequency ?? DEFAULT_HABIT_FREQUENCY
-    const optimisticId = `optimistic-${createId()}`
-    const now = new Date().toISOString()
-    const optimisticHabit: HabitWithProgress = {
-      id: optimisticId,
-      userId: user.id,
-      name,
-      icon,
-      color: nextColor,
-      period: nextPeriod,
-      frequency: nextFrequency,
-      archived: false,
-      archivedAt: null,
-      createdAt: now,
-      updatedAt: now,
-      currentProgress: 0,
-      streak: 0,
-      completionRate: 0,
-    }
-
-    setOptimisticHabits((current) => [optimisticHabit, ...current])
-
-    const formData = new FormData()
-    formData.append('name', name)
-    formData.append('icon', icon)
-    formData.append('color', nextColor)
-    formData.append('period', nextPeriod)
-    formData.append('frequency', String(nextFrequency))
-
-    const result = await createHabit(formData)
-
-    if (result.ok) {
-      // サーバーから返されたIDで楽観的IDを置換
-      setOptimisticHabits((current) =>
-        current.map((habit) => (habit.id === optimisticId ? { ...habit, id: result.data.id } : habit))
-      )
-      // 5分後にバックグラウンドリフレッシュ（整合性確保のためのフォールバック）
-      scheduleLazyRefresh()
-      return
-    }
-
-    setOptimisticHabits((current) => current.filter((habit) => habit.id !== optimisticId))
-    appToast.error('習慣の作成に失敗しました', result.error)
-  }
-
   const queueOptimisticCheckin = (
     habitId: string,
     options: {
@@ -477,7 +416,6 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
           habits={activeHabits}
           initialView={initialView}
           onAddCheckin={handleAddCheckin}
-          onAddHabit={handleAddHabit}
           onArchiveOptimistic={archiveOptimistically}
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
@@ -491,7 +429,6 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
         <DesktopDashboard
           habits={activeHabits}
           onAddCheckin={handleAddCheckin}
-          onAddHabit={handleAddHabit}
           onArchiveOptimistic={archiveOptimistically}
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
