@@ -8,12 +8,10 @@ import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 
 // Dynamic imports for modal content - only load what's needed for the current step
-const HabitPresetSelectorWrapper = dynamic(
-  () =>
-    import('@/components/habits/HabitPresetSelectorWrapper').then((mod) => ({
-      default: mod.HabitPresetSelectorWrapper,
-    })),
-  { ssr: false }
+const HabitPresetSelectorWrapper = dynamic(() =>
+  import('@/components/habits/HabitPresetSelectorWrapper').then((mod) => ({
+    default: mod.HabitPresetSelectorWrapper,
+  }))
 )
 
 const HabitFormServer = dynamic(() =>
