@@ -160,8 +160,6 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
           </div>
         )}
       </div>
-
-      <div className="h-8" />
     </div>
   )
 }
