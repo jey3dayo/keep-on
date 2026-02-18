@@ -73,6 +73,7 @@ export function HabitFormServer({
   const watchedName = form.watch('name')
 
   const selectedColorValue = getColorById(watchedColor || DEFAULT_HABIT_COLOR).color
+  const selectedColorForeground = getColorById(watchedColor || DEFAULT_HABIT_COLOR).foreground
   const SelectedIconComponent = getIconById(watchedIcon || DEFAULT_HABIT_ICON).icon
   const currentPeriod = getPeriodById(watchedPeriod || DEFAULT_HABIT_PERIOD)
 
@@ -291,7 +292,7 @@ export function HabitFormServer({
           render={({ field }) => (
             <div className="space-y-3">
               <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">カラー</div>
-              <div className="scrollbar-hide flex justify-center gap-3 overflow-x-auto pt-1 pb-2">
+              <div className="scrollbar-hide flex gap-3 overflow-x-auto px-1 pt-1 pb-2">
                 {habitColors.map((color) => {
                   const isSelected = field.value === color.id
                   return (
@@ -437,6 +438,7 @@ export function HabitFormServer({
               onClick={form.handleSubmit(handleSubmit)}
               style={{
                 backgroundColor: watchedName?.trim() && !isSaving ? selectedColorValue : undefined,
+                color: watchedName?.trim() && !isSaving ? selectedColorForeground : undefined,
               }}
               type="button"
             >

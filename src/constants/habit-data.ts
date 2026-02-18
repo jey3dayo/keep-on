@@ -50,16 +50,17 @@ export const habitIcons: HabitIcon[] = [
 ]
 
 export const habitColors = [
-  { id: 'orange', color: 'var(--orange-9)', label: 'オレンジ' },
-  { id: 'red', color: 'var(--red-9)', label: 'レッド' },
-  { id: 'pink', color: 'var(--pink-9)', label: 'ピンク' },
-  { id: 'purple', color: 'var(--purple-9)', label: 'パープル' },
-  { id: 'blue', color: 'var(--blue-9)', label: 'ブルー' },
-  { id: 'cyan', color: 'var(--cyan-9)', label: 'シアン' },
-  { id: 'teal', color: 'var(--teal-9)', label: 'ティール' },
-  { id: 'green', color: 'var(--green-9)', label: 'グリーン' },
-  { id: 'lime', color: 'var(--lime-9)', label: 'ライム' },
-  { id: 'yellow', color: 'var(--yellow-9)', label: 'イエロー' },
+  { id: 'orange', color: 'var(--orange-9)', foreground: 'var(--orange-1)', label: 'オレンジ' },
+  { id: 'red', color: 'var(--red-9)', foreground: 'var(--red-1)', label: 'レッド' },
+  { id: 'pink', color: 'var(--pink-9)', foreground: 'var(--pink-1)', label: 'ピンク' },
+  { id: 'purple', color: 'var(--purple-9)', foreground: 'var(--purple-1)', label: 'パープル' },
+  { id: 'blue', color: 'var(--blue-9)', foreground: 'var(--blue-1)', label: 'ブルー' },
+  { id: 'cyan', color: 'var(--cyan-9)', foreground: 'var(--cyan-1)', label: 'シアン' },
+  { id: 'teal', color: 'var(--teal-9)', foreground: 'var(--teal-1)', label: 'ティール' },
+  { id: 'green', color: 'var(--green-9)', foreground: 'var(--green-1)', label: 'グリーン' },
+  // lime/yellow は step-9 が明るいため step-12（ダーク）を foreground に使う
+  { id: 'lime', color: 'var(--lime-9)', foreground: 'var(--lime-12)', label: 'ライム' },
+  { id: 'yellow', color: 'var(--yellow-9)', foreground: 'var(--yellow-12)', label: 'イエロー' },
 ]
 
 export const oldHabitColors = [
