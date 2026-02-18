@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronRight, Search, X } from 'lucide-react'
+import { ChevronRight, X } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import {
@@ -21,62 +21,53 @@ interface HabitPresetSelectorProps {
 
 export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }: HabitPresetSelectorProps) {
   const [selectedCategory, setSelectedCategory] = useState<PresetCategory>('all')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
 
   const bgColor = 'var(--orange-9)'
   const bgColorLight = 'var(--orange-8)'
 
-  const filteredPresets = habitPresets.filter((preset) => {
-    const matchesCategory = selectedCategory === 'all' || preset.category === selectedCategory
-    const matchesSearch = preset.name.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && (searchQuery === '' || matchesSearch)
-  })
+  const filteredPresets = habitPresets.filter(
+    (preset) => selectedCategory === 'all' || preset.category === selectedCategory
+  )
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
-      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3">
-        <Button
-          className="h-10 w-10 rounded-full p-0"
-          onClick={onClose}
-          size="icon"
-          style={{ backgroundColor: bgColorLight }}
-          type="button"
-          variant="ghost"
-        >
-          <X className="h-5 w-5 text-white" />
-        </Button>
+      <header className="sticky top-0 z-10 px-4 pt-3 pb-4">
+        <div className="relative flex items-center justify-center">
+          <Button
+            className="absolute left-0 h-10 w-10 rounded-full p-0"
+            onClick={onClose}
+            size="icon"
+            style={{ backgroundColor: bgColorLight }}
+            type="button"
+            variant="ghost"
+          >
+            <X className="h-5 w-5 text-white" />
+          </Button>
 
-        <h1 className="font-semibold text-lg text-white">習慣を追加</h1>
-
-        <Button
-          className="h-10 w-10 rounded-full p-0"
-          onClick={() => setShowSearch(!showSearch)}
-          size="icon"
-          style={{ backgroundColor: bgColorLight }}
-          type="button"
-          variant="ghost"
-        >
-          <Search className="h-5 w-5 text-white" />
-        </Button>
+          <h1 className="font-semibold text-lg text-white">習慣を追加</h1>
+        </div>
       </header>
 
-      {showSearch && (
-        <div className="px-4 pb-3">
-          <input
-            autoFocus
-            className="w-full rounded-xl px-4 py-3 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="プリセットを検索..."
-            style={{ backgroundColor: bgColorLight }}
-            type="text"
-            value={searchQuery}
-          />
-        </div>
-      )}
+      <div className="px-4 pb-4">
+        <Button
+          className="h-auto w-full justify-start rounded-xl px-4 py-4 text-left text-white/50 hover:bg-white/10"
+          onClick={onCreateCustom}
+          style={{ backgroundColor: bgColorLight }}
+          type="button"
+          variant="ghost"
+        >
+          習慣の名前を入力...
+        </Button>
+      </div>
 
       <div className="px-4 pb-4">
-        <div className="scrollbar-hide flex gap-2 overflow-x-auto">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="h-px flex-1 bg-white/20" />
+          <p className="text-sm text-white/50">またはプリセットから選ぶ</p>
+          <div className="h-px flex-1 bg-white/20" />
+        </div>
+
+        <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
           {presetCategories.map((category) => {
             const IconComponent = category.icon
             const isSelected = selectedCategory === category.id
@@ -100,28 +91,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
         </div>
       </div>
 
-      <div className="px-4 pb-4">
-        <p className="text-sm text-white/80 leading-relaxed">
-          プリセットを選択するか、自身でカスタム習慣を作成できます。
-        </p>
-      </div>
-
-      <div className="px-4 pb-2">
-        <p className="mb-2 text-sm text-white/70">自身で作成:</p>
-        <Button
-          className="h-auto w-full justify-start rounded-xl px-4 py-4 text-left text-white/50 hover:bg-white/10"
-          onClick={onCreateCustom}
-          style={{ backgroundColor: bgColorLight }}
-          type="button"
-          variant="ghost"
-        >
-          習慣の名前を入力...
-        </Button>
-      </div>
-
-      <div className="px-4 pt-4">
-        <p className="mb-3 text-sm text-white/70">またはプリセットを選択:</p>
-
+      <div className="px-4 pb-8">
         <div className="space-y-2">
           {filteredPresets.map((preset) => {
             const icon = getIconById(preset.iconId)
