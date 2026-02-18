@@ -3,7 +3,7 @@
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import { Check, ChevronLeft, Clock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -47,8 +47,11 @@ export function HabitFormServer({
   const [isSaving, setIsSaving] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
-  // 初期値を設定
-  const defaultValues: HabitFormValues = getHabitFormDefaults(initialData)
+  // 初期値を設定（メモ化して不要な再計算を防ぐ）
+  const defaultValues: HabitFormValues = useMemo(() => getHabitFormDefaults(initialData), [initialData])
+
+  // 編集モードかどうかを判定（HabitPresetの場合は新規作成扱い）
+  const isEdit = useMemo(() => initialData && !('category' in initialData), [initialData])
 
   const form = useForm<FormValues>({
     resolver: valibotResolver(HabitInputSchema) as Resolver<FormValues>,
@@ -89,13 +92,16 @@ export function HabitFormServer({
     setIsSaving(true)
 
     const formData = buildHabitFormData(data)
-    const result = initialData ? await updateHabitAction(initialData.id, formData) : await createHabit(formData)
+    // HabitPresetの場合は新規作成、既存のHabitの場合は更新
+    const result = isEdit
+      ? await updateHabitAction((initialData as Habit | HabitWithProgress).id, formData)
+      : await createHabit(formData)
 
     setIsSaving(false)
 
     if (result.ok) {
-      toast.success(initialData ? '習慣を更新しました' : '習慣を作成しました', {
-        description: initialData ? `「${data.name}」を更新しました` : `「${data.name}」が追加されました`,
+      toast.success(isEdit ? '習慣を更新しました' : '習慣を作成しました', {
+        description: isEdit ? `「${data.name}」を更新しました` : `「${data.name}」が追加されました`,
       })
       form.reset()
 
@@ -105,7 +111,7 @@ export function HabitFormServer({
         router.push('/dashboard')
       }
     } else {
-      toast.error(initialData ? '習慣の更新に失敗しました' : '習慣の作成に失敗しました', {
+      toast.error(isEdit ? '習慣の更新に失敗しました' : '習慣の作成に失敗しました', {
         description: formatSerializableError(result.error),
       })
     }
