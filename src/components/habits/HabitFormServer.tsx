@@ -76,6 +76,7 @@ export function HabitFormServer({
   const selectedColorForeground = getColorById(watchedColor || DEFAULT_HABIT_COLOR).foreground
   const SelectedIconComponent = getIconById(watchedIcon || DEFAULT_HABIT_ICON).icon
   const currentPeriod = getPeriodById(watchedPeriod || DEFAULT_HABIT_PERIOD)
+  const submitContent = isSaving ? <Check className="h-5 w-5" /> : submitLabel
 
   async function handleExternalSubmit(data: FormValues) {
     if (!onSubmit) {
@@ -121,9 +122,9 @@ export function HabitFormServer({
   async function handleSubmit(data: FormValues) {
     if (onSubmit) {
       await handleExternalSubmit(data)
-    } else {
-      await handleDefaultSubmit(data)
+      return
     }
+    await handleDefaultSubmit(data)
   }
 
   return (
@@ -154,7 +155,7 @@ export function HabitFormServer({
             type="button"
             variant="ghost"
           >
-            {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
+            {submitContent}
           </Button>
         </header>
       )}
@@ -442,7 +443,7 @@ export function HabitFormServer({
               }}
               type="button"
             >
-              {isSaving ? <Check className="h-5 w-5" /> : submitLabel}
+              {submitContent}
             </Button>
           </div>
         )}
