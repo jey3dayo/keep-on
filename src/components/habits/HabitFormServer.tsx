@@ -431,7 +431,7 @@ export function HabitFormServer({
 
         {/* Submit Button for Modal */}
         {hideHeader && (
-          <div className="mt-8">
+          <div className="sticky bottom-0 mt-8 bg-background pt-2 pb-4">
             <Button
               className="w-full"
               disabled={!watchedName?.trim() || isSaving}
