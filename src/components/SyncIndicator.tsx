@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, CloudUpload } from 'lucide-react'
+import { CloudUpload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { SYNC_INDICATOR_DELAY_MS, SYNC_INDICATOR_MIN_DISPLAY_MS } from '@/constants/sync'
 import { useSyncContext } from '@/contexts/SyncContext'
@@ -59,19 +59,8 @@ export function SyncIndicator() {
   }, [isSyncing])
 
   return (
-    <div
-      aria-atomic="true"
-      aria-label={showSyncIcon ? '同期中' : '最新'}
-      aria-live="polite"
-      className="flex min-h-[44px] min-w-[44px] items-center justify-center"
-      role="status"
-      title={showSyncIcon ? '同期中' : '最新'}
-    >
-      {showSyncIcon ? (
-        <CloudUpload className="h-6 w-6 text-secondary-foreground" />
-      ) : (
-        <CheckCircle2 className="h-6 w-6 text-secondary-foreground" />
-      )}
+    <div aria-atomic="true" aria-label={showSyncIcon ? '同期中' : '最新'} aria-live="polite" role="status">
+      {showSyncIcon && <CloudUpload className="h-6 w-6 text-secondary-foreground" />}
     </div>
   )
 }
