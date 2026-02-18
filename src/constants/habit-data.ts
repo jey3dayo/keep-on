@@ -180,9 +180,9 @@ export interface PresetCategoryOption {
 export const presetCategories: PresetCategoryOption[] = [
   { id: 'all', label: 'すべて', icon: Sparkles },
   { id: 'health', label: '健康', icon: Heart },
-  { id: 'productivity', label: '生産性', icon: Target },
   { id: 'lifestyle', label: '生活', icon: Coffee },
   { id: 'learning', label: '学習', icon: BookOpen },
+  { id: 'productivity', label: '生産性', icon: Target },
 ]
 
 export interface HabitPreset {
