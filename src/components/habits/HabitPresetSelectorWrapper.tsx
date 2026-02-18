@@ -10,10 +10,10 @@ export function HabitPresetSelectorWrapper() {
     <HabitPresetSelector
       onClose={() => router.back()}
       onCreateCustom={() => {
-        router.push('/habits/new?step=form')
+        router.replace('/habits/new?step=form')
       }}
       onSelectPreset={(preset) => {
-        router.push(`/habits/new?step=form&preset=${preset.id}`)
+        router.replace(`/habits/new?step=form&preset=${preset.id}`)
       }}
     />
   )
