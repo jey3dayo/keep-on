@@ -51,7 +51,7 @@ export function HabitFormServer({
   const defaultValues: HabitFormValues = useMemo(() => getHabitFormDefaults(initialData), [initialData])
 
   // 編集モードかどうかを判定（HabitPresetの場合は新規作成扱い）
-  const isEdit = useMemo(() => initialData && !('category' in initialData), [initialData])
+  const isEdit = useMemo(() => Boolean(initialData && !('category' in initialData)), [initialData])
 
   const form = useForm<FormValues>({
     resolver: valibotResolver(HabitInputSchema) as Resolver<FormValues>,
@@ -141,7 +141,7 @@ export function HabitFormServer({
             <ChevronLeft className="h-5 w-5" />
             <span className="text-sm">戻る</span>
           </Button>
-          <h1 className="font-semibold text-foreground text-lg">{initialData ? '習慣を編集' : '新しい習慣'}</h1>
+          <h1 className="font-semibold text-foreground text-lg">{isEdit ? '習慣を編集' : '新しい習慣'}</h1>
           <Button
             className={cn(
               'h-auto p-0 hover:bg-transparent',
