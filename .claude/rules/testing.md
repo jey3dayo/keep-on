@@ -535,7 +535,7 @@ Workers のログと突き合わせて確認するための手順です。
 
 ### 補強チェック観点（ログ + UI）
 
-- **Cloudflare ログ**
+- Cloudflare ログ
   - `request.dashboard:start` / `request.dashboard:end` が連続して出る
   - `request.habits:start` / `request.habits:end` が出る
   - `:timeout` / `TimeoutError` が出ていない
@@ -543,7 +543,7 @@ Workers のログと突き合わせて確認するための手順です。
   - `dashboard.syncUser` / `dashboard.habits` / `dashboard.checkins` の `ms` がタイムアウト上限以内
   - `db.connection` が毎回出続けない（過剰な再接続が起きていない）
   - `Clerk: Refreshing the session token resulted in an infinite redirect loop` が出ていない
-- **UI**
+- UI
   - チェックイン後に進捗表示が 1 つ増える（例: `6 / 7` → `7 / 7`）
   - 連打時に重複反映しない（同一習慣の多重チェックインが起きない）
   - 失敗時はトーストでエラーが見える
