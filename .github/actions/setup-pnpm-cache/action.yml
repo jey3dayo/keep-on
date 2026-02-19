@@ -3,11 +3,6 @@ name: "Setup pnpm and Cache"
 description: "Setup pnpm, restore pnpm store cache, and install dependencies"
 
 inputs:
-  pnpm-version:
-    description: "pnpm version to use"
-    required: false
-    default: "10.29.3"
-
   lockfile:
     description: "Lockfile path used for cache key"
     required: false
@@ -28,8 +23,6 @@ runs:
   steps:
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
-      with:
-        version: ${{ inputs.pnpm-version }}
 
     - name: Resolve pnpm store path
       id: store
