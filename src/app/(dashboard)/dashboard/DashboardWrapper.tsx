@@ -34,7 +34,14 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   const router = useRouter()
   const [, startTransition] = useTransition()
   const { startSync, endSync, isSyncing } = useSyncContext()
+  const [prevHabits, setPrevHabits] = useState(habits)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
+
+  if (prevHabits !== habits) {
+    setPrevHabits(habits)
+    setOptimisticHabits(habits)
+  }
+
   const pendingCheckinsRef = useRef<Set<string>>(new Set())
   const pendingCountRef = useRef<Map<string, number>>(new Map())
   const activeRequestCountRef = useRef(0)
@@ -340,10 +347,6 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
       router.refresh()
     })
   }, [router])
-
-  useEffect(() => {
-    setOptimisticHabits(habits)
-  }, [habits])
 
   useEffect(() => {
     return () => {

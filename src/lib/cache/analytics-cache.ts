@@ -1,21 +1,7 @@
 import { ANALYTICS_CACHE_TTL_SECONDS } from '@/constants/cache'
 import { buildCacheKey, serializeCacheData, validateCachedData } from '@/lib/cache/analytics-cache.pure'
+import { getKV } from '@/lib/cache/kv'
 import { formatError, logInfo, logWarn } from '@/lib/logging'
-import type { CloudflareEnv, KVNamespace } from '@/types/cloudflare'
-
-async function getKV(): Promise<KVNamespace | null> {
-  if (typeof globalThis === 'undefined' || !('caches' in globalThis)) {
-    return null // ローカル環境
-  }
-
-  try {
-    const { getCloudflareContext } = await import('@opennextjs/cloudflare')
-    const { env } = getCloudflareContext()
-    return (env as CloudflareEnv).NEXT_INC_CACHE_KV ?? null
-  } catch {
-    return null
-  }
-}
 
 /**
  * 総チェックイン数をキャッシュから取得

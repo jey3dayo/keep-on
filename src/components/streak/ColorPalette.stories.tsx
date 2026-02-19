@@ -21,11 +21,13 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+function InteractiveStory() {
+  const [theme, setTheme] = useState<ColorThemeName>('lime')
+  return <ColorPalette currentTheme={theme} onThemeChange={setTheme} />
+}
+
 export const Interactive: Story = {
-  render: () => {
-    const [theme, setTheme] = useState<ColorThemeName>('lime')
-    return <ColorPalette currentTheme={theme} onThemeChange={setTheme} />
-  },
+  render: () => <InteractiveStory />,
 }
 
 export const Selected: Story = {

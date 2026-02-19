@@ -12,7 +12,7 @@ export type HabitInput = Omit<InferInsertModel<typeof import('@/db/schema').habi
 /**
  * 習慣更新データの型定義（全てのフィールドをオプションに）
  */
-export type HabitUpdateInput = Partial<HabitInput>
+type HabitUpdateInput = Partial<HabitInput>
 
 const toValidationError = (issues: ReturnType<typeof safeParseHabitInput>['issues']) => {
   const firstIssue = issues?.[0]

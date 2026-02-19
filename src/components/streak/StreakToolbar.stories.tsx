@@ -22,11 +22,13 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+function InteractiveStory() {
+  const [theme, setTheme] = useState<ColorThemeName>('lime')
+  return <StreakToolbar currentTheme={theme} onThemeChange={setTheme} ready />
+}
+
 export const Interactive: Story = {
-  render: () => {
-    const [theme, setTheme] = useState<ColorThemeName>('lime')
-    return <StreakToolbar currentTheme={theme} onThemeChange={setTheme} ready />
-  },
+  render: () => <InteractiveStory />,
 }
 
 export const Loading: Story = {

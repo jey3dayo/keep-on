@@ -10,6 +10,8 @@ import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
 import { updateHabitAction } from '@/app/actions/habits/update'
 import { Button } from '@/components/basics/Button'
+import { HabitIconPreview } from '@/components/habits/HabitIconPreview'
+import { HabitPreviewCard } from '@/components/habits/HabitPreviewCard'
 import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, DEFAULT_HABIT_PERIOD } from '@/constants/habit'
 import {
   getColorById,
@@ -161,15 +163,7 @@ export function HabitFormServer({
         onSubmit={form.handleSubmit(handleSubmit)}
       >
         {/* Icon Preview */}
-        <div className="flex flex-col items-center gap-4">
-          <div
-            className="flex h-24 w-24 items-center justify-center rounded-full transition-all duration-300"
-            style={{ backgroundColor: selectedColorValue }}
-          >
-            <SelectedIconComponent className="h-12 w-12 text-background" />
-          </div>
-          <p className="text-muted-foreground text-xs">アイコンと色を選択</p>
-        </div>
+        <HabitIconPreview backgroundColor={selectedColorValue} IconComponent={SelectedIconComponent} />
 
         {/* Habit Name Input */}
         <Controller
@@ -384,47 +378,13 @@ export function HabitFormServer({
         </div>
 
         {/* Preview Card */}
-        <div className="space-y-3">
-          <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">プレビュー</div>
-          <div className="rounded-2xl border border-border bg-card p-5">
-            <div className="flex items-center gap-4">
-              <div
-                className="flex h-14 w-14 items-center justify-center rounded-full"
-                style={{ backgroundColor: selectedColorValue }}
-              >
-                <SelectedIconComponent className="h-7 w-7 text-background" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground text-lg">{watchedName || '習慣の名前'}</h3>
-                <p className="text-muted-foreground text-sm">
-                  {watchedFrequency}
-                  {currentPeriod.frequencyLabel}
-                </p>
-              </div>
-              <div className="flex flex-col items-end">
-                <div className="font-bold text-2xl" style={{ color: selectedColorValue }}>
-                  0
-                </div>
-                <span className="text-muted-foreground text-xs">日連続</span>
-              </div>
-            </div>
-            <div className="mt-4 border-border border-t pt-4">
-              <div className="mb-2 flex justify-between text-muted-foreground text-xs">
-                <span>今日の進捗</span>
-                <span>0 / {watchedFrequency}</span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-secondary">
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{
-                    width: '0%',
-                    backgroundColor: selectedColorValue,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <HabitPreviewCard
+          currentPeriodFrequencyLabel={currentPeriod.frequencyLabel}
+          SelectedIconComponent={SelectedIconComponent}
+          selectedColorValue={selectedColorValue}
+          watchedFrequency={watchedFrequency}
+          watchedName={watchedName}
+        />
 
         {/* Submit Button for Modal */}
         {hideHeader && (

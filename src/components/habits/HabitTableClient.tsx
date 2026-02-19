@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { IconLabelButton } from '@/components/basics/IconLabelButton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -23,11 +23,13 @@ interface HabitTableClientProps {
 
 export function HabitTableClient({ habits }: HabitTableClientProps) {
   const router = useRouter()
+  const [prevHabits, setPrevHabits] = useState(habits)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
 
-  useEffect(() => {
+  if (prevHabits !== habits) {
+    setPrevHabits(habits)
     setOptimisticHabits(habits)
-  }, [habits])
+  }
 
   const runOptimisticUpdate = (updater: (current: HabitWithProgress[]) => HabitWithProgress[]): OptimisticRollback => {
     let previousState: HabitWithProgress[] | null = null
