@@ -1,7 +1,10 @@
+import { weekStartToDay } from '@/constants/habit'
 import { resetDb } from '@/lib/db'
-import { AuthorizationError } from '@/lib/errors/habit'
-import { isTimeoutError, logSpan, logWarn } from '@/lib/logging'
+import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
+import { isTimeoutError, logSpan, logSpanOptional, logWarn } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
+import { getUserWeekStartById } from '@/lib/queries/user'
+import { getCurrentUserId } from '@/lib/user'
 
 export type SpanRunner = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) => Promise<T>
 
@@ -66,4 +69,36 @@ export async function requireHabitForUserWithRetry(params: RequireHabitForUserPa
     throw new AuthorizationError({ detail: 'この習慣にアクセスする権限がありません' })
   }
   return habit
+}
+
+/**
+ * checkin/remove-checkin 共通: userId を取得して認証確認
+ * @param actionPrefix - ログスパン名のプレフィックス（例: 'action.habits.checkin'）
+ */
+export async function requireCheckinUserId(
+  actionPrefix: string,
+  baseMeta: Record<string, unknown>,
+  timeoutMs: number
+): Promise<string> {
+  const userId = await logSpanOptional(`${actionPrefix}.getCurrentUserId`, () => getCurrentUserId(), baseMeta, {
+    timeoutMs,
+  })
+  if (!userId) {
+    throw new UnauthorizedError({ detail: '認証されていません' })
+  }
+  return userId
+}
+
+/**
+ * checkin/remove-checkin 共通: 週開始日を解決
+ * @param actionPrefix - ログスパン名のプレフィックス（例: 'action.habits.checkin'）
+ */
+export async function resolveCheckinWeekStartDay(
+  actionPrefix: string,
+  userId: string,
+  meta: Record<string, unknown>,
+  runWithRetry: SpanRunner
+): Promise<ReturnType<typeof weekStartToDay>> {
+  const weekStart = await runWithRetry(`${actionPrefix}.getUserWeekStartById`, () => getUserWeekStartById(userId), meta)
+  return weekStartToDay(weekStart)
 }

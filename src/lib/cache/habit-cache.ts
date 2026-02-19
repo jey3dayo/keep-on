@@ -1,7 +1,7 @@
 import * as v from 'valibot'
+import { getKV } from '@/lib/cache/kv'
 import { formatError, logInfo, logWarn } from '@/lib/logging'
 import { HabitsCacheDataSchema } from '@/schemas/cache'
-import type { CloudflareEnv, KVNamespace } from '@/types/cloudflare'
 import type { HabitWithProgress } from '@/types/habit'
 
 export interface HabitsCacheData {
@@ -16,21 +16,6 @@ const CACHE_KEY_PREFIX = 'habits:user:'
 
 function getCacheKey(userId: string): string {
   return `${CACHE_KEY_PREFIX}${userId}`
-}
-
-async function getKV(): Promise<KVNamespace | null> {
-  if (typeof globalThis === 'undefined' || !('caches' in globalThis)) {
-    return null // ローカル環境
-  }
-
-  try {
-    const { getCloudflareContext } = await import('@opennextjs/cloudflare')
-    const { env } = getCloudflareContext()
-    const kv = (env as CloudflareEnv).NEXT_INC_CACHE_KV
-    return kv || null
-  } catch {
-    return null
-  }
 }
 
 export async function getHabitsCacheSnapshot(userId: string): Promise<HabitsCacheData | null> {

@@ -17,6 +17,18 @@ import { validateHabitId } from '@/validators/habit-action'
 
 export type HabitActionResult<T = void> = ServerActionResultAsync<T, SerializableHabitError>
 
+/**
+ * 認証チェック（Result型を返す）
+ * create/update アクションで使用
+ */
+export const authenticateUser = async (): Result.ResultAsync<string, UnauthorizedError> => {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return Result.fail(new UnauthorizedError())
+  }
+  return Result.succeed(userId)
+}
+
 type HabitRecord = NonNullable<Awaited<ReturnType<typeof getHabitById>>>
 type HabitMutation = (habitId: string, userId: string) => Promise<boolean>
 type HabitPrecondition = (habit: HabitRecord) => SerializableHabitError | null

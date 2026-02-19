@@ -1,49 +1,19 @@
 'use server'
 
 import { Result } from '@praha/byethrow'
-import { weekStartToDay } from '@/constants/habit'
 import { toActionResult } from '@/lib/actions/result'
-import { UnauthorizedError } from '@/lib/errors/habit'
-import { createRequestMeta, logSpanOptional } from '@/lib/logging'
+import { createRequestMeta } from '@/lib/logging'
 import { deleteLatestCheckinByHabitAndPeriod } from '@/lib/queries/checkin'
-import { getUserWeekStartById } from '@/lib/queries/user'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
-import { getCurrentUserId } from '@/lib/user'
 import { validateHabitActionInput } from '@/validators/habit-action'
-import { createHabitCheckinSpans, type HabitCheckinParams, requireHabitForUserWithRetry } from './checkin-shared'
+import {
+  createHabitCheckinSpans,
+  type HabitCheckinParams,
+  requireCheckinUserId,
+  requireHabitForUserWithRetry,
+  resolveCheckinWeekStartDay,
+} from './checkin-shared'
 import { type HabitActionResult, revalidateHabitPaths, serializeActionError } from './utils'
-
-type WeekStartDay = ReturnType<typeof weekStartToDay>
-
-async function requireUserId(baseMeta: Record<string, unknown>, timeoutMs: number): Promise<string> {
-  const userId = await logSpanOptional(
-    'action.habits.removeCheckin.getCurrentUserId',
-    () => getCurrentUserId(),
-    baseMeta,
-    {
-      timeoutMs,
-    }
-  )
-
-  if (!userId) {
-    throw new UnauthorizedError({ detail: '認証されていません' })
-  }
-
-  return userId
-}
-
-async function resolveWeekStartDay(
-  userId: string,
-  meta: Record<string, unknown>,
-  runWithRetry: HabitCheckinParams['spans']['runWithRetry']
-): Promise<WeekStartDay> {
-  const weekStart = await runWithRetry(
-    'action.habits.removeCheckin.getUserWeekStartById',
-    () => getUserWeekStartById(userId),
-    meta
-  )
-  return weekStartToDay(weekStart)
-}
 
 interface RemoveCheckinResultData {
   currentCount: number
@@ -52,7 +22,7 @@ interface RemoveCheckinResultData {
 
 async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveCheckinResultData> {
   const { habitId, dateKey, baseMeta, spans } = params
-  const userId = await requireUserId(baseMeta, spans.timeoutMs)
+  const userId = await requireCheckinUserId('action.habits.removeCheckin', baseMeta, spans.timeoutMs)
   const metaWithUser = { ...baseMeta, userId }
 
   // クエリを並列実行してレイテンシを削減
@@ -64,7 +34,7 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
       runWithRetry: spans.runWithRetry,
       actionName: 'action.habits.removeCheckin',
     }),
-    resolveWeekStartDay(userId, metaWithUser, spans.runWithRetry),
+    resolveCheckinWeekStartDay('action.habits.removeCheckin', userId, metaWithUser, spans.runWithRetry),
   ])
 
   const targetDate = dateKey ?? new Date()
