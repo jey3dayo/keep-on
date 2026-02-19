@@ -7,3 +7,8 @@ ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
   - workerd
+
+onlyBuiltDependencies:
+  - '@sentry/cli'
+  - better-sqlite3
+  - oracledb
