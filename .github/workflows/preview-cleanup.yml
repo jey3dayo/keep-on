@@ -9,6 +9,9 @@ jobs:
     name: Cleanup Preview
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -21,6 +24,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: "package.json"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Delete Preview Worker
         env:
@@ -55,4 +62,3 @@ jobs:
               issue_number: prNumber,
               body: body
             });
-
