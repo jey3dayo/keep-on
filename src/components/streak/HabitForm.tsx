@@ -1,7 +1,7 @@
 'use client'
 
 import { Check, ChevronLeft, Clock } from 'lucide-react'
-import { type CSSProperties, useMemo, useState } from 'react'
+import { type CSSProperties, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import type { IconName } from '@/components/basics/Icon'
 import {
@@ -29,9 +29,9 @@ export function HabitForm({ onBack, onSubmit, preset }: HabitFormProps) {
   const [frequency, setFrequency] = useState(preset?.frequency ?? DEFAULT_HABIT_FREQUENCY)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const selectedColorValue = useMemo(() => getColorById(selectedColor).color, [selectedColor])
-  const SelectedIconComponent = useMemo(() => getIconById(selectedIcon).icon, [selectedIcon])
-  const currentPeriod = useMemo(() => getPeriodById(selectedPeriod), [selectedPeriod])
+  const selectedColorValue = getColorById(selectedColor).color
+  const SelectedIconComponent = getIconById(selectedIcon).icon
+  const currentPeriod = getPeriodById(selectedPeriod)
 
   const handleSave = async () => {
     if (!habitName.trim() || isSubmitting) {

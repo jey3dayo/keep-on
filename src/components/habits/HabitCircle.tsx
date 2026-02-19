@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import { Icon, type IconName } from '@/components/basics/Icon'
 import { COMPLETION_ACTION_LABEL, DEFAULT_HABIT_ICON } from '@/constants/habit'
@@ -55,20 +55,17 @@ export function HabitCircle({ habitName, icon, completed, onClick, size = 'md', 
   const radius = sizeConfig.circle
   const circumference = 2 * Math.PI * radius
 
-  // 完了時のアニメーション
-  useEffect(() => {
-    if (completed) {
-      setIsAnimating(true)
-      const timer = setTimeout(() => setIsAnimating(false), 600)
-      return () => clearTimeout(timer)
-    }
-  }, [completed])
+  const handleClick = () => {
+    setIsAnimating(true)
+    setTimeout(() => setIsAnimating(false), 600)
+    onClick?.()
+  }
 
   return (
     <Button
       aria-label={`${habitName}を${completed ? COMPLETION_ACTION_LABEL.markIncomplete : COMPLETION_ACTION_LABEL.markComplete}`}
       className={cn('relative transition-all duration-200', sizeConfig.container, className)}
-      onClick={onClick}
+      onClick={handleClick}
       size="icon"
       type="button"
       variant="ghost"

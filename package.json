@@ -16,6 +16,7 @@
     "lint": "ultracite check",
     "format": "ultracite fix",
     "doctor": "ultracite doctor",
+    "doctor:react": "react-doctor .",
     "test": "dotenvx run -- vitest",
     "test:ui": "dotenvx run -- vitest --ui",
     "test:run": "dotenvx run -- vitest run",

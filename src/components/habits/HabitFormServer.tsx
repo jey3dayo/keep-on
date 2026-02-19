@@ -45,7 +45,6 @@ export function HabitFormServer({
 }: HabitFormServerProps = {}) {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   // 初期値を設定（メモ化して不要な再計算を防ぐ）
   const defaultValues: HabitFormValues = useMemo(() => getHabitFormDefaults(initialData), [initialData])
@@ -58,13 +57,10 @@ export function HabitFormServer({
     defaultValues,
   })
 
-  // 初期値がセットされた後に初期ロードフラグを解除
+  // initialData が変わった場合にフォームをリセット
   useEffect(() => {
-    if (isInitialLoad) {
-      form.reset(defaultValues)
-      setIsInitialLoad(false)
-    }
-  }, [isInitialLoad, form, defaultValues])
+    form.reset(defaultValues)
+  }, [defaultValues, form])
 
   const watchedIcon = form.watch('icon')
   const watchedColor = form.watch('color')

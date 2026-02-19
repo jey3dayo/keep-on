@@ -29,7 +29,7 @@ export function HabitActionDrawer({
 }: HabitActionDrawerProps) {
   const router = useRouter()
   const [dialogType, setDialogType] = useState<'reset' | 'archive' | 'delete' | null>(null)
-  const [activeHabit, setActiveHabit] = useState<HabitWithProgress | null>(habit)
+  const [activeHabit, setActiveHabit] = useState<HabitWithProgress | null>(null)
   const prevOpenRef = useRef(open)
 
   useEffect(() => {
