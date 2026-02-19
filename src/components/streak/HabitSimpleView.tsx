@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { resetHabitProgressAction } from '@/app/actions/habits/reset'
 import { Button } from '@/components/basics/Button'
-import { Icon, normalizeIconName } from '@/components/basics/Icon'
+import { Icon } from '@/components/basics/Icon'
 import type { OptimisticRollback } from '@/components/habits/types'
+import { HabitCircleItem } from '@/components/streak/HabitCircleItem'
+import { ProgressRing } from '@/components/streak/ProgressRing'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
-import { getColorById, getIconById } from '@/constants/habit-data'
+import { getColorById } from '@/constants/habit-data'
 import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
 import { cn } from '@/lib/utils'
 import { getRingColorFromBackground } from '@/lib/utils/color'
@@ -34,42 +36,6 @@ interface HabitSimpleViewProps {
   onRemoveCheckin?: (habitId: string) => Promise<void>
   onResetOptimistic?: (habitId: string) => OptimisticRollback
   onSettings?: () => void
-}
-
-function ProgressRing({
-  progress,
-  size = 140,
-  strokeWidth = 6,
-  progressColor,
-  backgroundColor,
-}: {
-  progress: number
-  size?: number
-  strokeWidth?: number
-  progressColor: string
-  backgroundColor: string
-}) {
-  const radius = (size - strokeWidth) / 2
-  const circumference = 2 * Math.PI * radius
-  const strokeDashoffset = circumference - (progress / 100) * circumference
-
-  return (
-    <svg aria-hidden="true" className="absolute inset-0 -rotate-90" height={size} width={size}>
-      <circle cx={size / 2} cy={size / 2} fill="none" r={radius} stroke={backgroundColor} strokeWidth={strokeWidth} />
-      <circle
-        className="transition-all duration-500 ease-out motion-reduce:transition-none"
-        cx={size / 2}
-        cy={size / 2}
-        fill="none"
-        r={radius}
-        stroke={progressColor}
-        strokeDasharray={circumference}
-        strokeDashoffset={strokeDashoffset}
-        strokeLinecap="round"
-        strokeWidth={strokeWidth}
-      />
-    </svg>
-  )
 }
 
 export function HabitSimpleView({
@@ -245,108 +211,21 @@ export function HabitSimpleView({
       <main className="relative flex flex-1 items-start justify-center px-4 pt-8 pb-24">
         <div className={cn('grid w-full max-w-md grid-cols-2 gap-6')}>
           {currentHabits.map((habit) => {
-            const iconData = getIconById(normalizeIconName(habit.icon))
-            const IconComponent = iconData.icon
-            const progressPercent = Math.min((habit.currentProgress / habit.frequency) * 100, 100)
             const isCompleted = completedHabitIds.has(habit.id)
-
             return (
-              <div className="flex flex-col items-center gap-3" key={habit.id}>
-                <Button
-                  aria-label={isCompleted ? '達成済み' : `${habit.name}をチェックイン`}
-                  className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
-                  disabled={isCompleted}
-                  onClick={(event) => handleProgressClick(event, habit, isCompleted)}
-                  onContextMenu={(e) => handleContextMenu(e, habit)}
-                  onPointerCancel={() => handleLongPressEnd(true)}
-                  onPointerDown={() => handleLongPressStart(habit)}
-                  onPointerLeave={() => handleLongPressEnd(true)}
-                  onPointerUp={() => handleLongPressEnd(false)}
-                  scale="md"
-                  type="button"
-                  variant="ghost"
-                >
-                  <ProgressRing
-                    backgroundColor={ringBgColor}
-                    progress={progressPercent}
-                    progressColor="rgba(255, 255, 255, 0.95)"
-                    size={140}
-                    strokeWidth={6}
-                  />
-
-                  <div
-                    className={cn(
-                      'flex h-[120px] w-[120px] items-center justify-center rounded-full ring-1 ring-white/15 transition-all duration-300',
-                      isCompleted && 'scale-105'
-                    )}
-                    style={{
-                      backgroundColor: bgColor,
-                      boxShadow: isCompleted ? '0 0 24px rgba(255, 255, 255, 0.35)' : 'none',
-                    }}
-                  >
-                    <IconComponent
-                      className={cn(
-                        'h-14 w-14 transition-all duration-300',
-                        isCompleted ? 'text-white' : 'text-white/90'
-                      )}
-                      strokeWidth={1.5}
-                    />
-                  </div>
-                </Button>
-
-                <div className="flex flex-col items-center gap-2">
-                  <p
-                    className={cn(
-                      'max-w-[160px] text-center font-medium text-base text-white leading-tight',
-                      isCompleted && 'opacity-80'
-                    )}
-                  >
-                    {habit.name}
-                  </p>
-
-                  {habit.frequency > 1 && (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        aria-label="チェックインを減らす"
-                        className="h-7 w-7 rounded-full bg-white/10 p-0 text-white hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
-                        disabled={habit.currentProgress === 0}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (onRemoveCheckin) {
-                            onRemoveCheckin(habit.id)
-                          }
-                        }}
-                        size="icon"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <Icon className="h-4 w-4" name="minus" />
-                      </Button>
-
-                      <span className="min-w-[3rem] text-center font-medium text-sm text-white">
-                        {habit.currentProgress} / {habit.frequency}
-                      </span>
-
-                      <Button
-                        aria-label="チェックインを増やす"
-                        className="h-7 w-7 rounded-full bg-white/10 p-0 text-white hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
-                        disabled={isCompleted}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (onAddCheckin) {
-                            onAddCheckin(habit.id)
-                          }
-                        }}
-                        size="icon"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <Icon className="h-4 w-4" name="plus" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <HabitCircleItem
+                bgColor={bgColor}
+                habit={habit}
+                isCompleted={isCompleted}
+                key={habit.id}
+                onAddCheckin={onAddCheckin ? () => onAddCheckin(habit.id) : undefined}
+                onCheckin={(event) => handleProgressClick(event, habit, isCompleted)}
+                onContextMenu={(e) => handleContextMenu(e, habit)}
+                onLongPressEnd={handleLongPressEnd}
+                onLongPressStart={() => handleLongPressStart(habit)}
+                onRemoveCheckin={onRemoveCheckin ? () => onRemoveCheckin(habit.id) : undefined}
+                ringBgColor={ringBgColor}
+              />
             )
           })}
 
