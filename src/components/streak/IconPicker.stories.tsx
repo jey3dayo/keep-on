@@ -15,11 +15,13 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+function InteractiveStory() {
+  const [selectedIcon, setSelectedIcon] = useState<IconName>('footprints')
+  return <IconPicker onIconSelect={setSelectedIcon} selectedIcon={selectedIcon} />
+}
+
 export const Interactive: Story = {
-  render: () => {
-    const [selectedIcon, setSelectedIcon] = useState<IconName>('footprints')
-    return <IconPicker onIconSelect={setSelectedIcon} selectedIcon={selectedIcon} />
-  },
+  render: () => <InteractiveStory />,
 }
 
 export const Selected: Story = {
