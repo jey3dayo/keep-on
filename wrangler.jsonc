@@ -34,8 +34,24 @@
   "env": {
     "preview": {
       "vars": {
-        "NEXTJS_ENV": "preview"
-      }
+        "NEXTJS_ENV": "preview",
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_ZGVsaWNhdGUtY29sbGllLTAuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
+        "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up"
+      },
+      "kv_namespaces": [
+        {
+          "binding": "NEXT_INC_CACHE_KV",
+          "id": "feaaf2df1aab41b68e7a19cb48779738"
+        }
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "keep-on-db",
+          "database_id": "763c22af-de35-49ef-8171-2ae5293491d5"
+        }
+      ]
     }
   }
 }
