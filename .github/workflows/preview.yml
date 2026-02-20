@@ -93,7 +93,8 @@ jobs:
           ./scripts/generate-secrets-json.sh
 
           # Set secrets on preview worker
-          pnpm wrangler secret bulk .secrets.json --name "${WORKER_NAME}" --env preview
+          # NOTE: --env preview を付けると Wrangler がワーカー名に "-preview" を付与するため省略
+          pnpm wrangler secret bulk .secrets.json --name "${WORKER_NAME}"
 
           # Clean up
           rm -f .secrets.json
