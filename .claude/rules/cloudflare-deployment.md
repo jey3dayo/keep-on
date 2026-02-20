@@ -41,6 +41,33 @@ echo '<value>' | pnpm wrangler secret put CLERK_SECRET_KEY
 - Git には含まれない
 - API キー、DB 接続文字列など
 
+### `env` セクションのバインディング継承に関する注意
+
+Wrangler の `env` セクションでは、`vars`・`kv_namespaces`・`d1_databases` 等のバインディングは **non-inheritable（継承不可）** です。トップレベルに定義していても `env.*` には自動で引き継がれないため、各環境で明示的に定義する必要があります。
+
+```jsonc
+{
+  "kv_namespaces": [{ "binding": "NEXT_INC_CACHE_KV", "id": "..." }],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "...", "database_id": "..." },
+  ],
+  "env": {
+    "preview": {
+      // vars, kv_namespaces, d1_databases をすべて明示的に定義すること
+      "vars": { "NEXTJS_ENV": "preview" },
+      "kv_namespaces": [{ "binding": "NEXT_INC_CACHE_KV", "id": "..." }],
+      "d1_databases": [
+        { "binding": "DB", "database_name": "...", "database_id": "..." },
+      ],
+    },
+  },
+}
+```
+
+バインディングを省略すると、ワーカー内の `env.DB` や `env.NEXT_INC_CACHE_KV` が `undefined` になり Internal Server Error が発生します。
+
+参考: [Wrangler Environments - Non-inheritable Keys](https://developers.cloudflare.com/workers/wrangler/environments)
+
 ---
 
 ## デプロイ手順
