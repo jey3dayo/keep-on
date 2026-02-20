@@ -71,9 +71,33 @@ jobs:
             PREVIEW_URL="https://${WORKER_NAME}.j138cm.workers.dev"
           fi
 
-          echo "preview_url=${PREVIEW_URL}" >> "$GITHUB_OUTPUT"
-          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+          {
+            echo "preview_url=${PREVIEW_URL}"
+            echo "pr_number=${PR_NUMBER}"
+            echo "worker_name=${WORKER_NAME}"
+          } >> "$GITHUB_OUTPUT"
           echo "✅ Preview deployed to: ${PREVIEW_URL}"
+
+      - name: Setup Preview Secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
+        run: |
+          WORKER_NAME="${{ steps.deploy.outputs.worker_name }}"
+
+          # Install dotenvx (required by generate-secrets-json.sh)
+          pnpm add -g @dotenvx/dotenvx
+
+          # Generate secrets JSON using existing script
+          ./scripts/generate-secrets-json.sh
+
+          # Set secrets on preview worker
+          pnpm wrangler secret bulk .secrets.json --name "${WORKER_NAME}" --env preview
+
+          # Clean up
+          rm -f .secrets.json
+          echo "✅ Preview secrets configured for ${WORKER_NAME}"
 
       - name: Comment Preview URL
         uses: actions/github-script@v7
