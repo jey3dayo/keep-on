@@ -16,14 +16,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node environment
+        uses: ./.github/actions/setup-node-env
         with:
-          node-version-file: "package.json"
-          cache: "pnpm"
+          skip-install: "true"
 
       - name: Cache Next.js build
         uses: actions/cache@v4
