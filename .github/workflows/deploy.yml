@@ -18,8 +18,6 @@ jobs:
 
       - name: Setup Node environment
         uses: ./.github/actions/setup-node-env
-        with:
-          skip-install: "true"
 
       - name: Cache Next.js build
         uses: actions/cache@v4
@@ -32,8 +30,6 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
             ${{ runner.os }}-nextjs-
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Generate Drizzle migrations
         run: pnpm db:generate
