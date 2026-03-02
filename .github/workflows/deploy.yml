@@ -11,6 +11,8 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      NODE_AUTH_TOKEN: ""
 
     steps:
       - name: Checkout

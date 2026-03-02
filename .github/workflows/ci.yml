@@ -34,6 +34,8 @@ jobs:
     name: "Check: Actionlint"
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    env:
+      NODE_AUTH_TOKEN: ""
     needs: detect-changes
     if: needs.detect-changes.outputs.docs-only == 'false'
 
@@ -48,6 +50,8 @@ jobs:
     name: "Check: Lint"
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      NODE_AUTH_TOKEN: ""
     needs: detect-changes
     if: needs.detect-changes.outputs.docs-only == 'false'
 
