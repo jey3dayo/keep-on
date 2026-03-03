@@ -30,7 +30,7 @@ export function SiteHeader() {
         <h1 className="font-medium text-base">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
           <SyncIndicator />
-          <ThemeToggle />
+          <ThemeToggle buttonVariant="ghost" />
           <ClerkUserButton />
         </div>
       </div>

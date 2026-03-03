@@ -6,7 +6,12 @@ import { addCheckinAction } from '@/app/actions/habits/checkin'
 import { removeCheckinAction } from '@/app/actions/habits/remove-checkin'
 import { DesktopDashboard } from '@/components/streak/DesktopDashboard'
 import { StreakDashboard } from '@/components/streak/StreakDashboard'
-import { MAX_CONCURRENT_CHECKINS } from '@/constants/dashboard'
+import {
+  DASHBOARD_VIEW_COOKIE_KEY,
+  type DashboardView,
+  DEFAULT_DASHBOARD_VIEW,
+  MAX_CONCURRENT_CHECKINS,
+} from '@/constants/dashboard'
 import { COMPLETION_THRESHOLD } from '@/constants/habit'
 import { useSyncContext } from '@/contexts/SyncContext'
 import { useBeforeUnload } from '@/hooks/useBeforeUnload'
@@ -18,7 +23,7 @@ import type { User } from '@/types/user'
 
 interface DashboardWrapperProps {
   habits: HabitWithProgress[]
-  initialView?: 'dashboard' | 'simple'
+  initialView?: DashboardView
   todayLabel: string
   user: User
 }
@@ -34,6 +39,7 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   const router = useRouter()
   const [, startTransition] = useTransition()
   const { startSync, endSync, isSyncing } = useSyncContext()
+  const [currentView, setCurrentView] = useState<DashboardView>(initialView ?? DEFAULT_DASHBOARD_VIEW)
   const [prevHabits, setPrevHabits] = useState(habits)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
 
@@ -388,6 +394,15 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
     return Promise.resolve()
   }
 
+  const handleViewChange = (view: DashboardView) => {
+    setCurrentView(view)
+    setClientCookie(DASHBOARD_VIEW_COOKIE_KEY, view, {
+      maxAge: 60 * 60 * 24 * 365,
+      path: '/',
+      sameSite: 'lax',
+    })
+  }
+
   const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
 
   return (
@@ -395,13 +410,14 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
       {/* スマホ版: STREAK風フルスクリーンUI */}
       <div className="flex-1 md:hidden">
         <StreakDashboard
+          currentView={currentView}
           habits={activeHabits}
-          initialView={initialView}
           onAddCheckin={handleAddCheckin}
           onArchiveOptimistic={archiveOptimistically}
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
+          onViewChange={handleViewChange}
           todayLabel={todayLabel}
         />
       </div>
@@ -409,12 +425,14 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
       {/* PC版: shadcn/ui Cardレイアウト */}
       <div className="hidden flex-1 md:block">
         <DesktopDashboard
+          currentView={currentView}
           habits={activeHabits}
           onAddCheckin={handleAddCheckin}
           onArchiveOptimistic={archiveOptimistically}
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
+          onViewChange={handleViewChange}
           todayLabel={todayLabel}
           user={user}
         />

@@ -63,10 +63,10 @@ export function SyncIndicator() {
       aria-atomic="true"
       aria-label={showSyncIcon ? '同期中' : '最新'}
       aria-live="polite"
-      className="flex h-6 w-6 shrink-0 items-center justify-center"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-foreground/80"
       role="status"
     >
-      {showSyncIcon && <CloudUpload className="h-6 w-6 text-secondary-foreground" />}
+      {showSyncIcon && <CloudUpload className="h-5 w-5" />}
     </div>
   )
 }

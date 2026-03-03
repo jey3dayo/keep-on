@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { SIGN_IN_PATH } from '@/constants/auth'
-import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
+import { DASHBOARD_VIEW_COOKIE_KEY, DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import { getHabitsCacheSnapshot } from '@/lib/cache/habit-cache'
 import { withDbRetry } from '@/lib/db-retry'
 import {
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 
 export default async function DashboardPage() {
   const cookieStore = await cookies()
-  const rawView = cookieStore.get('ko_dashboard_view')?.value
+  const rawView = cookieStore.get(DASHBOARD_VIEW_COOKIE_KEY)?.value
   const initialView = rawView === 'simple' || rawView === 'dashboard' ? rawView : DEFAULT_DASHBOARD_VIEW
   const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/dashboard')
