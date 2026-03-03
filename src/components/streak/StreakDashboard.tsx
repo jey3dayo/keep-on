@@ -5,33 +5,21 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
+import type { DashboardView } from '@/constants/dashboard'
 import type { Period } from '@/constants/habit'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
 import { cn } from '@/lib/utils'
-import { setClientCookie } from '@/lib/utils/cookies'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import { HabitListView } from './HabitListView'
 import { HabitSimpleView } from './HabitSimpleView'
 import type { DashboardBaseProps } from './types'
 
 interface StreakDashboardProps extends DashboardBaseProps {
-  initialView?: MainView
+  currentView: DashboardView
+  onViewChange: (view: DashboardView) => void
 }
 
 type PeriodFilter = 'all' | Period
-type View = 'dashboard' | 'simple'
-type MainView = 'dashboard' | 'simple'
-
-const VIEW_COOKIE_KEY = 'ko_dashboard_view'
-const VIEW_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
-const persistMainView = (view: MainView) => {
-  setClientCookie(VIEW_COOKIE_KEY, view, {
-    maxAge: VIEW_COOKIE_MAX_AGE,
-    path: '/',
-    sameSite: 'lax',
-  })
-}
 
 export function StreakDashboard({
   habits,
@@ -41,10 +29,10 @@ export function StreakDashboard({
   onDeleteOptimistic,
   onResetOptimistic,
   todayLabel,
-  initialView = DEFAULT_DASHBOARD_VIEW,
+  currentView,
+  onViewChange,
 }: StreakDashboardProps) {
   const router = useRouter()
-  const [currentView, setCurrentView] = useState<View>(initialView)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
 
   const { completedHabitIds, todayActive, totalDaily, totalStreak } = useDashboardStats(habits)
@@ -66,11 +54,6 @@ export function StreakDashboard({
     }
   }, [currentView])
 
-  const handleViewChange = (view: View) => {
-    setCurrentView(view)
-    persistMainView(view)
-  }
-
   return (
     <>
       {currentView === 'simple' ? (
@@ -84,7 +67,7 @@ export function StreakDashboard({
           onDeleteOptimistic={onDeleteOptimistic}
           onRemoveCheckin={onRemoveCheckin}
           onResetOptimistic={onResetOptimistic}
-          onSettings={() => handleViewChange('dashboard')}
+          onSettings={() => onViewChange('dashboard')}
         />
       ) : (
         <div className="streak-bg flex min-h-full flex-col" style={{ backgroundColor: 'var(--primary)' }}>
@@ -108,14 +91,14 @@ export function StreakDashboard({
         </div>
       )}
 
-      <ViewToggle currentView={currentView} onViewChange={handleViewChange} />
+      <ViewToggle currentView={currentView} onViewChange={onViewChange} />
     </>
   )
 }
 
 interface ViewToggleProps {
-  currentView: View
-  onViewChange: (view: View) => void
+  currentView: DashboardView
+  onViewChange: (view: DashboardView) => void
 }
 
 function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {

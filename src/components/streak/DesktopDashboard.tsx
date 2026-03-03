@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import type { DashboardView } from '@/constants/dashboard'
 import type { Period } from '@/constants/habit'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
-import { setClientCookie } from '@/lib/utils/cookies'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import type { User } from '@/types/user'
 import { HabitListView } from './HabitListView'
@@ -15,23 +15,12 @@ import { HabitSimpleView } from './HabitSimpleView'
 import type { DashboardBaseProps } from './types'
 
 interface DesktopDashboardProps extends DashboardBaseProps {
-  initialView?: MainView
+  currentView: DashboardView
+  onViewChange: (view: DashboardView) => void
   user: User
 }
 
 type PeriodFilter = 'all' | Period
-type MainView = 'dashboard' | 'simple'
-
-const VIEW_COOKIE_KEY = 'ko_dashboard_view'
-const VIEW_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
-
-const persistMainView = (view: MainView) => {
-  setClientCookie(VIEW_COOKIE_KEY, view, {
-    maxAge: VIEW_COOKIE_MAX_AGE,
-    path: '/',
-    sameSite: 'lax',
-  })
-}
 
 export function DesktopDashboard({
   habits,
@@ -41,20 +30,15 @@ export function DesktopDashboard({
   onDeleteOptimistic,
   onResetOptimistic,
   todayLabel,
-  initialView = 'dashboard',
+  currentView,
+  onViewChange,
 }: DesktopDashboardProps) {
   const router = useRouter()
-  const [currentView, setCurrentView] = useState<MainView>(initialView)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
 
   const { completedHabitIds, todayActive, totalDaily, totalStreak } = useDashboardStats(habits)
 
   const filteredHabits = useMemo(() => filterHabitsByPeriod(habits, periodFilter), [habits, periodFilter])
-
-  const handleViewChange = (view: MainView) => {
-    setCurrentView(view)
-    persistMainView(view)
-  }
 
   return (
     <>
@@ -69,7 +53,7 @@ export function DesktopDashboard({
           onDeleteOptimistic={onDeleteOptimistic}
           onRemoveCheckin={onRemoveCheckin}
           onResetOptimistic={onResetOptimistic}
-          onSettings={() => handleViewChange('dashboard')}
+          onSettings={() => onViewChange('dashboard')}
         />
       ) : (
         <div className="space-y-6 p-6">
@@ -93,14 +77,14 @@ export function DesktopDashboard({
         </div>
       )}
 
-      <DesktopViewToggle currentView={currentView} onViewChange={handleViewChange} />
+      <DesktopViewToggle currentView={currentView} onViewChange={onViewChange} />
     </>
   )
 }
 
 interface DesktopViewToggleProps {
-  currentView: MainView
-  onViewChange: (view: MainView) => void
+  currentView: DashboardView
+  onViewChange: (view: DashboardView) => void
 }
 
 function DesktopViewToggle({ currentView, onViewChange }: DesktopViewToggleProps) {
