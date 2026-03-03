@@ -410,6 +410,7 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
       <div className="hidden flex-1 md:block">
         <DesktopDashboard
           habits={activeHabits}
+          initialView={initialView}
           onAddCheckin={handleAddCheckin}
           onArchiveOptimistic={archiveOptimistically}
           onDeleteOptimistic={deleteOptimistically}
