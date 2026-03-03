@@ -151,7 +151,7 @@ export function HabitListCard({
               <div className="flex items-center gap-1.5">
                 <Button
                   aria-label="チェックインを1つ減らす"
-                  className="h-7 w-7 rounded-full bg-muted p-0 text-muted-foreground hover:bg-muted/80 disabled:opacity-50"
+                  className="h-8 w-8 rounded-full border border-border/70 bg-background/95 p-0 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:opacity-45"
                   disabled={habit.currentProgress <= 0}
                   onClick={(e) => {
                     e.stopPropagation()
@@ -161,11 +161,11 @@ export function HabitListCard({
                   type="button"
                   variant="ghost"
                 >
-                  <Icon className="h-3.5 w-3.5" name="minus" />
+                  <Icon className="h-4 w-4" name="minus" />
                 </Button>
                 <Button
                   aria-label="チェックインを1つ増やす"
-                  className="h-7 w-7 rounded-full bg-muted p-0 text-muted-foreground hover:bg-muted/80 disabled:opacity-50"
+                  className="h-8 w-8 rounded-full border border-border/70 bg-background/95 p-0 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:opacity-45"
                   disabled={habit.currentProgress >= habit.frequency}
                   onClick={(e) => {
                     e.stopPropagation()
@@ -175,7 +175,7 @@ export function HabitListCard({
                   type="button"
                   variant="ghost"
                 >
-                  <Icon className="h-3.5 w-3.5" name="plus" />
+                  <Icon className="h-4 w-4" name="plus" />
                 </Button>
               </div>
             )}
