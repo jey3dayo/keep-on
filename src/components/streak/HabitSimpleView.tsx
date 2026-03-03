@@ -316,7 +316,7 @@ export function HabitSimpleView({
         </div>
       ) : null}
 
-      <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between border-white/10 border-t bg-black/10 px-6 py-4 backdrop-blur-md">
+      <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between border-white/10 border-t bg-black/10 px-6 py-4 backdrop-blur-md md:hidden">
         <Button
           aria-label="設定を開く"
           className="h-10 w-10 rounded-full border border-white/20 bg-white/10 p-0 text-white/80 hover:bg-white/20 hover:text-white"
