@@ -105,7 +105,7 @@ interface DesktopViewToggleProps {
 
 function DesktopViewToggle({ currentView, onViewChange }: DesktopViewToggleProps) {
   return (
-    <div className="fixed right-4 bottom-6 z-50 hidden md:block">
+    <div className="fixed right-6 bottom-6 z-50 hidden md:block lg:right-8">
       <div className="group relative">
         <div className="absolute right-0 bottom-full mb-2 hidden w-64 group-hover:block">
           <Card className="border-border bg-popover shadow-xl">
