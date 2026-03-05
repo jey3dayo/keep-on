@@ -12,6 +12,7 @@
   "observability": {
     "enabled": true
   },
+  "routes": [{ "pattern": "keep-on.jey3dayo.net", "custom_domain": true }],
   "vars": {
     "NEXTJS_ENV": "production",
     "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_ZGVsaWNhdGUtY29sbGllLTAuY2xlcmsuYWNjb3VudHMuZGV2JA",

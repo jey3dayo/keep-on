@@ -32,7 +32,6 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
             ${{ runner.os }}-nextjs-
 
-
       - name: Generate Drizzle migrations
         run: pnpm db:generate
 
@@ -57,4 +56,5 @@ jobs:
         if: success()
         run: |
           echo "✅ Deployment successful!"
+          echo "🔗 https://keep-on.jey3dayo.net"
           echo "🔗 https://keep-on.j138cm.workers.dev"
