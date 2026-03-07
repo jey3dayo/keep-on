@@ -26,6 +26,7 @@ export function getHabitFormDefaults(initialData?: Habit | HabitWithProgress | H
       color: DEFAULT_HABIT_COLOR,
       period: DEFAULT_HABIT_PERIOD,
       frequency: DEFAULT_HABIT_FREQUENCY,
+      reminderTime: null,
     }
   }
 
@@ -37,6 +38,7 @@ export function getHabitFormDefaults(initialData?: Habit | HabitWithProgress | H
       color: initialData.colorId,
       period: initialData.period,
       frequency: initialData.frequency,
+      reminderTime: null,
     }
   }
 
@@ -47,6 +49,7 @@ export function getHabitFormDefaults(initialData?: Habit | HabitWithProgress | H
     color: initialData.color ?? DEFAULT_HABIT_COLOR,
     period: initialData.period,
     frequency: initialData.frequency,
+    reminderTime: initialData.reminderTime ?? null,
   }
 }
 
@@ -61,6 +64,9 @@ export function buildHabitFormData(input: HabitInputSchemaType): FormData {
   }
   formData.append('period', input.period)
   formData.append('frequency', String(input.frequency))
+  if (input.reminderTime) {
+    formData.append('reminderTime', input.reminderTime)
+  }
   return formData
 }
 
@@ -105,6 +111,7 @@ export function transformHabitInput(formData: FormData) {
     color: getString('color'),
     period: periodRaw,
     frequency,
+    reminderTime: getString('reminderTime'),
   }
 }
 
@@ -159,6 +166,11 @@ export function transformHabitUpdate(formData: FormData) {
 
   if (frequency !== undefined) {
     input.frequency = frequency
+  }
+
+  const reminderTime = getString('reminderTime')
+  if (reminderTime !== undefined) {
+    input.reminderTime = reminderTime || null
   }
 
   return input

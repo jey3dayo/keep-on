@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { addCheckinAction } from '@/app/actions/habits/checkin'
 import { removeCheckinAction } from '@/app/actions/habits/remove-checkin'
+import { addSkipAction, removeSkipAction } from '@/app/actions/habits/skip'
 import { DesktopDashboard } from '@/components/streak/DesktopDashboard'
 import { StreakDashboard } from '@/components/streak/StreakDashboard'
 import {
@@ -394,6 +395,24 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
     return Promise.resolve()
   }
 
+  const handleSkip = async (habitId: string) => {
+    const result = await addSkipAction(habitId)
+    if (!result.ok) {
+      appToast.error('スキップの設定に失敗しました')
+    } else {
+      appToast.success('今日をスキップしました（ストリーク維持）')
+    }
+  }
+
+  const handleUnSkip = async (habitId: string) => {
+    const result = await removeSkipAction(habitId)
+    if (!result.ok) {
+      appToast.error('スキップの解除に失敗しました')
+    } else {
+      appToast.success('スキップを解除しました')
+    }
+  }
+
   const handleViewChange = (view: DashboardView) => {
     setCurrentView(view)
     setClientCookie(DASHBOARD_VIEW_COOKIE_KEY, view, {
@@ -417,6 +436,8 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
+          onSkip={handleSkip}
+          onUnSkip={handleUnSkip}
           onViewChange={handleViewChange}
           todayLabel={todayLabel}
         />
@@ -432,6 +453,8 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
           onDeleteOptimistic={deleteOptimistically}
           onRemoveCheckin={handleRemoveCheckin}
           onResetOptimistic={resetOptimistically}
+          onSkip={handleSkip}
+          onUnSkip={handleUnSkip}
           onViewChange={handleViewChange}
           todayLabel={todayLabel}
           user={user}

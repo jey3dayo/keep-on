@@ -8,5 +8,7 @@ export interface DashboardBaseProps {
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
   onRemoveCheckin?: (habitId: string) => Promise<void>
   onResetOptimistic?: (habitId: string) => OptimisticRollback
+  onSkip?: (habitId: string) => Promise<void>
+  onUnSkip?: (habitId: string) => Promise<void>
   todayLabel: string
 }

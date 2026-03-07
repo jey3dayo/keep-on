@@ -28,6 +28,8 @@ export function StreakDashboard({
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
+  onSkip,
+  onUnSkip,
   todayLabel,
   currentView,
   onViewChange,
@@ -82,6 +84,8 @@ export function StreakDashboard({
             onPeriodChange={setPeriodFilter}
             onRemoveCheckin={onRemoveCheckin}
             onResetOptimistic={onResetOptimistic}
+            onSkip={onSkip}
+            onUnSkip={onUnSkip}
             periodFilter={periodFilter}
             todayActive={todayActive}
             todayLabel={todayLabel}
