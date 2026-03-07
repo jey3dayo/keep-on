@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 import {
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
@@ -91,6 +91,8 @@ export const habits = sqliteTable(
       .notNull(),
     /** 期間内の目標回数 */
     frequency: integer('frequency').default(DEFAULT_HABIT_FREQUENCY).notNull(),
+    /** リマインダー時刻 (HH:MM形式, nullable) */
+    reminderTime: text('reminderTime'),
     /** アーカイブ済みフラグ */
     archived: integer('archived', { mode: 'boolean' }).default(false).notNull(),
     /** アーカイブ日時 (ISO8601形式) */
@@ -133,5 +135,33 @@ export const checkins = sqliteTable(
   },
   (table) => ({
     habitDateIndex: index('Checkin_habitId_date_idx').on(table.habitId, table.date),
+  })
+)
+
+/**
+ * スキップテーブル
+ * 意図的にスキップした日を記録（ストリークを維持したまま休む）
+ */
+export const habitSkips = sqliteTable(
+  'HabitSkip',
+  {
+    /** スキップID (CUID2形式) */
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    /** 習慣ID (外部キー: habits.id) */
+    habitId: text('habitId')
+      .notNull()
+      .references(() => habits.id, { onDelete: 'cascade' }),
+    /** スキップ日付 (YYYY-MM-DD形式) */
+    date: text('date').notNull(),
+    /** レコード作成日時 (ISO8601形式) */
+    createdAt: text('createdAt')
+      .$defaultFn(() => new Date().toISOString())
+      .notNull(),
+  },
+  (table) => ({
+    habitDateUniqueIndex: uniqueIndex('HabitSkip_habitId_date_unique').on(table.habitId, table.date),
+    habitIdIndex: index('HabitSkip_habitId_idx').on(table.habitId),
   })
 )

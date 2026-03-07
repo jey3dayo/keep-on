@@ -29,6 +29,8 @@ export function DesktopDashboard({
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
+  onSkip,
+  onUnSkip,
   todayLabel,
   currentView,
   onViewChange,
@@ -68,6 +70,8 @@ export function DesktopDashboard({
             onPeriodChange={setPeriodFilter}
             onRemoveCheckin={onRemoveCheckin}
             onResetOptimistic={onResetOptimistic}
+            onSkip={onSkip}
+            onUnSkip={onUnSkip}
             periodFilter={periodFilter}
             todayActive={todayActive}
             todayLabel={todayLabel}

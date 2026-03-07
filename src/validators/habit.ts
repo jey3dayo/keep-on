@@ -44,6 +44,7 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
     color: parseResult.output.color,
     period: parseResult.output.period,
     frequency: parseResult.output.frequency,
+    reminderTime: parseResult.output.reminderTime,
   })
 }
 

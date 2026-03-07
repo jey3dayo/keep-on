@@ -8,7 +8,7 @@ import {
   type WeekStartDay,
   weekStartToDay,
 } from '@/constants/habit'
-import { checkins, habits } from '@/db/schema'
+import { checkins, habitSkips, habits } from '@/db/schema'
 import { getHabitsCacheSnapshot, setHabitsCache } from '@/lib/cache/habit-cache'
 import { getDb } from '@/lib/db'
 import { formatError, isDatabaseError, logInfo, logWarn, nowMs } from '@/lib/logging'
@@ -121,6 +121,7 @@ export async function createHabit(input: HabitInput) {
           color: input.color,
           period: input.period,
           frequency: input.frequency,
+          reminderTime: input.reminderTime,
         })
         .returning()
       return habit
@@ -462,9 +463,19 @@ export async function getHabitsWithProgress(
             .where(inArray(checkins.habitId, habitIds))
             .orderBy(checkins.habitId, desc(checkins.date), desc(checkins.createdAt))
 
-    // ユーザーの週開始日設定とチェックイン取得を並列化
+    // スキップ取得を並列化
+    const allSkipsPromise: Promise<(typeof habitSkips.$inferSelect)[]> =
+      habitIds.length === 0
+        ? Promise.resolve([])
+        : db.select().from(habitSkips).where(inArray(habitSkips.habitId, habitIds))
+
+    // ユーザーの週開始日設定・チェックイン・スキップ取得を並列化
     const weekStartPromise = weekStart ? Promise.resolve(weekStart) : getUserWeekStart(clerkId)
-    const [weekStartStr, allCheckins] = await Promise.all([weekStartPromise, allCheckinsPromise])
+    const [weekStartStr, allCheckins, allSkips] = await Promise.all([
+      weekStartPromise,
+      allCheckinsPromise,
+      allSkipsPromise,
+    ])
     const weekStartDay = weekStartToDay(weekStartStr)
 
     // 習慣ごとにチェックインをグループ化
@@ -473,6 +484,14 @@ export async function getHabitsWithProgress(
       const existing = checkinsByHabit.get(checkin.habitId) ?? []
       existing.push(checkin)
       checkinsByHabit.set(checkin.habitId, existing)
+    }
+
+    // 習慣ごとにスキップをグループ化
+    const skipsByHabit = new Map<string, typeof allSkips>()
+    for (const skip of allSkips) {
+      const existing = skipsByHabit.get(skip.habitId) ?? []
+      existing.push(skip)
+      skipsByHabit.set(skip.habitId, existing)
     }
 
     // 各習慣の進捗とストリークを計算
@@ -486,6 +505,7 @@ export async function getHabitsWithProgress(
         context: 'getHabitsWithProgress',
       })
       const habitCheckins = checkinsByHabit.get(habit.id) ?? []
+      const habitSkipList = skipsByHabit.get(habit.id) ?? []
 
       // 現在の期間の進捗を計算
       const { start, end } = getPeriodDateRange(baseDate, normalizedPeriod, weekStartDay)
@@ -494,7 +514,10 @@ export async function getHabitsWithProgress(
         return checkinDate >= start && checkinDate <= end
       }).length
 
-      // ストリークを計算
+      // 今日スキップ済みかどうかを確認
+      const skippedToday = habitSkipList.some((s) => s.date === dateKey)
+
+      // ストリークを計算（スキップを考慮）
       const streak = calculateStreakFromCheckins(
         {
           id: habit.id,
@@ -503,7 +526,8 @@ export async function getHabitsWithProgress(
         },
         habitCheckins,
         weekStartDay,
-        baseDate
+        baseDate,
+        habitSkipList
       )
 
       const completionRate = Math.min(
@@ -516,6 +540,7 @@ export async function getHabitsWithProgress(
         period: normalizedPeriod,
         frequency: normalizedFrequency,
         currentProgress,
+        skippedToday,
         streak,
         completionRate,
       }
@@ -562,9 +587,10 @@ function calculateStreakFromCheckins(
   habit: { id: string; frequency: number; period: Period },
   checkins: Array<{ date: Date | string }>,
   weekStartDay: WeekStartDay = 1,
-  baseDate: Date | string = new Date()
+  baseDate: Date | string = new Date(),
+  skips: Array<{ date: Date | string }> = []
 ): number {
-  if (checkins.length === 0) {
+  if (checkins.length === 0 && skips.length === 0) {
     return 0
   }
   const normalizedPeriod = normalizePeriod(habit.period, {
@@ -587,12 +613,21 @@ function calculateStreakFromCheckins(
     checkinsByPeriod.set(periodKey, (checkinsByPeriod.get(periodKey) ?? 0) + 1)
   }
 
-  // 現在の期間の達成状況を確認
+  // スキップ済み期間をSetで管理
+  const skippedPeriods = new Set<string>()
+  for (const skip of skips) {
+    const skipDate = normalizeCheckinDate(skip.date)
+    const periodKey = getPeriodKey(skipDate, normalizedPeriod, weekStartDay)
+    skippedPeriods.add(periodKey)
+  }
+
+  // 現在の期間の達成状況を確認（チェックインまたはスキップ）
   const currentPeriodKey = getPeriodKey(currentDate, normalizedPeriod, weekStartDay)
   const currentCount = checkinsByPeriod.get(currentPeriodKey) ?? 0
+  const currentSkipped = skippedPeriods.has(currentPeriodKey)
 
-  // 現在の期間が未達成の場合、前の期間から開始
-  if (currentCount < normalizedFrequency) {
+  // 現在の期間が未達成かつスキップなしの場合、前の期間から開始
+  if (currentCount < normalizedFrequency && !currentSkipped) {
     currentDate = getPreviousPeriod(currentDate, normalizedPeriod)
   }
 
@@ -600,8 +635,9 @@ function calculateStreakFromCheckins(
   for (let iteration = 0; iteration < MAX_STREAK_ITERATIONS; iteration += 1) {
     const periodKey = getPeriodKey(currentDate, normalizedPeriod, weekStartDay)
     const count = checkinsByPeriod.get(periodKey) ?? 0
+    const skipped = skippedPeriods.has(periodKey)
 
-    if (count >= normalizedFrequency) {
+    if (count >= normalizedFrequency || skipped) {
       streak++
       currentDate = getPreviousPeriod(currentDate, normalizedPeriod)
     } else {
