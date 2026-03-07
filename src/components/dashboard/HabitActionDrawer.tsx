@@ -16,6 +16,8 @@ interface HabitActionDrawerProps {
   onDeleteOptimistic?: OptimisticHandler
   onOpenChange: (open: boolean) => void
   onResetOptimistic?: OptimisticHandler
+  onSkip?: (habitId: string) => Promise<void>
+  onUnSkip?: (habitId: string) => Promise<void>
   open: boolean
 }
 
@@ -26,10 +28,13 @@ export function HabitActionDrawer({
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
+  onSkip,
+  onUnSkip,
 }: HabitActionDrawerProps) {
   const router = useRouter()
   const [dialogType, setDialogType] = useState<'reset' | 'archive' | 'delete' | null>(null)
   const [activeHabit, setActiveHabit] = useState<HabitWithProgress | null>(null)
+  const [isSkipping, setIsSkipping] = useState(false)
   const prevOpenRef = useRef(open)
 
   useEffect(() => {
@@ -72,6 +77,32 @@ export function HabitActionDrawer({
     }, 350)
   }
 
+  const handleSkipToggle = async () => {
+    if (!activeHabit || isSkipping) {
+      return
+    }
+    setIsSkipping(true)
+    try {
+      if (activeHabit.skippedToday) {
+        await onUnSkip?.(activeHabit.id)
+      } else {
+        await onSkip?.(activeHabit.id)
+      }
+      onOpenChange(false)
+    } finally {
+      setIsSkipping(false)
+    }
+  }
+
+  const handleViewDetail = () => {
+    onOpenChange(false)
+    setTimeout(() => {
+      if (activeHabit) {
+        router.push(`/habits/${activeHabit.id}`)
+      }
+    }, 350)
+  }
+
   if (!(activeHabit || dialogType)) {
     return null
   }
@@ -91,8 +122,22 @@ export function HabitActionDrawer({
               編集
             </Button>
 
+            <Button className="col-span-2" onClick={handleViewDetail} variant="outline">
+              カレンダー履歴を見る
+            </Button>
+
             {!isArchived && (
               <>
+                {(onSkip || onUnSkip) && (
+                  <Button
+                    className="col-span-2"
+                    disabled={isSkipping}
+                    onClick={handleSkipToggle}
+                    variant="outline"
+                  >
+                    {activeHabit?.skippedToday ? '今日のスキップを解除' : '今日をスキップ（ストリーク維持）'}
+                  </Button>
+                )}
                 <Button className="col-span-2" onClick={() => openDialog('reset')} variant="outline">
                   進捗をリセット
                 </Button>

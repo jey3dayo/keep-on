@@ -13,6 +13,7 @@ export interface Habit {
   id: string
   name: string
   period: Period
+  reminderTime: string | null
   updatedAt: string
   userId: string
 }
@@ -25,6 +26,8 @@ export interface HabitWithProgress extends Habit {
   completionRate: number
   /** 現在の期間での達成回数 */
   currentProgress: number
+  /** 今日スキップ済みかどうか */
+  skippedToday: boolean
   /** 連続達成日数 */
   streak: number
 }

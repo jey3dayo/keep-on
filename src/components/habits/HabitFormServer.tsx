@@ -352,30 +352,48 @@ export function HabitFormServer({
           )}
         />
 
-        {/* Reminder Section (Future Feature) */}
-        <div className="space-y-3">
-          <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">リマインダー</div>
-          <Button
-            className="h-auto w-full cursor-not-allowed justify-between rounded-xl border border-border bg-card p-4 opacity-50 hover:bg-card/80"
-            disabled
-            type="button"
-            variant="ghost"
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-full"
-                style={{ backgroundColor: `${selectedColorValue}20` }}
-              >
-                <Clock className="h-5 w-5" style={{ color: selectedColorValue }} />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-foreground">通知を設定</p>
-                <p className="text-muted-foreground text-sm">{currentPeriod.sublabel}同じ時間にリマインド</p>
+        {/* Reminder Section */}
+        <Controller
+          control={form.control}
+          name="reminderTime"
+          render={({ field }) => (
+            <div className="space-y-3">
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">リマインダー</div>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: `${selectedColorValue}20` }}
+                  >
+                    <Clock className="h-5 w-5" style={{ color: selectedColorValue }} />
+                  </div>
+                  <div className="flex flex-1 items-center justify-between gap-3">
+                    <div className="text-left">
+                      <p className="font-medium text-foreground">通知時刻</p>
+                      <p className="text-muted-foreground text-sm">未設定の場合はリマインドなし</p>
+                    </div>
+                    <input
+                      className="rounded-lg border border-border bg-background px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring/50"
+                      onChange={(e) => field.onChange(e.target.value || null)}
+                      style={{ '--tw-ring-color': selectedColorValue } as React.CSSProperties}
+                      type="time"
+                      value={field.value ?? ''}
+                    />
+                  </div>
+                </div>
+                {field.value && (
+                  <button
+                    className="mt-3 w-full text-center text-muted-foreground text-sm hover:text-foreground"
+                    onClick={() => field.onChange(null)}
+                    type="button"
+                  >
+                    リマインダーを解除
+                  </button>
+                )}
               </div>
             </div>
-            <ChevronLeft className="h-5 w-5 rotate-180 text-muted-foreground" />
-          </Button>
-        </div>
+          )}
+        />
 
         {/* Preview Card */}
         <HabitPreviewCard

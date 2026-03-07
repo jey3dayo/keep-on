@@ -32,6 +32,8 @@ interface HabitListViewProps {
   onPeriodChange: (filter: 'all' | Period) => void
   onRemoveCheckin?: (habitId: string) => Promise<void>
   onResetOptimistic?: (habitId: string) => OptimisticRollback
+  onSkip?: (habitId: string) => Promise<void>
+  onUnSkip?: (habitId: string) => Promise<void>
   periodFilter: 'all' | Period
   todayActive: number
   todayLabel: string
@@ -51,6 +53,8 @@ export function HabitListView({
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
+  onSkip,
+  onUnSkip,
   todayActive,
   todayLabel,
   totalDaily,
@@ -176,6 +180,8 @@ export function HabitListView({
           }
         }}
         onResetOptimistic={drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined}
+        onSkip={drawerHabitId && onSkip ? () => onSkip(drawerHabitId) : undefined}
+        onUnSkip={drawerHabitId && onUnSkip ? () => onUnSkip(drawerHabitId) : undefined}
         open={drawerState.open}
       />
       {/* リセット確認ダイアログ（達成時のみ表示） */}

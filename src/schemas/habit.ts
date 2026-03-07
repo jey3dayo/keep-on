@@ -6,6 +6,21 @@ import { DEFAULT_HABIT_PERIOD, PERIODS } from '@/constants/habit'
  */
 export const PeriodSchema = v.picklist(PERIODS)
 
+/** HH:MM形式の時刻バリデーション */
+const ReminderTimeSchema = v.pipe(
+  v.nullable(v.optional(v.string())),
+  v.transform((val): string | null => {
+    if (!val?.trim()) {
+      return null
+    }
+    // HH:MM 形式チェック
+    if (/^\d{2}:\d{2}$/.test(val.trim())) {
+      return val.trim()
+    }
+    return null
+  })
+)
+
 /**
  * 習慣入力のバリデーションスキーマ
  */
@@ -31,6 +46,7 @@ export const HabitInputSchema = v.pipe(
       v.minValue(1, 'Frequency must be at least 1'),
       v.maxValue(100, 'Frequency is too large (max 100)')
     ),
+    reminderTime: ReminderTimeSchema,
   })
 )
 
