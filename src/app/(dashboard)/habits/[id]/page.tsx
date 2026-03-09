@@ -1,26 +1,33 @@
-import { notFound, redirect } from 'next/navigation'
+import { ChevronLeft, Flame, Pencil, Target, TrendingUp } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ChevronLeft, Flame, Pencil, Target, TrendingUp } from 'lucide-react'
+import { notFound, redirect } from 'next/navigation'
 import { Button } from '@/components/basics/Button'
-import { Icon, normalizeIconName } from '@/components/basics/Icon'
+import { normalizeIconName } from '@/components/basics/Icon'
 import { HabitCalendarHeatmap } from '@/components/habits/HabitCalendarHeatmap'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
 import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
-import { getHabitCalendarData } from '@/lib/queries/habit-calendar'
 import { getHabitById } from '@/lib/queries/habit'
+import { getHabitCalendarData } from '@/lib/queries/habit-calendar'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 import type { HabitIdPageProps } from '@/types/route'
 
 export async function generateMetadata({ params }: HabitIdPageProps): Promise<Metadata> {
   const { id } = await params
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return { title: '習慣詳細 - KeepOn' }
+  }
   const habit = await getHabitById(id)
+  if (!habit || habit.userId !== userId) {
+    return { title: '習慣詳細 - KeepOn' }
+  }
   return {
-    title: habit ? `${habit.name} - KeepOn` : '習慣詳細 - KeepOn',
+    title: `${habit.name} - KeepOn`,
   }
 }
 
@@ -130,11 +137,7 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
           <CardTitle className="text-base">チェックイン履歴（過去6ヶ月）</CardTitle>
         </CardHeader>
         <CardContent>
-          <HabitCalendarHeatmap
-            accentColor={colorData.color}
-            checkinDates={checkinDates}
-            skipDates={skipDates}
-          />
+          <HabitCalendarHeatmap accentColor={colorData.color} checkinDates={checkinDates} skipDates={skipDates} />
         </CardContent>
       </Card>
     </div>

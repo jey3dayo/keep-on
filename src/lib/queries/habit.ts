@@ -637,8 +637,11 @@ function calculateStreakFromCheckins(
     const count = checkinsByPeriod.get(periodKey) ?? 0
     const skipped = skippedPeriods.has(periodKey)
 
-    if (count >= normalizedFrequency || skipped) {
+    if (count >= normalizedFrequency) {
       streak++
+      currentDate = getPreviousPeriod(currentDate, normalizedPeriod)
+    } else if (skipped) {
+      // スキップ期間はストリークを維持するが、カウントは増やさない
       currentDate = getPreviousPeriod(currentDate, normalizedPeriod)
     } else {
       return streak
