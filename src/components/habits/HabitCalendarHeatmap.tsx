@@ -23,6 +23,47 @@ interface DayCell {
 
 const WEEKDAY_LABELS = ['月', '火', '水', '木', '金', '土', '日']
 
+function getCellStyle(cell: DayCell, accentColor: string) {
+  if (cell.isCheckin) {
+    return { backgroundColor: accentColor }
+  }
+  if (cell.isSkip) {
+    return { border: `2px dashed ${accentColor}`, backgroundColor: `${accentColor}20` }
+  }
+  return undefined
+}
+
+function getCellTitle(cell: DayCell): string {
+  if (cell.isCheckin) {
+    return `${cell.dateKey} ✓`
+  }
+  if (cell.isSkip) {
+    return `${cell.dateKey} スキップ`
+  }
+  return cell.dateKey
+}
+
+interface CalendarCellProps {
+  accentColor: string
+  cell: DayCell
+}
+
+function CalendarCell({ cell, accentColor }: CalendarCellProps) {
+  return (
+    <div
+      className={cn(
+        'aspect-square rounded-sm',
+        !cell.isCurrentMonth && 'opacity-30',
+        cell.isFuture && 'opacity-10',
+        !(cell.isCheckin || cell.isSkip) && 'bg-muted'
+      )}
+      key={cell.dateKey}
+      style={getCellStyle(cell, accentColor)}
+      title={getCellTitle(cell)}
+    />
+  )
+}
+
 function buildMonthGrid(month: Date, checkinSet: Set<string>, skipSet: Set<string>, today: Date): DayCell[][] {
   const start = startOfMonth(month)
   const end = endOfMonth(month)
@@ -124,7 +165,7 @@ export function HabitCalendarHeatmap({
         const monthLabel = format(month, 'yyyy年M月', { locale: ja })
 
         return (
-          <div key={monthLabel} className="space-y-2">
+          <div className="space-y-2" key={monthLabel}>
             <div className="font-medium text-foreground text-sm">{monthLabel}</div>
             {/* Weekday headers */}
             <div className="grid grid-cols-7 gap-1">
@@ -140,32 +181,7 @@ export function HabitCalendarHeatmap({
                 // biome-ignore lint/suspicious/noArrayIndexKey: stable week index
                 <div className="grid grid-cols-7 gap-1" key={wi}>
                   {week.map((cell) => (
-                    <div
-                      className={cn(
-                        'aspect-square rounded-sm',
-                        !cell.isCurrentMonth && 'opacity-30',
-                        cell.isFuture && 'opacity-10',
-                        !cell.isCheckin && !cell.isSkip && 'bg-muted'
-                      )}
-                      key={cell.dateKey}
-                      style={
-                        cell.isCheckin
-                          ? { backgroundColor: accentColor }
-                          : cell.isSkip
-                            ? {
-                                border: `2px dashed ${accentColor}`,
-                                backgroundColor: `${accentColor}20`,
-                              }
-                            : undefined
-                      }
-                      title={
-                        cell.isCheckin
-                          ? `${cell.dateKey} ✓`
-                          : cell.isSkip
-                            ? `${cell.dateKey} スキップ`
-                            : cell.dateKey
-                      }
-                    />
+                    <CalendarCell accentColor={accentColor} cell={cell} key={cell.dateKey} />
                   ))}
                 </div>
               ))}

@@ -36,6 +36,8 @@ interface HabitSimpleViewProps {
   onRemoveCheckin?: (habitId: string) => Promise<void>
   onResetOptimistic?: (habitId: string) => OptimisticRollback
   onSettings?: () => void
+  onSkip?: (habitId: string) => Promise<void>
+  onUnSkip?: (habitId: string) => Promise<void>
 }
 
 export function HabitSimpleView({
@@ -48,6 +50,8 @@ export function HabitSimpleView({
   onDeleteOptimistic,
   onResetOptimistic,
   onSettings,
+  onSkip,
+  onUnSkip,
   backgroundColor,
 }: HabitSimpleViewProps) {
   const router = useRouter()
@@ -272,6 +276,8 @@ export function HabitSimpleView({
           }
         }}
         onResetOptimistic={drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined}
+        onSkip={drawerHabitId && onSkip ? () => onSkip(drawerHabitId) : undefined}
+        onUnSkip={drawerHabitId && onUnSkip ? () => onUnSkip(drawerHabitId) : undefined}
         open={drawerState.open}
       />
 

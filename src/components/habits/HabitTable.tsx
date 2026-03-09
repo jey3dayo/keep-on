@@ -68,6 +68,7 @@ export async function HabitTable({ userId, clerkId, requestMeta }: HabitTablePro
     currentProgress: 0,
     streak: 0,
     completionRate: 0,
+    skippedToday: false,
   }))
 
   // 両方をマージ

@@ -56,6 +56,8 @@ export function DesktopDashboard({
           onRemoveCheckin={onRemoveCheckin}
           onResetOptimistic={onResetOptimistic}
           onSettings={() => onViewChange('dashboard')}
+          onSkip={onSkip}
+          onUnSkip={onUnSkip}
         />
       ) : (
         <div className="space-y-6 p-6">
