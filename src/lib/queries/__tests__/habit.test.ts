@@ -206,6 +206,11 @@ describe('getHabitsWithProgress', () => {
         { id: 'checkin-1', habitId: 'habit-daily', date: new Date(2024, 0, 17), createdAt: baseDate },
         { id: 'checkin-5', habitId: 'habit-weekly', date: new Date(2024, 0, 17), createdAt: baseDate },
       ])
+    // スキップクエリ（3回目の where() 呼び出し）のモック
+    vi.mocked(db.where)
+      .mockReturnValueOnce(db as any)
+      .mockReturnValueOnce(db as any)
+      .mockResolvedValueOnce([])
 
     const result = await getHabitsWithProgress('user-123', 'clerk-123', baseDate)
 
@@ -246,6 +251,11 @@ describe('getHabitsWithProgress', () => {
       .mockResolvedValueOnce([
         { id: 'checkin-mon', habitId: 'habit-weekly-sun', date: new Date(2024, 0, 8), createdAt: sundayBaseDate },
       ])
+    // スキップクエリ（3回目の where() 呼び出し）のモック
+    vi.mocked(db.where)
+      .mockReturnValueOnce(db as any)
+      .mockReturnValueOnce(db as any)
+      .mockResolvedValueOnce([])
 
     const result = await getHabitsWithProgress('user-123', 'clerk-123', sundayBaseDate)
 
@@ -275,6 +285,11 @@ describe('getHabitsWithProgress', () => {
       .mockResolvedValueOnce([
         { id: 'checkin-invalid', habitId: 'habit-invalid', date: new Date(2024, 0, 20), createdAt: invalidDate },
       ])
+    // スキップクエリ（3回目の where() 呼び出し）のモック
+    vi.mocked(db.where)
+      .mockReturnValueOnce(db as any)
+      .mockReturnValueOnce(db as any)
+      .mockResolvedValueOnce([])
 
     const result = await getHabitsWithProgress('user-123', 'clerk-123', invalidDate)
 

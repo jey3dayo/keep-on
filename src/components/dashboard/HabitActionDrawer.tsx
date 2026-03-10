@@ -129,12 +129,7 @@ export function HabitActionDrawer({
             {!isArchived && (
               <>
                 {(onSkip || onUnSkip) && (
-                  <Button
-                    className="col-span-2"
-                    disabled={isSkipping}
-                    onClick={handleSkipToggle}
-                    variant="outline"
-                  >
+                  <Button className="col-span-2" disabled={isSkipping} onClick={handleSkipToggle} variant="outline">
                     {activeHabit?.skippedToday ? '今日のスキップを解除' : '今日をスキップ（ストリーク維持）'}
                   </Button>
                 )}

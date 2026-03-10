@@ -6,11 +6,7 @@ import { createRequestMeta } from '@/lib/logging'
 import { createSkip, deleteSkip } from '@/lib/queries/skip'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { validateHabitActionInput } from '@/validators/habit-action'
-import {
-  createHabitCheckinSpans,
-  requireCheckinUserId,
-  requireHabitForUserWithRetry,
-} from './checkin-shared'
+import { createHabitCheckinSpans, requireCheckinUserId, requireHabitForUserWithRetry } from './checkin-shared'
 import { type HabitActionResult, revalidateHabitPaths, serializeActionError } from './utils'
 
 export async function addSkipAction(habitId: string, dateKey?: string): HabitActionResult<{ skipped: boolean }> {

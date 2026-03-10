@@ -397,19 +397,19 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
 
   const handleSkip = async (habitId: string) => {
     const result = await addSkipAction(habitId)
-    if (!result.ok) {
-      appToast.error('スキップの設定に失敗しました')
-    } else {
+    if (result.ok) {
       appToast.success('今日をスキップしました（ストリーク維持）')
+    } else {
+      appToast.error('スキップの設定に失敗しました')
     }
   }
 
   const handleUnSkip = async (habitId: string) => {
     const result = await removeSkipAction(habitId)
-    if (!result.ok) {
-      appToast.error('スキップの解除に失敗しました')
-    } else {
+    if (result.ok) {
       appToast.success('スキップを解除しました')
+    } else {
+      appToast.error('スキップの解除に失敗しました')
     }
   }
 
