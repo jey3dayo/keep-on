@@ -24,6 +24,7 @@ describe('validateHabitInput', () => {
         color: null,
         period: 'daily',
         frequency: 1,
+        reminderTime: null,
       })
     }
   })

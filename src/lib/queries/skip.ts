@@ -19,10 +19,7 @@ export async function createSkip(habitId: string, date: Date | string) {
       const dateKey = normalizeDateKey(date)
 
       try {
-        const [skip] = await db
-          .insert(habitSkips)
-          .values({ habitId, date: dateKey })
-          .returning()
+        const [skip] = await db.insert(habitSkips).values({ habitId, date: dateKey }).returning()
         return skip ?? null
       } catch (error) {
         const errorMessage = String(error)
@@ -76,10 +73,7 @@ export async function getSkipsByHabitIds(habitIds: string[]) {
     'query.getSkipsByHabitIds',
     async () => {
       const db = getDb()
-      return await db
-        .select()
-        .from(habitSkips)
-        .where(inArray(habitSkips.habitId, habitIds))
+      return await db.select().from(habitSkips).where(inArray(habitSkips.habitId, habitIds))
     },
     { habitCount: habitIds.length }
   )
@@ -93,11 +87,7 @@ export async function getSkipsByHabitIds(habitIds: string[]) {
  * @param endDateKey - 終了日付 (YYYY-MM-DD)
  * @returns スキップの配列
  */
-export async function getSkipsByHabitAndDateRange(
-  habitId: string,
-  startDateKey: string,
-  endDateKey: string
-) {
+export async function getSkipsByHabitAndDateRange(habitId: string, startDateKey: string, endDateKey: string) {
   return await profileQuery(
     'query.getSkipsByHabitAndDateRange',
     async () => {
@@ -106,11 +96,7 @@ export async function getSkipsByHabitAndDateRange(
         .select()
         .from(habitSkips)
         .where(
-          and(
-            eq(habitSkips.habitId, habitId),
-            gte(habitSkips.date, startDateKey),
-            lte(habitSkips.date, endDateKey)
-          )
+          and(eq(habitSkips.habitId, habitId), gte(habitSkips.date, startDateKey), lte(habitSkips.date, endDateKey))
         )
     },
     { habitId, startDateKey, endDateKey }
