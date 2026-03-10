@@ -4,7 +4,11 @@
   "account_id": "4e7695e2370bc9cef6ae9f2802517dd3",
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-01-01",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "compatibility_flags": [
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env",
+    "global_fetch_strictly_public"
+  ],
   "assets": {
     "binding": "ASSETS",
     "directory": ".open-next/assets"
@@ -17,7 +21,8 @@
     "NEXTJS_ENV": "production",
     "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuamV5M2RheW8ubmV0JA",
     "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
-    "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up"
+    "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up",
+    "NEXT_PUBLIC_CLERK_FRONTEND_API": "clerk.jey3dayo.net"
   },
   "kv_namespaces": [
     {
@@ -38,7 +43,8 @@
         "NEXTJS_ENV": "preview",
         "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuamV5M2RheW8ubmV0JA",
         "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
-        "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up"
+        "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up",
+        "NEXT_PUBLIC_CLERK_FRONTEND_API": "clerk.jey3dayo.net"
       },
       "kv_namespaces": [
         {

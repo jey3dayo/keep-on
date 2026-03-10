@@ -17,7 +17,7 @@ case "$ENV" in
     echo -e "${GREEN}🏠 ローカル開発環境でデバッグを開始します${NC}"
     ;;
   production)
-    URL="https://keep-on.j138cm.workers.dev"
+    URL="https://keep-on.jey3dayo.net"
     echo -e "${GREEN}☁️  Cloudflare 本番環境でデバッグを開始します${NC}"
     ;;
   *)

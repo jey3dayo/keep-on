@@ -7,7 +7,7 @@
  * 基本的な動作を確認します。
  */
 
-const BASE_URL = 'https://keep-on.j138cm.workers.dev'
+const BASE_URL = 'https://keep-on.jey3dayo.net'
 
 async function testHealthCheck() {
   console.log('🔍 Testing health check endpoint...')
