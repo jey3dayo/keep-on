@@ -87,20 +87,20 @@ export default async function RootLayout({
   const htmlClassName = themeMode === 'light' || themeMode === 'dark' ? themeMode : undefined
 
   return (
-    <ClerkProvider>
-      <html className={htmlClassName} data-theme={colorTheme} lang="ja" suppressHydrationWarning>
-        <head>
-          <meta content="light dark" name="color-scheme" />
-          <meta content={THEME_COLOR_LIGHT} name="theme-color" />
-          <meta content={THEME_COLOR_DARK} media="(prefers-color-scheme: dark)" name="theme-color" />
-          <script dangerouslySetInnerHTML={{ __html: nameHelperScript }} />
-          {process.env.NODE_ENV === 'production' ? (
-            <script dangerouslySetInnerHTML={{ __html: swRegistrationScript }} />
-          ) : null}
-          <ThemeModeScript />
-          <ColorThemeScript />
-        </head>
-        <body>
+    <html className={htmlClassName} data-theme={colorTheme} lang="ja" suppressHydrationWarning>
+      <head>
+        <meta content="light dark" name="color-scheme" />
+        <meta content={THEME_COLOR_LIGHT} name="theme-color" />
+        <meta content={THEME_COLOR_DARK} media="(prefers-color-scheme: dark)" name="theme-color" />
+        <script dangerouslySetInnerHTML={{ __html: nameHelperScript }} />
+        {process.env.NODE_ENV === 'production' ? (
+          <script dangerouslySetInnerHTML={{ __html: swRegistrationScript }} />
+        ) : null}
+        <ThemeModeScript />
+        <ColorThemeScript />
+      </head>
+      <body>
+        <ClerkProvider>
           <a
             className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-foreground focus:shadow focus:ring-2 focus:ring-ring focus:ring-offset-2"
             href="#main-content"
@@ -118,8 +118,8 @@ export default async function RootLayout({
           <ServiceWorkerRegistration />
           <A2HSPrompt />
           <DevAgentationToolbar />
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   )
 }
