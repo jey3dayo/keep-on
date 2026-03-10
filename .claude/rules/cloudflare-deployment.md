@@ -21,7 +21,7 @@
 }
 ```
 
-### 特徴:
+### 特徴
 
 - Git にコミット可能
 - ブラウザに露出しても問題ない値
@@ -35,7 +35,7 @@
 echo '<value>' | pnpm wrangler secret put CLERK_SECRET_KEY
 ```
 
-### 特徴:
+### 特徴
 
 - Cloudflare にのみ保存
 - Git には含まれない
@@ -188,19 +188,19 @@ git push origin main
 ./scripts/setup-cloudflare-secrets-bulk.sh
 ```
 
-### 仕組み:
+### 仕組み
 
 1. `.env` から環境変数を読み込み
 2. `.secrets.json` を生成（一時ファイル、自動削除）
 3. `wrangler secret bulk` で一括登録
 
-### 必要な環境変数:
+### 必要な環境変数
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 - `DOTENV_PRIVATE_KEY`（dotenvx復号用）
 
-### 登録されるSecrets:
+### 登録されるSecrets
 
 - `CLERK_SECRET_KEY`
 - `SENTRY_DSN`（設定されている場合）
@@ -221,7 +221,7 @@ git push origin main
 2. **Sync Secrets to Cloudflare** ワークフローを選択
 3. **Run workflow** をクリック
 
-### 注意事項:
+### 注意事項
 
 - 既存のSecretsを上書きします
 - GitHub Secrets（`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `DOTENV_PRIVATE_KEY`）が必要

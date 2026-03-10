@@ -366,12 +366,12 @@ Cloudflare Workers は CPU Time で課金されます。
 
 ### メトリクスが表示されない
 
-### 原因:
+### 原因
 
 - `observability: { enabled: true }` が設定されていない
 - Worker がデプロイされていない
 
-### 解決方法:
+### 解決方法
 
 ```bash
 # wrangler.jsonc を確認
@@ -384,13 +384,13 @@ pnpm wrangler deploy
 
 ### CPU Time が高い
 
-### 調査方法:
+### 調査方法
 
 1. Cloudflare Dashboard で P99 CPU Time を確認
 2. Sentry でスロークエリを特定
 3. `wrangler tail` でリアルタイムログを確認
 
-### 最適化:
+### 最適化
 
 - DB クエリのインデックス追加
 - 不要な処理の削減
@@ -398,13 +398,13 @@ pnpm wrangler deploy
 
 ### エラー率が高い
 
-### 調査方法:
+### 調査方法
 
 1. Sentry でエラー内容を確認
 2. `wrangler tail` でエラーログを確認
 3. Cloudflare Dashboard でエラー種別を確認
 
-### 対処:
+### 対処
 
 - エラーハンドリングの改善
 - リトライロジックの追加

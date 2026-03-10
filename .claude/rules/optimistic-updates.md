@@ -51,7 +51,7 @@ const runOptimisticUpdateForHabit = (
 };
 ```
 
-### 特徴:
+### 特徴
 
 - 更新前の状態をクロージャでキャプチャ
 - 返り値のロールバック関数でUI状態を元に戻す
@@ -134,7 +134,7 @@ const drainCheckinQueue = () => {
 };
 ```
 
-### 特徴:
+### 特徴
 
 - `activeHabitsRef`（Set）で実行中の habitId を追跡
 - 同一 habitId のタスクはキューで直列化（順序保証）

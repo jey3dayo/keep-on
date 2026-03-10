@@ -67,7 +67,7 @@ AIがコードを生成する際は以下を遵守：
 3. 120文字制限: 長い行は適切に改行
 4. ES5末尾カンマ: 配列・オブジェクトの最後の要素にカンマ
 
-### 良い例:
+### 良い例
 
 ```tsx
 const config = {
@@ -80,7 +80,7 @@ export function Button({ children }: { children: React.ReactNode }) {
 }
 ```
 
-### 悪い例:
+### 悪い例
 
 ```tsx
 const config = {

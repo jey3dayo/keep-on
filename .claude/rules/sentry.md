@@ -126,7 +126,7 @@ await withSentryScope(
 | 開発 | 100%               | ~1,000                 | 無料枠内                 |
 | 本番 | 10%                | ~100,000 → 10,000      | $26（無料10,000 + 有料） |
 
-### 推奨事項：
+### 推奨事項
 
 - 初期は 10% で様子を見る
 - トラフィックが増えたら 5% に下げる
@@ -189,13 +189,13 @@ pnpm sentry-cli releases finalize "$(git rev-parse HEAD)"
 
 ### SENTRY_DSN が設定されていない
 
-### エラー:
+### エラー
 
 ```
 SENTRY_DSN is not set. Sentry will not be initialized.
 ```
 
-### 解決方法:
+### 解決方法
 
 ```bash
 # Cloudflare Secrets に設定
@@ -207,12 +207,12 @@ pnpm env:encrypt
 
 ### ソースマップがアップロードされない
 
-### 原因:
+### 原因
 
 - GitHub Secrets が設定されていない
 - `SENTRY_AUTH_TOKEN` の権限不足
 
-### 解決方法:
+### 解決方法
 
 1. [Auth Tokens](https://sentry.io/settings/account/api/auth-tokens/) で新しいトークンを作成
 2. `project:releases` 権限を付与
@@ -220,7 +220,7 @@ pnpm env:encrypt
 
 ### エラーがSentryに表示されない
 
-### 確認事項:
+### 確認事項
 
 1. DSN が正しいか確認:
 
