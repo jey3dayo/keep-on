@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD001 -->
 # KeepOn Project Configuration
 
 ## プロジェクト概要

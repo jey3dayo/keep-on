@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # シェルスクリプト共通ライブラリ
 
 `scripts/lib/common.sh` は、プロジェクト内のシェルスクリプトで共通して使用される機能を提供します。

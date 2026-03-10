@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # Cloudflare Workers デプロイガイド
 
 ## Infrastructure as Code による環境変数管理
@@ -303,7 +305,7 @@ pnpm wrangler deploy --dry-run
 
 出力例：
 
-```
+```text
 Total Upload: 12.34 MB / gzip: 4.56 MB
 ```
 

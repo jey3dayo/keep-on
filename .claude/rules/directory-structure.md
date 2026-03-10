@@ -3,6 +3,8 @@ paths:
   - "src/**/*.{ts,tsx}"
 ---
 
+<!-- markdownlint-disable MD024 -->
+
 # ディレクトリ構造と責務定義
 
 ## 概要

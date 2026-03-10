@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # Prisma → Drizzle ORM 移行完了
 
 ## 移行日

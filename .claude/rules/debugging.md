@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD001 MD024 -->
+
 # フロントエンドデバッグガイド
 
 KeepOn プロジェクトのブラウザデバッグ手順。汎用的なツール知識は `chrome-debug` skill を参照。

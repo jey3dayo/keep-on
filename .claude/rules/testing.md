@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # Clerk テストユーザー管理ガイド
 
 ## 概要

@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # Cloudflare Analytics ダッシュボード構築ガイド
 
 ## 概要
@@ -99,7 +101,7 @@ Cloudflare Dashboard で以下のアラートを設定：
 
 ### 通知例
 
-```
+```text
 🚨 Alert: CPU Time Exceeded
 Worker: keep-on
 Metric: P99 CPU Time

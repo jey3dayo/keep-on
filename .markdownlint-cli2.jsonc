@@ -15,6 +15,8 @@
     ".open-next",
     "out",
     "src/generated",
-    ".worktrees"
+    ".worktrees",
+    ".claude/worktrees",
+    "AGENTS.md"
   ]
 }

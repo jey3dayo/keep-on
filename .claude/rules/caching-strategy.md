@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # キャッシュ戦略
 
 ## 概要

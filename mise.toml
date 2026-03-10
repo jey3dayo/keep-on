@@ -9,7 +9,7 @@ _.path = ["./node_modules/.bin"]
 # Markdown lint/format用の変数
 MD_GLOB = "**/*.md"
 MD_EXCLUDE_NODE_MODULES = "#**/node_modules/**"
-MD_EXCLUDE_WORKTREES = "#**/.worktrees/**"
+MD_EXCLUDE_WORKTREES = "#**/.worktrees/** #**/.claude/worktrees/**"
 
 # ========================================
 # ツール

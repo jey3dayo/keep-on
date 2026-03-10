@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # ダッシュボード「rendering...」手動診断手順
 
 ## 前提条件
