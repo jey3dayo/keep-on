@@ -3,6 +3,7 @@
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Trash2 } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
@@ -115,7 +116,11 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
                         <Icon className="h-5 w-5 text-white" name={normalizeIconName(habit.icon)} />
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{habit.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link className="hover:underline" href={`/habits/${habit.id}`}>
+                        {habit.name}
+                      </Link>
+                    </TableCell>
                     <TableCell>{getPeriodLabel(habit.period)}</TableCell>
                     <TableCell>{habit.frequency}</TableCell>
                     <TableCell className="hidden md:table-cell">
