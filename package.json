@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "dotenvx run -- next dev --turbopack",
     "build": "dotenvx run -- next build",
-    "build:cf": "dotenvx run -- opennextjs-cloudflare build",
+    "build:cf": "dotenvx run --overload -- opennextjs-cloudflare build && node scripts/patch-open-next.mjs",
     "start": "dotenvx run -- next start",
     "deploy": "run-s build:cf cf:deploy",
     "lint": "ultracite check",

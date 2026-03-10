@@ -72,11 +72,13 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 ### 暗号化のベストプラクティス
 
 1. 機密情報のみ暗号化:
+
    - API キー、シークレットトークン
    - データベース接続文字列
    - 認証プロバイダーの秘密鍵
 
 2. 非機密情報は平文OK:
+
    - 公開API URL
    - フィーチャーフラグ
    - 環境識別子（development, production など）
@@ -103,7 +105,7 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 - `script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.accounts.dev`: Clerk認証に必要
 - `style-src 'self' 'unsafe-inline'`: Tailwind CSSのインラインスタイル対応
 - `img-src 'self' data: blob: https://img.clerk.com`: 画像ソース
-- `connect-src 'self' https://clerk.com https://*.clerk.accounts.dev https://keep-on.j138cm.workers.dev`: API接続
+- `connect-src 'self' https://clerk.com https://api.clerk.com https://*.clerk.accounts.dev https://clerk.jey3dayo.net https://keep-on.jey3dayo.net https://cloudflareinsights.com`: API接続
 - `frame-ancestors 'none'`: iframe内での表示を禁止（クリックジャッキング対策）
 
 ### 注意
@@ -118,10 +120,12 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 Clerk Dashboardで以下を設定してください：
 
 1. Sign-in試行回数制限
+
    - Clerk Dashboard → Settings → Security → Sign-in
    - 推奨設定: 5回失敗で15分間ロック
 
 2. Sign-up試行回数制限
+
    - 同一IPアドレスからの連続登録を制限
    - 推奨設定: 1時間あたり3回まで
 
@@ -136,11 +140,13 @@ Clerk Dashboardで以下を設定してください：
 ### 実装ステップ
 
 1. **Phase 1: Clerk MFA有効化**（工数: 1日）
+
    - Clerk Dashboard → Settings → Security → Multi-factor
    - TOTPアプリ（Google Authenticator、Authy等）対応を有効化
    - SMS OTPは追加コストのため保留
 
 2. **Phase 2: UIカスタマイズ**（工数: 0.5日）
+
    - ユーザー設定ページにMFA有効化トグルを追加
    - `/settings` ページに「セキュリティ」タブを追加
 
