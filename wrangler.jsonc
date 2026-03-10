@@ -15,7 +15,7 @@
   "routes": [{ "pattern": "keep-on.jey3dayo.net", "custom_domain": true }],
   "vars": {
     "NEXTJS_ENV": "production",
-    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuajEzOGNtLndvcmtlcnMuZGV2JA",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuamV5M2RheW8ubmV0JA",
     "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
     "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up"
   },
@@ -36,7 +36,7 @@
     "preview": {
       "vars": {
         "NEXTJS_ENV": "preview",
-        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuajEzOGNtLndvcmtlcnMuZGV2JA",
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuamV5M2RheW8ubmV0JA",
         "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
         "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up"
       },

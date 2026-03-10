@@ -25,11 +25,11 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value:
               "default-src 'self'; " +
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.accounts.dev; " +
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.accounts.dev https://clerk.jey3dayo.net https://clerk.j138cm.workers.dev; " +
               "style-src 'self' 'unsafe-inline'; " +
               "img-src 'self' data: blob: https://img.clerk.com; " +
               "font-src 'self' data:; " +
-              `connect-src 'self' https://clerk.com https://*.clerk.accounts.dev https://keep-on.j138cm.workers.dev https://keep-on.jey3dayo.net${isDev ? ' ws: wss:' : ''}; ` +
+              `connect-src 'self' https://clerk.com https://api.clerk.com https://*.clerk.accounts.dev https://clerk.jey3dayo.net https://clerk.j138cm.workers.dev https://keep-on.j138cm.workers.dev https://keep-on.jey3dayo.net${isDev ? ' ws: wss:' : ''}; ` +
               "worker-src 'self' blob:; " +
               "frame-ancestors 'none'; " +
               "base-uri 'self'; " +
