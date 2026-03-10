@@ -16,19 +16,8 @@ import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 import type { HabitIdPageProps } from '@/types/route'
 
-export async function generateMetadata({ params }: HabitIdPageProps): Promise<Metadata> {
-  const { id } = await params
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    return { title: '習慣詳細 - KeepOn' }
-  }
-  const habit = await getHabitById(id)
-  if (!habit || habit.userId !== userId) {
-    return { title: '習慣詳細 - KeepOn' }
-  }
-  return {
-    title: `${habit.name} - KeepOn`,
-  }
+export async function generateMetadata({ params: _params }: HabitIdPageProps): Promise<Metadata> {
+  return { title: '習慣詳細 - KeepOn' }
 }
 
 export default async function HabitDetailPage({ params }: HabitIdPageProps) {

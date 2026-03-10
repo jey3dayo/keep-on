@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, lte } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { habitSkips } from '@/db/schema'
 import { getDb } from '@/lib/db'
 import { normalizeDateKey } from '@/lib/utils/date'
@@ -55,50 +55,5 @@ export async function deleteSkip(habitId: string, date: Date | string) {
       return result.length > 0
     },
     { habitId }
-  )
-}
-
-/**
- * 複数の習慣IDのスキップを取得
- *
- * @param habitIds - 習慣IDの配列
- * @returns スキップの配列
- */
-export async function getSkipsByHabitIds(habitIds: string[]) {
-  if (habitIds.length === 0) {
-    return []
-  }
-
-  return await profileQuery(
-    'query.getSkipsByHabitIds',
-    async () => {
-      const db = getDb()
-      return await db.select().from(habitSkips).where(inArray(habitSkips.habitId, habitIds))
-    },
-    { habitCount: habitIds.length }
-  )
-}
-
-/**
- * 特定の日付範囲のスキップを取得
- *
- * @param habitId - 習慣ID
- * @param startDateKey - 開始日付 (YYYY-MM-DD)
- * @param endDateKey - 終了日付 (YYYY-MM-DD)
- * @returns スキップの配列
- */
-export async function getSkipsByHabitAndDateRange(habitId: string, startDateKey: string, endDateKey: string) {
-  return await profileQuery(
-    'query.getSkipsByHabitAndDateRange',
-    async () => {
-      const db = getDb()
-      return await db
-        .select()
-        .from(habitSkips)
-        .where(
-          and(eq(habitSkips.habitId, habitId), gte(habitSkips.date, startDateKey), lte(habitSkips.date, endDateKey))
-        )
-    },
-    { habitId, startDateKey, endDateKey }
   )
 }

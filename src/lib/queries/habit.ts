@@ -463,11 +463,18 @@ export async function getHabitsWithProgress(
             .where(inArray(checkins.habitId, habitIds))
             .orderBy(checkins.habitId, desc(checkins.date), desc(checkins.createdAt))
 
-    // スキップ取得を並列化
+    // スキップ取得を並列化（1年分のフィルタでパフォーマンス最適化）
+    const streakLimitDate = new Date(baseDate)
+    streakLimitDate.setFullYear(streakLimitDate.getFullYear() - 1)
+    const streakLimitDateKey = formatDateKey(streakLimitDate)
+
     const allSkipsPromise: Promise<(typeof habitSkips.$inferSelect)[]> =
       habitIds.length === 0
         ? Promise.resolve([])
-        : db.select().from(habitSkips).where(inArray(habitSkips.habitId, habitIds))
+        : db
+            .select()
+            .from(habitSkips)
+            .where(and(inArray(habitSkips.habitId, habitIds), gte(habitSkips.date, streakLimitDateKey)))
 
     // ユーザーの週開始日設定・チェックイン・スキップ取得を並列化
     const weekStartPromise = weekStart ? Promise.resolve(weekStart) : getUserWeekStart(clerkId)
@@ -632,6 +639,9 @@ function calculateStreakFromCheckins(
   }
 
   // 過去に向かってストリークをカウント
+  let consecutiveSkips = 0
+  const MAX_CONSECUTIVE_SKIPS = 3
+
   for (let iteration = 0; iteration < MAX_STREAK_ITERATIONS; iteration += 1) {
     const periodKey = getPeriodKey(currentDate, normalizedPeriod, weekStartDay)
     const count = checkinsByPeriod.get(periodKey) ?? 0
@@ -639,9 +649,11 @@ function calculateStreakFromCheckins(
 
     if (count >= normalizedFrequency) {
       streak++
+      consecutiveSkips = 0
       currentDate = getPreviousPeriod(currentDate, normalizedPeriod)
-    } else if (skipped) {
+    } else if (skipped && consecutiveSkips < MAX_CONSECUTIVE_SKIPS) {
       // スキップ期間はストリークを維持するが、カウントは増やさない
+      consecutiveSkips++
       currentDate = getPreviousPeriod(currentDate, normalizedPeriod)
     } else {
       return streak

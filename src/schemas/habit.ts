@@ -15,7 +15,7 @@ const ReminderTimeSchema = v.optional(
         return null
       }
       // HH:MM 形式チェック
-      if (/^\d{2}:\d{2}$/.test(val.trim())) {
+      if (/^([01]\d|2[0-3]):[0-5]\d$/.test(val.trim())) {
         return val.trim()
       }
       return null
