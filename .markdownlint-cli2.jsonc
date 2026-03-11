@@ -8,8 +8,8 @@
     "MD034": false,
     "MD041": false,
     "MD024": {
-      "siblings_only": true,
-    },
+      "siblings_only": true
+    }
   },
   "globs": ["**/*.md"],
   "ignores": [
@@ -18,6 +18,6 @@
     ".open-next",
     "out",
     "src/generated",
-    ".worktrees",
-  ],
+    ".worktrees"
+  ]
 }
