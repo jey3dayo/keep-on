@@ -424,12 +424,12 @@ export async function getHabitsWithProgress(
 
 function calculateStreakFromCheckins(
   habit: HabitSchedule,
-  checkins: Array<{ date: Date | string }>,
+  habitCheckins: Array<{ date: Date | string }>,
   weekStartDay: WeekStartDay = 1,
   baseDate: Date | string = new Date(),
   skips: Array<{ date: Date | string }> = []
 ): number {
-  if (checkins.length === 0 && skips.length === 0) {
+  if (habitCheckins.length === 0 && skips.length === 0) {
     return 0
   }
 
@@ -446,7 +446,7 @@ function calculateStreakFromCheckins(
   let currentDate = startOfDay(baseDate)
 
   const checkinsByPeriod = new Map<string, number>()
-  for (const checkin of checkins) {
+  for (const checkin of habitCheckins) {
     const checkinDate = normalizeCheckinDate(checkin.date)
     const periodKey = getPeriodKey(checkinDate, normalizedPeriod, weekStartDay)
     checkinsByPeriod.set(periodKey, (checkinsByPeriod.get(periodKey) ?? 0) + 1)

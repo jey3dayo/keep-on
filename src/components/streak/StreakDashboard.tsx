@@ -33,18 +33,12 @@ export function StreakDashboard({
 
   useEffect(() => {
     const root = document.documentElement
-    const shouldApply = currentView === 'dashboard' || currentView === 'simple'
-
-    if (shouldApply) {
-      root.style.setProperty('--dashboard-bg', 'var(--primary)')
-    } else {
-      root.style.removeProperty('--dashboard-bg')
-    }
+    root.style.setProperty('--dashboard-bg', 'var(--primary)')
 
     return () => {
       root.style.removeProperty('--dashboard-bg')
     }
-  }, [currentView])
+  }, [])
 
   return (
     <>
@@ -60,6 +54,8 @@ export function StreakDashboard({
           onRemoveCheckin={onRemoveCheckin}
           onResetOptimistic={onResetOptimistic}
           onSettings={() => onViewChange('dashboard')}
+          onSkip={onSkip}
+          onUnSkip={onUnSkip}
         />
       ) : (
         <div className="streak-bg flex min-h-full flex-col" style={{ backgroundColor: 'var(--primary)' }}>
