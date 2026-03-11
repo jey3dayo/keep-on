@@ -21,7 +21,7 @@
 }
 ```
 
-### 特徴
+##### 特徴
 
 - Git にコミット可能
 - ブラウザに露出しても問題ない値
@@ -35,7 +35,7 @@
 echo '<value>' | pnpm wrangler secret put CLERK_SECRET_KEY
 ```
 
-### 特徴
+##### 特徴
 
 - Cloudflare にのみ保存
 - Git には含まれない

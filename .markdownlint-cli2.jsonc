@@ -8,8 +8,8 @@
     "MD034": false,
     "MD041": false,
     "MD024": {
-      "siblings_only": true
-    }
+      "siblings_only": true,
+    },
   },
   "globs": ["**/*.md"],
   "ignores": [
@@ -20,10 +20,5 @@
     "src/generated",
     ".worktrees",
     ".claude/worktrees",
-    ".claude/CLAUDE.md",
-    ".claude/rules/**/*.md",
-    "docs/migrations/**/*.md",
-    "scripts/**/*.md",
-    "AGENTS.md"
-  ]
+  ],
 }
