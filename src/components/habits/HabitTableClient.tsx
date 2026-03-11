@@ -5,7 +5,7 @@ import { ja } from 'date-fns/locale'
 import { Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { type MouseEvent, useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { IconLabelButton } from '@/components/basics/IconLabelButton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -74,6 +74,28 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
   const deleteOptimistically = (habitId: string) =>
     runOptimisticUpdate((current) => current.filter((habit) => habit.id !== habitId))
 
+  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>, habitId: string) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return
+    }
+
+    if (
+      event.target instanceof Element &&
+      event.target.closest('a, button, input, select, textarea, [role="button"]')
+    ) {
+      return
+    }
+
+    router.push(`/habits/${habitId}`)
+  }
+
   const activeHabits = optimisticHabits.filter((h) => !h.archived)
   const archivedHabits = optimisticHabits
     .filter((h) => h.archived)
@@ -110,7 +132,7 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
                   <TableRow
                     className="cursor-pointer"
                     key={habit.id}
-                    onClick={() => router.push(`/habits/${habit.id}`)}
+                    onClick={(event) => handleRowClick(event, habit.id)}
                   >
                     <TableCell>
                       <div

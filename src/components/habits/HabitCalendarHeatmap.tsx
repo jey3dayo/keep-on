@@ -23,12 +23,18 @@ interface DayCell {
 }
 
 const WEEKDAY_LABELS = ['月', '火', '水', '木', '金', '土', '日']
+const EMPTY_SKIP_DATES: string[] = []
 
 function getCheckinColor(count: number, frequency: number, accentColor: string): string {
   const ratio = Math.min(count / frequency, 1)
   // 30% → 100% の範囲でグラデーション
   const pct = Math.round(30 + ratio * 70)
   return `color-mix(in srgb, ${accentColor} ${pct}%, transparent)`
+}
+
+function getLegendSteps(frequency: number): number[] {
+  const safeFrequency = Math.max(frequency, 1)
+  return Array.from(new Set([1, Math.ceil(safeFrequency / 2), safeFrequency])).sort((a, b) => a - b)
 }
 
 function getCellStyle(cell: DayCell, accentColor: string, frequency: number) {
@@ -142,13 +148,14 @@ function buildMonthGrid(
 
 export function HabitCalendarHeatmap({
   checkinCounts,
-  skipDates = [],
+  skipDates = EMPTY_SKIP_DATES,
   accentColor,
   frequency,
   months = 6,
 }: HabitCalendarHeatmapProps) {
   const today = useMemo(() => new Date(), [])
 
+  const legendSteps = useMemo(() => getLegendSteps(frequency), [frequency])
   const skipSet = useMemo(() => new Set(skipDates), [skipDates])
 
   const monthList = useMemo(() => {
@@ -165,15 +172,16 @@ export function HabitCalendarHeatmap({
       <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-xs">
         <div className="flex items-center gap-1.5">
           <div className="flex gap-0.5">
-            {[1, 2, 3].map((step) => (
+            {legendSteps.map((step) => (
               <div
                 className="h-3 w-3 rounded-sm"
                 key={step}
-                style={{ backgroundColor: getCheckinColor(step, 3, accentColor) }}
+                style={{ backgroundColor: getCheckinColor(step, frequency, accentColor) }}
+                title={`${step}/${frequency}回`}
               />
             ))}
           </div>
-          <span>チェックイン（薄→濃：達成率低→高）</span>
+          <span>チェックイン（達成率に応じて濃く表示）</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="h-3 w-3 rounded-sm border-2 border-dashed" style={{ borderColor: accentColor }} />

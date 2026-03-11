@@ -62,6 +62,23 @@ describe('HabitCalendarHeatmap', () => {
     expect(screen.getByText('スキップ')).toBeInTheDocument()
   })
 
+  it('frequency=1 の凡例は 1/1 回だけを表示する', () => {
+    renderHeatmap(new Map(), 1)
+
+    expect(screen.getByTitle('1/1回')).toBeInTheDocument()
+    expect(screen.queryByTitle('2/1回')).not.toBeInTheDocument()
+    expect(screen.queryByTitle('3/1回')).not.toBeInTheDocument()
+  })
+
+  it('凡例は frequency 基準のステップを表示する', () => {
+    renderHeatmap(new Map(), 4)
+
+    expect(screen.getByTitle('1/4回')).toBeInTheDocument()
+    expect(screen.getByTitle('2/4回')).toBeInTheDocument()
+    expect(screen.getByTitle('4/4回')).toBeInTheDocument()
+    expect(screen.queryByTitle('3/4回')).not.toBeInTheDocument()
+  })
+
   it('凡例に「未達成」テキストが表示される', () => {
     renderHeatmap(new Map(), 1)
     expect(screen.getByText('未達成')).toBeInTheDocument()
