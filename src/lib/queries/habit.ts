@@ -22,13 +22,27 @@ import type { HabitInput } from '@/validators/habit'
 const MIN_HABIT_FREQUENCY = 1
 const MAX_STREAK_ITERATIONS = 50_000
 
-function normalizePeriod(
-  period: unknown,
-  options: {
-    habitId: string
-    context: string
-  }
-): Period {
+interface HabitNormalizationOptions {
+  context: string
+  habitId: string
+}
+
+interface HabitNormalizationTarget {
+  frequency: number
+  habitId: string
+  period: unknown
+}
+
+interface NormalizedHabitSchedule {
+  frequency: number
+  period: Period
+}
+
+interface HabitSchedule extends NormalizedHabitSchedule {
+  id: string
+}
+
+function normalizePeriod(period: unknown, options: HabitNormalizationOptions): Period {
   if (period === 'daily' || period === 'weekly' || period === 'monthly') {
     return period
   }
@@ -42,13 +56,7 @@ function normalizePeriod(
   return DEFAULT_HABIT_PERIOD
 }
 
-function normalizeFrequency(
-  frequency: number,
-  options: {
-    habitId: string
-    context: string
-  }
-): number {
+function normalizeFrequency(frequency: number, options: HabitNormalizationOptions): number {
   if (!Number.isFinite(frequency) || frequency < MIN_HABIT_FREQUENCY) {
     logWarn('habit.frequency:invalid', {
       habitId: options.habitId,
@@ -60,6 +68,18 @@ function normalizeFrequency(
   }
 
   return Math.max(MIN_HABIT_FREQUENCY, Math.trunc(frequency))
+}
+
+function normalizeHabitSchedule(schedule: HabitNormalizationTarget, context: string): NormalizedHabitSchedule {
+  const options: HabitNormalizationOptions = {
+    habitId: schedule.habitId,
+    context,
+  }
+
+  return {
+    period: normalizePeriod(schedule.period, options),
+    frequency: normalizeFrequency(schedule.frequency, options),
+  }
 }
 
 /**
@@ -306,14 +326,14 @@ export async function calculateStreak(
       if (!habit) {
         return 0
       }
-      const normalizedPeriod = normalizePeriod(period, {
-        habitId,
-        context: 'calculateStreak',
-      })
-      const normalizedFrequency = normalizeFrequency(habit.frequency, {
-        habitId,
-        context: 'calculateStreak',
-      })
+      const { frequency: normalizedFrequency, period: normalizedPeriod } = normalizeHabitSchedule(
+        {
+          frequency: habit.frequency,
+          habitId,
+          period,
+        },
+        'calculateStreak'
+      )
 
       // 全チェックイン履歴を取得（降順）
       const allCheckins = await db
@@ -503,14 +523,14 @@ export async function getHabitsWithProgress(
 
     // 各習慣の進捗とストリークを計算
     const habitsWithProgress = habitList.map((habit) => {
-      const normalizedPeriod = normalizePeriod(habit.period, {
-        habitId: habit.id,
-        context: 'getHabitsWithProgress',
-      })
-      const normalizedFrequency = normalizeFrequency(habit.frequency, {
-        habitId: habit.id,
-        context: 'getHabitsWithProgress',
-      })
+      const { frequency: normalizedFrequency, period: normalizedPeriod } = normalizeHabitSchedule(
+        {
+          frequency: habit.frequency,
+          habitId: habit.id,
+          period: habit.period,
+        },
+        'getHabitsWithProgress'
+      )
       const habitCheckins = checkinsByHabit.get(habit.id) ?? []
       const habitSkipList = skipsByHabit.get(habit.id) ?? []
 
@@ -591,7 +611,7 @@ export async function getHabitsWithProgress(
  * @returns ストリーク数
  */
 function calculateStreakFromCheckins(
-  habit: { id: string; frequency: number; period: Period },
+  habit: HabitSchedule,
   checkins: Array<{ date: Date | string }>,
   weekStartDay: WeekStartDay = 1,
   baseDate: Date | string = new Date(),
@@ -600,14 +620,14 @@ function calculateStreakFromCheckins(
   if (checkins.length === 0 && skips.length === 0) {
     return 0
   }
-  const normalizedPeriod = normalizePeriod(habit.period, {
-    habitId: habit.id,
-    context: 'calculateStreakFromCheckins',
-  })
-  const normalizedFrequency = normalizeFrequency(habit.frequency, {
-    habitId: habit.id,
-    context: 'calculateStreakFromCheckins',
-  })
+  const { frequency: normalizedFrequency, period: normalizedPeriod } = normalizeHabitSchedule(
+    {
+      frequency: habit.frequency,
+      habitId: habit.id,
+      period: habit.period,
+    },
+    'calculateStreakFromCheckins'
+  )
 
   let streak = 0
   let currentDate = startOfDay(baseDate)

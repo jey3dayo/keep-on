@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
 import { filterHabitsByPeriod } from '@/lib/utils/habits'
 import type { HabitWithProgress } from '@/types/habit'
@@ -15,9 +15,9 @@ export function useDashboardContent(habits: HabitWithProgress[]) {
 
   const filteredHabits = useMemo(() => filterHabitsByPeriod(habits, periodFilter), [habits, periodFilter])
 
-  const handleAddHabit = () => {
+  const handleAddHabit = useCallback(() => {
     router.push('/habits/new?step=preset')
-  }
+  }, [router])
 
   return {
     completedHabitIds,
