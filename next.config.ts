@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
+  // Turbopack はデフォルト有効（Next.js 16+）。webpack 設定と共存させるために明示する
+  turbopack: {},
   webpack: (config) => {
     // Cloudflare Workers 環境に不要な WASM ファイルをバンドルから除外する
     // blake3-wasm のみを対象にし、@vercel/og (yoga.wasm / resvg.wasm) は除外しない
