@@ -72,13 +72,11 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 ### 暗号化のベストプラクティス
 
 1. 機密情報のみ暗号化:
-
    - API キー、シークレットトークン
    - データベース接続文字列
    - 認証プロバイダーの秘密鍵
 
 2. 非機密情報は平文OK:
-
    - 公開API URL
    - フィーチャーフラグ
    - 環境識別子（development, production など）
@@ -120,12 +118,10 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 Clerk Dashboardで以下を設定してください：
 
 1. Sign-in試行回数制限
-
    - Clerk Dashboard → Settings → Security → Sign-in
    - 推奨設定: 5回失敗で15分間ロック
 
 2. Sign-up試行回数制限
-
    - 同一IPアドレスからの連続登録を制限
    - 推奨設定: 1時間あたり3回まで
 
@@ -140,13 +136,11 @@ Clerk Dashboardで以下を設定してください：
 ### 実装ステップ
 
 1. **Phase 1: Clerk MFA有効化**（工数: 1日）
-
    - Clerk Dashboard → Settings → Security → Multi-factor
    - TOTPアプリ（Google Authenticator、Authy等）対応を有効化
    - SMS OTPは追加コストのため保留
 
 2. **Phase 2: UIカスタマイズ**（工数: 0.5日）
-
    - ユーザー設定ページにMFA有効化トグルを追加
    - `/settings` ページに「セキュリティ」タブを追加
 
@@ -208,3 +202,41 @@ export function SafeHtml({ html }: { html: string }) {
   return <div dangerouslySetInnerHTML={{ __html: sanitized }} />;
 }
 ```
+
+## Clerk 認証戦略
+
+### JWT / セッション方式
+
+Clerk はデフォルトで JWT ベースの認証を使用します。
+
+- **Short-lived JWT**: アクセストークンのデフォルト有効期限は **60秒**
+- **セッション**: Clerk セッション（`__session` Cookie）は **30日** 有効
+- JWT の検証は Edge Runtime 上で `auth()` を呼ぶことで実施されます（`@clerk/nextjs/server`）
+
+### リフレッシュトークン戦略
+
+Clerk はトークンリフレッシュをクライアントライブラリ（`@clerk/nextjs`）が自動で処理します。
+
+- クライアント側の `@clerk/nextjs` が JWT 期限切れを検知し、バックグラウンドで自動リフレッシュ
+- アプリケーションコードでリフレッシュ処理を実装する必要はありません
+- Cloudflare Workers 環境では `auth()` がリクエストごとに短命 JWT を検証するため、サーバー側でのリフレッシュ処理も不要
+
+### パスワードハッシュ
+
+パスワードのハッシュ化は **Clerk に完全委譲** しています。自前実装はありません。
+
+### 多要素認証（MFA）
+
+Clerk は組み込み MFA 機能（TOTP / SMS OTP）を提供しています。**現在は未有効化**。
+
+有効化する場合は Clerk Dashboard → Settings → Security → Multi-factor から設定します（詳細は「ブルートフォース攻撃対策」セクション参照）。
+
+### Edge での JWT 検証
+
+`auth()` は Edge Runtime 上で JWT をローカル検証します。Clerk の公開鍵を使った署名検証が Edge で完結するため、外部への追加ネットワークリクエストは発生しません。
+
+### Clerk v7 と Cloudflare Workers の注意点
+
+Clerk v7 はモジュール評価時に `CLERK_SECRET_KEY` を読み取ります。OpenNext は初回リクエスト内で `process.env` を設定するため、モジュールロード時点では環境変数が未設定になる問題があります。
+
+これを解消するため、`scripts/patch-open-next.mjs` がビルド後の `.open-next/cloudflare/init.js` を修正し、`CLERK_SECRET_KEY` 等を `process.env` にモジュールロード前に事前充填します。このパッチは `build:cf` スクリプトに組み込まれており、**手動実行は不要**です。
