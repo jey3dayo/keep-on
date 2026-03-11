@@ -60,7 +60,6 @@ storybook-static/
 
 # git worktrees
 .worktrees/
-.claude/worktrees/
 tmp/
 # next-agents-md
 .next-docs/
