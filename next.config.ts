@@ -10,6 +10,16 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
+  webpack: (config) => {
+    // Cloudflare Workers 環境に不要な WASM ファイルをバンドルから除外する
+    // (blake3-wasm, @vercel/og など Next.js 以外のランタイムが使う WASM を対象)
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'javascript/auto',
+      loader: 'null-loader',
+    })
+    return config
+  },
   async headers() {
     const isDev = process.env.NODE_ENV === 'development'
 

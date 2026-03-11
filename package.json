@@ -114,6 +114,7 @@
     "jsdom": "^28.1.0",
     "markdownlint-cli2": "^0.21.0",
     "npm-run-all2": "^8.0.4",
+    "null-loader": "^4.0.1",
     "playwright": "^1.58.2",
     "sharp": "^0.34.5",
     "storybook": "^10.2.16",
