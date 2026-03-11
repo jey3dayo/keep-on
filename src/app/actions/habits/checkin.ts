@@ -1,19 +1,14 @@
 'use server'
 
-import { Result } from '@praha/byethrow'
-import { toActionResult } from '@/lib/actions/result'
-import { createRequestMeta, logInfo } from '@/lib/logging'
+import { logInfo } from '@/lib/logging'
 import { type CreateCheckinWithLimitResult, createCheckinWithLimit } from '@/lib/queries/checkin'
-import { getRequestTimeoutMs } from '@/lib/server/timeout'
-import { validateHabitActionInput } from '@/validators/habit-action'
 import {
-  createHabitCheckinSpans,
   type HabitCheckinParams,
   requireCheckinUserId,
   requireHabitForUserWithRetry,
   resolveCheckinWeekStartDay,
 } from './checkin-shared'
-import { type HabitActionResult, revalidateHabitPaths, serializeActionError } from './utils'
+import { type HabitActionResult, revalidateHabitPaths, runTimedHabitAction } from './utils'
 
 type CheckinResultData = Pick<CreateCheckinWithLimitResult, 'created' | 'currentCount'>
 
@@ -66,27 +61,13 @@ async function performCheckin(params: HabitCheckinParams): Promise<CheckinResult
 }
 
 export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult<CheckinResultData> {
-  const requestMeta = createRequestMeta('action.habits.checkin')
-  const timeoutMs = getRequestTimeoutMs()
-  const spans = createHabitCheckinSpans(timeoutMs)
-
-  const result = await Result.pipe(
-    validateHabitActionInput({ habitId, dateKey }),
-    Result.andThen(async (input) => {
-      const baseMeta = { ...requestMeta, habitId: input.habitId, dateKey: input.dateKey }
-      return await Result.try({
-        try: async () => {
-          return await spans.runWithRequestTimeout(
-            'action.habits.checkin',
-            () => performCheckin({ habitId: input.habitId, dateKey: input.dateKey, baseMeta, spans }),
-            baseMeta
-          )
-        },
-        catch: (error) => error,
-      })
-    }),
-    Result.mapError((error) => serializeActionError(error, 'チェックインの切り替えに失敗しました'))
+  return await runTimedHabitAction(
+    { habitId, dateKey },
+    {
+      actionName: 'action.habits.checkin',
+      errorDetail: 'チェックインの切り替えに失敗しました',
+      run: async ({ input, baseMeta, spans }) =>
+        await performCheckin({ habitId: input.habitId, dateKey: input.dateKey, baseMeta, spans }),
+    }
   )
-
-  return toActionResult(result)
 }
