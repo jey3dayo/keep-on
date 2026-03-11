@@ -99,7 +99,7 @@ Cloudflare Dashboard で以下のアラートを設定：
 
 ### 通知例
 
-```
+```text
 🚨 Alert: CPU Time Exceeded
 Worker: keep-on
 Metric: P99 CPU Time

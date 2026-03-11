@@ -15,9 +15,34 @@ dotenvx は環境変数を暗号化してリポジトリに安全にコミット
 
 ## 仕組み
 
-- `.env` - 暗号化された環境変数（コミット対象）
+- `.env` - 暗号化された本番用環境変数（コミット対象）
+- `.env.development` - 暗号化された開発用環境変数（コミット対象）
 - `.env.keys` - 秘密鍵（**絶対にコミットしない** - `.gitignore` 済み）
-- `DOTENV_PRIVATE_KEY` - 復号に必要な秘密鍵（環境変数として設定）
+- `DOTENV_PRIVATE_KEY` - `.env` の復号キー
+- `DOTENV_PRIVATE_KEY_DEVELOPMENT` - `.env.development` の復号キー
+
+## マルチ環境の仕組み
+
+開発系スクリプトには `dotenvx run --overload -f .env -f .env.development` を使用:
+
+| 読み込み順                        | 優先度                          |
+| --------------------------------- | ------------------------------- |
+| 1. `.env`（本番キー）             | 低（後から上書きされる）        |
+| 2. `.env.development`（開発キー） | 高（`--overload` で上書き優先） |
+
+`.env.development` が後に読み込まれるため、開発時は `pk_test_...` / `sk_test_...` が有効になる。
+
+### 適用スクリプト（開発系）
+
+- `pnpm dev`, `pnpm start`
+- `pnpm test`, `pnpm test:run` など全テスト系
+- `pnpm db:studio`
+- `pnpm env:run`
+
+### 適用されないスクリプト（本番用）
+
+- `pnpm build:cf` - `dotenvx run --overload --` で `.env` のみ使用
+- `pnpm cf:deploy`, `pnpm cf:logs` などの Cloudflare 系スクリプト
 
 ## 初回セットアップ（新規開発者向け）
 
@@ -91,8 +116,12 @@ GitHub Secrets に秘密鍵を設定してください。
 
 1. リポジトリの Settings → Secrets and variables → Actions
 2. New repository secret
-3. Name: `DOTENV_PRIVATE_KEY`
-4. Value: `.env.keys` 内の `DOTENV_PRIVATE_KEY` の値
+3. 以下の2つを登録:
+
+| Secret 名                        | 取得元                                          |
+| -------------------------------- | ----------------------------------------------- |
+| `DOTENV_PRIVATE_KEY`             | `.env.keys` の `DOTENV_PRIVATE_KEY`             |
+| `DOTENV_PRIVATE_KEY_DEVELOPMENT` | `.env.keys` の `DOTENV_PRIVATE_KEY_DEVELOPMENT` |
 
 ワークフロー内での使用例:
 
@@ -110,8 +139,8 @@ Cloudflare デプロイ時は `wrangler.jsonc` で環境変数を設定します
 ```jsonc
 {
   "vars": {
-    "NODE_ENV": "production"
-  }
+    "NODE_ENV": "production",
+  },
   // secrets は wrangler secret put で設定
 }
 ```

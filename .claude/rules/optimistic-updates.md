@@ -109,7 +109,7 @@ export const MAX_CONCURRENT_CHECKINS = 2; // 並列実行数の上限
 
 ### キューフロー
 
-```
+```text
 enqueueCheckin → drainCheckinQueue → startCheckinTask → runCheckinTask
                        ↑                    |
                        └────────────────────┘ (finally で次のタスクを処理)

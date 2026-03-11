@@ -303,7 +303,7 @@ pnpm wrangler deploy --dry-run
 
 出力例：
 
-```
+```text
 Total Upload: 12.34 MB / gzip: 4.56 MB
 ```
 

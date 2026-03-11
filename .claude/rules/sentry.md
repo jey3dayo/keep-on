@@ -191,7 +191,7 @@ pnpm sentry-cli releases finalize "$(git rev-parse HEAD)"
 
 ### エラー
 
-```
+```text
 SENTRY_DSN is not set. Sentry will not be initialized.
 ```
 
