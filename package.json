@@ -110,6 +110,7 @@
     "drizzle-dbml-generator": "^0.10.0",
     "drizzle-kit": "^0.31.9",
     "jsdom": "^28.1.0",
+    "markdownlint-cli2": "^0.21.0",
     "npm-run-all2": "^8.0.4",
     "playwright": "^1.58.2",
     "sharp": "^0.34.5",
