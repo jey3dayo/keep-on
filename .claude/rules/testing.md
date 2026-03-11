@@ -62,13 +62,13 @@ Clerk の開発インスタンスでは、デフォルトで**テストモード
 
 **ルール**: ローカルパートの末尾に `+clerk_test` を追加
 
-#### 例
+##### 例
 
 - `test+clerk_test@example.com`
 - `sample+clerk_test@example.com`
 - `user123+clerk_test@domain.org`
 
-#### 形式
+##### 形式
 
 ```text
 <username>+clerk_test@<domain>
@@ -78,13 +78,13 @@ Clerk の開発インスタンスでは、デフォルトで**テストモード
 
 **ルール**: 下4桁が `0100` 〜 `0199` の範囲
 
-#### 例
+##### 例
 
 - `+1 (201) 555-0100`
 - `+1 (973) 555-0133`
 - `+12015550199`
 
-#### 形式
+##### 形式
 
 ```text
 +1<area code>555-01<00-99>
@@ -356,7 +356,7 @@ pnpm exec tsx scripts/agent-browser-playwright.ts https://keep-on.j138cm.workers
 
 **エラー**: `❌ エラー: e2e/storage-state.json が見つかりません`
 
-#### 解決方法
+##### 解決方法
 
 ```bash
 # 認証状態を生成
@@ -367,7 +367,7 @@ pnpm exec tsx scripts/agent-browser-playwright.ts https://keep-on.j138cm.workers
 
 **原因**: セッション期限切れまたは認証状態が無効
 
-#### 解決方法
+##### 解決方法
 
 ```bash
 # 既存の認証状態を削除
@@ -381,7 +381,7 @@ rm e2e/storage-state.json
 
 **エラー**: `✗ 開発サーバーが起動していません`
 
-#### 解決方法
+##### 解決方法
 
 ```bash
 # 別のターミナルで開発サーバーを起動
@@ -392,7 +392,7 @@ pnpm env:run -- pnpm dev
 
 **エラー**: Playwrightがブラウザを見つけられない
 
-#### 解決方法
+##### 解決方法
 
 ```bash
 # Chromiumブラウザをインストール

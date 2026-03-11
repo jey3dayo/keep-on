@@ -3,8 +3,9 @@
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Trash2 } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { type MouseEvent, useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { IconLabelButton } from '@/components/basics/IconLabelButton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -73,6 +74,28 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
   const deleteOptimistically = (habitId: string) =>
     runOptimisticUpdate((current) => current.filter((habit) => habit.id !== habitId))
 
+  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>, habitId: string) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return
+    }
+
+    if (
+      event.target instanceof Element &&
+      event.target.closest('a, button, input, select, textarea, [role="button"]')
+    ) {
+      return
+    }
+
+    router.push(`/habits/${habitId}`)
+  }
+
   const activeHabits = optimisticHabits.filter((h) => !h.archived)
   const archivedHabits = optimisticHabits
     .filter((h) => h.archived)
@@ -106,7 +129,11 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
                 const bgColor = getColorById(habit.color ?? DEFAULT_HABIT_COLOR).color
 
                 return (
-                  <TableRow key={habit.id}>
+                  <TableRow
+                    className="cursor-pointer"
+                    key={habit.id}
+                    onClick={(event) => handleRowClick(event, habit.id)}
+                  >
                     <TableCell>
                       <div
                         className="flex h-10 w-10 items-center justify-center rounded-full"
@@ -115,7 +142,11 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
                         <Icon className="h-5 w-5 text-white" name={normalizeIconName(habit.icon)} />
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{habit.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link className="hover:underline" href={`/habits/${habit.id}`}>
+                        {habit.name}
+                      </Link>
+                    </TableCell>
                     <TableCell>{getPeriodLabel(habit.period)}</TableCell>
                     <TableCell>{habit.frequency}</TableCell>
                     <TableCell className="hidden md:table-cell">

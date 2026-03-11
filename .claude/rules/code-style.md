@@ -149,14 +149,14 @@ pnpm env:run -- pnpm dev
 
 マジックナンバーや設定値は定数として抽出し、`src/constants/` で管理してください。
 
-### 定数ファイルの配置
+#### 定数ファイルの配置
 
 - `src/constants/db.ts` - データベース接続設定
 - `src/constants/cache.ts` - キャッシュ設定
 - `src/constants/habit.ts` - 習慣関連の定数
 - `src/constants/habit-data.ts` - 習慣関連の静的データ
 
-### 良い例
+#### 良い例
 
 ```tsx
 // src/constants/db.ts
@@ -173,7 +173,7 @@ const client = postgres(connectionString, {
 });
 ```
 
-### 悪い例
+#### 悪い例
 
 ```tsx
 // ❌ ハードコードされた値

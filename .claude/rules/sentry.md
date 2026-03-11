@@ -191,13 +191,13 @@ pnpm sentry-cli releases finalize "$(git rev-parse HEAD)"
 
 ### SENTRY_DSN が設定されていない
 
-### エラー
+#### エラー
 
 ```text
 SENTRY_DSN is not set. Sentry will not be initialized.
 ```
 
-### 解決方法
+#### 解決方法
 
 ```bash
 # Cloudflare Secrets に設定
@@ -209,12 +209,12 @@ pnpm env:encrypt
 
 ### ソースマップがアップロードされない
 
-### 原因
+#### 原因
 
 - GitHub Secrets が設定されていない
 - `SENTRY_AUTH_TOKEN` の権限不足
 
-### 解決方法
+#### 解決方法
 
 1. [Auth Tokens](https://sentry.io/settings/account/api/auth-tokens/) で新しいトークンを作成
 2. `project:releases` 権限を付与
@@ -222,7 +222,7 @@ pnpm env:encrypt
 
 ### エラーがSentryに表示されない
 
-### 確認事項
+#### 確認事項
 
 1. DSN が正しいか確認:
 

@@ -54,7 +54,7 @@ set -euo pipefail
 NO_COLOR=1 ./script.sh
 ```
 
-#### 使用例
+##### 使用例
 
 ```bash
 echo -e "${GREEN}成功しました${NC}"
@@ -75,7 +75,7 @@ echo -e "${RED}エラーが発生しました${NC}"
   - `exit_code`: 終了コード（省略時: 1）
 - **出力先**: stderr
 
-#### 使用例
+##### 使用例
 
 ```bash
 error "ファイルが見つかりません"
@@ -89,7 +89,7 @@ error "処理に失敗しました" 2
 - **引数**: `message` - 成功メッセージ
 - **出力先**: stdout
 
-#### 使用例
+##### 使用例
 
 ```bash
 success "処理が完了しました"
@@ -103,7 +103,7 @@ success "ファイルを作成しました: output.txt"
 - **引数**: `message` - 警告メッセージ
 - **出力先**: stdout
 
-#### 使用例
+##### 使用例
 
 ```bash
 warn "設定が見つかりません。デフォルト値を使用します"
@@ -117,7 +117,7 @@ warn "古いバージョンが検出されました"
 - **引数**: `message` - 情報メッセージ
 - **出力先**: stdout
 
-#### 使用例
+##### 使用例
 
 ```bash
 info "処理を開始しています..."
@@ -132,7 +132,7 @@ info "ダウンロード中: 50%"
 
 - **引数**: `VAR_NAME` - チェックする環境変数名
 
-#### 使用例
+##### 使用例
 
 ```bash
 check_env "API_KEY"
@@ -148,7 +148,7 @@ echo "API Key: $API_KEY"
 
 - **戻り値**: プロジェクトルートの絶対パス
 
-#### 使用例
+##### 使用例
 
 ```bash
 PROJECT_ROOT=$(get_project_root)
@@ -168,7 +168,7 @@ CONFIG_FILE="${PROJECT_ROOT}/config/settings.json"
 - **実行タイミング**: `EXIT`, `ERR`, `INT`, `TERM` シグナル時
 - **実行順序**: LIFO（後に登録したものから先に実行）
 
-#### 使用例
+##### 使用例
 
 ```bash
 #!/usr/bin/env bash

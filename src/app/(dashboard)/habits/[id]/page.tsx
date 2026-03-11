@@ -52,9 +52,9 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
 
   const colorData = getColorById(habit.color ?? DEFAULT_HABIT_COLOR)
   const IconComponent = getIconById(normalizeIconName(habit.icon)).icon
-  const checkinDates = Array.from(calendarData.checkinDates)
+  const checkinCounts = calendarData.checkinCounts
   const skipDates = Array.from(calendarData.skipDates)
-  const totalCheckins = checkinDates.length
+  const totalCheckins = Array.from(checkinCounts.values()).reduce((sum, n) => sum + n, 0)
   const periodLabel = PERIOD_DISPLAY_NAME[habit.period]
 
   return (
@@ -126,7 +126,12 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
           <CardTitle className="text-base">チェックイン履歴（過去6ヶ月）</CardTitle>
         </CardHeader>
         <CardContent>
-          <HabitCalendarHeatmap accentColor={colorData.color} checkinDates={checkinDates} skipDates={skipDates} />
+          <HabitCalendarHeatmap
+            accentColor={colorData.color}
+            checkinCounts={checkinCounts}
+            frequency={habit.frequency}
+            skipDates={skipDates}
+          />
         </CardContent>
       </Card>
     </div>

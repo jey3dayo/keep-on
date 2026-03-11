@@ -125,17 +125,17 @@ Console タブで以下のスクリプトを実行:
 
 ### パターン1: タイムゾーン Cookie の問題
 
-### 症状
+#### 症状
 
 - `ko_tz` Cookie が NOT_SET
 - Console に無限リロードのログ
 - Network に複数回の /dashboard リクエスト
 
-### 原因
+#### 原因
 
 DashboardWrapper が Cookie 設定とリロードを繰り返している
 
-### 修正案
+#### 修正案
 
 ```javascript
 // Console で実行
@@ -145,16 +145,16 @@ location.reload();
 
 ### パターン2: Clerk 認証エラー
 
-### 症状
+#### 症状
 
 - Console に `Clerk: ...` エラー
 - Network に clerk API へのリクエスト失敗
 
-### 原因
+#### 原因
 
 Clerk の設定不備またはセッションタイムアウト
 
-### 修正案
+#### 修正案
 
 1. `.env` の `CLERK_SECRET_KEY` を確認
 2. サインアウトして再ログイン
@@ -162,16 +162,16 @@ Clerk の設定不備またはセッションタイムアウト
 
 ### パターン3: React Hydration エラー
 
-### 症状
+#### 症状
 
 - Console に `Hydration failed`
 - `Text content does not match` エラー
 
-### 原因
+#### 原因
 
 SSR とクライアントの不一致
 
-### 修正案
+#### 修正案
 
 1. ページをハードリロード (Ctrl+Shift+R)
 2. キャッシュをクリア (DevTools > Application > Clear storage)
@@ -179,16 +179,16 @@ SSR とクライアントの不一致
 
 ### パターン4: タイムアウトエラー
 
-### 症状
+#### 症状
 
 - Console に `TimeoutError`
 - Network に長時間 pending のリクエスト
 
-### 原因
+#### 原因
 
 サーバー側のデータ取得が遅い
 
-### 修正案
+#### 修正案
 
 1. DB 接続を確認 (`pnpm test:supabase`)
 2. Cloudflare のログを確認 (`pnpm cf:logs`)
