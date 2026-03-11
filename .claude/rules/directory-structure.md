@@ -48,7 +48,7 @@ src/
 
 **返り値の型:** `v.BaseSchema` + 推論型
 
-### 例
+#### 例
 
 ```typescript
 import * as v from "valibot";
@@ -80,7 +80,7 @@ export type HabitInputSchemaType = v.InferOutput<typeof HabitInputSchema>;
 
 **返り値の型:** 直接値、またはフォールバック値を返す
 
-### 例
+#### 例
 
 ```typescript
 // 静的データ定義
@@ -108,7 +108,7 @@ export function getColorById(id: string): HabitColor {
 
 **返り値の型:** 直接値を返す
 
-### 例
+#### 例
 
 ```typescript
 import type { TaskPeriod } from "../habit-data";
@@ -143,20 +143,20 @@ export function isHabitCompleted(
 
 **返り値の型:** 生のDrizzle返り値のみ（`Promise<T>`）
 
-### 重要な制約
+#### 重要な制約
 
 - ❌ **Result型を返してはいけない**: `Promise<Result.Result<T, E>>` 形式は禁止
 - ✅ **生のPromiseのみ**: `Promise<T>` 形式で返す
 - ✅ **エラーはthrowする**: データベースエラーは `throw` で伝播させる
 - ✅ **null/undefinedでの失敗表現**: 取得失敗は `null` または `undefined` を返す
 
-### 理由
+#### 理由
 
 - `Result` 型は上位層（`validators`, `actions`）で扱うべきエラーハンドリングパターン
 - `queries` 層は純粋なデータアクセスに専念し、エラー解釈は行わない
 - データベース例外は自然にthrowし、上位層で適切なエラー型に変換する
 
-### 例
+#### 例
 
 ```typescript
 import { eq } from "drizzle-orm";
@@ -204,13 +204,13 @@ export async function createHabit(input: HabitInput) {
 
 **返り値の型:** `Result.Result<T, E>` (byethrow)
 
-### 重要な制約
+#### 重要な制約
 
 - ✅ **同期的なResult型**: `Result.Result<T, E>` 形式で返す（Promiseでラップしない）
 - ✅ **バリデーションエラーを明示**: エラーの場合は `Result.fail(new ValidationError(...))` で返す
 - ✅ **成功時は型付きデータ**: `Result.succeed(validatedData)` で型安全な値を返す
 
-### 例
+#### 例
 
 ```typescript
 import { Result } from "@praha/byethrow";
@@ -252,14 +252,14 @@ export function validateHabitInput(
 
 **返り値の型:** `Promise<Result.ResultAsync<T, E>>`
 
-### 重要な制約
+#### 重要な制約
 
 - ✅ **非同期Result型**: `Promise<Result.ResultAsync<T, E>>` 形式で返す
 - ✅ **queries層のエラーをキャッチ**: `Result.try` を使って `queries` からのエラーを適切な型に変換
 - ✅ **エラーチェーン**: `Result.pipe` や `Result.andThen` でエラーを伝播させる
 - ✅ **成功時の副作用実行**: `Result.isSuccess` でチェックしてから `revalidatePath` などを実行
 
-### データフロー
+#### データフロー
 
 ```text
 queries (Promise<T>) → Result.try → Promise<Result<T, E>>
@@ -269,7 +269,7 @@ validators (Result<T, E>) → Result.andThen → Promise<Result<T, E>>
 actions (Promise<Result<T, E>>) → クライアントへ返却
 ```
 
-### 例
+#### 例
 
 ```typescript
 "use server";

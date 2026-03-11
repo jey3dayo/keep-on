@@ -37,44 +37,47 @@ export function HabitCircleItem({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <Button
-        aria-label={isCompleted ? '達成済み' : `${habit.name}をチェックイン`}
-        className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
-        disabled={isCompleted}
-        onClick={onCheckin}
-        onContextMenu={onContextMenu}
-        onPointerCancel={() => onLongPressEnd(true)}
-        onPointerDown={onLongPressStart}
-        onPointerLeave={() => onLongPressEnd(true)}
-        onPointerUp={() => onLongPressEnd(false)}
-        scale="md"
-        type="button"
-        variant="ghost"
-      >
-        <ProgressRing
-          backgroundColor={ringBgColor}
-          progress={progressPercent}
-          progressColor="rgba(255, 255, 255, 0.95)"
-          size={140}
-          strokeWidth={6}
-        />
-
-        <div
-          className={cn(
-            'flex h-[120px] w-[120px] items-center justify-center rounded-full ring-1 ring-white/15 transition-all duration-300',
-            isCompleted && 'scale-105'
-          )}
-          style={{
-            backgroundColor: bgColor,
-            boxShadow: isCompleted ? '0 0 24px rgba(255, 255, 255, 0.35)' : 'none',
-          }}
+      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: context menu for long-press on disabled button */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: context menu for long-press on disabled button */}
+      <div onContextMenu={onContextMenu}>
+        <Button
+          aria-label={isCompleted ? '達成済み' : `${habit.name}をチェックイン`}
+          className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
+          disabled={isCompleted}
+          onClick={onCheckin}
+          onPointerCancel={() => onLongPressEnd(true)}
+          onPointerDown={onLongPressStart}
+          onPointerLeave={() => onLongPressEnd(true)}
+          onPointerUp={() => onLongPressEnd(false)}
+          scale="md"
+          type="button"
+          variant="ghost"
         >
-          <IconComponent
-            className={cn('h-14 w-14 transition-all duration-300', isCompleted ? 'text-white' : 'text-white/90')}
-            strokeWidth={1.5}
+          <ProgressRing
+            backgroundColor={ringBgColor}
+            progress={progressPercent}
+            progressColor="rgba(255, 255, 255, 0.95)"
+            size={140}
+            strokeWidth={6}
           />
-        </div>
-      </Button>
+
+          <div
+            className={cn(
+              'flex h-[120px] w-[120px] items-center justify-center rounded-full ring-1 ring-white/15 transition-all duration-300',
+              isCompleted && 'scale-105'
+            )}
+            style={{
+              backgroundColor: bgColor,
+              boxShadow: isCompleted ? '0 0 24px rgba(255, 255, 255, 0.35)' : 'none',
+            }}
+          >
+            <IconComponent
+              className={cn('h-14 w-14 transition-all duration-300', isCompleted ? 'text-white' : 'text-white/90')}
+              strokeWidth={1.5}
+            />
+          </div>
+        </Button>
+      </div>
 
       <div className="flex flex-col items-center gap-2">
         <p
