@@ -231,9 +231,9 @@ Clerk は組み込み MFA 機能（TOTP / SMS OTP）を提供しています。*
 
 有効化する場合は Clerk Dashboard → Settings → Security → Multi-factor から設定します（詳細は「ブルートフォース攻撃対策」セクション参照）。
 
-### Edge での JWT 検証
+### Edge での JWT 検証（仕組み）
 
-`auth()` は Edge Runtime 上で JWT をローカル検証します。Clerk の公開鍵を使った署名検証が Edge で完結するため、外部への追加ネットワークリクエストは発生しません。
+`auth()` は `getAuthDataFromRequest` を通じて、`clerkMiddleware` がリクエストに付与した署名済みヘッダーを読み取ります。ミドルウェアの `authenticateRequest` はセッションのハンドシェイクやトークン更新時に Clerk API への外部通信が発生し得ます。通常リクエストではローカル検証で完結しますが、「常に外部リクエスト不要」ではありません。
 
 ### Clerk v7 と Cloudflare Workers の注意点
 
