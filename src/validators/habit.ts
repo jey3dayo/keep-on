@@ -13,6 +13,7 @@ export type HabitInput = Omit<InferInsertModel<typeof import('@/db/schema').habi
  * 習慣更新データの型定義（全てのフィールドをオプションに）
  */
 type HabitUpdateInput = Partial<HabitInput>
+type ParsedHabitInput = Omit<HabitInput, 'userId'>
 
 const toValidationError = (issues: ReturnType<typeof safeParseHabitInput>['issues']) => {
   const firstIssue = issues?.[0]
@@ -20,6 +21,18 @@ const toValidationError = (issues: ReturnType<typeof safeParseHabitInput>['issue
     field: firstIssue?.path?.map((p) => String(p.key)).join('.') || 'unknown',
     reason: firstIssue?.message || 'Validation failed',
   })
+}
+
+function parseHabitFormData(
+  input: Parameters<typeof safeParseHabitInput>[0]
+): Result.Result<ParsedHabitInput, ValidationError> {
+  const parseResult = safeParseHabitInput(input)
+
+  if (!parseResult.success) {
+    return Result.fail(toValidationError(parseResult.issues))
+  }
+
+  return Result.succeed(parseResult.output)
 }
 
 /**
@@ -30,21 +43,14 @@ const toValidationError = (issues: ReturnType<typeof safeParseHabitInput>['issue
  * @returns Result<HabitInput, ValidationError>
  */
 export function validateHabitInput(userId: string, formData: FormData): Result.Result<HabitInput, ValidationError> {
-  const transformed = transformHabitInput(formData)
-  const parseResult = safeParseHabitInput(transformed)
-
-  if (!parseResult.success) {
-    return Result.fail(toValidationError(parseResult.issues))
+  const parsedResult = parseHabitFormData(transformHabitInput(formData))
+  if (!Result.isSuccess(parsedResult)) {
+    return parsedResult
   }
 
   return Result.succeed({
     userId,
-    name: parseResult.output.name,
-    icon: parseResult.output.icon,
-    color: parseResult.output.color,
-    period: parseResult.output.period,
-    frequency: parseResult.output.frequency,
-    reminderTime: parseResult.output.reminderTime,
+    ...parsedResult.value,
   })
 }
 
@@ -56,12 +62,5 @@ export function validateHabitInput(userId: string, formData: FormData): Result.R
  * @returns Result<HabitUpdateInput, ValidationError>
  */
 export function validateHabitUpdate(formData: FormData): Result.Result<HabitUpdateInput, ValidationError> {
-  const transformed = transformHabitUpdate(formData)
-  const parseResult = safeParseHabitInput(transformed)
-
-  if (!parseResult.success) {
-    return Result.fail(toValidationError(parseResult.issues))
-  }
-
-  return Result.succeed(parseResult.output)
+  return parseHabitFormData(transformHabitUpdate(formData))
 }

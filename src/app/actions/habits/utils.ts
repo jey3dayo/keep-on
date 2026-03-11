@@ -1,6 +1,6 @@
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
-import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
+import { actionError, actionOk, type ServerActionResultAsync, toActionResult } from '@/lib/actions/result'
 import { invalidateHabitsCache } from '@/lib/cache/habit-cache'
 import {
   AuthorizationError,
@@ -10,12 +10,30 @@ import {
   ValidationError,
 } from '@/lib/errors/habit'
 import { type SerializableHabitError, serializeHabitError } from '@/lib/errors/serializable'
-import { formatError, logWarn } from '@/lib/logging'
+import { createRequestMeta, formatError, logWarn } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
+import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
-import { validateHabitId } from '@/validators/habit-action'
+import { validateHabitActionInput, validateHabitId } from '@/validators/habit-action'
+import { createHabitCheckinSpans, type HabitCheckinSpans } from './checkin-shared'
 
 export type HabitActionResult<T = void> = ServerActionResultAsync<T, SerializableHabitError>
+
+export interface TimedHabitActionInput {
+  dateKey?: string
+  habitId: string
+}
+
+interface RunTimedHabitActionOptions<T> {
+  actionName: string
+  buildBaseMeta?: (input: TimedHabitActionInput, requestMeta: Record<string, unknown>) => Record<string, unknown>
+  errorDetail: string
+  run: (params: {
+    input: TimedHabitActionInput
+    baseMeta: Record<string, unknown>
+    spans: HabitCheckinSpans
+  }) => Promise<T>
+}
 
 /**
  * 認証チェック（Result型を返す）
@@ -97,6 +115,40 @@ export async function runHabitMutation(
   await revalidateHabitPaths(userIdResult.data, { sync: options.sync ?? true })
 
   return actionOk()
+}
+
+export async function runTimedHabitAction<T>(
+  actionInput: TimedHabitActionInput,
+  options: RunTimedHabitActionOptions<T>
+): HabitActionResult<T> {
+  const requestMeta = createRequestMeta(options.actionName)
+  const timeoutMs = getRequestTimeoutMs()
+  const spans = createHabitCheckinSpans(timeoutMs)
+
+  const result = await Result.pipe(
+    validateHabitActionInput(actionInput),
+    Result.andThen(async (input) => {
+      const baseMeta = options.buildBaseMeta?.(input, requestMeta) ?? {
+        ...requestMeta,
+        habitId: input.habitId,
+        ...(input.dateKey ? { dateKey: input.dateKey } : {}),
+      }
+
+      return await Result.try({
+        try: async () => {
+          return await spans.runWithRequestTimeout(
+            options.actionName,
+            () => options.run({ input, baseMeta, spans }),
+            baseMeta
+          )
+        },
+        catch: (error) => error,
+      })
+    }),
+    Result.mapError((error) => serializeActionError(error, options.errorDetail))
+  )
+
+  return toActionResult(result)
 }
 
 export function serializeActionError(error: unknown, detail: string): SerializableHabitError {

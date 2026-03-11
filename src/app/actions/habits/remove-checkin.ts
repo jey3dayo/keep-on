@@ -1,19 +1,13 @@
 'use server'
 
-import { Result } from '@praha/byethrow'
-import { toActionResult } from '@/lib/actions/result'
-import { createRequestMeta } from '@/lib/logging'
 import { deleteLatestCheckinByHabitAndPeriod } from '@/lib/queries/checkin'
-import { getRequestTimeoutMs } from '@/lib/server/timeout'
-import { validateHabitActionInput } from '@/validators/habit-action'
 import {
-  createHabitCheckinSpans,
   type HabitCheckinParams,
   requireCheckinUserId,
   requireHabitForUserWithRetry,
   resolveCheckinWeekStartDay,
 } from './checkin-shared'
-import { type HabitActionResult, revalidateHabitPaths, serializeActionError } from './utils'
+import { type HabitActionResult, revalidateHabitPaths, runTimedHabitAction } from './utils'
 
 interface RemoveCheckinResultData {
   currentCount: number
@@ -82,27 +76,13 @@ export async function removeCheckinAction(
   habitId: string,
   dateKey?: string
 ): HabitActionResult<RemoveCheckinResultData> {
-  const requestMeta = createRequestMeta('action.habits.removeCheckin')
-  const timeoutMs = getRequestTimeoutMs()
-  const spans = createHabitCheckinSpans(timeoutMs)
-
-  const result = await Result.pipe(
-    validateHabitActionInput({ habitId, dateKey }),
-    Result.andThen(async (input) => {
-      const baseMeta = { ...requestMeta, habitId: input.habitId, dateKey: input.dateKey }
-      return await Result.try({
-        try: async () => {
-          return await spans.runWithRequestTimeout(
-            'action.habits.removeCheckin',
-            () => performRemoveCheckin({ habitId: input.habitId, dateKey: input.dateKey, baseMeta, spans }),
-            baseMeta
-          )
-        },
-        catch: (error) => error,
-      })
-    }),
-    Result.mapError((error) => serializeActionError(error, 'チェックインの削除に失敗しました'))
+  return await runTimedHabitAction(
+    { habitId, dateKey },
+    {
+      actionName: 'action.habits.removeCheckin',
+      errorDetail: 'チェックインの削除に失敗しました',
+      run: async ({ input, baseMeta, spans }) =>
+        await performRemoveCheckin({ habitId: input.habitId, dateKey: input.dateKey, baseMeta, spans }),
+    }
   )
-
-  return toActionResult(result)
 }
