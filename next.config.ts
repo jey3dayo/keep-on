@@ -12,9 +12,10 @@ const nextConfig: NextConfig = {
   },
   webpack: (config) => {
     // Cloudflare Workers 環境に不要な WASM ファイルをバンドルから除外する
-    // (blake3-wasm, @vercel/og など Next.js 以外のランタイムが使う WASM を対象)
+    // blake3-wasm のみを対象にし、@vercel/og (yoga.wasm / resvg.wasm) は除外しない
     config.module.rules.push({
       test: /\.wasm$/,
+      include: [/blake3-wasm/],
       type: 'javascript/auto',
       loader: 'null-loader',
     })
