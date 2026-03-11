@@ -7,15 +7,16 @@ import { cn } from '@/lib/utils'
 
 interface HabitCalendarHeatmapProps {
   accentColor: string
-  checkinDates: string[]
+  checkinCounts: Map<string, number>
+  frequency: number
   months?: number
   skipDates?: string[]
 }
 
 interface DayCell {
+  count: number
   date: Date
   dateKey: string
-  isCheckin: boolean
   isCurrentMonth: boolean
   isFuture: boolean
   isSkip: boolean
@@ -23,19 +24,29 @@ interface DayCell {
 
 const WEEKDAY_LABELS = ['月', '火', '水', '木', '金', '土', '日']
 
-function getCellStyle(cell: DayCell, accentColor: string) {
-  if (cell.isCheckin) {
-    return { backgroundColor: accentColor }
+function getCheckinColor(count: number, frequency: number, accentColor: string): string {
+  const ratio = Math.min(count / frequency, 1)
+  // 30% → 100% の範囲でグラデーション
+  const pct = Math.round(30 + ratio * 70)
+  return `color-mix(in srgb, ${accentColor} ${pct}%, transparent)`
+}
+
+function getCellStyle(cell: DayCell, accentColor: string, frequency: number) {
+  if (cell.count > 0) {
+    return { backgroundColor: getCheckinColor(cell.count, frequency, accentColor) }
   }
   if (cell.isSkip) {
-    return { border: `2px dashed ${accentColor}`, backgroundColor: `${accentColor}20` }
+    return {
+      border: `2px dashed ${accentColor}`,
+      backgroundColor: `color-mix(in srgb, ${accentColor} 12%, transparent)`,
+    }
   }
   return undefined
 }
 
-function getCellTitle(cell: DayCell): string {
-  if (cell.isCheckin) {
-    return `${cell.dateKey} ✓`
+function getCellTitle(cell: DayCell, frequency: number): string {
+  if (cell.count > 0) {
+    return `${cell.dateKey} ${cell.count}/${frequency}回`
   }
   if (cell.isSkip) {
     return `${cell.dateKey} スキップ`
@@ -46,25 +57,31 @@ function getCellTitle(cell: DayCell): string {
 interface CalendarCellProps {
   accentColor: string
   cell: DayCell
+  frequency: number
 }
 
-function CalendarCell({ cell, accentColor }: CalendarCellProps) {
+function CalendarCell({ cell, accentColor, frequency }: CalendarCellProps) {
   return (
     <div
       className={cn(
         'aspect-square rounded-sm',
         !cell.isCurrentMonth && 'opacity-30',
         cell.isFuture && 'opacity-10',
-        !(cell.isCheckin || cell.isSkip) && 'bg-muted'
+        cell.count === 0 && !cell.isSkip && 'bg-muted'
       )}
       key={cell.dateKey}
-      style={getCellStyle(cell, accentColor)}
-      title={getCellTitle(cell)}
+      style={getCellStyle(cell, accentColor, frequency)}
+      title={getCellTitle(cell, frequency)}
     />
   )
 }
 
-function buildMonthGrid(month: Date, checkinSet: Set<string>, skipSet: Set<string>, today: Date): DayCell[][] {
+function buildMonthGrid(
+  month: Date,
+  checkinCounts: Map<string, number>,
+  skipSet: Set<string>,
+  today: Date
+): DayCell[][] {
   const start = startOfMonth(month)
   const end = endOfMonth(month)
   const days = eachDayOfInterval({ start, end })
@@ -82,7 +99,7 @@ function buildMonthGrid(month: Date, checkinSet: Set<string>, skipSet: Set<strin
     cells.push({
       date: d,
       dateKey,
-      isCheckin: checkinSet.has(dateKey),
+      count: checkinCounts.get(dateKey) ?? 0,
       isSkip: skipSet.has(dateKey),
       isCurrentMonth: false,
       isFuture: d > today,
@@ -94,7 +111,7 @@ function buildMonthGrid(month: Date, checkinSet: Set<string>, skipSet: Set<strin
     cells.push({
       date: day,
       dateKey,
-      isCheckin: checkinSet.has(dateKey),
+      count: checkinCounts.get(dateKey) ?? 0,
       isSkip: skipSet.has(dateKey),
       isCurrentMonth: true,
       isFuture: day > today,
@@ -108,7 +125,7 @@ function buildMonthGrid(month: Date, checkinSet: Set<string>, skipSet: Set<strin
     cells.push({
       date: d,
       dateKey,
-      isCheckin: checkinSet.has(dateKey),
+      count: checkinCounts.get(dateKey) ?? 0,
       isSkip: skipSet.has(dateKey),
       isCurrentMonth: false,
       isFuture: d > today,
@@ -124,19 +141,19 @@ function buildMonthGrid(month: Date, checkinSet: Set<string>, skipSet: Set<strin
 }
 
 export function HabitCalendarHeatmap({
-  checkinDates,
+  checkinCounts,
   skipDates = [],
   accentColor,
+  frequency,
   months = 6,
 }: HabitCalendarHeatmapProps) {
   const today = useMemo(() => new Date(), [])
 
-  const checkinSet = useMemo(() => new Set(checkinDates), [checkinDates])
   const skipSet = useMemo(() => new Set(skipDates), [skipDates])
 
   const monthList = useMemo(() => {
     const result: Date[] = []
-    for (let i = months - 1; i >= 0; i--) {
+    for (let i = 0; i < months; i++) {
       result.push(subMonths(today, i))
     }
     return result
@@ -145,10 +162,18 @@ export function HabitCalendarHeatmap({
   return (
     <div className="space-y-6">
       {/* Legend */}
-      <div className="flex items-center gap-4 text-muted-foreground text-xs">
+      <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-xs">
         <div className="flex items-center gap-1.5">
-          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: accentColor }} />
-          <span>チェックイン</span>
+          <div className="flex gap-0.5">
+            {[1, 2, 3].map((step) => (
+              <div
+                className="h-3 w-3 rounded-sm"
+                key={step}
+                style={{ backgroundColor: getCheckinColor(step, 3, accentColor) }}
+              />
+            ))}
+          </div>
+          <span>チェックイン（薄→濃：達成率低→高）</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="h-3 w-3 rounded-sm border-2 border-dashed" style={{ borderColor: accentColor }} />
@@ -161,7 +186,7 @@ export function HabitCalendarHeatmap({
       </div>
 
       {monthList.map((month) => {
-        const weeks = buildMonthGrid(month, checkinSet, skipSet, today)
+        const weeks = buildMonthGrid(month, checkinCounts, skipSet, today)
         const monthLabel = format(month, 'yyyy年M月', { locale: ja })
 
         return (
@@ -181,7 +206,7 @@ export function HabitCalendarHeatmap({
                 // biome-ignore lint/suspicious/noArrayIndexKey: stable week index
                 <div className="grid grid-cols-7 gap-1" key={wi}>
                   {week.map((cell) => (
-                    <CalendarCell accentColor={accentColor} cell={cell} key={cell.dateKey} />
+                    <CalendarCell accentColor={accentColor} cell={cell} frequency={frequency} key={cell.dateKey} />
                   ))}
                 </div>
               ))}
