@@ -107,7 +107,11 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
                 const bgColor = getColorById(habit.color ?? DEFAULT_HABIT_COLOR).color
 
                 return (
-                  <TableRow key={habit.id}>
+                  <TableRow
+                    className="cursor-pointer"
+                    key={habit.id}
+                    onClick={() => router.push(`/habits/${habit.id}`)}
+                  >
                     <TableCell>
                       <div
                         className="flex h-10 w-10 items-center justify-center rounded-full"
