@@ -2,7 +2,10 @@
   "config": {
     "default": true,
     "MD013": false,
+    "MD031": true,
+    "MD032": true,
     "MD033": false,
+    "MD034": false,
     "MD041": false,
     "MD024": {
       "siblings_only": true
@@ -15,6 +18,12 @@
     ".open-next",
     "out",
     "src/generated",
-    ".worktrees"
+    ".worktrees",
+    ".claude/worktrees",
+    ".claude/CLAUDE.md",
+    ".claude/rules/**/*.md",
+    "docs/migrations/**/*.md",
+    "scripts/**/*.md",
+    "AGENTS.md"
   ]
 }
