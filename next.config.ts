@@ -13,14 +13,16 @@ const nextConfig: NextConfig = {
   // Turbopack はデフォルト有効（Next.js 16+）。webpack 設定と共存させるために明示する
   turbopack: {},
   webpack: (config) => {
-    // Cloudflare Workers 環境に不要な WASM ファイルをバンドルから除外する
+    // Cloudflare Workers ビルド時のみ、不要な WASM ファイルをバンドルから除外する
     // blake3-wasm のみを対象にし、@vercel/og (yoga.wasm / resvg.wasm) は除外しない
-    config.module.rules.push({
-      test: /\.wasm$/,
-      include: [/blake3-wasm/],
-      type: 'javascript/auto',
-      loader: 'null-loader',
-    })
+    if (process.env.CF_BUILD === '1') {
+      config.module.rules.push({
+        test: /\.wasm$/,
+        include: [/blake3-wasm/],
+        type: 'javascript/auto',
+        loader: require.resolve('next/dist/build/webpack/loaders/empty-loader.js'),
+      })
+    }
     return config
   },
   async headers() {
