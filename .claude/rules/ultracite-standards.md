@@ -9,7 +9,7 @@ paths:
 
 ## 基本設定
 
-**設定ファイル**: `biome.jsonc`
+設定ファイル: `biome.jsonc`
 
 ```jsonc
 {

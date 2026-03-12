@@ -155,8 +155,8 @@ pnpm wrangler secret list
 
 `.github/workflows/deploy.yml` で自動デプロイが設定済み：
 
-- **トリガー**: `main` ブランチへのプッシュ
-- **ワークフロー**: ビルド → デプロイ
+- トリガー: `main` ブランチへのプッシュ
+- ワークフロー: ビルド → デプロイ
 
 #### 必要な GitHub Secrets
 

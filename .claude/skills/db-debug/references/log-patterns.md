@@ -41,7 +41,7 @@ query.createCheckinWithLimit:error {"habitId":"abc","ms":45,"error":{"name":"Pos
 | `query`           | SQL 文（200文字で切り詰め） | `INSERT INTO...`              |
 | `cause`           | 原因（1レベルのみ）         | `{ message, code }`           |
 
-**セキュリティ:** `parameters` / `args` はログに含まれない。
+セキュリティ: `parameters` / `args` はログに含まれない。
 
 ## 典型的なログパターン
 

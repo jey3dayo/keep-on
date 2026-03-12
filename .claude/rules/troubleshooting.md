@@ -2,7 +2,7 @@
 
 ## Cloudflare Workers デプロイエラー
 
-**エラー**: 環境変数が見つからない。
+エラー: 環境変数が見つからない。
 
 ### 解決方法
 
@@ -16,7 +16,7 @@ pnpm wrangler secret list
 
 ## dotenvx 復号エラー
 
-**エラー**: `DOTENV_PRIVATE_KEY` が見つからない。
+エラー: `DOTENV_PRIVATE_KEY` が見つからない。
 
 ### 解決方法
 
@@ -30,10 +30,10 @@ DOTENV_PRIVATE_KEY=$(grep '^DOTENV_PRIVATE_KEY=' .env.keys | cut -d= -f2-) doten
 
 ## Clerk ハンドシェイクのリダイレクトループ（headless でのみ再現）
 
-**症状**: `Clerk: Refreshing the session token resulted in an infinite redirect loop` が
+症状: `Clerk: Refreshing the session token resulted in an infinite redirect loop` が
 `wrangler tail` に出るが、通常のブラウザでは問題なく遷移できる。
 
-**原因**: headless ブラウザ（未ログイン/セッションなし）で `/dashboard` に直接アクセスすると、
+原因: headless ブラウザ（未ログイン/セッションなし）で `/dashboard` に直接アクセスすると、
 Clerk のハンドシェイクが失敗してループすることがある。実ブラウザで有効なセッションがある場合は発生しない。
 
 ### 確認手順

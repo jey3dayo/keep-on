@@ -40,13 +40,13 @@ src/
 
 ### `src/schemas/`
 
-**責務:** Valibotスキーマ定義
+責務: Valibotスキーマ定義
 
 - 純粋なValibotスキーマの定義のみを行う
 - ビジネスロジックやデータアクセスを含めない
 - 型推論（`v.InferOutput<typeof Schema>`）用の型をエクスポート
 
-**返り値の型:** `v.BaseSchema` + 推論型
+返り値の型: `v.BaseSchema` + 推論型
 
 #### 例
 
@@ -73,12 +73,12 @@ export type HabitInputSchemaType = v.InferOutput<typeof HabitInputSchema>;
 
 ### `src/constants/habit-data.ts`
 
-**責務:** 習慣関連の静的データ定義
+責務: 習慣関連の静的データ定義
 
 - アイコン・カラー・期間などの定数データ定義
 - データルックアップ関数（`getIconById`, `getColorById` など）
 
-**返り値の型:** 直接値、またはフォールバック値を返す
+返り値の型: 直接値、またはフォールバック値を返す
 
 #### 例
 
@@ -101,12 +101,12 @@ export function getColorById(id: string): HabitColor {
 
 ### `src/lib/utils/habits.ts`
 
-**責務:** 習慣関連のヘルパー関数
+責務: 習慣関連のヘルパー関数
 
 - 習慣データの変換・フィルタリング関数
 - 習慣の状態計算・判定関数
 
-**返り値の型:** 直接値を返す
+返り値の型: 直接値を返す
 
 #### 例
 
@@ -134,14 +134,14 @@ export function isHabitCompleted(
 
 ### `src/lib/queries/`
 
-**責務:** Drizzle ORMデータアクセス
+責務: Drizzle ORMデータアクセス
 
 - **生のDrizzle操作のみ**を行う
 - Result.try などのエラーハンドリングは含めない
 - 外部ライブラリ（Clerk等）への依存を排除
 - 引数は抽出済みデータのみを受け取る（テスト容易性の確保）
 
-**返り値の型:** 生のDrizzle返り値のみ（`Promise<T>`）
+返り値の型: 生のDrizzle返り値のみ（`Promise<T>`）
 
 #### 重要な制約
 
@@ -196,13 +196,13 @@ export async function createHabit(input: HabitInput) {
 
 ### `src/validators/`
 
-**責務:** バリデーションロジック
+責務: バリデーションロジック
 
 - FormDataやリクエストボディのバリデーション
 - `src/schemas/` のValibotスキーマを使用
 - バリデーション結果を `Result<T, E>` 型で返す
 
-**返り値の型:** `Result.Result<T, E>` (byethrow)
+返り値の型: `Result.Result<T, E>` (byethrow)
 
 #### 重要な制約
 
@@ -243,14 +243,14 @@ export function validateHabitInput(
 
 ### `src/app/actions/`
 
-**責務:** Server Actions
+責務: Server Actions
 
 - クライアントから呼び出される Server Action の定義
 - 認証チェック、バリデーション、データアクセスを組み合わせる
 - `Result.try` でエラーハンドリング
 - `revalidatePath` などのNext.js機能を使用
 
-**返り値の型:** `Promise<Result.ResultAsync<T, E>>`
+返り値の型: `Promise<Result.ResultAsync<T, E>>`
 
 #### 重要な制約
 
@@ -308,10 +308,10 @@ export async function createHabitAction(formData: FormData) {
 
 各層は明確に分離され、以下の責務を持つ：
 
-- **schemas**: データ構造の定義
-- **validators**: 入力データの検証
-- **queries**: データアクセス
-- **actions**: ビジネスロジックの統合
+- schemas: データ構造の定義
+- validators: 入力データの検証
+- queries: データアクセス
+- actions: ビジネスロジックの統合
 
 ### 2. テスト容易性
 
@@ -382,5 +382,5 @@ drizzle/      # Drizzle マイグレーション
 
 ## テストファイル配置
 
-- **配置**: テスト対象ファイルと同じディレクトリまたは `__tests__/` サブディレクトリ
-- **命名**: `*.test.ts` / `*.test.tsx`
+- 配置: テスト対象ファイルと同じディレクトリまたは `__tests__/` サブディレクトリ
+- 命名: `*.test.ts` / `*.test.tsx`

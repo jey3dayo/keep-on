@@ -114,8 +114,8 @@ await withSentryScope(
 
 本番環境では CPU Time 課金を抑えるため、サンプリングレートを低く設定：
 
-- **開発環境**: 100% (`tracesSampleRate: 1.0`)
-- **本番環境**: 10% (`tracesSampleRate: 0.1`)
+- 開発環境: 100% (`tracesSampleRate: 1.0`)
+- 本番環境: 10% (`tracesSampleRate: 0.1`)
 
 設定は `instrumentation.ts` で管理されています。
 

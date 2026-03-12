@@ -63,7 +63,7 @@ WIN_HOST_IP=$(ip route show default | grep -oP '(?<=via )\d+(\.\d+){3}')
 wget -qO- "http://${WIN_HOST_IP}:9222/json/version"
 ```
 
-**重要**: WSL2 では `localhost` ではなく Windows ホスト IP（デフォルトゲートウェイ）を使う。
+重要: WSL2 では `localhost` ではなく Windows ホスト IP（デフォルトゲートウェイ）を使う。
 
 ## agent-browser with storageState
 
