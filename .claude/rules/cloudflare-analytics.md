@@ -57,21 +57,21 @@ Cloudflare Dashboard で以下のアラートを設定：
 
 #### 1. CPU Time 超過アラート
 
-- **条件**: P99 CPU Time > 50ms
-- **期間**: 5分間継続
-- **通知先**: Email / Slack
+- 条件: P99 CPU Time > 50ms
+- 期間: 5分間継続
+- 通知先: Email / Slack
 
 #### 2. エラー率アラート
 
-- **条件**: Error Rate > 5%
-- **期間**: 1分間継続
-- **通知先**: Email / Slack
+- 条件: Error Rate > 5%
+- 期間: 1分間継続
+- 通知先: Email / Slack
 
 #### 3. レスポンスタイムアラート
 
-- **条件**: P99 Duration > 500ms
-- **期間**: 5分間継続
-- **通知先**: Email / Slack
+- 条件: P99 Duration > 500ms
+- 期間: 5分間継続
+- 通知先: Email / Slack
 
 ### アラート設定手順
 
@@ -203,27 +203,27 @@ curl -X POST https://api.cloudflare.com/client/v4/graphql \
 
 #### 1. リクエスト数（時系列）
 
-- **クエリ**: GraphQL で `sum { requests }`
-- **可視化**: Time series
-- **Y軸**: リクエスト数
+- クエリ: GraphQL で `sum { requests }`
+- 可視化: Time series
+- Y軸: リクエスト数
 
 #### 2. CPU Time（ヒストグラム）
 
-- **クエリ**: GraphQL で `quantiles { cpuTimeP50 cpuTimeP99 }`
-- **可視化**: Stat panel
-- **単位**: ms
+- クエリ: GraphQL で `quantiles { cpuTimeP50 cpuTimeP99 }`
+- 可視化: Stat panel
+- 単位: ms
 
 #### 3. エラー率（時系列）
 
-- **クエリ**: GraphQL で `sum { errors } / sum { requests } * 100`
-- **可視化**: Time series
-- **Y軸**: エラー率（%）
+- クエリ: GraphQL で `sum { errors } / sum { requests } * 100`
+- 可視化: Time series
+- Y軸: エラー率（%）
 
 #### 4. レスポンスタイム（時系列）
 
-- **クエリ**: GraphQL で `quantiles { durationP99 }`
-- **可視化**: Time series
-- **Y軸**: レスポンスタイム（ms）
+- クエリ: GraphQL で `quantiles { durationP99 }`
+- 可視化: Time series
+- Y軸: レスポンスタイム（ms）
 
 ---
 

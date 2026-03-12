@@ -55,11 +55,11 @@ DB エラーの場合、`code`, `severity`, `constraint_name`, `table_name`, `ca
 
 ### エラー発生時の切り分け手順
 
-1. **ログのサフィックスを確認** → `:timeout` なら タイムアウト階層を確認
-2. **error.code を確認** → PostgreSQL コードなら `references/error-codes.md` を参照
-3. **`:retry` / `:final-failure` の有無** → リトライが走ったか確認
-4. **`:late-error` の有無** → タイムアウト後に本来のエラーが出ていないか確認
-5. **Cloudflare ログとの突き合わせ** → `pnpm cf:logs` で Workers ログを監視
+1. ログのサフィックスを確認 → `:timeout` なら タイムアウト階層を確認
+2. error.code を確認 → PostgreSQL コードなら `references/error-codes.md` を参照
+3. `:retry` / `:final-failure` の有無 → リトライが走ったか確認
+4. `:late-error` の有無 → タイムアウト後に本来のエラーが出ていないか確認
+5. Cloudflare ログとの突き合わせ → `pnpm cf:logs` で Workers ログを監視
 
 ## References
 

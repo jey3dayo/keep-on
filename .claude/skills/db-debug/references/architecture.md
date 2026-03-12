@@ -4,7 +4,7 @@
 
 ### 現在: Cloudflare D1 (SQLite)
 
-**ファイル:** `src/lib/db.ts`
+ファイル: `src/lib/db.ts`
 
 ```text
 getCloudflareContext() → env.DB (D1Database) → drizzle(d1Database, { schema })
@@ -30,7 +30,7 @@ getCloudflareContext() → env.DB (D1Database) → drizzle(d1Database, { schema 
 
 ### 1. `withDbRetry()` — 汎用リトライ
 
-**ファイル:** `src/lib/db-retry.ts`
+ファイル: `src/lib/db-retry.ts`
 
 ```text
 withDbRetry(name, fn, { maxRetries=1, retryOn=isDatabaseError, timeoutMs })
@@ -40,11 +40,11 @@ withDbRetry(name, fn, { maxRetries=1, retryOn=isDatabaseError, timeoutMs })
   └─ timeoutMs指定時 → logSpan でラップ (リトライループ全体に適用)
 ```
 
-**使用箇所:** Dashboard ページの habits/checkins 取得
+使用箇所: Dashboard ページの habits/checkins 取得
 
 ### 2. Server Action の `runWithRetry` — タイムアウト特化
 
-**ファイル:** `src/app/actions/habits/checkin.ts`, `remove-checkin.ts`
+ファイル: `src/app/actions/habits/checkin.ts`, `remove-checkin.ts`
 
 ```text
 runWithRetry(spanName, fn, { dbTimeoutMs })
@@ -53,11 +53,11 @@ runWithRetry(spanName, fn, { dbTimeoutMs })
   └─ それ以外 → throw (リトライしない)
 ```
 
-**特徴:** タイムアウトのみリトライ。DB エラー全般はリトライしない。
+特徴: タイムアウトのみリトライ。DB エラー全般はリトライしない。
 
 ### 3. `fetchExistingUserWithRetry()` — PostgreSQL コード特化
 
-**ファイル:** `src/lib/user.ts`
+ファイル: `src/lib/user.ts`
 
 ```text
 fetchExistingUserWithRetry(clerkId, dbTimeoutMs)
@@ -70,7 +70,7 @@ fetchExistingUserWithRetry(clerkId, dbTimeoutMs)
 
 ## タイムアウト階層
 
-**ファイル:** `src/constants/request-timeout.ts`
+ファイル: `src/constants/request-timeout.ts`
 
 ```text
 requestTimeoutMs (8000ms / Cloudflare: 15000ms)
@@ -83,7 +83,7 @@ requestTimeoutMs (8000ms / Cloudflare: 15000ms)
 
 ## Stale Cache フォールバック
 
-**使用箇所:** Dashboard ページ、HabitTable
+使用箇所: Dashboard ページ、HabitTable
 
 ```typescript
 try {
