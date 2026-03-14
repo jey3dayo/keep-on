@@ -1,8 +1,11 @@
-const CACHE_NAME = 'keepon-v3'
+const CACHE_NAME = 'keepon-v4'
 const OFFLINE_URL = '/offline'
 const NEXT_ASSET_PREFIX = '/_next/'
 const NEXT_STATIC_CSS_PREFIX = '/_next/static/css/'
 const NEXT_STATIC_MEDIA_PREFIX = '/_next/static/media/'
+
+// stale-while-revalidate を適用するルート
+const CACHEABLE_ROUTES = ['/dashboard', '/habits', '/analytics']
 
 const PRECACHE_FILES = ['/offline', '/manifest.json', '/icon-192.png', '/icon-512.png']
 
@@ -77,9 +80,29 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // ナビゲーション: network-first + offline fallback
+  // ナビゲーション
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)))
+    const isCacheable = CACHEABLE_ROUTES.some((r) => url.pathname.startsWith(r))
+
+    if (isCacheable) {
+      // stale-while-revalidate: キャッシュがあればすぐ返しつつバックグラウンドで更新
+      event.respondWith(
+        caches.open(CACHE_NAME).then((cache) => {
+          return cache.match(request).then((cached) => {
+            const fetchPromise = fetch(request)
+              .then((networkResp) => {
+                cache.put(request, networkResp.clone())
+                return networkResp
+              })
+              .catch(() => cached || caches.match(OFFLINE_URL))
+            return cached || fetchPromise
+          })
+        })
+      )
+    } else {
+      // network-first + offline fallback（その他ページ）
+      event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)))
+    }
     return
   }
 
@@ -99,6 +122,68 @@ self.addEventListener('fetch', (event) => {
       )
     )
   }
+})
+
+// Background Sync: オフライン中に溜まったチェックインを replay
+self.addEventListener('sync', (event) => {
+  if (event.tag !== 'sync-checkins') {
+    return
+  }
+
+  event.waitUntil(
+    (async () => {
+      const DB_NAME = 'keepon-offline'
+      const STORE_NAME = 'checkin-queue'
+
+      const openDb = () =>
+        new Promise((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, 1)
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME, { keyPath: 'id' })
+            }
+          }
+          req.onsuccess = () => resolve(req.result)
+          req.onerror = () => reject(req.error)
+        })
+
+      const getAllItems = (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, 'readonly')
+          const req = tx.objectStore(STORE_NAME).getAll()
+          req.onsuccess = () => resolve(req.result)
+          req.onerror = () => reject(req.error)
+        })
+
+      const deleteItem = (db, id) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, 'readwrite')
+          const req = tx.objectStore(STORE_NAME).delete(id)
+          req.onsuccess = () => resolve()
+          req.onerror = () => reject(req.error)
+        })
+
+      try {
+        const db = await openDb()
+        const items = await getAllItems(db)
+        const sorted = [...items].sort((a, b) => a.timestamp - b.timestamp)
+
+        for (const item of sorted) {
+          const res = await fetch('/api/checkin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ habitId: item.habitId, action: item.action }),
+          })
+          if (res.ok) {
+            await deleteItem(db, item.id)
+          }
+        }
+      } catch {
+        // sync 失敗時は次回の sync イベントで再試行
+      }
+    })()
+  )
 })
 
 // 更新通知用

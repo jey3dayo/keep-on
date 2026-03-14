@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { AppSidebar } from '@/components/dashboard/AppSidebar'
 import { SiteHeader } from '@/components/dashboard/SiteHeader'
+import { OfflineIndicator } from '@/components/pwa/OfflineIndicator'
 import { SidebarInset, SidebarProvider } from '@/components/sidebar/Sidebar'
 import { SIGN_IN_PATH } from '@/constants/auth'
 
@@ -34,6 +35,7 @@ export default async function DashboardLayout({
         } as React.CSSProperties
       }
     >
+      <OfflineIndicator />
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
