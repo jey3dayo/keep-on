@@ -16,6 +16,7 @@ import {
 import { COMPLETION_THRESHOLD } from '@/constants/habit'
 import { useSyncContext } from '@/contexts/SyncContext'
 import { useBeforeUnload } from '@/hooks/useBeforeUnload'
+import { useOfflineCheckin } from '@/hooks/useOfflineCheckin'
 import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
 import { formatDateKey } from '@/lib/utils/date'
 import { appToast } from '@/lib/utils/toast'
@@ -40,6 +41,15 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   const router = useRouter()
   const [, startTransition] = useTransition()
   const { startSync, endSync, isSyncing } = useSyncContext()
+  const { isOnline, enqueueCheckin: enqueueOfflineCheckin } = useOfflineCheckin({
+    onReplayComplete: ({ replayed }) => {
+      if (replayed > 0) {
+        startTransition(() => {
+          router.refresh()
+        })
+      }
+    },
+  })
   const [currentView, setCurrentView] = useState<DashboardView>(initialView ?? DEFAULT_DASHBOARD_VIEW)
   const [prevHabits, setPrevHabits] = useState(habits)
   const [optimisticHabits, setOptimisticHabits] = useState(habits)
@@ -368,6 +378,16 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
 
     const dateKey = formatDateKey(new Date())
     updateHabitProgress(habitId, options.delta)
+
+    if (!isOnline) {
+      // オフライン時: IndexedDB にキューイングして楽観的更新のみ
+      enqueueOfflineCheckin(habitId, options.isRemove ? 'remove' : 'add').catch(() => {
+        appToast.error('オフラインキューへの保存に失敗しました')
+        updateHabitProgress(habitId, -options.delta)
+      })
+      return
+    }
+
     addPendingCheckin(habitId)
     enqueueCheckin({
       habitId,
