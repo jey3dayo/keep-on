@@ -33,7 +33,7 @@ const replayQueue = async (): Promise<ReplayResult> => {
       const res = await fetch('/api/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ habitId: item.habitId, action: item.action }),
+        body: JSON.stringify({ habitId: item.habitId, action: item.action, dateKey: item.dateKey }),
       })
       if (res.ok) {
         await removeQueuedCheckin(item.id)
@@ -70,21 +70,25 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
     })
   }, [isOnline, onReplayComplete])
 
-  const enqueueCheckin = useCallback(async (habitId: string, action: 'add' | 'remove'): Promise<void> => {
-    const item: QueuedCheckin = {
-      id: generateId(),
-      habitId,
-      action,
-      timestamp: Date.now(),
-    }
-    await enqueueOfflineCheckin(item)
+  const enqueueCheckin = useCallback(
+    async (habitId: string, action: 'add' | 'remove', dateKey: string): Promise<void> => {
+      const item: QueuedCheckin = {
+        id: generateId(),
+        habitId,
+        action,
+        dateKey,
+        timestamp: Date.now(),
+      }
+      await enqueueOfflineCheckin(item)
 
-    // Background Sync が利用可能ならキューを SW に委譲
-    if ('serviceWorker' in navigator && 'SyncManager' in window) {
-      const reg = await navigator.serviceWorker.ready
-      await (reg as unknown as { sync: { register: (tag: string) => Promise<void> } }).sync.register('sync-checkins')
-    }
-  }, [])
+      // Background Sync が利用可能ならキューを SW に委譲
+      if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        const reg = await navigator.serviceWorker.ready
+        await (reg as unknown as { sync: { register: (tag: string) => Promise<void> } }).sync.register('sync-checkins')
+      }
+    },
+    []
+  )
 
   return { isOnline, enqueueCheckin }
 }

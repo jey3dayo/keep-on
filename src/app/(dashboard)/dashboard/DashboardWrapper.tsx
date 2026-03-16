@@ -381,10 +381,15 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
 
     if (!isOnline) {
       // オフライン時: IndexedDB にキューイングして楽観的更新のみ
-      enqueueOfflineCheckin(habitId, options.isRemove ? 'remove' : 'add').catch(() => {
-        appToast.error('オフラインキューへの保存に失敗しました')
-        updateHabitProgress(habitId, -options.delta)
-      })
+      startSync(habitId)
+      enqueueOfflineCheckin(habitId, options.isRemove ? 'remove' : 'add', dateKey)
+        .catch(() => {
+          appToast.error('オフラインキューへの保存に失敗しました')
+          updateHabitProgress(habitId, -options.delta)
+        })
+        .finally(() => {
+          endSync(habitId)
+        })
       return
     }
 

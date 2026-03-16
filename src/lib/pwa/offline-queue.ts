@@ -4,6 +4,7 @@ const STORE_NAME = 'checkin-queue'
 
 export interface QueuedCheckin {
   action: 'add' | 'remove'
+  dateKey: string
   habitId: string
   id: string
   timestamp: number

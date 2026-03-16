@@ -173,7 +173,7 @@ self.addEventListener('sync', (event) => {
           const res = await fetch('/api/checkin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ habitId: item.habitId, action: item.action }),
+            body: JSON.stringify({ habitId: item.habitId, action: item.action, dateKey: item.dateKey }),
           })
           if (res.ok) {
             await deleteItem(db, item.id)
