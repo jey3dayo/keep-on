@@ -62,6 +62,22 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
   const onReplayCompleteRef = useRef(options.onReplayComplete)
   onReplayCompleteRef.current = options.onReplayComplete
 
+  // Background Sync 対応ブラウザ: SW からの SYNC_CHECKINS_COMPLETE メッセージを受信
+  useEffect(() => {
+    if (!hasBgSync()) {
+      return
+    }
+
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === 'SYNC_CHECKINS_COMPLETE') {
+        onReplayCompleteRef.current?.({ replayed: event.data.replayedCount ?? 0, failed: 0 })
+      }
+    }
+
+    navigator.serviceWorker.addEventListener('message', handler)
+    return () => navigator.serviceWorker.removeEventListener('message', handler)
+  }, [])
+
   // オンライン復帰時にキューを replay（Background Sync 非対応ブラウザのフォールバック）
   useEffect(() => {
     if (!isOnline) {

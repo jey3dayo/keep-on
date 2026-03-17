@@ -185,26 +185,39 @@ self.addEventListener('sync', (event) => {
           req.onerror = () => reject(req.error)
         })
 
-      // try/catch なし: ネットワーク障害時は Promise が reject し、
+      // ネットワーク障害時は Promise が reject し、
       // event.waitUntil に伝播してブラウザの Background Sync 自動リトライが発動する
       const db = await openDb()
-      const items = await getAllItems(db)
-      const sorted = [...items].sort((a, b) => a.timestamp - b.timestamp)
+      let replayedCount = 0
+      try {
+        const items = await getAllItems(db)
+        const sorted = [...items].sort((a, b) => a.timestamp - b.timestamp)
 
-      for (const item of sorted) {
-        const res = await fetch('/api/checkin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ habitId: item.habitId, action: item.action, dateKey: item.dateKey }),
-        })
-        if (res.ok) {
-          await deleteItem(db, item.id)
-        } else if (res.status >= 400 && res.status < 500) {
-          // 永続的な 4xx エラー（無効な habitId 等）はリトライしても無駄なので削除
-          await deleteItem(db, item.id)
+        for (const item of sorted) {
+          const res = await fetch('/api/checkin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ habitId: item.habitId, action: item.action, dateKey: item.dateKey }),
+          })
+          if (res.ok) {
+            await deleteItem(db, item.id)
+            replayedCount++
+          } else if (res.status >= 400 && res.status < 500) {
+            // 永続的な 4xx エラー（無効な habitId 等）はリトライしても無駄なので削除
+            await deleteItem(db, item.id)
+          }
+        }
+      } finally {
+        db.close()
+      }
+
+      // replay 完了をクライアントに通知（router.refresh のトリガー）
+      if (replayedCount > 0) {
+        const clients = await self.clients.matchAll({ type: 'window' })
+        for (const client of clients) {
+          client.postMessage({ type: 'SYNC_CHECKINS_COMPLETE', replayedCount })
         }
       }
-      db.close()
     })()
   )
 })

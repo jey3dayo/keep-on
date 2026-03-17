@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import * as v from 'valibot'
 import { addCheckinAction } from '@/app/actions/habits/checkin'
 import { removeCheckinAction } from '@/app/actions/habits/remove-checkin'
+import type { SerializableHabitError } from '@/lib/errors/serializable'
 import { DateKeySchema } from '@/schemas/date-key'
 
 const CheckinRequestSchema = v.object({
@@ -10,6 +11,21 @@ const CheckinRequestSchema = v.object({
   dateKey: DateKeySchema,
   habitId: v.pipe(v.string(), v.minLength(1)),
 })
+
+/** ビジネスロジックエラーを適切な HTTP ステータスコードにマッピング */
+function errorToStatus(error: SerializableHabitError): number {
+  switch (error.name) {
+    case 'UnauthorizedError':
+      return 401
+    case 'AuthorizationError':
+      return 403
+    case 'ValidationError':
+    case 'NotFoundError':
+      return 422
+    default:
+      return 500
+  }
+}
 
 export async function POST(request: Request) {
   const { userId } = await auth()
@@ -35,7 +51,8 @@ export async function POST(request: Request) {
     action === 'remove' ? await removeCheckinAction(habitId, dateKey) : await addCheckinAction(habitId, dateKey)
 
   if (!result.ok) {
-    return NextResponse.json({ error: 'Checkin failed' }, { status: 500 })
+    const status = errorToStatus(result.error)
+    return NextResponse.json({ error: result.error.name }, { status })
   }
 
   return NextResponse.json({ ok: true, data: result.data })
