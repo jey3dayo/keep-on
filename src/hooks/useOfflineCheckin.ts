@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import {
   enqueueOfflineCheckin,
@@ -15,6 +15,8 @@ interface ReplayResult {
   failed: number
   replayed: number
 }
+
+const hasBgSync = () => 'serviceWorker' in navigator && 'SyncManager' in window
 
 const replayQueue = async (): Promise<ReplayResult> => {
   let replayed = 0
@@ -55,20 +57,28 @@ interface UseOfflineCheckinOptions {
 
 export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
   const isOnline = useOnlineStatus()
-  const { onReplayComplete } = options
 
-  // オンライン復帰時にキューを replay（Safari/iOS フォールバック）
+  // onReplayComplete を useRef で安定化（インラインオブジェクトによる useEffect 再実行を防止）
+  const onReplayCompleteRef = useRef(options.onReplayComplete)
+  onReplayCompleteRef.current = options.onReplayComplete
+
+  // オンライン復帰時にキューを replay（Background Sync 非対応ブラウザのフォールバック）
   useEffect(() => {
     if (!isOnline) {
       return
     }
 
+    // Background Sync 対応ブラウザでは SW が replay するため、hook での replay をスキップ
+    if (hasBgSync()) {
+      return
+    }
+
     replayQueue().then((result) => {
       if (result.replayed > 0 || result.failed > 0) {
-        onReplayComplete?.(result)
+        onReplayCompleteRef.current?.(result)
       }
     })
-  }, [isOnline, onReplayComplete])
+  }, [isOnline])
 
   const enqueueCheckin = useCallback(
     async (habitId: string, action: 'add' | 'remove', dateKey: string): Promise<void> => {
@@ -82,7 +92,7 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
       await enqueueOfflineCheckin(item)
 
       // Background Sync が利用可能ならキューを SW に委譲
-      if ('serviceWorker' in navigator && 'SyncManager' in window) {
+      if (hasBgSync()) {
         const reg = await navigator.serviceWorker.ready
         await (reg as unknown as { sync: { register: (tag: string) => Promise<void> } }).sync.register('sync-checkins')
       }

@@ -24,46 +24,28 @@ const openDb = (): Promise<IDBDatabase> => {
   })
 }
 
-export const enqueueOfflineCheckin = async (item: QueuedCheckin): Promise<void> => {
+/** トランザクション完了後に db.close() して将来の versionchange ブロックを防止 */
+const withDb = async <T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBRequest): Promise<T> => {
   const db = await openDb()
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite')
+    const tx = db.transaction(STORE_NAME, mode)
     const store = tx.objectStore(STORE_NAME)
-    const req = store.put(item)
-    req.onsuccess = () => resolve()
+    const req = fn(store)
+    req.onsuccess = () => resolve(req.result as T)
     req.onerror = () => reject(req.error)
+    tx.oncomplete = () => db.close()
+    tx.onerror = () => db.close()
   })
 }
 
-export const getAllQueuedCheckins = async (): Promise<QueuedCheckin[]> => {
-  const db = await openDb()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly')
-    const store = tx.objectStore(STORE_NAME)
-    const req = store.getAll()
-    req.onsuccess = () => resolve(req.result as QueuedCheckin[])
-    req.onerror = () => reject(req.error)
-  })
-}
+export const enqueueOfflineCheckin = (item: QueuedCheckin): Promise<void> =>
+  withDb<IDBValidKey>('readwrite', (store) => store.put(item)).then(() => undefined)
 
-export const removeQueuedCheckin = async (id: string): Promise<void> => {
-  const db = await openDb()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite')
-    const store = tx.objectStore(STORE_NAME)
-    const req = store.delete(id)
-    req.onsuccess = () => resolve()
-    req.onerror = () => reject(req.error)
-  })
-}
+export const getAllQueuedCheckins = (): Promise<QueuedCheckin[]> =>
+  withDb<QueuedCheckin[]>('readonly', (store) => store.getAll())
 
-export const clearQueuedCheckins = async (): Promise<void> => {
-  const db = await openDb()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite')
-    const store = tx.objectStore(STORE_NAME)
-    const req = store.clear()
-    req.onsuccess = () => resolve()
-    req.onerror = () => reject(req.error)
-  })
-}
+export const removeQueuedCheckin = (id: string): Promise<void> =>
+  withDb<undefined>('readwrite', (store) => store.delete(id)).then(() => undefined)
+
+export const clearQueuedCheckins = (): Promise<void> =>
+  withDb<undefined>('readwrite', (store) => store.clear()).then(() => undefined)

@@ -71,12 +71,27 @@ self.addEventListener('fetch', (event) => {
   }
 
   // API・認証: network-only (SWスルー)
-  if (
-    url.pathname.startsWith('/api/') ||
-    url.pathname.startsWith('/sign-in') ||
-    url.pathname.startsWith('/sign-up') ||
-    url.hostname.includes('clerk')
-  ) {
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('clerk')) {
+    return
+  }
+
+  // サインイン・サインアップ遷移時はユーザー固有キャッシュをクリア（セッション切り替え対策）
+  if (url.pathname.startsWith('/sign-in') || url.pathname.startsWith('/sign-up')) {
+    event.waitUntil(
+      caches
+        .open(CACHE_NAME)
+        .then((cache) =>
+          cache
+            .keys()
+            .then((requests) =>
+              Promise.all(
+                requests
+                  .filter((req) => CACHEABLE_ROUTES.some((route) => new URL(req.url).pathname.startsWith(route)))
+                  .map((req) => cache.delete(req))
+              )
+            )
+        )
+    )
     return
   }
 
@@ -95,7 +110,13 @@ self.addEventListener('fetch', (event) => {
                 return networkResp
               })
               .catch(() => cached || caches.match(OFFLINE_URL))
-            return cached || fetchPromise
+
+            if (cached) {
+              // SW を生かし続けてバックグラウンド更新を完走させる
+              event.waitUntil(fetchPromise)
+              return cached
+            }
+            return fetchPromise
           })
         })
       )
@@ -164,31 +185,52 @@ self.addEventListener('sync', (event) => {
           req.onerror = () => reject(req.error)
         })
 
-      try {
-        const db = await openDb()
-        const items = await getAllItems(db)
-        const sorted = [...items].sort((a, b) => a.timestamp - b.timestamp)
+      // try/catch なし: ネットワーク障害時は Promise が reject し、
+      // event.waitUntil に伝播してブラウザの Background Sync 自動リトライが発動する
+      const db = await openDb()
+      const items = await getAllItems(db)
+      const sorted = [...items].sort((a, b) => a.timestamp - b.timestamp)
 
-        for (const item of sorted) {
-          const res = await fetch('/api/checkin', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ habitId: item.habitId, action: item.action, dateKey: item.dateKey }),
-          })
-          if (res.ok) {
-            await deleteItem(db, item.id)
-          }
+      for (const item of sorted) {
+        const res = await fetch('/api/checkin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ habitId: item.habitId, action: item.action, dateKey: item.dateKey }),
+        })
+        if (res.ok) {
+          await deleteItem(db, item.id)
+        } else if (res.status >= 400 && res.status < 500) {
+          // 永続的な 4xx エラー（無効な habitId 等）はリトライしても無駄なので削除
+          await deleteItem(db, item.id)
         }
-      } catch {
-        // sync 失敗時は次回の sync イベントで再試行
       }
+      db.close()
     })()
   )
 })
 
-// 更新通知用
+// メッセージハンドラ: 更新通知・サインアウト時のキャッシュクリア
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting()
+  }
+
+  // サインアウト時にユーザー固有のキャッシュ（ダッシュボード等）をクリア
+  if (event.data?.type === 'CLEAR_USER_CACHE') {
+    event.waitUntil(
+      caches
+        .open(CACHE_NAME)
+        .then((cache) =>
+          cache
+            .keys()
+            .then((requests) =>
+              Promise.all(
+                requests
+                  .filter((req) => CACHEABLE_ROUTES.some((route) => new URL(req.url).pathname.startsWith(route)))
+                  .map((req) => cache.delete(req))
+              )
+            )
+        )
+    )
   }
 })
