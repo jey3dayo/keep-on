@@ -8,32 +8,6 @@ export const LogLevelSchema = v.union([v.literal('debug'), v.literal('info'), v.
 export type LogLevel = v.InferOutput<typeof LogLevelSchema>
 
 /**
- * エラーオブジェクトのスキーマ
- */
-export const ErrorObjectSchema = v.object({
-  name: v.string(),
-  message: v.string(),
-})
-
-/**
- * プロセス環境変数のスキーマ（LOG_LEVEL用）
- */
-export const ProcessEnvSchema = v.object({
-  LOG_LEVEL: v.optional(v.string()),
-})
-
-/**
- * グローバルオブジェクトのスキーマ（process.env用）
- */
-export const GlobalWithProcessSchema = v.object({
-  process: v.optional(
-    v.object({
-      env: v.optional(v.record(v.string(), v.optional(v.string()))),
-    })
-  ),
-})
-
-/**
  * LOG_LEVELをパースして型安全なLogLevelを返す
  */
 export function parseLogLevel(rawLevel: unknown): LogLevel {

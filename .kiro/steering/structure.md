@@ -10,7 +10,7 @@ keep-on/
 │   ├── app/              # Next.js App Router
 │   │   ├── actions/      # Server Actions
 │   │   ├── (dashboard)/  # 認証後のダッシュボード群
-│   │   └── api/          # API Routes（必要時）
+│   │   └── api/          # API Routes（checkin など）
 │   ├── components/       # 共有 UI コンポーネント
 │   │   ├── basics/       # アプリ固有の基本コンポーネント
 │   │   ├── ui/           # shadcn/ui プリミティブ
@@ -69,7 +69,7 @@ src/app/
 │   ├── layout.tsx       # ダッシュボード共通レイアウト
 │   ├── dashboard/
 │   │   ├── page.tsx        # ダッシュボードページ
-│   │   └── DashboardClient.tsx  # Client Component
+│   │   └── DashboardWrapper.tsx  # Client Component
 │   ├── analytics/
 │   │   └── page.tsx
 │   ├── habits/
@@ -146,14 +146,17 @@ export async function createHabit(formData: FormData) {
 ### 重要なパターン
 
 - `db.ts`: Drizzle 接続の一元管理（`getDb()`）
+- `db-retry.ts`: D1 接続のリトライロジック
 - `logging.ts`: LOG_LEVEL ベースの軽量ログ/計測ユーティリティ
+- `sentry.ts`: Sentry 送信ラッパー（共通タグ/コンテキスト付与）
 - `user.ts`: Clerk ユーザーを `users` テーブルへ同期（upsert）
-- `queries/`: ドメインごとのDBアクセス層（habit/user など、Drizzle クエリ）
-- `cache/`: Cloudflare KV を使ったアプリ内キャッシュ（analytics/habit/user など）
+- `queries/`: ドメインごとのDBアクセス層（habit/checkin/user/user-settings/period/skip など、Drizzle クエリ）
+- `cache/`: Cloudflare KV を使ったアプリ内キャッシュ（analytics/habit/user/offline-queue など）
 - `cloudflare/`: Workers 専用ユーティリティ（`waitUntil` など）
 - `errors/`: ドメインエラー定義とシリアライズ変換
+- `pwa/`: Service Worker 関連のユーティリティ
 - `server/`: Server Component 専用のユーティリティ（cookies/date/timeout など）
-- `utils/`: 小さなドメイン/日付ユーティリティを集約
+- `utils/`: ドメインユーティリティを集約（clerk/color/cookies/date/guards/habits/toast など）
 - テストファイル: `*.test.ts` / `__tests__/`（対象ファイルと同じディレクトリ or サブフォルダ）
 
 ### `src/lib/` の例
@@ -206,6 +209,10 @@ User (Clerk 認証ユーザー)
 
 - `basics/`: アプリ固有の基本コンポーネント（Button, Input, Theme など）
 - サブディレクトリ: 機能別グルーピング（例: `habits/`, `dashboard/`, `settings/`, `pwa/`, `streak/`）
+- `clerk/`: Clerk 認証関連の UI ラッパー（UserButton など）
+- `modals/`: モーダル表示コンポーネント（Route Interception と連携）
+- `providers/`: Context Provider のラッパー（SyncProvider など）
+- `sidebar/`: サイドバーナビゲーション
 - `dev/`: 開発専用の補助UI（本番バンドルから除外する前提のツール群）
 - `ui/`: shadcn/ui 由来のプリミティブ（Radix ラッパー）
 
