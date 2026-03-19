@@ -189,10 +189,11 @@ self.addEventListener('sync', (event) => {
           req.onerror = () => reject(req.error)
         })
 
-      // ネットワーク障害時は Promise が reject し、
-      // event.waitUntil に伝播してブラウザの Background Sync 自動リトライが発動する
+      // ネットワーク障害時は fetch が throw → waitUntil が reject →
+      // ブラウザの Background Sync 自動リトライが発動する
       const db = await openDb()
       let replayedCount = 0
+      let hasRetryableError = false
       try {
         const items = await getAllItems(db)
         const sorted = [...items].sort((a, b) => a.timestamp - b.timestamp)
@@ -208,11 +209,14 @@ self.addEventListener('sync', (event) => {
             replayedCount++
           } else if (res.status === 401 || res.status === 403) {
             // 認証エラーはセッション復帰後にリトライ可能なのでキューに残す
-            // Background Sync の自動リトライに委ねる
+            hasRetryableError = true
             break
           } else if (res.status >= 400 && res.status < 500) {
             // 永続的なバリデーションエラー（422 等）はリトライしても無駄なので削除
             await deleteItem(db, item.id)
+          } else {
+            // 5xx: サーバー一時障害。アイテムはキューに残し、リトライをスケジュール
+            hasRetryableError = true
           }
         }
       } finally {
@@ -225,6 +229,12 @@ self.addEventListener('sync', (event) => {
         for (const client of clients) {
           client.postMessage({ type: 'SYNC_CHECKINS_COMPLETE', replayedCount })
         }
+      }
+
+      // リトライ可能なエラーがあった場合、waitUntil を reject して
+      // ブラウザの Background Sync 自動リトライをスケジュールさせる
+      if (hasRetryableError) {
+        throw new Error('Retryable errors remain in sync queue')
       }
     })()
   )
