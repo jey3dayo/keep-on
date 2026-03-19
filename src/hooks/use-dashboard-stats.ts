@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { HabitWithProgress } from '@/types/habit'
 
-export interface DashboardStats {
+interface DashboardStats {
   completedHabitIds: Set<string>
   todayActive: number
   totalDaily: number

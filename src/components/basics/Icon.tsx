@@ -126,7 +126,7 @@ const icons: Record<IconName, React.ComponentType<LucideProps>> = {
   x: X,
 }
 
-export type IconProps = LucideProps & {
+type IconProps = LucideProps & {
   name: IconName
 }
 

@@ -30,4 +30,4 @@ const IconLabelButton = React.forwardRef<HTMLButtonElement, IconLabelButtonProps
 )
 IconLabelButton.displayName = 'IconLabelButton'
 
-export { IconLabelButton, type IconLabelButtonProps }
+export { IconLabelButton }

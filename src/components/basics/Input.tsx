@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Input as BaseInput } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
-export interface InputProps extends React.ComponentProps<'input'> {
+interface InputProps extends React.ComponentProps<'input'> {
   disablePasswordManagers?: boolean
   error?: boolean
 }

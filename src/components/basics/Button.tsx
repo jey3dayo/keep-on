@@ -102,4 +102,4 @@ export function CheckInButton({ children, completed = false, className, ...props
   )
 }
 
-export { Button, buttonVariants, type ButtonProps }
+export { Button }

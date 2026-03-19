@@ -46,6 +46,3 @@ export const getAllQueuedCheckins = (): Promise<QueuedCheckin[]> =>
 
 export const removeQueuedCheckin = (id: string): Promise<void> =>
   withDb<undefined>('readwrite', (store) => store.delete(id)).then(() => undefined)
-
-export const clearQueuedCheckins = (): Promise<void> =>
-  withDb<undefined>('readwrite', (store) => store.clear()).then(() => undefined)

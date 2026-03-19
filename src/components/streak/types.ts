@@ -3,7 +3,7 @@ import type { DashboardView } from '@/constants/dashboard'
 import type { Period } from '@/constants/habit'
 import type { HabitWithProgress } from '@/types/habit'
 
-export interface DashboardBaseProps {
+interface DashboardBaseProps {
   habits: HabitWithProgress[]
   onAddCheckin?: (habitId: string) => Promise<void>
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback

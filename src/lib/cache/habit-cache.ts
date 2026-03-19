@@ -4,7 +4,7 @@ import { formatError, logInfo, logWarn } from '@/lib/logging'
 import { HabitsCacheDataSchema } from '@/schemas/cache'
 import type { HabitWithProgress } from '@/types/habit'
 
-export interface HabitsCacheData {
+interface HabitsCacheData {
   dateKey: string
   habits: HabitWithProgress[]
   staleAt?: number
@@ -48,27 +48,6 @@ export async function getHabitsCacheSnapshot(userId: string): Promise<HabitsCach
     logWarn('habit-cache:error:read', { userId, error: formatError(error) })
     return null
   }
-}
-
-export async function getHabitsFromCache(userId: string, dateKey: string): Promise<HabitWithProgress[] | null> {
-  const kv = await getKV()
-  if (!kv) {
-    return null
-  }
-
-  const snapshot = await getHabitsCacheSnapshot(userId)
-  if (!snapshot) {
-    return null
-  }
-
-  if (snapshot.staleAt) {
-    return null
-  }
-
-  if (snapshot.dateKey !== dateKey) {
-    return null
-  }
-  return snapshot.habits as HabitWithProgress[]
 }
 
 export async function setHabitsCache(userId: string, dateKey: string, habits: HabitWithProgress[]): Promise<void> {

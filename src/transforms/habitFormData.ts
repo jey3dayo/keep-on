@@ -6,7 +6,7 @@ import {
   type Period,
 } from '@/constants/habit'
 import type { HabitPreset } from '@/constants/habit-data'
-import { type HabitInputSchemaType, safeParseHabitInput } from '@/schemas/habit'
+import type { HabitInputSchemaType } from '@/schemas/habit'
 import type { Habit, HabitWithProgress } from '@/types/habit'
 
 /**
@@ -68,14 +68,6 @@ export function buildHabitFormData(input: HabitInputSchemaType): FormData {
     formData.append('reminderTime', input.reminderTime)
   }
   return formData
-}
-
-export function safeBuildHabitFormData(input: unknown): FormData | null {
-  const parsed = safeParseHabitInput(input)
-  if (!parsed.success) {
-    return null
-  }
-  return buildHabitFormData(parsed.output)
 }
 
 /**
