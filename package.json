@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "dotenvx run --overload -f .env -f .env.development -- next dev --turbopack",
-    "build": "dotenvx run --overload -f .env -f .env.development -- next build",
+    "build": "if [ -n \"$CF_BUILD\" ]; then dotenvx run --overload -- next build; else dotenvx run --overload -f .env -f .env.development -- next build; fi",
     "build:cf": "CF_BUILD=1 dotenvx run --overload -- opennextjs-cloudflare build && node scripts/patch-open-next.mjs",
     "start": "dotenvx run --overload -f .env -f .env.development -- next start",
     "deploy": "run-s build:cf cf:deploy",
@@ -29,7 +29,7 @@
     "test:e2e:types": "tsc --project tsconfig.e2e.json --noEmit",
     "agent:setup": "./scripts/setup-auth-state.sh",
     "agent:browser": "tsx scripts/agent-browser-playwright.ts",
-    "cf:deploy": "dotenvx run -- wrangler deploy",
+    "cf:deploy": "dotenvx run --overload -- wrangler deploy",
     "cf:preview": "dotenvx run -- opennextjs-cloudflare preview",
     "cf:logs": "dotenvx run -- wrangler tail --format pretty",
     "cf:secret": "dotenvx run -- wrangler secret",
