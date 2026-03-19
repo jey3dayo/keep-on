@@ -83,11 +83,3 @@ export const COMPLETION_STATUS_LABEL = {
   completed: '完了',
   incomplete: '未完了',
 } as const
-
-/**
- * 完了アクションラベル
- */
-export const COMPLETION_ACTION_LABEL = {
-  markComplete: '完了にする',
-  markIncomplete: '未完了にする',
-} as const
