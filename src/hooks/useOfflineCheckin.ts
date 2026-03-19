@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef } from 'react'
+import { SW_MSG_SYNC_COMPLETE, SW_SYNC_TAG } from '@/constants/pwa'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import {
   enqueueOfflineCheckin,
@@ -30,18 +31,18 @@ const registerBackgroundSync = async (): Promise<boolean> => {
     if (!reg.sync) {
       return false
     }
-    await reg.sync.register('sync-checkins')
+    await reg.sync.register(SW_SYNC_TAG)
     return true
   } catch {
     return false
   }
 }
 
-const replayQueue = async (): Promise<ReplayResult> => {
+const replayQueue = async (prefetchedItems?: QueuedCheckin[]): Promise<ReplayResult> => {
   let replayed = 0
   let failed = 0
 
-  const items = await getAllQueuedCheckins()
+  const items = prefetchedItems ?? (await getAllQueuedCheckins())
   if (items.length === 0) {
     return { replayed: 0, failed: 0 }
   }
@@ -96,7 +97,7 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
     }
 
     const handler = (event: MessageEvent) => {
-      if (event.data?.type === 'SYNC_CHECKINS_COMPLETE') {
+      if (event.data?.type === SW_MSG_SYNC_COMPLETE) {
         onReplayCompleteRef.current?.({ replayed: event.data.replayedCount ?? 0, failed: 0 })
       }
     }
@@ -123,7 +124,7 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
         return
       }
 
-      const result = await replayQueue()
+      const result = await replayQueue(queuedItems)
       if (!isCancelled && (result.replayed > 0 || result.failed > 0)) {
         onReplayCompleteRef.current?.(result)
       }
@@ -148,15 +149,8 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
       await enqueueOfflineCheckin(item)
 
       // Background Sync が利用可能ならキューを SW に委譲
-      if (hasBgSync()) {
-        const registered = await registerBackgroundSync()
-        if (!registered && navigator.onLine) {
-          const result = await replayQueue()
-          if (result.replayed > 0 || result.failed > 0) {
-            onReplayCompleteRef.current?.(result)
-          }
-        }
-      }
+      // replay は isOnline effect 側で一元管理（重複実行を回避）
+      await registerBackgroundSync()
     },
     []
   )

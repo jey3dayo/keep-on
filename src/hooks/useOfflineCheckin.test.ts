@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { SW_SYNC_TAG } from '@/constants/pwa'
 import { useOfflineCheckin } from './useOfflineCheckin'
 
 let mockIsOnline = false
@@ -88,7 +89,7 @@ describe('useOfflineCheckin', () => {
     renderHook(() => useOfflineCheckin({ onReplayComplete }))
 
     await waitFor(() => {
-      expect(mockSyncRegister).toHaveBeenCalledWith('sync-checkins')
+      expect(mockSyncRegister).toHaveBeenCalledWith(SW_SYNC_TAG)
     })
     await waitFor(() => {
       expect(mockRemoveQueuedCheckin).toHaveBeenCalledWith('queued-1')

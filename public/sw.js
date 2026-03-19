@@ -1,3 +1,4 @@
+// メッセージタイプ・sync タグは src/constants/pwa.ts と同期すること
 const CACHE_NAME = 'keepon-v4'
 const OFFLINE_URL = '/offline'
 const NEXT_ASSET_PREFIX = '/_next/'
@@ -152,7 +153,7 @@ self.addEventListener('fetch', (event) => {
               caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
               return response
             })
-            .catch(() => cached || Response.error())
+            .catch(() => Response.error())
       )
     )
   }
@@ -166,6 +167,7 @@ self.addEventListener('sync', (event) => {
 
   event.waitUntil(
     (async () => {
+      // DB_NAME, STORE_NAME は src/lib/pwa/offline-queue.ts と同期すること
       const DB_NAME = 'keepon-offline'
       const STORE_NAME = 'checkin-queue'
 

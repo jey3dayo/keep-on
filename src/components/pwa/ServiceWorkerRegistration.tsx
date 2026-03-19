@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/basics/Button'
+import { SW_MSG_SKIP_WAITING } from '@/constants/pwa'
 
 export function ServiceWorkerRegistration() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
@@ -57,7 +58,7 @@ export function ServiceWorkerRegistration() {
 
   const handleUpdate = () => {
     if (registration?.waiting) {
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' })
+      registration.waiting.postMessage({ type: SW_MSG_SKIP_WAITING })
 
       // 新しいService Workerが制御権を取得するまで待機
       navigator.serviceWorker.addEventListener('controllerchange', () => {
