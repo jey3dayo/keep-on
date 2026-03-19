@@ -109,8 +109,22 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
 
       // Background Sync が利用可能ならキューを SW に委譲
       if (hasBgSync()) {
-        const reg = await navigator.serviceWorker.ready
-        await (reg as unknown as { sync: { register: (tag: string) => Promise<void> } }).sync.register('sync-checkins')
+        try {
+          const reg = await navigator.serviceWorker.ready
+          await (reg as unknown as { sync: { register: (tag: string) => Promise<void> } }).sync.register(
+            'sync-checkins'
+          )
+        } catch {
+          // sync.register() 失敗時（BgSync 無効・登録拒否等）はフォールバック replay
+          // オンライン状態なら即座に replay を試行
+          if (navigator.onLine) {
+            replayQueue().then((result) => {
+              if (result.replayed > 0 || result.failed > 0) {
+                onReplayCompleteRef.current?.(result)
+              }
+            })
+          }
+        }
       }
     },
     []

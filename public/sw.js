@@ -106,7 +106,11 @@ self.addEventListener('fetch', (event) => {
           return cache.match(request).then((cached) => {
             const fetchPromise = fetch(request)
               .then((networkResp) => {
-                cache.put(request, networkResp.clone())
+                // リダイレクトされたレスポンス（例: 未認証→/sign-in）はキャッシュしない
+                // redirected=true or 非200 の場合、古いキャッシュをそのまま残すか無視する
+                if (networkResp.ok && !networkResp.redirected) {
+                  cache.put(request, networkResp.clone())
+                }
                 return networkResp
               })
               .catch(() => cached || caches.match(OFFLINE_URL))
@@ -202,8 +206,12 @@ self.addEventListener('sync', (event) => {
           if (res.ok) {
             await deleteItem(db, item.id)
             replayedCount++
+          } else if (res.status === 401 || res.status === 403) {
+            // 認証エラーはセッション復帰後にリトライ可能なのでキューに残す
+            // Background Sync の自動リトライに委ねる
+            break
           } else if (res.status >= 400 && res.status < 500) {
-            // 永続的な 4xx エラー（無効な habitId 等）はリトライしても無駄なので削除
+            // 永続的なバリデーションエラー（422 等）はリトライしても無駄なので削除
             await deleteItem(db, item.id)
           }
         }
