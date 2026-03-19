@@ -83,7 +83,7 @@ depends = ["lint:types", "lint:biome", "test:ci", "build:ci"]
 
 [tasks.deploy]
 description = "Cloudflare Workers にデプロイ"
-run = "pnpm wrangler deploy"
+run = "pnpm cf:deploy"
 
 [tasks."deploy:preview"]
 description = "ローカルでCloudflare環境をプレビュー"
