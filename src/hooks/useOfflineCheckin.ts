@@ -18,6 +18,25 @@ interface ReplayResult {
 
 const hasBgSync = () => 'serviceWorker' in navigator && 'SyncManager' in window
 
+const registerBackgroundSync = async (): Promise<boolean> => {
+  if (!hasBgSync()) {
+    return false
+  }
+
+  try {
+    const reg = (await navigator.serviceWorker.ready) as ServiceWorkerRegistration & {
+      sync?: { register: (tag: string) => Promise<void> }
+    }
+    if (!reg.sync) {
+      return false
+    }
+    await reg.sync.register('sync-checkins')
+    return true
+  } catch {
+    return false
+  }
+}
+
 const replayQueue = async (): Promise<ReplayResult> => {
   let replayed = 0
   let failed = 0
@@ -40,11 +59,19 @@ const replayQueue = async (): Promise<ReplayResult> => {
       if (res.ok) {
         await removeQueuedCheckin(item.id)
         replayed++
+      } else if (res.status === 401 || res.status === 403) {
+        failed++
+        break
+      } else if (res.status >= 400 && res.status < 500) {
+        await removeQueuedCheckin(item.id)
+        failed++
       } else {
         failed++
+        break
       }
     } catch {
       failed++
+      break
     }
   }
 
@@ -78,22 +105,35 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
     return () => navigator.serviceWorker.removeEventListener('message', handler)
   }, [])
 
-  // オンライン復帰時にキューを replay（Background Sync 非対応ブラウザのフォールバック）
+  // オンライン復帰時は BgSync を再登録し、失敗した場合だけ hook 側で replay する
   useEffect(() => {
     if (!isOnline) {
       return
     }
 
-    // Background Sync 対応ブラウザでは SW が replay するため、hook での replay をスキップ
-    if (hasBgSync()) {
-      return
-    }
+    let isCancelled = false
 
-    replayQueue().then((result) => {
-      if (result.replayed > 0 || result.failed > 0) {
+    const handleReconnect = async () => {
+      const queuedItems = await getAllQueuedCheckins()
+      if (queuedItems.length === 0) {
+        return
+      }
+
+      if (await registerBackgroundSync()) {
+        return
+      }
+
+      const result = await replayQueue()
+      if (!isCancelled && (result.replayed > 0 || result.failed > 0)) {
         onReplayCompleteRef.current?.(result)
       }
-    })
+    }
+
+    handleReconnect().catch(() => undefined)
+
+    return () => {
+      isCancelled = true
+    }
   }, [isOnline])
 
   const enqueueCheckin = useCallback(
@@ -109,20 +149,11 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
 
       // Background Sync が利用可能ならキューを SW に委譲
       if (hasBgSync()) {
-        try {
-          const reg = await navigator.serviceWorker.ready
-          await (reg as unknown as { sync: { register: (tag: string) => Promise<void> } }).sync.register(
-            'sync-checkins'
-          )
-        } catch {
-          // sync.register() 失敗時（BgSync 無効・登録拒否等）はフォールバック replay
-          // オンライン状態なら即座に replay を試行
-          if (navigator.onLine) {
-            replayQueue().then((result) => {
-              if (result.replayed > 0 || result.failed > 0) {
-                onReplayCompleteRef.current?.(result)
-              }
-            })
+        const registered = await registerBackgroundSync()
+        if (!registered && navigator.onLine) {
+          const result = await replayQueue()
+          if (result.replayed > 0 || result.failed > 0) {
+            onReplayCompleteRef.current?.(result)
           }
         }
       }

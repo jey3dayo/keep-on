@@ -4,10 +4,33 @@ const NEXT_ASSET_PREFIX = '/_next/'
 const NEXT_STATIC_CSS_PREFIX = '/_next/static/css/'
 const NEXT_STATIC_MEDIA_PREFIX = '/_next/static/media/'
 
-// stale-while-revalidate を適用するルート
+// ユーザー固有 HTML をキャッシュ対象にするルート
 const CACHEABLE_ROUTES = ['/dashboard', '/habits', '/analytics']
 
 const PRECACHE_FILES = ['/offline', '/manifest.json', '/icon-192.png', '/icon-512.png']
+
+const isUserCacheableRoute = (pathname) => CACHEABLE_ROUTES.some((route) => pathname.startsWith(route))
+
+const isAuthRoute = (pathname) => pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')
+
+const clearUserCache = async (cache) => {
+  const requests = await cache.keys()
+  await Promise.all(
+    requests.filter((req) => isUserCacheableRoute(new URL(req.url).pathname)).map((req) => cache.delete(req))
+  )
+}
+
+const isAuthNavigationFailure = (response) => {
+  if (response.status === 401 || response.status === 403) {
+    return true
+  }
+
+  if (!(response.redirected && response.url)) {
+    return false
+  }
+
+  return isAuthRoute(new URL(response.url).pathname)
+}
 
 const extractOfflineAssets = (html) => {
   const assets = new Set()
@@ -76,52 +99,38 @@ self.addEventListener('fetch', (event) => {
   }
 
   // サインイン・サインアップ遷移時はユーザー固有キャッシュをクリア（セッション切り替え対策）
-  if (url.pathname.startsWith('/sign-in') || url.pathname.startsWith('/sign-up')) {
-    event.waitUntil(
-      caches
-        .open(CACHE_NAME)
-        .then((cache) =>
-          cache
-            .keys()
-            .then((requests) =>
-              Promise.all(
-                requests
-                  .filter((req) => CACHEABLE_ROUTES.some((route) => new URL(req.url).pathname.startsWith(route)))
-                  .map((req) => cache.delete(req))
-              )
-            )
-        )
-    )
+  if (isAuthRoute(url.pathname)) {
+    event.waitUntil(caches.open(CACHE_NAME).then((cache) => clearUserCache(cache)))
     return
   }
 
   // ナビゲーション
   if (request.mode === 'navigate') {
-    const isCacheable = CACHEABLE_ROUTES.some((r) => url.pathname.startsWith(r))
+    const isCacheable = isUserCacheableRoute(url.pathname)
 
     if (isCacheable) {
-      // stale-while-revalidate: キャッシュがあればすぐ返しつつバックグラウンドで更新
+      // 認証ページ相当はキャッシュ露出を避けるため network-first にする
       event.respondWith(
-        caches.open(CACHE_NAME).then((cache) => {
-          return cache.match(request).then((cached) => {
-            const fetchPromise = fetch(request)
-              .then((networkResp) => {
-                // リダイレクトされたレスポンス（例: 未認証→/sign-in）はキャッシュしない
-                // redirected=true or 非200 の場合、古いキャッシュをそのまま残すか無視する
-                if (networkResp.ok && !networkResp.redirected) {
-                  cache.put(request, networkResp.clone())
-                }
-                return networkResp
-              })
-              .catch(() => cached || caches.match(OFFLINE_URL))
+        caches.open(CACHE_NAME).then(async (cache) => {
+          const cached = await cache.match(request)
 
-            if (cached) {
-              // SW を生かし続けてバックグラウンド更新を完走させる
-              event.waitUntil(fetchPromise)
-              return cached
+          try {
+            const networkResp = await fetch(request)
+
+            if (isAuthNavigationFailure(networkResp)) {
+              await clearUserCache(cache)
+              return networkResp
             }
-            return fetchPromise
-          })
+
+            if (networkResp.ok && !networkResp.redirected) {
+              await cache.put(request, networkResp.clone())
+              return networkResp
+            }
+
+            return cached || networkResp
+          } catch {
+            return cached || caches.match(OFFLINE_URL)
+          }
         })
       )
     } else {
@@ -217,6 +226,7 @@ self.addEventListener('sync', (event) => {
           } else {
             // 5xx: サーバー一時障害。アイテムはキューに残し、リトライをスケジュール
             hasRetryableError = true
+            break
           }
         }
       } finally {
@@ -248,20 +258,6 @@ self.addEventListener('message', (event) => {
 
   // サインアウト時にユーザー固有のキャッシュ（ダッシュボード等）をクリア
   if (event.data?.type === 'CLEAR_USER_CACHE') {
-    event.waitUntil(
-      caches
-        .open(CACHE_NAME)
-        .then((cache) =>
-          cache
-            .keys()
-            .then((requests) =>
-              Promise.all(
-                requests
-                  .filter((req) => CACHEABLE_ROUTES.some((route) => new URL(req.url).pathname.startsWith(route)))
-                  .map((req) => cache.delete(req))
-              )
-            )
-        )
-    )
+    event.waitUntil(caches.open(CACHE_NAME).then((cache) => clearUserCache(cache)))
   }
 })
