@@ -4,13 +4,7 @@ import { getDb } from '@/lib/db'
 import { profileQuery } from '@/lib/queries/profiler'
 import type { HabitInput } from '@/validators/habit'
 
-export {
-  calculateStreak,
-  getCheckinCountForPeriod,
-  getHabitById,
-  getHabitsByUserId,
-  getHabitsWithProgress,
-} from './habit-read'
+export { getHabitById, getHabitsWithProgress } from './habit-read'
 
 /**
  * 習慣をデータベースに作成

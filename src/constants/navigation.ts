@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
 import { BarChart3, HelpCircle, LayoutDashboard, ListChecks, Settings } from 'lucide-react'
-import type { IconName } from '@/components/basics/Icon'
 
 export interface NavItem {
   icon: LucideIcon
@@ -42,18 +41,6 @@ export const NAV_ITEMS: {
     },
   ],
 }
-
-// Appbar用のシンプルなナビゲーションリンク
-export interface AppbarNavLink {
-  href: string
-  icon: IconName
-  label: string
-}
-
-export const APPBAR_NAV_LINKS: AppbarNavLink[] = [
-  { href: '/dashboard', label: 'ホーム', icon: 'home' },
-  { href: '/habits', label: '習慣', icon: 'target' },
-]
 
 // パスからページタイトルを取得するマッピング
 export const PAGE_TITLES: Record<string, string> = {

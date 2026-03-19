@@ -1,6 +1,6 @@
 import { Result } from '@praha/byethrow'
 
-export type ServerActionResult<T, E> =
+type ServerActionResult<T, E> =
   | {
       ok: true
       data: T

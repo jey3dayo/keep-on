@@ -22,7 +22,7 @@ import {
 import type { IconName } from '@/components/basics/Icon'
 import type { Period } from '@/constants/habit'
 
-export interface HabitIcon {
+interface HabitIcon {
   icon: LucideIcon
   id: IconName
   label: string
@@ -62,20 +62,7 @@ export const habitColors = [
   { id: 'yellow', color: 'var(--yellow-9)', foreground: 'var(--yellow-1)', label: 'イエロー' },
 ]
 
-export const oldHabitColors = [
-  { id: 'orange', color: 'oklch(0.70 0.18 45)', label: 'オレンジ' },
-  { id: 'red', color: 'oklch(0.65 0.22 25)', label: 'レッド' },
-  { id: 'pink', color: 'oklch(0.70 0.18 350)', label: 'ピンク' },
-  { id: 'purple', color: 'oklch(0.65 0.20 300)', label: 'パープル' },
-  { id: 'blue', color: 'oklch(0.65 0.18 250)', label: 'ブルー' },
-  { id: 'cyan', color: 'oklch(0.75 0.14 200)', label: 'シアン' },
-  { id: 'teal', color: 'oklch(0.70 0.14 175)', label: 'ティール' },
-  { id: 'green', color: 'oklch(0.70 0.18 145)', label: 'グリーン' },
-  { id: 'lime', color: 'oklch(0.80 0.18 125)', label: 'ライム' },
-  { id: 'yellow', color: 'oklch(0.85 0.16 95)', label: 'イエロー' },
-]
-
-export interface TaskPeriodOption {
+interface TaskPeriodOption {
   frequencyLabel: string
   id: Period
   label: string
@@ -86,87 +73,6 @@ export const taskPeriods: TaskPeriodOption[] = [
   { id: 'daily', label: 'デイリー', sublabel: '毎日', frequencyLabel: '回 / 日' },
   { id: 'weekly', label: '週次', sublabel: '毎週', frequencyLabel: '回 / 週' },
   { id: 'monthly', label: '月次', sublabel: '毎月', frequencyLabel: '回 / 月' },
-]
-
-export interface Habit {
-  colorId: string
-  createdAt: Date
-  currentProgress: number
-  frequency: number
-  iconId: string
-  id: string
-  name: string
-  period: Period
-  streak: number
-}
-
-export const sampleHabits: Habit[] = [
-  {
-    id: '1',
-    name: '水を8杯飲む',
-    iconId: 'droplets',
-    colorId: 'cyan',
-    period: 'daily',
-    frequency: 8,
-    streak: 12,
-    currentProgress: 5,
-    createdAt: new Date(),
-  },
-  {
-    id: '2',
-    name: '30分運動する',
-    iconId: 'dumbbell',
-    colorId: 'orange',
-    period: 'daily',
-    frequency: 1,
-    streak: 7,
-    currentProgress: 1,
-    createdAt: new Date(),
-  },
-  {
-    id: '3',
-    name: '読書',
-    iconId: 'book-open',
-    colorId: 'purple',
-    period: 'daily',
-    frequency: 1,
-    streak: 5,
-    currentProgress: 0,
-    createdAt: new Date(),
-  },
-  {
-    id: '4',
-    name: '瞑想する',
-    iconId: 'brain',
-    colorId: 'teal',
-    period: 'daily',
-    frequency: 1,
-    streak: 21,
-    currentProgress: 1,
-    createdAt: new Date(),
-  },
-  {
-    id: '5',
-    name: '週次レビュー',
-    iconId: 'target',
-    colorId: 'blue',
-    period: 'weekly',
-    frequency: 1,
-    streak: 4,
-    currentProgress: 0,
-    createdAt: new Date(),
-  },
-  {
-    id: '6',
-    name: '月の振り返り',
-    iconId: 'clock',
-    colorId: 'pink',
-    period: 'monthly',
-    frequency: 1,
-    streak: 3,
-    currentProgress: 0,
-    createdAt: new Date(),
-  },
 ]
 
 export type PresetCategory = 'all' | 'health' | 'productivity' | 'lifestyle' | 'learning'

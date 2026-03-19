@@ -31,13 +31,3 @@ export interface HabitWithProgress extends Habit {
   /** 連続達成日数 */
   streak: number
 }
-
-/**
- * チェックイン記録
- */
-export interface HabitCheckin {
-  createdAt: string
-  date: string
-  habitId: string
-  id: string
-}

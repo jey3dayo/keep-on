@@ -1,7 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { DEFAULT_WEEK_START, type WeekStart } from '@/constants/habit'
 import { users } from '@/db/schema'
-import { invalidateUserCache } from '@/lib/cache/user-cache'
 import { getDb } from '@/lib/db'
 import { profileQuery } from '@/lib/queries/profiler'
 
@@ -95,52 +94,5 @@ export async function getUserWeekStartById(userId: string): Promise<WeekStart> {
       return (user?.weekStart as WeekStart) ?? DEFAULT_WEEK_START
     },
     { userId }
-  )
-}
-
-/**
- * ユーザーIDから週開始日設定を更新
- *
- * @param userId - アプリ内ユーザーID
- * @param weekStart - 週開始日 ('monday' | 'sunday')
- * @returns 更新されたユーザー
- */
-export async function updateUserWeekStartById(userId: string, weekStart: WeekStart) {
-  return await profileQuery(
-    'query.updateUserWeekStartById',
-    async () => {
-      const db = getDb()
-      const [user] = await db.update(users).set({ weekStart }).where(eq(users.id, userId)).returning()
-
-      if (user?.clerkId) {
-        await invalidateUserCache(user.clerkId)
-      }
-
-      return user
-    },
-    { userId, weekStart }
-  )
-}
-
-/**
- * ユーザーの週開始日設定を更新
- *
- * @param clerkId - ClerkのユーザーID
- * @param weekStart - 週開始日 ('monday' | 'sunday')
- * @returns 更新されたユーザー
- */
-export async function updateUserWeekStart(clerkId: string, weekStart: WeekStart) {
-  return await profileQuery(
-    'query.updateUserWeekStart',
-    async () => {
-      const db = getDb()
-      const [user] = await db.update(users).set({ weekStart }).where(eq(users.clerkId, clerkId)).returning()
-
-      // キャッシュ無効化
-      await invalidateUserCache(clerkId)
-
-      return user
-    },
-    { clerkId, weekStart }
   )
 }

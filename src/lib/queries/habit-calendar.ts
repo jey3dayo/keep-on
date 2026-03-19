@@ -4,7 +4,7 @@ import { getDb } from '@/lib/db'
 import { formatDateKey } from '@/lib/utils/date'
 import { profileQuery } from './profiler'
 
-export interface HabitCalendarData {
+interface HabitCalendarData {
   /** 日付ごとのチェックイン回数 */
   checkinCounts: Map<string, number>
   skipDates: Set<string>
