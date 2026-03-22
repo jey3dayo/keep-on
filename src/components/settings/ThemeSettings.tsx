@@ -1,7 +1,6 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
 import { ColorPalette } from '@/components/streak/ColorPalette'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -30,13 +29,8 @@ const COLOR_THEME_META: Record<ColorThemeName, { label: string; swatch: string }
 export function ThemeSettings({ initialColorTheme }: { initialColorTheme?: ColorThemeName }) {
   const { theme: mode, setTheme: setMode } = useTheme()
   const { theme: colorTheme, setTheme: setColorTheme, ready } = useColorTheme(initialColorTheme)
-  const [mounted, setMounted] = useState<boolean>(false)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const currentMode = mounted ? (mode ?? DEFAULT_THEME_MODE) : DEFAULT_THEME_MODE
+  const currentMode = mode ?? DEFAULT_THEME_MODE
   const currentModeLabel = MODE_LABELS[currentMode as keyof typeof MODE_LABELS] ?? MODE_LABELS.system
   const currentColorMeta = COLOR_THEME_META[colorTheme]
 
@@ -52,7 +46,7 @@ export function ThemeSettings({ initialColorTheme }: { initialColorTheme?: Color
             <p className="font-medium text-foreground">表示モード</p>
             <span className="text-muted-foreground text-xs">現在: {currentModeLabel}</span>
           </div>
-          <Tabs onValueChange={(value) => setMode(value)} value={currentMode}>
+          <Tabs onValueChange={(value) => setMode(value)} suppressHydrationWarning value={currentMode}>
             <TabsList aria-label="表示モード" className="grid w-full grid-cols-3">
               <TabsTrigger className="flex-1" value="light">
                 ライト

@@ -1,7 +1,7 @@
 import * as v from 'valibot'
 import { isError } from '@/lib/utils/guards'
 
-export const ClerkApiErrorEntrySchema = v.object({
+const ClerkApiErrorEntrySchema = v.object({
   code: v.optional(v.string()),
   message: v.optional(v.string()),
 })
@@ -24,7 +24,7 @@ export const UserSchema = v.object({
   updatedAt: UserDateSchema,
 })
 
-export interface ClerkApiResponseErrorPayload extends Record<string, unknown> {
+interface ClerkApiResponseErrorPayload extends Record<string, unknown> {
   clerkTraceId?: string
   errors?: Array<{ code?: string; message?: string }>
   status?: number

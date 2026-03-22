@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { type ConcurrencyResult, runConcurrencyChecks } from './actions'
 import { CONCURRENCY_LIMITS, ITERATION_LIMITS } from './constants'
@@ -148,12 +149,12 @@ export default async function ReproConcurrencyPage({ searchParams }: { searchPar
                 Clerk API と DB クエリを並列実行し、タイムアウトや失敗率を確認します。
               </p>
             </div>
-            <a
+            <Link
               className="inline-flex items-center justify-center rounded-full border border-border/60 bg-background px-4 py-2 font-semibold text-foreground text-sm transition hover:border-primary/60 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               href="/debug/repro-concurrency"
             >
               リセット
-            </a>
+            </Link>
           </div>
         </header>
 
