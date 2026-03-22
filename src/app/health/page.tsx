@@ -1,6 +1,5 @@
 import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 
 export const metadata: Metadata = {
@@ -284,12 +283,12 @@ export default async function HealthPage() {
               <h1 className="font-semibold text-3xl text-foreground">ヘルスチェック</h1>
               <p className="text-muted-foreground text-sm">Clerk と DB の設定状態を確認します。値は公開しません。</p>
             </div>
-            <Link
+            <a
               className="inline-flex items-center justify-center rounded-full border border-border/60 bg-background px-4 py-2 font-semibold text-foreground text-sm transition hover:border-primary/60 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               href="/health"
             >
               再読み込み
-            </Link>
+            </a>
           </div>
           <div className="flex flex-wrap gap-2">
             <StatusPill count={summary.ok} label="OK" tone="ok" />
