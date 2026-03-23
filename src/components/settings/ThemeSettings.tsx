@@ -30,7 +30,7 @@ const COLOR_THEME_META: Record<ColorThemeName, { label: string; swatch: string }
 export function ThemeSettings({ initialColorTheme }: { initialColorTheme?: ColorThemeName }) {
   const { theme: mode, setTheme: setMode } = useTheme()
   const { theme: colorTheme, setTheme: setColorTheme, ready } = useColorTheme(initialColorTheme)
-  const [mounted, setMounted] = useState<boolean>(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
