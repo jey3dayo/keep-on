@@ -6,8 +6,8 @@ Chrome が http://localhost:3000/dashboard で起動している状態
 
 ## Step 1: Console エラー確認
 
-1. **F12** を押して DevTools を開く
-2. **Console** タブを選択
+1. F12 を押して DevTools を開く
+2. Console タブを選択
 3. 以下のエラーがないか確認:
 
 ```text
@@ -21,8 +21,8 @@ Chrome が http://localhost:3000/dashboard で起動している状態
 
 ## Step 2: Network リクエスト確認
 
-1. **Network** タブを選択
-2. **F5** でページをリロード
+1. Network タブを選択
+2. F5 でページをリロード
 3. 以下を確認:
 
 ```text
@@ -113,7 +113,7 @@ Console タブで以下のスクリプトを実行:
 
 ## Step 5: スクリーンショット取得
 
-1. **Ctrl+Shift+P** でコマンドパレットを開く
+1. Ctrl+Shift+P でコマンドパレットを開く
 2. `Capture full size screenshot` を検索して実行
 3. スクリーンショットを保存
 

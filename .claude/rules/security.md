@@ -135,16 +135,16 @@ Clerk Dashboardで以下を設定してください：
 
 ### 実装ステップ
 
-1. **Phase 1: Clerk MFA有効化**（工数: 1日）
+1. Phase 1: Clerk MFA有効化（工数: 1日）
    - Clerk Dashboard → Settings → Security → Multi-factor
    - TOTPアプリ（Google Authenticator、Authy等）対応を有効化
    - SMS OTPは追加コストのため保留
 
-2. **Phase 2: UIカスタマイズ**（工数: 0.5日）
+2. Phase 2: UIカスタマイズ（工数: 0.5日）
    - ユーザー設定ページにMFA有効化トグルを追加
    - `/settings` ページに「セキュリティ」タブを追加
 
-3. **Phase 3: ドキュメント整備**（工数: 0.5日）
+3. Phase 3: ドキュメント整備（工数: 0.5日）
    - ユーザー向けMFAセットアップガイド作成
    - 開発者向け実装ガイドを`security.md`に追記
 

@@ -136,7 +136,7 @@ export function isHabitCompleted(
 
 責務: Drizzle ORMデータアクセス
 
-- **生のDrizzle操作のみ**を行う
+- 生のDrizzle操作のみを行う
 - Result.try などのエラーハンドリングは含めない
 - 外部ライブラリ（Clerk等）への依存を排除
 - 引数は抽出済みデータのみを受け取る（テスト容易性の確保）
@@ -315,18 +315,18 @@ export async function createHabitAction(formData: FormData) {
 
 ### 2. テスト容易性
 
-- **queries** は外部ライブラリに依存しない純粋な関数として設計
+- queries は外部ライブラリに依存しない純粋な関数として設計
 - 引数は抽出済みデータのみを受け取る
 - モックが容易で単体テストが書きやすい
 
 ### 3. エラーハンドリング
 
-- **queries** はエラーをthrowするかDrizzleの生の返り値を返す
+- queries はエラーをthrowするかDrizzleの生の返り値を返す
   - ❌ `Promise<Result<T, E>>` を返してはいけない
   - ✅ `Promise<T>` を返し、エラーは `throw` で伝播
-- **validators** は同期的な `Result<T, E>` を返す
+- validators は同期的な `Result<T, E>` を返す
   - ✅ バリデーションエラーは `Result.fail` で明示
-- **actions** で `Result.try` を使ってエラーをキャッチし、適切なエラー型に変換
+- actions で `Result.try` を使ってエラーをキャッチし、適切なエラー型に変換
   - ✅ `Promise<Result.ResultAsync<T, E>>` 形式で返す
   - ✅ queries からのエラーは `Result.try` でキャッチ
 

@@ -10,10 +10,10 @@ Cloudflare Workers で動作する `@sentry/cloudflare` を使用したエラー
 
 [Sentry Dashboard](https://sentry.io/) でプロジェクトを作成：
 
-1. **Organizationを作成** (例: `yourcompany`)
-2. **プロジェクトを作成** (例: `keep-on`)
-3. **プラットフォーム**を選択: `Cloudflare Workers`
-4. **DSN** をコピー (例: `https://...@o....ingest.sentry.io/...`)
+1. Organizationを作成 (例: `yourcompany`)
+2. プロジェクトを作成 (例: `keep-on`)
+3. プラットフォームを選択: `Cloudflare Workers`
+4. DSN をコピー (例: `https://...@o....ingest.sentry.io/...`)
 
 ### 2. 環境変数の設定
 

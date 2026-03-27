@@ -218,8 +218,8 @@ git push origin main
 `.github/workflows/sync-secrets.yml` で手動トリガー可能：
 
 1. GitHub リポジトリの **Actions** タブを開く
-2. **Sync Secrets to Cloudflare** ワークフローを選択
-3. **Run workflow** をクリック
+2. Sync Secrets to Cloudflare ワークフローを選択
+3. Run workflow をクリック
 
 ### 注意事項
 

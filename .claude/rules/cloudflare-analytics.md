@@ -31,11 +31,11 @@ Cloudflare Workers のパフォーマンスメトリクスを可視化し、CPU 
 
 | メトリクス       | 説明                         | 推奨値      |
 | ---------------- | ---------------------------- | ----------- |
-| **Requests**     | リクエスト数（時系列）       | -           |
-| **Success Rate** | 成功率（2xx/3xx）            | > 99%       |
-| **CPU Time**     | CPU 使用時間（P50, P99）     | P99 < 50ms  |
-| **Duration**     | レスポンスタイム（P50, P99） | P99 < 500ms |
-| **Errors**       | 5xx エラー数                 | < 1%        |
+| Requests     | リクエスト数（時系列）       | -           |
+| Success Rate | 成功率（2xx/3xx）            | > 99%       |
+| CPU Time     | CPU 使用時間（P50, P99）     | P99 < 50ms  |
+| Duration     | レスポンスタイム（P50, P99） | P99 < 500ms |
+| Errors       | 5xx エラー数                 | < 1%        |
 
 ### パフォーマンス目標
 
@@ -76,9 +76,9 @@ Cloudflare Dashboard で以下のアラートを設定：
 ### アラート設定手順
 
 1. [Cloudflare Dashboard](https://dash.cloudflare.com/) → **Notifications** → **Create**
-2. **Workers** カテゴリを選択
+2. Workers カテゴリを選択
 3. 条件と通知先を設定
-4. **Save** をクリック
+4. Save をクリック
 
 ---
 
@@ -87,7 +87,7 @@ Cloudflare Dashboard で以下のアラートを設定：
 ### Webhook URL の取得
 
 1. [Slack API](https://api.slack.com/apps) でアプリを作成
-2. **Incoming Webhooks** を有効化
+2. Incoming Webhooks を有効化
 3. チャンネルを選択して Webhook URL を取得
 
 ### Cloudflare への設定
@@ -194,7 +194,7 @@ curl -X POST https://api.cloudflare.com/client/v4/graphql \
 ### データソースの設定
 
 1. Grafana → **Configuration** → **Data Sources** → **Add data source**
-2. **JSON API** を選択（プラグインが必要な場合はインストール）
+2. JSON API を選択（プラグインが必要な場合はインストール）
 3. URL: `https://api.cloudflare.com/client/v4/graphql`
 4. Custom HTTP Headers:
    - `Authorization: Bearer YOUR_API_TOKEN`
