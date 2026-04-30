@@ -73,6 +73,8 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
             const isSelected = selectedCategory === category.id
             return (
               <Button
+                aria-label={`${category.label}カテゴリを表示`}
+                aria-pressed={isSelected}
                 className={cn(
                   'h-14 w-14 flex-shrink-0 rounded-full p-0 transition-all',
                   isSelected ? 'bg-white/90 shadow-lg' : 'hover:bg-white/20'

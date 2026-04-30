@@ -1,6 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 
@@ -12,6 +13,7 @@ interface BeforeInstallPromptEvent extends Event {
 const IOS_REGEX = /iPad|iPhone|iPod/
 
 export function A2HSPrompt() {
+  const pathname = usePathname()
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showIOSPrompt, setShowIOSPrompt] = useState(false)
   const [dismissed, setDismissed] = useState(false)
@@ -59,7 +61,7 @@ export function A2HSPrompt() {
     localStorage.setItem('a2hs-dismissed', 'true')
   }
 
-  if (dismissed) {
+  if (dismissed || pathname !== '/dashboard') {
     return null
   }
 
