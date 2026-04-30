@@ -34,6 +34,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
       <header className="sticky top-0 z-10 px-4 pt-3 pb-4">
         <div className="relative flex items-center justify-center">
           <Button
+            aria-label="習慣追加を閉じる"
             className="absolute left-0 h-10 w-10 rounded-full p-0"
             onClick={onClose}
             size="icon"
