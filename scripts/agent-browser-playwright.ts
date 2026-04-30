@@ -52,7 +52,7 @@ function loadDotenvPrivateKey(): string | undefined {
     const match = envKeysContent.match(/^DOTENV_PRIVATE_KEY=(.+)$/m)
     return match ? match[1] : undefined
   } catch {
-    return undefined
+    return
   }
 }
 
@@ -177,7 +177,7 @@ async function main() {
       console.log('   本番環境など異なるオリジンをテストする場合は、そのオリジン用の認証状態を別途生成してください。')
       console.log('')
     }
-  } catch (_error) {
+  } catch {
     console.error('❌ URLの解析に失敗しました:', targetUrl)
     console.error('')
     process.exit(1)

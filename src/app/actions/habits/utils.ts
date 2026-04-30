@@ -135,13 +135,12 @@ export async function runTimedHabitAction<T>(
       }
 
       return await Result.try({
-        try: async () => {
-          return await spans.runWithRequestTimeout(
+        try: async () =>
+          await spans.runWithRequestTimeout(
             options.actionName,
             () => options.run({ input, baseMeta, spans }),
             baseMeta
-          )
-        },
+          ),
         catch: (error) => error,
       })
     }),

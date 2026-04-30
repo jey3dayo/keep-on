@@ -10,8 +10,8 @@ export interface QueuedCheckin {
   timestamp: number
 }
 
-const openDb = (): Promise<IDBDatabase> => {
-  return new Promise((resolve, reject) => {
+const openDb = (): Promise<IDBDatabase> =>
+  new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION)
     req.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result
@@ -22,7 +22,6 @@ const openDb = (): Promise<IDBDatabase> => {
     req.onsuccess = () => resolve(req.result)
     req.onerror = () => reject(req.error)
   })
-}
 
 /** トランザクション完了後に db.close() して将来の versionchange ブロックを防止 */
 const withDb = async <T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBRequest): Promise<T> => {

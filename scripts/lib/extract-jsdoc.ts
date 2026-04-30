@@ -52,31 +52,31 @@ function extractTableInfo(
   // 変数宣言を取得
   const declaration = node.declarationList.declarations[0]
   if (!(declaration && ts.isVariableDeclaration(declaration))) {
-    return undefined
+    return
   }
 
   // 初期化子を取得
   const initializer = declaration.initializer
   if (!(initializer && ts.isCallExpression(initializer))) {
-    return undefined
+    return
   }
 
   // sqliteTable('TableName', { ... }) のパターンを検出
   const functionName = initializer.expression.getText(sourceFile)
   if (functionName !== 'sqliteTable') {
-    return undefined
+    return
   }
 
   // 第1引数: テーブルSQL名
   const sqlTableName = getSqlTableName(initializer)
   if (!sqlTableName) {
-    return undefined
+    return
   }
 
   // 第2引数: カラム定義オブジェクト
   const columnsObject = initializer.arguments[1]
   if (!(columnsObject && ts.isObjectLiteralExpression(columnsObject))) {
-    return undefined
+    return
   }
 
   // カラムコメントを抽出
@@ -107,18 +107,18 @@ function extractJSDocComment(node: ts.Node, sourceFile: ts.SourceFile): string |
   const commentRanges = ts.getLeadingCommentRanges(fullText, node.pos)
 
   if (!commentRanges || commentRanges.length === 0) {
-    return undefined
+    return
   }
 
   // 直前のJSDocコメントを取得
   const lastComment = commentRanges.at(-1)
   if (!lastComment || lastComment.kind !== ts.SyntaxKind.MultiLineCommentTrivia) {
-    return undefined
+    return
   }
 
   const commentText = fullText.slice(lastComment.pos, lastComment.end)
   if (!commentText.startsWith('/**')) {
-    return undefined
+    return
   }
 
   // /** と */ を除去し、行頭の * を削除
@@ -137,7 +137,7 @@ function extractJSDocComment(node: ts.Node, sourceFile: ts.SourceFile): string |
 function getSqlTableName(callExpr: ts.CallExpression): string | undefined {
   const firstArg = callExpr.arguments[0]
   if (!(firstArg && ts.isStringLiteral(firstArg))) {
-    return undefined
+    return
   }
   return firstArg.text
 }
@@ -164,5 +164,5 @@ function extractSqlColumnName(property: ts.PropertyAssignment): string | undefin
     break
   }
 
-  return undefined
+  return
 }

@@ -72,7 +72,7 @@ setup('authenticate with Clerk', async ({ page }) => {
     // Continue ボタンをクリック
     await clickContinue(page)
     console.log('[auth.setup] Clicked Continue button')
-  } catch (_error) {
+  } catch {
     // OTP入力画面が表示されない場合はスキップ
     console.log('[auth.setup] OTP input not required, skipping...')
   }

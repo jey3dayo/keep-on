@@ -148,11 +148,11 @@ function buildHealthChecks(envSnapshot: EnvSnapshot): HealthCheck[] {
   const runtimeDescription = envSnapshot.runtime === 'workers' ? 'Cloudflare Workers 実行中' : 'Node.js 実行中'
   const runtimeStatus: Status = envSnapshot.runtime === 'workers' ? 'ok' : 'warn'
   const publishableMeta =
-    publishableMode !== 'unknown'
-      ? `mode: ${publishableMode} / tail: ${publishableTail}`
-      : `mode: unknown / tail: ${publishableTail}`
+    publishableMode === 'unknown'
+      ? `mode: unknown / tail: ${publishableTail}`
+      : `mode: ${publishableMode} / tail: ${publishableTail}`
   const secretMeta =
-    secretMode !== 'unknown' ? `mode: ${secretMode} / tail: ${secretTail}` : `mode: unknown / tail: ${secretTail}`
+    secretMode === 'unknown' ? `mode: unknown / tail: ${secretTail}` : `mode: ${secretMode} / tail: ${secretTail}`
   const clerkUrlsConfigured = Boolean(envSnapshot.signInUrl && envSnapshot.signUpUrl)
 
   return [

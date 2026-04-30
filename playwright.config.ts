@@ -15,7 +15,7 @@ function loadDotenvPrivateKey(): string | undefined {
     return match ? match[1] : undefined
   } catch {
     // .env.keysファイルが存在しない場合はundefinedを返す
-    return undefined
+    return
   }
 }
 
