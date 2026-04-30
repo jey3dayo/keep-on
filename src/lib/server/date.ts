@@ -5,7 +5,7 @@ const DEFAULT_TIMEZONE_COOKIE_KEY = 'ko_tz'
 
 const decodeCookieValue = (value: string | null): string | undefined => {
   if (!value) {
-    return undefined
+    return
   }
   try {
     return decodeURIComponent(value)

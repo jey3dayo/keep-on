@@ -25,12 +25,13 @@ export async function createHabit(formData: FormData): ServerActionResultAsync<{
 
   const result = await Result.pipe(
     validateHabitInput(userId, formData),
-    Result.andThen(async (validInput) => {
-      return await Result.try({
-        try: async () => await createHabitQuery(validInput),
-        catch: (error) => new DatabaseError({ cause: error }),
-      })
-    })
+    Result.andThen(
+      async (validInput) =>
+        await Result.try({
+          try: async () => await createHabitQuery(validInput),
+          catch: (error) => new DatabaseError({ cause: error }),
+        })
+    )
   )
 
   if (Result.isSuccess(result)) {

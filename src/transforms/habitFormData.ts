@@ -125,7 +125,7 @@ export function transformHabitUpdate(formData: FormData) {
   const getOptionalNumber = (key: string): number | undefined => {
     const v = getOptionalString(key)
     if (v === undefined) {
-      return undefined
+      return
     }
     const n = Number(v)
     return Number.isFinite(n) ? n : undefined

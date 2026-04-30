@@ -352,13 +352,14 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
     })
   }, [router])
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current)
       }
-    }
-  }, [])
+    },
+    []
+  )
 
   const queueOptimisticCheckin = (
     habitId: string,

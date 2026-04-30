@@ -47,7 +47,7 @@ function getCellStyle(cell: DayCell, accentColor: string, frequency: number) {
       backgroundColor: `color-mix(in srgb, ${accentColor} 12%, transparent)`,
     }
   }
-  return undefined
+  return
 }
 
 function getCellTitle(cell: DayCell, frequency: number): string {

@@ -67,21 +67,23 @@ export function HabitListView({
   const [resetConfirmHabit, setResetConfirmHabit] = useState<HabitWithProgress | null>(null)
   const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
 
-  const { dailyCount, weeklyCount, monthlyCount } = useMemo(() => {
-    return habits.reduce(
-      (acc, habit) => {
-        if (habit.period === 'daily') {
-          acc.dailyCount += 1
-        } else if (habit.period === 'weekly') {
-          acc.weeklyCount += 1
-        } else if (habit.period === 'monthly') {
-          acc.monthlyCount += 1
-        }
-        return acc
-      },
-      { dailyCount: 0, weeklyCount: 0, monthlyCount: 0 }
-    )
-  }, [habits])
+  const { dailyCount, weeklyCount, monthlyCount } = useMemo(
+    () =>
+      habits.reduce(
+        (acc, habit) => {
+          if (habit.period === 'daily') {
+            acc.dailyCount += 1
+          } else if (habit.period === 'weekly') {
+            acc.weeklyCount += 1
+          } else if (habit.period === 'monthly') {
+            acc.monthlyCount += 1
+          }
+          return acc
+        },
+        { dailyCount: 0, weeklyCount: 0, monthlyCount: 0 }
+      ),
+    [habits]
+  )
 
   const sortedHabits = useMemo(() => {
     return filteredHabits.map((habit, index) => ({
