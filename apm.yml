@@ -1,0 +1,11 @@
+name: keep-on
+version: 1.0.0
+description: APM project for keep-on
+author: jey3dayo
+dependencies:
+  apm:
+  - cloudflare/skills/skills/workers-best-practices
+  - cloudflare/skills/skills/wrangler
+  mcp: []
+includes: auto
+scripts: {}

@@ -1,0 +1,36 @@
+lockfile_version: '1'
+generated_at: '2026-07-09T03:33:27.363755+00:00'
+apm_version: 0.22.0
+dependencies:
+- repo_url: cloudflare/skills
+  name: workers-best-practices
+  host: github.com
+  resolved_commit: 27ce0c0e159225caa7ed30ebefd4107aa6c52497
+  version: 1.0.0
+  virtual_path: skills/workers-best-practices
+  is_virtual: true
+  package_type: claude_skill
+  deployed_files:
+  - .claude/skills/workers-best-practices
+  - .claude/skills/workers-best-practices/SKILL.md
+  - .claude/skills/workers-best-practices/references/review.md
+  - .claude/skills/workers-best-practices/references/rules.md
+  deployed_file_hashes:
+    .claude/skills/workers-best-practices/SKILL.md: sha256:099432ff265ff6080327ef0b392c118b835d2a5bda98a7de07e1afd115ed6458
+    .claude/skills/workers-best-practices/references/review.md: sha256:3e32da345be0906d020e5235d01f2b6398a41216900b5370a267e3f17757ade0
+    .claude/skills/workers-best-practices/references/rules.md: sha256:b0273b18c7fa40fadf33262e7da7c8f2a52f2f1240ce66d590e4c31663261380
+  content_hash: sha256:ebd71bed0ade41e2d4839b0d280ec6d93dced0d19f568d27b92da00e4aa9943c
+- repo_url: cloudflare/skills
+  name: wrangler
+  host: github.com
+  resolved_commit: 27ce0c0e159225caa7ed30ebefd4107aa6c52497
+  version: 1.0.0
+  virtual_path: skills/wrangler
+  is_virtual: true
+  package_type: claude_skill
+  deployed_files:
+  - .claude/skills/wrangler
+  - .claude/skills/wrangler/SKILL.md
+  deployed_file_hashes:
+    .claude/skills/wrangler/SKILL.md: sha256:42abe11ba6c0cb0c135deed1d591d844838fe0b61fc8c6d675a832435508a61b
+  content_hash: sha256:11edeb37eedb91deedde694b2bb1cc4ff4e8b5a8f1836c217a8c871fe39abcb5
