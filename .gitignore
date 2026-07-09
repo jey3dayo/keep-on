@@ -74,3 +74,7 @@ test-results/
 
 # cloudflare secrets (機密情報)
 .secrets.json
+
+
+# APM dependencies
+apm_modules/
