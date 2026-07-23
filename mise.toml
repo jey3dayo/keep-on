@@ -17,7 +17,8 @@ MD_EXCLUDE_WORKTREES = "#**/.worktrees/**"
 
 [tools]
 node = "24.13.0"
-pnpm = "10.29.3"
+# bootstrap のみ。正確なバージョンは package.json の packageManager が正本（pnpm self-management が切替）
+pnpm = "11"
 taplo = "0.10.0"
 "aqua:evilmartians/lefthook" = "latest"
 "pipx:yamllint" = "latest"
