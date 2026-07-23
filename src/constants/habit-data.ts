@@ -121,6 +121,15 @@ export const habitPresets: HabitPreset[] = [
     category: 'health',
   },
   {
+    id: 'p19',
+    name: '筋トレをする',
+    iconId: 'dumbbell',
+    colorId: 'red',
+    period: 'daily',
+    frequency: 1,
+    category: 'health',
+  },
+  {
     id: 'p3',
     name: '5,000歩歩く',
     iconId: 'footprints',
