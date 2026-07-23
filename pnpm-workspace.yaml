@@ -1,14 +1,71 @@
-ignoredBuiltDependencies:
-  - '@clerk/shared'
-  - '@prisma/client'
-  - '@prisma/engines'
+allowBuilds:
+  '@sentry/cli': true
+  esbuild: true
+  oracledb: true
+  sharp: true
+  workerd: true
+
+minimumReleaseAgeExclude:
+  - "@cloudflare/workers-types@5.20260723.1"
+  - "@dotenvx/dotenvx@2.17.2"
+  - "@radix-ui/primitive@1.1.7"
+  - "@radix-ui/react-alert-dialog@1.1.21"
+  - "@radix-ui/react-arrow@1.1.13"
+  - "@radix-ui/react-avatar@1.2.4"
+  - "@radix-ui/react-collection@1.1.13"
+  - "@radix-ui/react-compose-refs@1.1.4"
+  - "@radix-ui/react-context@1.2.1"
+  - "@radix-ui/react-dialog@1.1.21"
+  - "@radix-ui/react-direction@1.1.3"
+  - "@radix-ui/react-dismissable-layer@1.1.17"
+  - "@radix-ui/react-dropdown-menu@2.1.22"
+  - "@radix-ui/react-focus-guards@1.1.5"
+  - "@radix-ui/react-focus-scope@1.1.14"
+  - "@radix-ui/react-id@1.1.3"
+  - "@radix-ui/react-label@2.1.13"
+  - "@radix-ui/react-menu@2.1.22"
+  - "@radix-ui/react-popper@1.3.5"
+  - "@radix-ui/react-portal@1.1.15"
+  - "@radix-ui/react-presence@1.1.9"
+  - "@radix-ui/react-primitive@2.1.8"
+  - "@radix-ui/react-progress@1.1.14"
+  - "@radix-ui/react-radio-group@1.4.5"
+  - "@radix-ui/react-roving-focus@1.1.17"
+  - "@radix-ui/react-separator@1.1.13"
+  - "@radix-ui/react-slot@1.3.1"
+  - "@radix-ui/react-tabs@1.1.19"
+  - "@radix-ui/react-tooltip@1.2.14"
+  - "@radix-ui/react-use-callback-ref@1.1.3"
+  - "@radix-ui/react-use-controllable-state@1.2.5"
+  - "@radix-ui/react-use-effect-event@0.0.4"
+  - "@radix-ui/react-use-is-hydrated@0.1.2"
+  - "@radix-ui/react-use-layout-effect@1.1.3"
+  - "@radix-ui/react-use-rect@1.1.3"
+  - "@radix-ui/react-use-size@1.1.3"
+  - "@radix-ui/react-visually-hidden@1.2.9"
+  - "@radix-ui/rect@1.1.3"
+  - "@sentry/cli-darwin@3.6.2"
+  - "@sentry/cli-linux-arm64@3.6.2"
+  - "@sentry/cli-linux-arm@3.6.2"
+  - "@sentry/cli-linux-i686@3.6.2"
+  - "@sentry/cli-linux-x64@3.6.2"
+  - "@sentry/cli-win32-arm64@3.6.2"
+  - "@sentry/cli-win32-i686@3.6.2"
+  - "@sentry/cli-win32-x64@3.6.2"
+  - "@sentry/cli@3.6.2"
+  - html-parse-stringify@4.0.1
+  - lucide-react@1.26.0
+  - react-i18next@17.0.11
+
+onlyBuiltDependencies:
+  - "@clerk/shared"
+  - "@prisma/client"
+  - "@prisma/engines"
+  - "@sentry/cli"
+  - better-sqlite3
   - esbuild
+  - oracledb
   - prisma
   - sharp
   - unrs-resolver
   - workerd
-
-onlyBuiltDependencies:
-  - '@sentry/cli'
-  - better-sqlite3
-  - oracledb

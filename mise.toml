@@ -19,6 +19,7 @@ MD_EXCLUDE_WORKTREES = "#**/.worktrees/**"
 node = "24.13.0"
 pnpm = "10.29.3"
 taplo = "0.10.0"
+"aqua:evilmartians/lefthook" = "latest"
 "pipx:yamllint" = "latest"
 
 # ========================================
@@ -108,3 +109,11 @@ run = ["pnpm db:docs:generate", "pnpm db:docs:push"]
 [tasks."db:docs:generate"]
 description = "DrizzleスキーマからDBMLを生成"
 run = "pnpm db:docs:generate"
+
+# ========================================
+# Git hooks（lefthook: commit 前整形 + push 前 CI 相当チェック）
+# ========================================
+
+[tasks."hooks:install"]
+description = "lefthook の git hooks を .git/hooks へインストール"
+run = "mise exec -- lefthook install"
