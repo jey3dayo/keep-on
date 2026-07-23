@@ -1,5 +1,5 @@
 import { startOfDay, startOfMonth, subDays, subMonths, subWeeks } from 'date-fns'
-import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
+import { and, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm'
 import {
   COMPLETION_THRESHOLD,
   DEFAULT_HABIT_PERIOD,
@@ -295,41 +295,39 @@ export async function getHabitsWithProgress(
     logInfo('getHabitsWithProgress:db-acquisition', { userId, ms: dbMs })
 
     const queryStart = nowMs()
-    const habitList = await getHabitsByUserId(userId)
+
+    const streakLimitDate = new Date(baseDate)
+    streakLimitDate.setFullYear(streakLimitDate.getFullYear() - 1)
+    const streakLimitDateKey = formatDateKey(streakLimitDate)
+
+    // habits / checkins / skips / weekStart は独立したクエリのため1段のPromise.allで並列取得する
+    // checkins・skips は habits へのJOINで userId + archived 起点にフィルタし、habitIds経由のinArrayを不要にする
+    const habitListPromise = getHabitsByUserId(userId)
+    const allCheckinsPromise: Promise<(typeof checkins.$inferSelect)[]> = db
+      .select(getTableColumns(checkins))
+      .from(checkins)
+      .innerJoin(habits, eq(checkins.habitId, habits.id))
+      .where(and(eq(habits.userId, userId), eq(habits.archived, false)))
+      .orderBy(checkins.habitId, desc(checkins.date), desc(checkins.createdAt))
+    const allSkipsPromise: Promise<(typeof habitSkips.$inferSelect)[]> = db
+      .select(getTableColumns(habitSkips))
+      .from(habitSkips)
+      .innerJoin(habits, eq(habitSkips.habitId, habits.id))
+      .where(and(eq(habits.userId, userId), eq(habits.archived, false), gte(habitSkips.date, streakLimitDateKey)))
+    const weekStartPromise = weekStart ? Promise.resolve(weekStart) : getUserWeekStart(clerkId)
+
+    const [habitList, allCheckins, allSkips, weekStartStr] = await Promise.all([
+      habitListPromise,
+      allCheckinsPromise,
+      allSkipsPromise,
+      weekStartPromise,
+    ])
 
     if (habitList.length === 0) {
       await setHabitsCache(userId, dateKey, [])
       return []
     }
 
-    const habitIds = habitList.map((habit) => habit.id)
-    const allCheckinsPromise: Promise<(typeof checkins.$inferSelect)[]> =
-      habitIds.length === 0
-        ? Promise.resolve([])
-        : db
-            .select()
-            .from(checkins)
-            .where(inArray(checkins.habitId, habitIds))
-            .orderBy(checkins.habitId, desc(checkins.date), desc(checkins.createdAt))
-
-    const streakLimitDate = new Date(baseDate)
-    streakLimitDate.setFullYear(streakLimitDate.getFullYear() - 1)
-    const streakLimitDateKey = formatDateKey(streakLimitDate)
-
-    const allSkipsPromise: Promise<(typeof habitSkips.$inferSelect)[]> =
-      habitIds.length === 0
-        ? Promise.resolve([])
-        : db
-            .select()
-            .from(habitSkips)
-            .where(and(inArray(habitSkips.habitId, habitIds), gte(habitSkips.date, streakLimitDateKey)))
-
-    const weekStartPromise = weekStart ? Promise.resolve(weekStart) : getUserWeekStart(clerkId)
-    const [weekStartStr, allCheckins, allSkips] = await Promise.all([
-      weekStartPromise,
-      allCheckinsPromise,
-      allSkipsPromise,
-    ])
     const weekStartDay = weekStartToDay(weekStartStr)
 
     const checkinsByHabit = new Map<string, typeof allCheckins>()

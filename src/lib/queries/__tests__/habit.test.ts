@@ -77,7 +77,9 @@ describe('getHabitsWithProgress', () => {
     const result = await getHabitsWithProgress('user-123', 'clerk-123', baseDate)
 
     expect(result).toEqual([])
-    expect(db.orderBy).toHaveBeenCalledTimes(1)
+    // habits/checkins/skips/weekStart は1段のPromise.allで並列実行するため、
+    // habitsが空でもcheckins側のorderBy呼び出し(JOINクエリ)は発生する
+    expect(db.orderBy).toHaveBeenCalledTimes(2)
   })
 
   it('進捗とストリークを計算して返す', async () => {
