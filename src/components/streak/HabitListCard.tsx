@@ -1,6 +1,6 @@
 'use client'
 
-import type { CSSProperties, KeyboardEvent } from 'react'
+import type { CSSProperties, KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react'
 import { useRef } from 'react'
 import { Button, CheckInButton } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
@@ -8,6 +8,9 @@ import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById } from '@/constants/habit-data'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
+
+// スクロール操作を長押しと誤検知しないための移動許容量
+const LONG_PRESS_MOVE_THRESHOLD_PX = 10
 
 interface HabitListCardProps {
   completed: boolean
@@ -32,14 +35,32 @@ export function HabitListCard({
   const periodData = getPeriodById(habit.period)
   const IconComponent = getIconById(normalizeIconName(habit.icon)).icon
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const longPressTriggeredRef = useRef(false)
+  const longPressStartPointRef = useRef<{ x: number; y: number } | null>(null)
   const badgeBackgroundColor = `var(--${colorData.id}-a4)`
 
   const progressPercent = Math.min((habit.currentProgress / habit.frequency) * 100, 100)
 
-  const handleLongPressStart = () => {
+  const handleLongPressStart = (event: ReactPointerEvent<HTMLDivElement>) => {
+    longPressTriggeredRef.current = false
+    longPressStartPointRef.current = { x: event.clientX, y: event.clientY }
     longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true
       onLongPressOrContextMenu()
     }, 500)
+  }
+
+  const handleLongPressMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const startPoint = longPressStartPointRef.current
+    if (!(startPoint && longPressTimerRef.current)) {
+      return
+    }
+    const deltaX = event.clientX - startPoint.x
+    const deltaY = event.clientY - startPoint.y
+    if (Math.hypot(deltaX, deltaY) > LONG_PRESS_MOVE_THRESHOLD_PX) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
   }
 
   const handleLongPressEnd = () => {
@@ -47,10 +68,20 @@ export function HabitListCard({
       clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
     }
+    longPressStartPointRef.current = null
   }
 
   const handleContextMenu = (event: React.MouseEvent) => {
     event.preventDefault()
+    longPressTriggeredRef.current = true
+    onLongPressOrContextMenu()
+  }
+
+  const handleCardClick = () => {
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false
+      return
+    }
     onLongPressOrContextMenu()
   }
 
@@ -70,10 +101,12 @@ export function HabitListCard({
       className={cn(
         'group relative cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-4 pr-12 shadow-sm transition-all duration-200 hover:border-border/80 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none'
       )}
+      onClick={handleCardClick}
       onContextMenu={handleContextMenu}
       onKeyDown={handleKeyDown}
       onPointerDown={handleLongPressStart}
       onPointerLeave={handleLongPressEnd}
+      onPointerMove={handleLongPressMove}
       onPointerUp={handleLongPressEnd}
       role="button"
       style={{
@@ -104,7 +137,11 @@ export function HabitListCard({
           aria-pressed={completed}
           completed={completed}
           disabled={false}
-          onClick={completed ? onRemove : onAdd}
+          onClick={(event) => {
+            event.stopPropagation()
+            const handler = completed ? onRemove : onAdd
+            handler?.()
+          }}
           style={
             {
               backgroundColor: colorData.color,
@@ -144,7 +181,7 @@ export function HabitListCard({
                 }}
               />
             </div>
-            <span className="whitespace-nowrap font-medium text-muted-foreground text-sm">
+            <span className="whitespace-nowrap font-medium text-muted-foreground text-sm tabular-nums">
               {habit.currentProgress} / {habit.frequency}
             </span>
             {habit.frequency > 1 && onAdd && onRemove && (
@@ -185,7 +222,10 @@ export function HabitListCard({
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-1">
             <Icon className="h-4 w-4" name="flame" style={{ color: habit.streak > 0 ? colorData.color : undefined }} />
-            <span className="font-bold text-lg" style={{ color: habit.streak > 0 ? colorData.color : undefined }}>
+            <span
+              className="font-bold text-lg tabular-nums"
+              style={{ color: habit.streak > 0 ? colorData.color : undefined }}
+            >
               {habit.streak}
             </span>
           </div>

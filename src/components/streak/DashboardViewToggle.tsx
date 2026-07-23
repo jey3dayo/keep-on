@@ -43,7 +43,7 @@ export function DashboardViewToggle({
 }: DashboardViewToggleProps) {
   return (
     <div className="group relative">
-      <div className="absolute right-0 bottom-full mb-2 hidden w-64 group-hover:block">
+      <div className="absolute right-0 bottom-full mb-2 hidden w-64 group-focus-within:block group-hover:block">
         <Card className="border-border bg-popover shadow-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">ビュー切り替え</CardTitle>

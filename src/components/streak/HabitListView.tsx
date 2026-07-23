@@ -6,7 +6,6 @@ import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 import { AddHabitButton, Button } from '@/components/basics/Button'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
-import { HabitResetDialog } from '@/components/habits/HabitResetDialog'
 import type { OptimisticRollback } from '@/components/habits/types'
 import { HabitListCard } from '@/components/streak/HabitListCard'
 import { PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
@@ -64,7 +63,6 @@ export function HabitListView({
     open: false,
     habit: null,
   })
-  const [resetConfirmHabit, setResetConfirmHabit] = useState<HabitWithProgress | null>(null)
   const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
 
   const { dailyCount, weeklyCount, monthlyCount } = useMemo(
@@ -186,21 +184,6 @@ export function HabitListView({
         onUnSkip={drawerHabitId && onUnSkip ? () => onUnSkip(drawerHabitId) : undefined}
         open={drawerState.open}
       />
-      {/* リセット確認ダイアログ（達成時のみ表示） */}
-      {resetConfirmHabit && (
-        <HabitResetDialog
-          habitId={resetConfirmHabit.id}
-          habitName={resetConfirmHabit.name}
-          onOpenChange={(open) => {
-            if (!open) {
-              setResetConfirmHabit(null)
-            }
-          }}
-          onOptimistic={onResetOptimistic ? () => onResetOptimistic(resetConfirmHabit.id) : undefined}
-          open
-          trigger={null}
-        />
-      )}
     </>
   )
 }

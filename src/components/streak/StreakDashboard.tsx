@@ -81,7 +81,7 @@ export function StreakDashboard({
         </div>
       )}
 
-      <div className="fixed right-4 bottom-6 z-50">
+      <div className="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50">
         <div className="flex items-center gap-3">
           <DashboardViewToggle
             activeButtonClassName="bg-foreground text-background"

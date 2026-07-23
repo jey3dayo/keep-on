@@ -17,6 +17,9 @@ import { getRingColorFromBackground } from '@/lib/utils/color'
 import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
 
+// スクロール操作を長押しと誤検知しないための移動許容量
+const LONG_PRESS_MOVE_THRESHOLD_PX = 10
+
 // Drawerコンポーネントを動的にインポート
 const HabitActionDrawer = dynamic(
   () => import('@/components/dashboard/HabitActionDrawer').then((mod) => mod.HabitActionDrawer),
@@ -65,6 +68,7 @@ export function HabitSimpleView({
   const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const longPressTriggeredRef = useRef(false)
+  const longPressStartPointRef = useRef<{ x: number; y: number } | null>(null)
 
   const habitsPerPage = 6
   const totalPages = Math.max(1, Math.ceil(habits.length / habitsPerPage))
@@ -179,12 +183,26 @@ export function HabitSimpleView({
     setDrawerState({ open: false, habit: null })
   }
 
-  const handleLongPressStart = (habit: HabitWithProgress) => {
+  const handleLongPressStart = (habit: HabitWithProgress, event: React.PointerEvent<HTMLButtonElement>) => {
     longPressTriggeredRef.current = false
+    longPressStartPointRef.current = { x: event.clientX, y: event.clientY }
     longPressTimerRef.current = setTimeout(() => {
       longPressTriggeredRef.current = true
       openDrawer(habit)
     }, 500)
+  }
+
+  const handleLongPressMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const startPoint = longPressStartPointRef.current
+    if (!(startPoint && longPressTimerRef.current)) {
+      return
+    }
+    const deltaX = event.clientX - startPoint.x
+    const deltaY = event.clientY - startPoint.y
+    if (Math.hypot(deltaX, deltaY) > LONG_PRESS_MOVE_THRESHOLD_PX) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
   }
 
   const handleLongPressEnd = (resetTriggered: boolean) => {
@@ -192,6 +210,7 @@ export function HabitSimpleView({
       clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
     }
+    longPressStartPointRef.current = null
     if (resetTriggered) {
       longPressTriggeredRef.current = false
     }
@@ -226,7 +245,8 @@ export function HabitSimpleView({
                 onCheckin={(event) => handleProgressClick(event, habit, isCompleted)}
                 onContextMenu={(e) => handleContextMenu(e, habit)}
                 onLongPressEnd={handleLongPressEnd}
-                onLongPressStart={() => handleLongPressStart(habit)}
+                onLongPressMove={handleLongPressMove}
+                onLongPressStart={(event) => handleLongPressStart(habit, event)}
                 onRemoveCheckin={onRemoveCheckin ? () => onRemoveCheckin(habit.id) : undefined}
                 ringBgColor={ringBgColor}
               />
@@ -322,7 +342,7 @@ export function HabitSimpleView({
         </div>
       ) : null}
 
-      <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between border-white/10 border-t bg-black/10 px-6 py-4 backdrop-blur-md md:hidden">
+      <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between border-white/10 border-t bg-black/10 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-md md:hidden">
         <Button
           aria-label="設定を開く"
           className="h-10 w-10 rounded-full border border-white/20 bg-white/10 p-0 text-white/80 hover:bg-white/20 hover:text-white"

@@ -15,7 +15,8 @@ interface HabitCircleItemProps {
   onCheckin: (event: React.MouseEvent<HTMLButtonElement>) => void
   onContextMenu: (e: React.MouseEvent) => void
   onLongPressEnd: (resetTriggered: boolean) => void
-  onLongPressStart: () => void
+  onLongPressMove: (event: React.PointerEvent<HTMLButtonElement>) => void
+  onLongPressStart: (event: React.PointerEvent<HTMLButtonElement>) => void
   onRemoveCheckin?: () => void
   ringBgColor: string
 }
@@ -28,6 +29,7 @@ export function HabitCircleItem({
   onCheckin,
   onContextMenu,
   onLongPressEnd,
+  onLongPressMove,
   onLongPressStart,
   onRemoveCheckin,
   ringBgColor,
@@ -41,13 +43,13 @@ export function HabitCircleItem({
       {/* biome-ignore lint/a11y/noStaticElementInteractions: context menu for long-press on disabled button */}
       <div onContextMenu={onContextMenu}>
         <Button
-          aria-label={isCompleted ? '達成済み' : `${habit.name}をチェックイン`}
+          aria-label={isCompleted ? `${habit.name}のチェックインを取り消す` : `${habit.name}をチェックイン`}
           className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
-          disabled={isCompleted}
           onClick={onCheckin}
           onPointerCancel={() => onLongPressEnd(true)}
           onPointerDown={onLongPressStart}
           onPointerLeave={() => onLongPressEnd(true)}
+          onPointerMove={onLongPressMove}
           onPointerUp={() => onLongPressEnd(false)}
           scale="md"
           type="button"
@@ -63,7 +65,7 @@ export function HabitCircleItem({
 
           <div
             className={cn(
-              'flex h-[120px] w-[120px] items-center justify-center rounded-full ring-1 ring-white/15 transition-all duration-300',
+              'flex h-[120px] w-[120px] items-center justify-center rounded-full ring-1 ring-white/15 transition-[transform,box-shadow] duration-300 motion-reduce:transition-none',
               isCompleted && 'scale-105'
             )}
             style={{
@@ -72,7 +74,10 @@ export function HabitCircleItem({
             }}
           >
             <IconComponent
-              className={cn('h-14 w-14 transition-all duration-300', isCompleted ? 'text-white' : 'text-white/90')}
+              className={cn(
+                'h-14 w-14 transition-colors duration-300 motion-reduce:transition-none',
+                isCompleted ? 'text-white' : 'text-white/90'
+              )}
               strokeWidth={1.5}
             />
           </div>
@@ -108,7 +113,7 @@ export function HabitCircleItem({
               <Icon className="h-4 w-4" name="minus" />
             </Button>
 
-            <span className="min-w-[3rem] text-center font-medium text-sm text-white">
+            <span className="min-w-[3rem] text-center font-medium text-sm text-white tabular-nums">
               {habit.currentProgress} / {habit.frequency}
             </span>
 
