@@ -23,8 +23,10 @@ export async function resetHabitProgressAction(habitId: string, dateKey?: string
             throw new UnauthorizedError({ detail: '認証されていません' })
           }
 
+          // habit取得とweekStart取得は互いに独立したクエリのため並列実行する
+          const [habit, weekStart] = await Promise.all([getHabitById(input.habitId), getUserWeekStartById(userId)])
+
           // habit所有権チェック
-          const habit = await getHabitById(input.habitId)
           if (!habit) {
             throw new AuthorizationError({ detail: '習慣が見つかりません' })
           }
@@ -33,7 +35,6 @@ export async function resetHabitProgressAction(habitId: string, dateKey?: string
           }
 
           const targetDate = input.dateKey ?? new Date()
-          const weekStart = await getUserWeekStartById(userId)
           const weekStartDay = weekStartToDay(weekStart)
 
           // 期間内の全チェックインを削除

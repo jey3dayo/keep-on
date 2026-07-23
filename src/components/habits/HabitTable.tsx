@@ -30,13 +30,17 @@ export async function HabitTable({ userId, clerkId, requestMeta }: HabitTablePro
 
   logInfo('habits.table:start', meta)
 
-  // アクティブな習慣（進捗付き）
+  // アクティブな習慣（進捗付き）とアーカイブ済み習慣は互いに独立したクエリのため並列実行する
+  const [activeHabitsResult, archivedHabitsResult] = await Promise.allSettled([
+    logSpan('habits.table.query', () => getHabitsWithProgress(userId, clerkId, dateKey), meta, { timeoutMs }),
+    logSpan('habits.table.archived', () => getArchivedHabits(userId), meta, { timeoutMs }),
+  ])
+
   let activeHabits: HabitWithProgress[]
-  try {
-    activeHabits = await logSpan('habits.table.query', () => getHabitsWithProgress(userId, clerkId, dateKey), meta, {
-      timeoutMs,
-    })
-  } catch (error) {
+  if (activeHabitsResult.status === 'fulfilled') {
+    activeHabits = activeHabitsResult.value
+  } else {
+    const error = activeHabitsResult.reason
     if (staleHabits && (isTimeoutError(error) || isDatabaseError(error))) {
       logWarn('habits.table.query:stale-fallback', {
         ...meta,
@@ -52,9 +56,10 @@ export async function HabitTable({ userId, clerkId, requestMeta }: HabitTablePro
 
   // アーカイブ済み習慣
   let archivedHabits: Awaited<ReturnType<typeof getArchivedHabits>> = []
-  try {
-    archivedHabits = await logSpan('habits.table.archived', () => getArchivedHabits(userId), meta, { timeoutMs })
-  } catch (error) {
+  if (archivedHabitsResult.status === 'fulfilled') {
+    archivedHabits = archivedHabitsResult.value
+  } else {
+    const error = archivedHabitsResult.reason
     if (isTimeoutError(error) || isDatabaseError(error)) {
       logWarn('habits.table.archived:skip', { ...meta, error: formatError(error) })
     } else {
