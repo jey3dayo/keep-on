@@ -37,20 +37,13 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
     period: habit.period,
   }
 
-  const deletedCheckin = await spans.runWithDbTimeout(
+  const { deleted, currentCount } = await spans.runWithDbTimeout(
     'action.habits.removeCheckin.deleteLatestCheckin',
     () => deleteLatestCheckinByHabitAndPeriod(habitId, targetDate, habit.period, weekStartDay),
     deleteMeta
   )
 
-  if (!deletedCheckin) {
-    // 削除されなかった場合でもcurrentCountを取得して返す
-    const { getCurrentCountForPeriod } = await import('@/lib/queries/checkin')
-    const currentCount = await spans.runWithDbTimeout(
-      'action.habits.removeCheckin.getCurrentCount',
-      () => getCurrentCountForPeriod(habitId, targetDate, habit.period, weekStartDay),
-      deleteMeta
-    )
+  if (!deleted) {
     return { deleted: false, currentCount }
   }
 
@@ -60,14 +53,6 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
   // アナリティクスキャッシュも無効化（総チェックイン数が変わるため）
   const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
   await invalidateAnalyticsCache(userId)
-
-  // 削除後の現在のカウントを取得
-  const { getCurrentCountForPeriod } = await import('@/lib/queries/checkin')
-  const currentCount = await spans.runWithDbTimeout(
-    'action.habits.removeCheckin.getCurrentCount',
-    () => getCurrentCountForPeriod(habitId, targetDate, habit.period, weekStartDay),
-    deleteMeta
-  )
 
   return { deleted: true, currentCount }
 }
