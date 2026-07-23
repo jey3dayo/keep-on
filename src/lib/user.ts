@@ -44,7 +44,7 @@ function parseClerkApiResponseError(error: unknown) {
   if (isClerkAPIResponseError(error)) {
     const errors = Array.isArray(error.errors)
       ? error.errors
-          .filter((entry): entry is NonNullable<typeof entry> => entry != null)
+          .filter((entry): entry is NonNullable<typeof entry> => entry !== null && entry !== undefined)
           .map((entry) => ({ code: entry.code, message: entry.message }))
       : undefined
 

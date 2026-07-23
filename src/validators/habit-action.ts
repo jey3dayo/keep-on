@@ -38,7 +38,7 @@ export function validateHabitActionInput(input: {
     return habitIdResult
   }
 
-  if (input.dateKey == null) {
+  if (input.dateKey === undefined) {
     return Result.succeed({ habitId: habitIdResult.value })
   }
 

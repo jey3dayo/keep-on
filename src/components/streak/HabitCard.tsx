@@ -27,7 +27,7 @@ export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: Habi
   return (
     <div className="relative">
       {/* 編集メニューボタン */}
-      {(onEdit || onDelete) && (
+      {onEdit || onDelete ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -47,7 +47,7 @@ export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: Habi
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {onEdit && (
+            {onEdit ? (
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation()
@@ -57,8 +57,8 @@ export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: Habi
                 <Icon className="mr-2 h-4 w-4" name="pencil" />
                 編集
               </DropdownMenuItem>
-            )}
-            {onDelete && (
+            ) : null}
+            {onDelete ? (
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onClick={(e) => {
@@ -69,10 +69,10 @@ export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: Habi
                 <Icon className="mr-2 h-4 w-4" name="trash" />
                 削除
               </DropdownMenuItem>
-            )}
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
-      )}
+      ) : null}
 
       <HabitCardToggleButton
         aria-checked={completed}
@@ -87,11 +87,11 @@ export function HabitCard({ habit, completed, onToggle, onEdit, onDelete }: Habi
           <div className="flex items-center justify-between">
             <div className="relative flex h-16 w-16 items-center justify-center rounded-full border-4 border-black/20">
               <Icon className="h-8 w-8" name={normalizeIconName(habit.icon)} />
-              {completed && (
+              {completed ? (
                 <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
                   <Icon className="h-8 w-8" name="check" />
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* ストリーク表示 */}

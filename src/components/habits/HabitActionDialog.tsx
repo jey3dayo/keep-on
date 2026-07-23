@@ -87,11 +87,11 @@ export function HabitActionDialog({
   const isControlled = open !== undefined
   const currentOpen = isControlled ? open : isOpen
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = (nextOpen: boolean) => {
     if (!isControlled) {
-      setIsOpen(open)
+      setIsOpen(nextOpen)
     }
-    onOpenChange?.(open)
+    onOpenChange?.(nextOpen)
   }
 
   const handleConfirm = async () => {
@@ -141,7 +141,7 @@ export function HabitActionDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isProcessing}>{t('habits.dialog.cancel')}</AlertDialogCancel>
           <AlertDialogAction className={confirmClassName} disabled={isProcessing} onClick={handleConfirm}>
-            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : confirmLabel}
+            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <span>{confirmLabel}</span>}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

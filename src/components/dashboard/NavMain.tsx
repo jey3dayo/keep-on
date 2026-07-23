@@ -31,7 +31,7 @@ export function NavMain({
             <SidebarMenuItem key={item.titleKey}>
               <SidebarMenuButton asChild tooltip={t(item.titleKey)}>
                 <Link href={item.url} prefetch={false}>
-                  {item.icon && <item.icon />}
+                  {item.icon ? <item.icon /> : null}
                   <span>{t(item.titleKey)}</span>
                 </Link>
               </SidebarMenuButton>

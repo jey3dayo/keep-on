@@ -18,9 +18,9 @@ const config: StorybookConfig = {
   typescript: {
     check: false,
   },
-  viteFinal: (config) => {
-    config.resolve = config.resolve ?? {}
-    const replacement = path.resolve(__dirname, './mocks/clerk.tsx')
+  viteFinal: (viteConfig) => {
+    viteConfig.resolve = viteConfig.resolve ?? {}
+    const clerkMock = path.resolve(__dirname, './mocks/clerk.tsx')
     const serverActionsMock = path.resolve(__dirname, './mocks/server-actions.ts')
     const dbMock = path.resolve(__dirname, './mocks/db.ts')
     const postgresMock = path.resolve(__dirname, './mocks/postgres.ts')
@@ -36,35 +36,35 @@ const config: StorybookConfig = {
       },
     ]
 
-    const existingAliases = Array.isArray(config.resolve.alias)
-      ? config.resolve.alias
-      : Object.entries(config.resolve.alias ?? {}).map(([find, replacement]) => ({ find, replacement }))
+    const existingAliases = Array.isArray(viteConfig.resolve.alias)
+      ? viteConfig.resolve.alias
+      : Object.entries(viteConfig.resolve.alias ?? {}).map(([find, to]) => ({ find, replacement: to }))
 
-    config.resolve.alias = [
+    viteConfig.resolve.alias = [
       { find: /^@\//, replacement: `${srcRoot}/` },
       ...serverActionAliases,
       { find: /^@\/lib\/db$/, replacement: dbMock },
       { find: /^postgres$/, replacement: postgresMock },
-      { find: '@clerk/nextjs/server', replacement },
-      { find: '@clerk/nextjs/errors', replacement },
-      { find: '@clerk/nextjs', replacement },
+      { find: '@clerk/nextjs/server', replacement: clerkMock },
+      { find: '@clerk/nextjs/errors', replacement: clerkMock },
+      { find: '@clerk/nextjs', replacement: clerkMock },
       ...existingAliases,
     ]
-    config.define = {
-      ...(config.define ?? {}),
+    viteConfig.define = {
+      ...(viteConfig.define ?? {}),
       'process.env.SKIP_ENV_VALIDATION': '"1"',
     }
-    config.esbuild = {
-      ...(config.esbuild ?? {}),
+    viteConfig.esbuild = {
+      ...(viteConfig.esbuild ?? {}),
       target: 'esnext',
     }
-    config.optimizeDeps = config.optimizeDeps ?? {}
-    config.optimizeDeps.exclude = [...(config.optimizeDeps.exclude ?? []), '@clerk/nextjs']
-    config.optimizeDeps.esbuildOptions = {
-      ...(config.optimizeDeps.esbuildOptions ?? {}),
+    viteConfig.optimizeDeps = viteConfig.optimizeDeps ?? {}
+    viteConfig.optimizeDeps.exclude = [...(viteConfig.optimizeDeps.exclude ?? []), '@clerk/nextjs']
+    viteConfig.optimizeDeps.esbuildOptions = {
+      ...(viteConfig.optimizeDeps.esbuildOptions ?? {}),
       target: 'esnext',
     }
-    return config
+    return viteConfig
   },
 }
 

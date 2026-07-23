@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getHabitById, unarchiveHabit } from '@/lib/queries/habit'
 import { unarchiveHabitAction } from '../unarchive'
 

@@ -30,7 +30,7 @@ export function DashboardStatsCard({ type, value, total, suffix, className }: Da
       <p className="font-bold text-xl">
         {value}
         {total !== undefined && <span className="font-normal text-muted-foreground text-sm"> / {total}</span>}
-        {suffix && <span className="font-normal text-muted-foreground text-sm"> {suffix}</span>}
+        {suffix ? <span className="font-normal text-muted-foreground text-sm"> {suffix}</span> : null}
       </p>
     </Card>
   )

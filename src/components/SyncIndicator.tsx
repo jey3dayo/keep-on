@@ -66,7 +66,7 @@ export function SyncIndicator() {
       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-foreground/80"
       role="status"
     >
-      {showSyncIcon && <CloudUpload className="h-5 w-5" />}
+      {showSyncIcon ? <CloudUpload className="h-5 w-5" /> : null}
     </div>
   )
 }

@@ -126,13 +126,13 @@ export function HabitActionDrawer({
               カレンダー履歴を見る
             </Button>
 
-            {!isArchived && (
+            {isArchived ? null : (
               <>
-                {(onSkip || onUnSkip) && (
+                {onSkip || onUnSkip ? (
                   <Button className="col-span-2" disabled={isSkipping} onClick={handleSkipToggle} variant="outline">
                     {activeHabit?.skippedToday ? '今日のスキップを解除' : '今日をスキップ（ストリーク維持）'}
                   </Button>
-                )}
+                ) : null}
                 <Button className="col-span-2" onClick={() => openDialog('reset')} variant="outline">
                   進捗をリセット
                 </Button>
@@ -142,11 +142,11 @@ export function HabitActionDrawer({
               </>
             )}
 
-            {isArchived && (
+            {isArchived ? (
               <Button className="col-span-2" onClick={() => openDialog('delete')} variant="outline">
                 完全に削除
               </Button>
-            )}
+            ) : null}
           </div>
         </DrawerContent>
       </Drawer>

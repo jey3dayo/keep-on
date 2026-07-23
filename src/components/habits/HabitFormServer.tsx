@@ -39,6 +39,60 @@ interface HabitFormServerProps {
 
 type FormValues = HabitFormValues
 
+interface HabitFormHeaderProps {
+  isEdit: boolean
+  isSaving: boolean
+  onBack: () => void
+  onSubmit: () => void
+  selectedColorValue: string
+  submitContent: React.ReactNode
+  t: (key: string) => string
+  watchedName?: string
+}
+
+function HabitFormHeader({
+  isEdit,
+  isSaving,
+  onBack,
+  onSubmit,
+  selectedColorValue,
+  submitContent,
+  t,
+  watchedName,
+}: HabitFormHeaderProps) {
+  const canSubmit = Boolean(watchedName?.trim()) && !isSaving
+
+  return (
+    <header className="sticky top-0 z-10 flex items-center justify-between border-border/50 border-b bg-background/50 px-4 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
+      <Button
+        className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+        onClick={onBack}
+        type="button"
+        variant="ghost"
+      >
+        <ChevronLeft className="h-5 w-5" />
+        <span className="text-sm">{t('habits.form.back')}</span>
+      </Button>
+      <h1 className="font-semibold text-foreground text-lg">
+        {isEdit ? t('habits.form.titleEdit') : t('habits.form.titleNew')}
+      </h1>
+      <Button
+        className={cn(
+          'h-auto p-0 hover:bg-transparent',
+          canSubmit ? 'text-foreground hover:opacity-80' : 'cursor-not-allowed text-muted-foreground'
+        )}
+        disabled={!canSubmit}
+        onClick={onSubmit}
+        style={{ color: canSubmit ? selectedColorValue : undefined }}
+        type="button"
+        variant="ghost"
+      >
+        {submitContent}
+      </Button>
+    </header>
+  )
+}
+
 export function HabitFormServer({
   initialData,
   onSubmit,
@@ -133,36 +187,17 @@ export function HabitFormServer({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      {!hideHeader && (
-        <header className="sticky top-0 z-10 flex items-center justify-between border-border/50 border-b bg-background/50 px-4 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
-          <Button
-            className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
-            onClick={() => router.back()}
-            type="button"
-            variant="ghost"
-          >
-            <ChevronLeft className="h-5 w-5" />
-            <span className="text-sm">{t('habits.form.back')}</span>
-          </Button>
-          <h1 className="font-semibold text-foreground text-lg">
-            {isEdit ? t('habits.form.titleEdit') : t('habits.form.titleNew')}
-          </h1>
-          <Button
-            className={cn(
-              'h-auto p-0 hover:bg-transparent',
-              watchedName?.trim() && !isSaving
-                ? 'text-foreground hover:opacity-80'
-                : 'cursor-not-allowed text-muted-foreground'
-            )}
-            disabled={!watchedName?.trim() || isSaving}
-            onClick={form.handleSubmit(handleSubmit)}
-            style={{ color: watchedName?.trim() && !isSaving ? selectedColorValue : undefined }}
-            type="button"
-            variant="ghost"
-          >
-            {submitContent}
-          </Button>
-        </header>
+      {hideHeader ? null : (
+        <HabitFormHeader
+          isEdit={isEdit}
+          isSaving={isSaving}
+          onBack={() => router.back()}
+          onSubmit={form.handleSubmit(handleSubmit)}
+          selectedColorValue={selectedColorValue}
+          submitContent={submitContent}
+          t={t}
+          watchedName={watchedName}
+        />
       )}
 
       <form
@@ -188,7 +223,7 @@ export function HabitFormServer({
                 style={{ '--tw-ring-color': selectedColorValue } as React.CSSProperties}
                 type="text"
               />
-              {fieldState.error && <p className="text-destructive text-sm">{fieldState.error.message}</p>}
+              {fieldState.error ? <p className="text-destructive text-sm">{fieldState.error.message}</p> : null}
             </div>
           )}
         />
@@ -400,7 +435,7 @@ export function HabitFormServer({
                     />
                   </div>
                 </div>
-                {field.value && (
+                {field.value ? (
                   <button
                     className="mt-3 w-full text-center text-muted-foreground text-sm hover:text-foreground"
                     onClick={() => field.onChange(null)}
@@ -408,7 +443,7 @@ export function HabitFormServer({
                   >
                     {t('habits.form.reminderClear')}
                   </button>
-                )}
+                ) : null}
               </div>
             </div>
           )}
@@ -424,7 +459,7 @@ export function HabitFormServer({
         />
 
         {/* Submit Button for Modal */}
-        {hideHeader && (
+        {hideHeader ? (
           <div className="sticky bottom-0 mt-8 bg-background pt-2 pb-4">
             <Button
               className="w-full"
@@ -439,7 +474,7 @@ export function HabitFormServer({
               {submitContent}
             </Button>
           </div>
-        )}
+        ) : null}
       </form>
     </div>
   )

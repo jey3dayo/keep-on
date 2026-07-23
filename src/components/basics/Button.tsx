@@ -72,7 +72,7 @@ export function AddHabitButton({ children, icon = true, className, ...props }: A
       variant="default"
       {...props}
     >
-      {icon && <Icon className="h-5 w-5" name="plus" />}
+      {icon ? <Icon className="h-5 w-5" name="plus" /> : null}
       {children}
     </Button>
   )

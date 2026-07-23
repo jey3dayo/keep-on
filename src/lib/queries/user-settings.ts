@@ -104,7 +104,9 @@ async function rollbackUserSettings(
       settingsId,
       userId,
     })
-    throw new Error('Critical: Failed to rollback userSettings. Manual database intervention required.')
+    throw new Error('Critical: Failed to rollback userSettings. Manual database intervention required.', {
+      cause: rollbackError,
+    })
   }
 }
 
@@ -187,13 +189,13 @@ async function updateWeekStartAndCache(
     }
 
     return clerkId
-  } catch {
+  } catch (error) {
     console.error('updateWeekStartAndCache: users.weekStart update failed, rolling back', {
       settingsId,
       userId,
     })
     await rollbackUserSettings(userId, settingsId, previousSettings)
-    throw new Error('Failed to update users.weekStart. Settings have been rolled back.')
+    throw new Error('Failed to update users.weekStart. Settings have been rolled back.', { cause: error })
   }
 }
 

@@ -68,11 +68,11 @@ export function TaskCircle({
         style={{ borderColor }}
       >
         <Icon className={cn('text-white', ICON_SIZE_CLASSES[size])} name={icon} />
-        {completed && (
+        {completed ? (
           <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
             <Icon className={cn('text-white', ICON_SIZE_CLASSES[size])} name="check" />
           </div>
-        )}
+        ) : null}
       </div>
       <span className={cn('text-center font-medium text-white', TEXT_SIZE_CLASSES[size])}>{habitName}</span>
     </Button>

@@ -13,7 +13,9 @@ function loadDotenvPrivateKey(): string | undefined {
     const envKeysContent = readFileSync(envKeysPath, 'utf-8')
     const match = envKeysContent.match(/^DOTENV_PRIVATE_KEY=(.+)$/m)
     return match ? match[1] : undefined
-  } catch {}
+  } catch {
+    // .env.keys が存在しない環境（CI等）では未設定として扱う
+  }
 }
 
 /**
