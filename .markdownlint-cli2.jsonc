@@ -20,6 +20,7 @@
     "src/generated",
     ".worktrees",
     "apm_modules",
-    ".claude/skills"
+    ".claude/skills",
+    ".plans"
   ]
 }

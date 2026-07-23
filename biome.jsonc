@@ -6,7 +6,8 @@
     "ultracite/biome/next"
   ],
   "files": {
-    "includes": ["**/*", "!!**/src/components/ui"]
+    // public/ はブラウザ直配信のランタイム資産（sw.js 含む）、*.svg は画像アセット
+    "includes": ["**/*", "!!**/src/components/ui", "!public", "!**/*.svg"]
   },
   "formatter": {
     "lineWidth": 120
@@ -21,15 +22,23 @@
   "linter": {
     "rules": {
       "style": {
-        "useFilenamingConvention": "off"
+        "useFilenamingConvention": "off",
+        // ultracite 7.9 で追加されたスタイル系。既存コードの記法（非分割代入・i++）と衝突するため無効化
+        "useDestructuring": "off",
+        "noIncrementDecrement": "off",
+        "useConsistentMethodSignatures": "off"
       },
       "suspicious": {
-        "noUnknownAtRules": "off"
+        "noUnknownAtRules": "off",
+        // 防御的チェック（D1/リトライ境界の実行時ガード）を誤検知するため無効化
+        "noUnnecessaryConditions": "off"
       },
       "performance": {
         "noNamespaceImport": "off",
         "noBarrelFile": "off",
         "useTopLevelRegex": "off",
+        // D1 は 1 クエリ = 1 往復のため、直列 await ループが意図的な箇所が多く無効化
+        "noAwaitInLoops": "off",
         // ultracite 7.9 で追加。既存コード全体がアロー関数 props 前提のため無効化。
         // 段階的な useCallback 化の候補は TODO.md を参照
         "noJsxPropsBind": "off"
