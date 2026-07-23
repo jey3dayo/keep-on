@@ -127,6 +127,25 @@ try {
 
 設定変更は `src/constants/db.ts` で一元管理されています。
 
+### raw SQL（`sql` テンプレート）を使う場合の検証必須ルール
+
+ユニットテストは DB を mock するため、`sql` テンプレートで書いた raw SQL の構文エラーは CI を素通りして本番で初めて発火する（2026-07 に条件付き INSERT の構文エラーで本番チェックインが全滅した実績あり）。
+
+`sql` テンプレートを追加・変更したときは、コミット前に実 SQLite で構文検証すること:
+
+```bash
+# ローカル D1 で検証
+pnpm wrangler d1 execute <db-name> --local --command "<生成されるSQL>"
+
+# または sqlite3 で最小スキーマを作って検証
+sqlite3 :memory: 'CREATE TABLE ...; <生成されるSQL>;'
+```
+
+#### SQLite 固有の構文制約（D1 で踏みやすいもの）
+
+- INSERT のカラムリストにテーブル修飾は書けない（`INSERT INTO t ("t"."col")` は構文エラー）。Drizzle の `${table.column}` は完全修飾で展開されるため、カラムリストには使わずリテラルで書く
+- RETURNING 句内にサブクエリは書けない
+
 ### 4. 環境変数の機密情報は dotenvx で暗号化
 
 機密情報を含む環境変数は `.env` ファイルに平文で保存せず、dotenvx で暗号化してください。
