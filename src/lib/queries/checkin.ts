@@ -73,8 +73,6 @@ export async function createCheckin(input: CreateCheckinInput) {
   )
 }
 
-const CHECKIN_COUNT_ALIAS = 'currentCheckinCount'
-
 /**
  * `INSERT ... SELECT ... WHERE (count) < frequency RETURNING *` の1行を
  * `CreateCheckinWithLimitResult`（作成成功パス）へ変換する。
@@ -82,18 +80,14 @@ const CHECKIN_COUNT_ALIAS = 'currentCheckinCount'
  * RETURNING で返る行は D1 上は `Record<string, unknown>` 形状のため、
  * 型アサーションではなくフィールドごとの検証で `checkins.$inferSelect` を組み立てる。
  */
-function parseInsertedCheckinRow(row: Record<string, unknown>): CreateCheckinWithLimitResult {
+function parseInsertedCheckinRow(row: Record<string, unknown>, currentCount: number): CreateCheckinWithLimitResult {
   const { id, habitId, date, createdAt } = row
-  const currentCount = row[CHECKIN_COUNT_ALIAS]
 
   if (typeof id !== 'string' || typeof habitId !== 'string' || typeof date !== 'string') {
     throw new Error('Unexpected checkin insert row shape: missing string fields')
   }
   if (typeof createdAt !== 'string') {
     throw new Error('Unexpected checkin insert row shape: missing createdAt')
-  }
-  if (typeof currentCount !== 'number') {
-    throw new Error('Unexpected checkin insert row shape: missing currentCheckinCount')
   }
 
   return {
@@ -117,34 +111,31 @@ export async function createCheckinWithLimit(
 
       // D1では通常のトランザクションAPIが使えず、同一日付の重複を防ぐUNIQUE制約も撤去済み（migration 0002）。
       // 頻度上限チェックを INSERT 文自身の WHERE 句（相関サブクエリ）に埋め込むことで、
-      // 「カウント取得 → INSERT」の2往復・非アトミックな旧実装のレースを解消し、1往復に統合する。
-      // RETURNING には INSERT 後の期間内カウントを相関サブクエリで同梱し、追加の往復を避ける。
+      // 「カウント取得 → INSERT」の非アトミックな旧実装のレースを解消する。
+      // 注意: INSERT のカラムリストはテーブル修飾不可、RETURNING はサブクエリ不可（いずれも SQLite の構文制約）。
       const insertedRows = await db.all<Record<string, unknown>>(sql`
-        INSERT INTO ${checkins} (${checkins.id}, ${checkins.habitId}, ${checkins.date}, ${checkins.createdAt})
+        INSERT INTO ${checkins} ("id", "habitId", "date", "createdAt")
         SELECT ${newId}, ${input.habitId}, ${dateKey}, ${createdAt}
         WHERE (
           SELECT count(*) FROM ${checkins}
           WHERE ${checkins.habitId} = ${input.habitId} AND ${checkins.date} BETWEEN ${startKey} AND ${endKey}
         ) < ${input.frequency}
-        RETURNING *, (
-          SELECT count(*) FROM ${checkins}
-          WHERE ${checkins.habitId} = ${input.habitId} AND ${checkins.date} BETWEEN ${startKey} AND ${endKey}
-        ) AS ${sql.raw(CHECKIN_COUNT_ALIAS)}
+        RETURNING *
       `)
 
-      const [insertedRow] = insertedRows
-      if (insertedRow) {
-        return parseInsertedCheckinRow(insertedRow)
-      }
-
-      // 頻度上限に達していたため INSERT がスキップされたケース（低頻度パス）。
-      // このときのみ現在カウントを取得するための追加の1往復を許容する。
+      // RETURNING にサブクエリを同梱できないため、期間内カウントは別クエリで取得する（挿入有無どちらのパスでも1回）。
       const countResult = await db
         .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
         .from(checkins)
         .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
       const currentCount = countResult[0]?.count ?? 0
+
+      const [insertedRow] = insertedRows
+      if (insertedRow) {
+        return parseInsertedCheckinRow(insertedRow, currentCount)
+      }
+
       return { created: false, currentCount, checkin: null }
     },
     { habitId: input.habitId, period: input.period }

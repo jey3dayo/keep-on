@@ -244,10 +244,11 @@ describe('createCheckinWithLimit', () => {
     vi.clearAllMocks()
   })
 
-  it('creates a checkin in a single round trip when under frequency limit', async () => {
+  it('creates a checkin atomically and fetches the resulting count', async () => {
     // レースコンディション解消の検証: 頻度上限チェックを INSERT 文自身の WHERE 句に
-    // 埋め込むことで「カウント取得→INSERT」の2往復・非アトミックな旧実装を1往復化している。
-    // ここでは db.all が1回だけ呼ばれ、db.select（事前/事後カウント）が呼ばれないことを確認する。
+    // 埋め込むことで「カウント取得→INSERT」の非アトミックな旧実装のレースを解消している。
+    // SQLite は RETURNING 句内のサブクエリを許可しないため、期間内カウントは別クエリ
+    // （db.select 1回）で取得する。db.insert（ビルダー経由の旧実装）は呼ばれない。
     const db = getDb()
     const targetDate = new Date(2024, 0, 1)
     const normalizedDate = formatDateKey(targetDate)
@@ -256,10 +257,10 @@ describe('createCheckinWithLimit', () => {
       habitId: 'habit-5',
       date: normalizedDate,
       createdAt: '2024-01-01T10:00:00.000Z',
-      currentCheckinCount: 3,
     }
 
     vi.mocked(db.all).mockResolvedValueOnce([insertedRow])
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 3 }])
 
     const result = await createCheckinWithLimit({
       habitId: 'habit-5',
@@ -279,7 +280,7 @@ describe('createCheckinWithLimit', () => {
       },
     })
     expect(db.all).toHaveBeenCalledTimes(1)
-    expect(db.select).not.toHaveBeenCalled()
+    expect(db.select).toHaveBeenCalledTimes(1)
     expect(db.insert).not.toHaveBeenCalled()
   })
 
