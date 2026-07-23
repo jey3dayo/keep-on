@@ -18,6 +18,7 @@
     ".open-next",
     "out",
     "src/generated",
-    ".worktrees"
+    ".worktrees",
+    "apm_modules"
   ]
 }
