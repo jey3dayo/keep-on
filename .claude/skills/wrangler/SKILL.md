@@ -12,7 +12,7 @@ Your knowledge of Wrangler CLI flags, config fields, and subcommands may be outd
 Fetch the **latest** information before writing or reviewing Wrangler commands and config. Do not rely on baked-in knowledge for CLI flags, config fields, or binding shapes.
 
 | Source | How to retrieve | Use for |
-|--------|----------------|---------|
+| -------- | ---------------- | --------- |
 | Wrangler docs | `https://developers.cloudflare.com/workers/wrangler/` | CLI commands, flags, config reference |
 | Wrangler config schema | `node_modules/wrangler/config-schema.json` | Config fields, binding shapes, allowed values |
 | Cloudflare docs | Search tool or `https://developers.cloudflare.com/workers/` | API reference, compatibility dates/flags |
@@ -55,7 +55,7 @@ npx create-cloudflare@latest my-app
 ## Quick Reference: Core Commands
 
 | Task | Command |
-|------|---------|
+| ------ | --------- |
 | Start local dev server | `wrangler dev` |
 | Deploy to Cloudflare | `wrangler deploy` |
 | Deploy dry run | `wrangler deploy --dry-run` |
@@ -855,6 +855,7 @@ npm install -D @cloudflare/vitest-pool-workers vitest
 ```
 
 `vitest.config.ts`:
+
 ```typescript
 import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
 
@@ -886,7 +887,7 @@ curl http://localhost:8787/__scheduled
 ### Common Issues
 
 | Issue | Solution |
-|-------|----------|
+| ------- | ---------- |
 | `command not found: wrangler` | Install: `npm install -D wrangler` |
 | Auth errors | Run `wrangler login` |
 | Startup time limit exceeded | Run `wrangler check startup` to profile startup and generate CPU profiles |

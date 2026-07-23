@@ -10,7 +10,7 @@ Your knowledge of Cloudflare Workers APIs, types, and configuration may be outda
 Fetch the **latest** versions before writing or reviewing Workers code. Do not rely on baked-in knowledge for API signatures, config fields, or binding shapes.
 
 | Source | How to retrieve | Use for |
-|--------|----------------|---------|
+| -------- | ---------------- | --------- |
 | Workers best practices | Fetch `https://developers.cloudflare.com/workers/best-practices/workers-best-practices/` | Canonical rules, patterns, anti-patterns |
 | Workers types | See `references/review.md` for retrieval steps | API signatures, handler types, binding types |
 | Wrangler config schema | `node_modules/wrangler/config-schema.json` | Config fields, binding shapes, allowed values |
@@ -38,7 +38,7 @@ mkdir -p /tmp/workers-types-latest && \
 ### Configuration
 
 | Rule | Summary |
-|------|---------|
+| ------ | --------- |
 | Compatibility date | Set `compatibility_date` to today on new projects; update periodically on existing ones |
 | nodejs_compat | Enable the `nodejs_compat` flag — many libraries depend on Node.js built-ins |
 | wrangler types | Run `wrangler types` to generate `Env` — never hand-write binding interfaces |
@@ -55,7 +55,7 @@ mkdir -p /tmp/workers-types-latest && \
 ### Architecture
 
 | Rule | Summary |
-|------|---------|
+| ------ | --------- |
 | Bindings over REST | Use in-process bindings (KV, R2, D1, Queues) — not the Cloudflare REST API |
 | Queues & Workflows | Move async/background work off the critical path |
 | Service bindings | Use service bindings for Worker-to-Worker calls — not public HTTP |
@@ -84,7 +84,7 @@ mkdir -p /tmp/workers-types-latest && \
 ## Anti-Patterns to Flag
 
 | Anti-pattern | Why it matters |
-|-------------|----------------|
+| ------------- | ---------------- |
 | `await response.text()` on unbounded data | Memory exhaustion — 128 MB limit |
 | Hardcoded secrets in source or config | Credential leak via version control |
 | `Math.random()` for tokens/IDs | Predictable, not cryptographically secure |
