@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
+import { and, eq, gte, lte, sql } from 'drizzle-orm'
 import type { Period, WeekStartDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
@@ -152,49 +152,48 @@ export async function createCheckinWithLimit(
         throw new Error('Failed to create checkin')
       }
 
-      // 4. INSERT成功後のカウントを返す
-      const finalCountResult = await db
-        .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
-        .from(checkins)
-        .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
-
-      const finalCount = finalCountResult[0]?.count ?? 0
-
+      // 4. INSERT成功後のカウントは事前チェック値から算出する（D1往復を1回削減）
       return {
         created: true,
-        currentCount: finalCount,
-        checkin: checkin ?? null,
+        currentCount: currentCount + 1,
+        checkin,
       }
     },
     { habitId: input.habitId, period: input.period }
   )
 }
 
+/**
+ * 期間内の最新チェックインを1往復（サブクエリDELETE）で削除する
+ *
+ * @returns 削除されたチェックイン。期間内にチェックインが存在しなかった場合は null
+ */
 export async function deleteLatestCheckinByHabitAndPeriod(
   habitId: string,
   date: Date | string,
   period: Period,
   weekStartDay: WeekStartDay = 1
-) {
+): Promise<typeof checkins.$inferSelect | null> {
   return await profileQuery(
     'query.deleteLatestCheckinByHabitAndPeriod',
     async () => {
       const db = getDb()
       const { startKey, endKey } = getPeriodDateRange(date, period, weekStartDay)
 
-      const [latestCheckin] = await db
-        .select()
-        .from(checkins)
-        .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
-        .orderBy(desc(checkins.date), desc(checkins.createdAt))
-        .limit(1)
+      // DELETE ... WHERE id = (期間内最新1件のサブクエリ) + RETURNING で select→delete の2往復を1往復に統合
+      const [deleted] = await db
+        .delete(checkins)
+        .where(
+          sql`${checkins.id} = (
+            SELECT ${checkins.id} FROM ${checkins}
+            WHERE ${checkins.habitId} = ${habitId} AND ${checkins.date} >= ${startKey} AND ${checkins.date} <= ${endKey}
+            ORDER BY ${checkins.date} DESC, ${checkins.createdAt} DESC
+            LIMIT 1
+          )`
+        )
+        .returning()
 
-      if (!latestCheckin) {
-        return false
-      }
-
-      await db.delete(checkins).where(eq(checkins.id, latestCheckin.id))
-      return true
+      return deleted ?? null
     },
     { habitId, period }
   )

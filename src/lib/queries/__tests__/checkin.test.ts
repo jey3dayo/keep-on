@@ -142,27 +142,19 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
     vi.clearAllMocks()
   })
 
-  it('returns false when no checkin exists in the period', async () => {
+  it('returns null when no checkin exists in the period (1回のDELETE+RETURNINGのみ)', async () => {
     const db = getDb()
     const targetDate = new Date(2024, 0, 1)
 
-    vi.mocked(db.limit).mockResolvedValueOnce([])
+    vi.mocked(db.returning).mockResolvedValueOnce([])
 
     const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', targetDate, 'daily')
-    const range = vi.mocked(getPeriodDateRange).mock.results[0]?.value
-    const whereArg = vi.mocked(db.where).mock.calls[0]?.[0] as Condition | undefined
-    const startCondition = whereArg?.conditions?.find(
-      (condition) => condition.op === 'gte' && condition.right === range?.startKey
-    )
-    const endCondition = whereArg?.conditions?.find(
-      (condition) => condition.op === 'lte' && condition.right === range?.endKey
-    )
 
-    expect(result).toBe(false)
+    expect(result).toBeNull()
     expect(vi.mocked(getPeriodDateRange)).toHaveBeenCalledWith(targetDate, 'daily', 1)
-    expect(startCondition).toBeTruthy()
-    expect(endCondition).toBeTruthy()
-    expect(db.delete).not.toHaveBeenCalled()
+    expect(db.delete).toHaveBeenCalledTimes(1)
+    expect(db.where).toHaveBeenCalledTimes(1)
+    expect(db.returning).toHaveBeenCalledTimes(1)
   })
 
   it('uses weekStartDay when calculating weekly range', async () => {
@@ -170,25 +162,15 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
     const targetDate = new Date(2024, 0, 7)
     const weekStartDay = 0
 
-    vi.mocked(db.limit).mockResolvedValueOnce([])
+    vi.mocked(db.returning).mockResolvedValueOnce([])
 
     const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', targetDate, 'weekly', weekStartDay)
-    const range = vi.mocked(getPeriodDateRange).mock.results[0]?.value
-    const whereArg = vi.mocked(db.where).mock.calls[0]?.[0] as Condition | undefined
-    const startCondition = whereArg?.conditions?.find(
-      (condition) => condition.op === 'gte' && condition.right === range?.startKey
-    )
-    const endCondition = whereArg?.conditions?.find(
-      (condition) => condition.op === 'lte' && condition.right === range?.endKey
-    )
 
-    expect(result).toBe(false)
+    expect(result).toBeNull()
     expect(vi.mocked(getPeriodDateRange)).toHaveBeenCalledWith(targetDate, 'weekly', weekStartDay)
-    expect(startCondition).toBeTruthy()
-    expect(endCondition).toBeTruthy()
   })
 
-  it('deletes the latest checkin and returns true', async () => {
+  it('deletes the latest checkin and returns the deleted row', async () => {
     const db = getDb()
     const latestCheckin = {
       id: 'checkin-4',
@@ -197,13 +179,14 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
       createdAt: new Date('2024-01-01T12:00:00Z'),
     }
 
-    vi.mocked(db.limit).mockResolvedValueOnce([latestCheckin])
+    vi.mocked(db.returning).mockResolvedValueOnce([latestCheckin])
 
     const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', new Date('2024-01-01'), 'daily')
 
-    expect(result).toBe(true)
+    expect(result).toEqual(latestCheckin)
     expect(db.delete).toHaveBeenCalledTimes(1)
-    expect(db.where).toHaveBeenCalledTimes(2)
+    // select→delete の2往復ではなく、サブクエリDELETEのwhere()呼び出しは1回のみ
+    expect(db.where).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -258,8 +241,6 @@ describe('createCheckinWithLimit', () => {
     vi.mocked(db.where).mockResolvedValueOnce([{ count: 2 }])
     // Mock INSERT with RETURNING
     vi.mocked(db.returning).mockResolvedValueOnce([createdCheckin])
-    // Mock final COUNT query after INSERT to return 3
-    vi.mocked(db.where).mockResolvedValueOnce([{ count: 3 }])
 
     const result = await createCheckinWithLimit({
       habitId: 'habit-5',
@@ -275,7 +256,8 @@ describe('createCheckinWithLimit', () => {
     })
     expect(db.insert).toHaveBeenCalledTimes(1)
     expect(db.returning).toHaveBeenCalledTimes(1)
-    expect(db.where).toHaveBeenCalledTimes(2)
+    // 事前カウント取得の1往復のみ（INSERT成功後の再カウントは行わない）
+    expect(db.where).toHaveBeenCalledTimes(1)
   })
 
   it('returns false when frequency limit is reached', async () => {

@@ -37,13 +37,13 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
     period: habit.period,
   }
 
-  const deleted = await spans.runWithDbTimeout(
+  const deletedCheckin = await spans.runWithDbTimeout(
     'action.habits.removeCheckin.deleteLatestCheckin',
     () => deleteLatestCheckinByHabitAndPeriod(habitId, targetDate, habit.period, weekStartDay),
     deleteMeta
   )
 
-  if (!deleted) {
+  if (!deletedCheckin) {
     // 削除されなかった場合でもcurrentCountを取得して返す
     const { getCurrentCountForPeriod } = await import('@/lib/queries/checkin')
     const currentCount = await spans.runWithDbTimeout(
