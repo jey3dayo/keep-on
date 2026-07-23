@@ -1,3 +1,4 @@
+import { createId } from '@paralleldrive/cuid2'
 import { and, eq, gte, lte, sql } from 'drizzle-orm'
 import type { Period, WeekStartDay } from '@/constants/habit'
 import { checkins, habits } from '@/db/schema'
@@ -22,7 +23,7 @@ interface CreateCheckinWithLimitInput {
 /**
  * チェックイン作成結果
  *
- * @property created - チェックインが作成されたかどうか（UNIQUE制約違反や頻度上限で失敗した場合はfalse）
+ * @property created - チェックインが作成されたかどうか（頻度上限に達している場合はfalse）
  * @property currentCount - 期間内の現在のチェックイン数
  * @property checkin - 作成されたチェックインレコード（失敗時はnull）
  */
@@ -72,28 +73,34 @@ export async function createCheckin(input: CreateCheckinInput) {
   )
 }
 
-export async function getCurrentCountForPeriod(
-  habitId: string,
-  date: Date | string,
-  period: Period,
-  weekStartDay: WeekStartDay = 1
-): Promise<number> {
-  return await profileQuery(
-    'query.getCurrentCountForPeriod',
-    async () => {
-      const db = getDb()
-      const dateKey = normalizeDateKey(date)
-      const { startKey, endKey } = getPeriodDateRange(dateKey, period, weekStartDay)
+const CHECKIN_COUNT_ALIAS = 'currentCheckinCount'
 
-      const countResult = await db
-        .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
-        .from(checkins)
-        .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+/**
+ * `INSERT ... SELECT ... WHERE (count) < frequency RETURNING *` の1行を
+ * `CreateCheckinWithLimitResult`（作成成功パス）へ変換する。
+ *
+ * RETURNING で返る行は D1 上は `Record<string, unknown>` 形状のため、
+ * 型アサーションではなくフィールドごとの検証で `checkins.$inferSelect` を組み立てる。
+ */
+function parseInsertedCheckinRow(row: Record<string, unknown>): CreateCheckinWithLimitResult {
+  const { id, habitId, date, createdAt } = row
+  const currentCount = row[CHECKIN_COUNT_ALIAS]
 
-      return countResult[0]?.count ?? 0
-    },
-    { habitId, period }
-  )
+  if (typeof id !== 'string' || typeof habitId !== 'string' || typeof date !== 'string') {
+    throw new Error('Unexpected checkin insert row shape: missing string fields')
+  }
+  if (typeof createdAt !== 'string') {
+    throw new Error('Unexpected checkin insert row shape: missing createdAt')
+  }
+  if (typeof currentCount !== 'number') {
+    throw new Error('Unexpected checkin insert row shape: missing currentCheckinCount')
+  }
+
+  return {
+    created: true,
+    currentCount,
+    checkin: { id, habitId, date, createdAt },
+  }
 }
 
 export async function createCheckinWithLimit(
@@ -105,82 +112,91 @@ export async function createCheckinWithLimit(
       const db = getDb()
       const dateKey = normalizeDateKey(input.date)
       const { startKey, endKey } = getPeriodDateRange(dateKey, input.period, input.weekStartDay ?? 1)
+      const newId = createId()
+      const createdAt = new Date().toISOString()
 
-      // D1では通常のトランザクションAPIが使えないため、UNIQUE制約に依存
-      // 頻度上限チェックは参考値として事前確認するが、最終的な制御はUNIQUE制約で行う
+      // D1では通常のトランザクションAPIが使えず、同一日付の重複を防ぐUNIQUE制約も撤去済み（migration 0002）。
+      // 頻度上限チェックを INSERT 文自身の WHERE 句（相関サブクエリ）に埋め込むことで、
+      // 「カウント取得 → INSERT」の2往復・非アトミックな旧実装のレースを解消し、1往復に統合する。
+      // RETURNING には INSERT 後の期間内カウントを相関サブクエリで同梱し、追加の往復を避ける。
+      const insertedRows = await db.all<Record<string, unknown>>(sql`
+        INSERT INTO ${checkins} (${checkins.id}, ${checkins.habitId}, ${checkins.date}, ${checkins.createdAt})
+        SELECT ${newId}, ${input.habitId}, ${dateKey}, ${createdAt}
+        WHERE (
+          SELECT count(*) FROM ${checkins}
+          WHERE ${checkins.habitId} = ${input.habitId} AND ${checkins.date} BETWEEN ${startKey} AND ${endKey}
+        ) < ${input.frequency}
+        RETURNING *, (
+          SELECT count(*) FROM ${checkins}
+          WHERE ${checkins.habitId} = ${input.habitId} AND ${checkins.date} BETWEEN ${startKey} AND ${endKey}
+        ) AS ${sql.raw(CHECKIN_COUNT_ALIAS)}
+      `)
 
-      // 1. 現在の期間内カウントを取得（頻度上限の事前チェック用）
+      const [insertedRow] = insertedRows
+      if (insertedRow) {
+        return parseInsertedCheckinRow(insertedRow)
+      }
+
+      // 頻度上限に達していたため INSERT がスキップされたケース（低頻度パス）。
+      // このときのみ現在カウントを取得するための追加の1往復を許容する。
       const countResult = await db
         .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
         .from(checkins)
         .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
 
       const currentCount = countResult[0]?.count ?? 0
-
-      // 2. 頻度上限チェック（早期リターンによる最適化）
-      if (currentCount >= input.frequency) {
-        return { created: false, currentCount, checkin: null }
-      }
-
-      // 3. INSERT（UNIQUE制約により同一日付の重複は自動的に防止される）
-      let checkin: typeof checkins.$inferSelect | undefined
-      try {
-        ;[checkin] = await db
-          .insert(checkins)
-          .values({
-            habitId: input.habitId,
-            date: dateKey,
-          })
-          .returning()
-      } catch (error) {
-        // UNIQUE制約違反のみをハンドリング（同じ習慣の同じ日に既にチェックイン済み）
-        const errorMessage = String(error)
-        if (errorMessage.includes('UNIQUE')) {
-          // UNIQUE制約違反の場合は最新のカウントを取得して返す
-          const latestCountResult = await db
-            .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
-            .from(checkins)
-            .where(and(eq(checkins.habitId, input.habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
-          const latestCount = latestCountResult[0]?.count ?? 0
-          return { created: false, currentCount: latestCount, checkin: null }
-        }
-        // その他のエラー（FOREIGN KEY制約違反など）は上位層に伝播
-        throw error
-      }
-
-      if (!checkin) {
-        throw new Error('Failed to create checkin')
-      }
-
-      // 4. INSERT成功後のカウントは事前チェック値から算出する（D1往復を1回削減）
-      return {
-        created: true,
-        currentCount: currentCount + 1,
-        checkin,
-      }
+      return { created: false, currentCount, checkin: null }
     },
     { habitId: input.habitId, period: input.period }
   )
 }
 
 /**
- * 期間内の最新チェックインを1往復（サブクエリDELETE）で削除する
+ * 削除結果
  *
- * @returns 削除されたチェックイン。期間内にチェックインが存在しなかった場合は null
+ * @property checkin - 削除されたチェックインレコード（削除対象なしの場合はnull）
+ * @property currentCount - 削除後の期間内チェックイン数
+ * @property deleted - チェックインが削除されたかどうか
+ */
+export interface DeleteLatestCheckinResult {
+  checkin: typeof checkins.$inferSelect | null
+  currentCount: number
+  deleted: boolean
+}
+
+/**
+ * 期間内の最新チェックインを削除し、削除後のカウントを返す
+ *
+ * `createCheckinWithLimit` と対称の設計: 削除前に期間内カウントを取得し、
+ * 削除成功時はカウントを再取得せず `count - 1` を返すことで往復数を抑える。
+ * 期間内にチェックインが存在しない場合は DELETE 自体を発行せず1往復で終える。
  */
 export async function deleteLatestCheckinByHabitAndPeriod(
   habitId: string,
   date: Date | string,
   period: Period,
   weekStartDay: WeekStartDay = 1
-): Promise<typeof checkins.$inferSelect | null> {
+): Promise<DeleteLatestCheckinResult> {
   return await profileQuery(
     'query.deleteLatestCheckinByHabitAndPeriod',
     async () => {
       const db = getDb()
       const { startKey, endKey } = getPeriodDateRange(date, period, weekStartDay)
 
-      // DELETE ... WHERE id = (期間内最新1件のサブクエリ) + RETURNING で select→delete の2往復を1往復に統合
+      // 1. 削除前の期間内カウントを取得
+      const countResult = await db
+        .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
+        .from(checkins)
+        .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+
+      const currentCount = countResult[0]?.count ?? 0
+
+      // 2. 削除対象が存在しない場合はDELETEを発行せず早期リターン
+      if (currentCount === 0) {
+        return { deleted: false, currentCount: 0, checkin: null }
+      }
+
+      // 3. DELETE ... WHERE id = (期間内最新1件のサブクエリ) + RETURNING で select→delete の2往復を1往復に統合
       const [deleted] = await db
         .delete(checkins)
         .where(
@@ -193,7 +209,12 @@ export async function deleteLatestCheckinByHabitAndPeriod(
         )
         .returning()
 
-      return deleted ?? null
+      if (!deleted) {
+        return { deleted: false, currentCount, checkin: null }
+      }
+
+      // 4. 削除成功後のカウントは事前チェック値から算出する（再カウントのD1往復を削減）
+      return { deleted: true, currentCount: currentCount - 1, checkin: deleted }
     },
     { habitId, period }
   )

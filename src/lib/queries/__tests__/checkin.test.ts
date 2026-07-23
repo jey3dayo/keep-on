@@ -6,7 +6,10 @@ vi.mock('drizzle-orm', () => ({
   gte: (left: unknown, right: unknown) => ({ op: 'gte', left, right }),
   lte: (left: unknown, right: unknown) => ({ op: 'lte', left, right }),
   desc: (value: unknown) => ({ op: 'desc', value }),
-  sql: Object.assign((...values: unknown[]) => ({ sql: values }), { mapWith: (fn: unknown) => fn }),
+  sql: Object.assign((...values: unknown[]) => ({ sql: values }), {
+    mapWith: (fn: unknown) => fn,
+    raw: (str: string) => ({ raw: str }),
+  }),
 }))
 
 vi.mock('@/lib/utils/date', async (importOriginal) => {
@@ -38,6 +41,7 @@ vi.mock('@/lib/db', () => {
     returning: vi.fn().mockResolvedValue([]),
     delete: vi.fn().mockReturnThis(),
     run: vi.fn().mockResolvedValue({}),
+    all: vi.fn().mockResolvedValue([]),
   }
 
   return {
@@ -142,19 +146,19 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
     vi.clearAllMocks()
   })
 
-  it('returns null when no checkin exists in the period (1回のDELETE+RETURNINGのみ)', async () => {
+  it('returns deleted:false without issuing DELETE when the period count is 0 (1往復のみ)', async () => {
     const db = getDb()
     const targetDate = new Date(2024, 0, 1)
 
-    vi.mocked(db.returning).mockResolvedValueOnce([])
+    // 事前カウント取得のみ0件
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 0 }])
 
     const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', targetDate, 'daily')
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ deleted: false, currentCount: 0, checkin: null })
     expect(vi.mocked(getPeriodDateRange)).toHaveBeenCalledWith(targetDate, 'daily', 1)
-    expect(db.delete).toHaveBeenCalledTimes(1)
+    expect(db.delete).not.toHaveBeenCalled()
     expect(db.where).toHaveBeenCalledTimes(1)
-    expect(db.returning).toHaveBeenCalledTimes(1)
   })
 
   it('uses weekStartDay when calculating weekly range', async () => {
@@ -162,15 +166,15 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
     const targetDate = new Date(2024, 0, 7)
     const weekStartDay = 0
 
-    vi.mocked(db.returning).mockResolvedValueOnce([])
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 0 }])
 
     const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', targetDate, 'weekly', weekStartDay)
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ deleted: false, currentCount: 0, checkin: null })
     expect(vi.mocked(getPeriodDateRange)).toHaveBeenCalledWith(targetDate, 'weekly', weekStartDay)
   })
 
-  it('deletes the latest checkin and returns the deleted row', async () => {
+  it('deletes the latest checkin and returns count-1 without re-counting (事前カウント値から算出)', async () => {
     const db = getDb()
     const latestCheckin = {
       id: 'checkin-4',
@@ -179,14 +183,28 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
       createdAt: new Date('2024-01-01T12:00:00Z'),
     }
 
+    // 事前カウント取得: 2件
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 2 }])
     vi.mocked(db.returning).mockResolvedValueOnce([latestCheckin])
 
     const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', new Date('2024-01-01'), 'daily')
 
-    expect(result).toEqual(latestCheckin)
+    expect(result).toEqual({ deleted: true, currentCount: 1, checkin: latestCheckin })
     expect(db.delete).toHaveBeenCalledTimes(1)
-    // select→delete の2往復ではなく、サブクエリDELETEのwhere()呼び出しは1回のみ
-    expect(db.where).toHaveBeenCalledTimes(1)
+    // 事前カウント取得(1回) + サブクエリDELETEのwhere()呼び出し(1回) の計2回
+    expect(db.where).toHaveBeenCalledTimes(2)
+    expect(db.returning).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns deleted:false when DELETE affects no row despite a positive pre-count', async () => {
+    const db = getDb()
+
+    vi.mocked(db.where).mockResolvedValueOnce([{ count: 1 }])
+    vi.mocked(db.returning).mockResolvedValueOnce([])
+
+    const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', new Date('2024-01-01'), 'daily')
+
+    expect(result).toEqual({ deleted: false, currentCount: 1, checkin: null })
   })
 })
 
@@ -226,21 +244,22 @@ describe('createCheckinWithLimit', () => {
     vi.clearAllMocks()
   })
 
-  it('creates a checkin when under frequency limit', async () => {
+  it('creates a checkin in a single round trip when under frequency limit', async () => {
+    // レースコンディション解消の検証: 頻度上限チェックを INSERT 文自身の WHERE 句に
+    // 埋め込むことで「カウント取得→INSERT」の2往復・非アトミックな旧実装を1往復化している。
+    // ここでは db.all が1回だけ呼ばれ、db.select（事前/事後カウント）が呼ばれないことを確認する。
     const db = getDb()
     const targetDate = new Date(2024, 0, 1)
     const normalizedDate = formatDateKey(targetDate)
-    const createdCheckin = {
+    const insertedRow = {
       id: 'checkin-5',
       habitId: 'habit-5',
       date: normalizedDate,
-      createdAt: new Date('2024-01-01T10:00:00Z'),
+      createdAt: '2024-01-01T10:00:00.000Z',
+      currentCheckinCount: 3,
     }
 
-    // Mock COUNT query to return 2 (under limit of 3)
-    vi.mocked(db.where).mockResolvedValueOnce([{ count: 2 }])
-    // Mock INSERT with RETURNING
-    vi.mocked(db.returning).mockResolvedValueOnce([createdCheckin])
+    vi.mocked(db.all).mockResolvedValueOnce([insertedRow])
 
     const result = await createCheckinWithLimit({
       habitId: 'habit-5',
@@ -252,19 +271,25 @@ describe('createCheckinWithLimit', () => {
     expect(result).toEqual({
       created: true,
       currentCount: 3,
-      checkin: createdCheckin,
+      checkin: {
+        id: 'checkin-5',
+        habitId: 'habit-5',
+        date: normalizedDate,
+        createdAt: '2024-01-01T10:00:00.000Z',
+      },
     })
-    expect(db.insert).toHaveBeenCalledTimes(1)
-    expect(db.returning).toHaveBeenCalledTimes(1)
-    // 事前カウント取得の1往復のみ（INSERT成功後の再カウントは行わない）
-    expect(db.where).toHaveBeenCalledTimes(1)
+    expect(db.all).toHaveBeenCalledTimes(1)
+    expect(db.select).not.toHaveBeenCalled()
+    expect(db.insert).not.toHaveBeenCalled()
   })
 
-  it('returns false when frequency limit is reached', async () => {
+  it('returns false and fetches the count when frequency limit is reached', async () => {
+    // INSERT 文の WHERE 句で上限超過のため RETURNING が空になるケース。
+    // このときのみカウント取得のための追加往復（db.select）を許容する。
     const db = getDb()
     const targetDate = new Date(2024, 0, 2)
 
-    // Mock COUNT query to return 3 (at limit)
+    vi.mocked(db.all).mockResolvedValueOnce([])
     vi.mocked(db.where).mockResolvedValueOnce([{ count: 3 }])
 
     const result = await createCheckinWithLimit({
@@ -279,41 +304,15 @@ describe('createCheckinWithLimit', () => {
       currentCount: 3,
       checkin: null,
     })
-    expect(db.insert).not.toHaveBeenCalled()
-    expect(db.where).toHaveBeenCalledTimes(1)
+    expect(db.all).toHaveBeenCalledTimes(1)
+    expect(db.select).toHaveBeenCalledTimes(1)
   })
 
-  it('returns false when legacy UNIQUE constraint rejects same-day duplicate', async () => {
-    const db = getDb()
-    const targetDate = new Date(2024, 0, 3)
-
-    // Mock initial COUNT query to return 1 (under limit)
-    vi.mocked(db.where).mockResolvedValueOnce([{ count: 1 }])
-    // Mock INSERT to throw UNIQUE constraint error
-    vi.mocked(db.returning).mockRejectedValueOnce(new Error('UNIQUE constraint failed: Checkin.habitId, Checkin.date'))
-    // Mock latest COUNT query in catch block to return 1
-    vi.mocked(db.where).mockResolvedValueOnce([{ count: 1 }])
-
-    const result = await createCheckinWithLimit({
-      habitId: 'habit-7',
-      date: targetDate,
-      period: 'daily',
-      frequency: 3,
-    })
-
-    expect(result).toEqual({
-      created: false,
-      currentCount: 1,
-      checkin: null,
-    })
-  })
-
-  it('throws when insert fails for non-constraint reasons', async () => {
+  it('throws when insert fails (UNIQUE制約は撤去済みのためエラーは常に伝播する)', async () => {
     const db = getDb()
     const targetDate = new Date(2024, 0, 4)
 
-    vi.mocked(db.where).mockResolvedValueOnce([{ count: 0 }])
-    vi.mocked(db.returning).mockRejectedValueOnce(new Error('database is locked'))
+    vi.mocked(db.all).mockRejectedValueOnce(new Error('database is locked'))
 
     await expect(
       createCheckinWithLimit({
@@ -323,5 +322,21 @@ describe('createCheckinWithLimit', () => {
         frequency: 3,
       })
     ).rejects.toThrow('database is locked')
+  })
+
+  it('throws when the inserted row is missing expected fields (型ガードの安全性検証)', async () => {
+    const db = getDb()
+    const targetDate = new Date(2024, 0, 5)
+
+    vi.mocked(db.all).mockResolvedValueOnce([{ id: 'checkin-9', habitId: 'habit-9' }])
+
+    await expect(
+      createCheckinWithLimit({
+        habitId: 'habit-9',
+        date: targetDate,
+        period: 'daily',
+        frequency: 3,
+      })
+    ).rejects.toThrow('Unexpected checkin insert row shape')
   })
 })
