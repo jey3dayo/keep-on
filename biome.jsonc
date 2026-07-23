@@ -29,7 +29,10 @@
       "performance": {
         "noNamespaceImport": "off",
         "noBarrelFile": "off",
-        "useTopLevelRegex": "off"
+        "useTopLevelRegex": "off",
+        // ultracite 7.9 で追加。既存コード全体がアロー関数 props 前提のため無効化。
+        // 段階的な useCallback 化の候補は TODO.md を参照
+        "noJsxPropsBind": "off"
       },
       "a11y": {
         "useSemanticElements": "off"
