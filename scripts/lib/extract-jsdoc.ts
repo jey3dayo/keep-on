@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
-import ts from 'typescript'
+// TS7 (Go実装) は Strada コンパイラ API を提供しないため、TS6 API 再エクスポートを使用（7.1 の安定 API 提供後に一本化予定）
+import ts from '@typescript/typescript6'
 
 export interface SchemaComments {
   tables: Record<
@@ -50,13 +51,13 @@ function extractTableInfo(
   const tableComment = extractJSDocComment(node, sourceFile)
 
   // 変数宣言を取得
-  const declaration = node.declarationList.declarations[0]
+  const [declaration] = node.declarationList.declarations
   if (!(declaration && ts.isVariableDeclaration(declaration))) {
     return
   }
 
   // 初期化子を取得
-  const initializer = declaration.initializer
+  const { initializer } = declaration
   if (!(initializer && ts.isCallExpression(initializer))) {
     return
   }
@@ -74,7 +75,7 @@ function extractTableInfo(
   }
 
   // 第2引数: カラム定義オブジェクト
-  const columnsObject = initializer.arguments[1]
+  const [, columnsObject] = initializer.arguments
   if (!(columnsObject && ts.isObjectLiteralExpression(columnsObject))) {
     return
   }
@@ -135,7 +136,7 @@ function extractJSDocComment(node: ts.Node, sourceFile: ts.SourceFile): string |
  * sqliteTable('TableName', ...) の第1引数からSQL名を取得
  */
 function getSqlTableName(callExpr: ts.CallExpression): string | undefined {
-  const firstArg = callExpr.arguments[0]
+  const [firstArg] = callExpr.arguments
   if (!(firstArg && ts.isStringLiteral(firstArg))) {
     return
   }
@@ -157,7 +158,7 @@ function extractSqlColumnName(property: ts.PropertyAssignment): string | undefin
     }
 
     // チェーンの先頭に到達（text('clerkId') など）
-    const firstArg = expr.arguments[0]
+    const [firstArg] = expr.arguments
     if (firstArg && ts.isStringLiteral(firstArg)) {
       return firstArg.text
     }
