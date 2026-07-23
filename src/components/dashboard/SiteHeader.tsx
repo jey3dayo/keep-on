@@ -3,16 +3,18 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { ThemeToggle } from '@/components/basics/ThemeToggle'
 import { ClerkUserButton } from '@/components/clerk/ClerkUserButton'
 import { SyncIndicator } from '@/components/SyncIndicator'
 import { SidebarTrigger } from '@/components/sidebar/Sidebar'
 import { Separator } from '@/components/ui/separator'
-import { getPageTitle } from '@/constants/navigation'
+import { getPageTitleKey } from '@/constants/navigation'
 
 export function SiteHeader() {
+  const { t } = useTranslation()
   const pathname = usePathname()
-  const title = getPageTitle(pathname)
+  const title = t(getPageTitleKey(pathname))
 
   return (
     <header className="flex h-[--header-height] shrink-0 items-center gap-2 border-border/50 border-b bg-background/50 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-[--header-height] supports-[backdrop-filter]:bg-background/30 md:rounded-t-xl md:border-r">

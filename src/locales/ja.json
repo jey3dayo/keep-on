@@ -1,0 +1,76 @@
+{
+  "habits": {
+    "form": {
+      "back": "戻る",
+      "titleNew": "新しい習慣",
+      "titleEdit": "習慣を編集",
+      "save": "保存",
+      "nameLabel": "習慣の名前",
+      "namePlaceholder": "例: 毎日水を8杯飲む",
+      "iconLabel": "アイコン",
+      "periodLabel": "頻度",
+      "colorLabel": "カラー",
+      "frequencyLabel": "目標回数",
+      "reminderLabel": "リマインダー",
+      "reminderTitle": "通知時刻",
+      "reminderDescription": "未設定の場合はリマインドなし",
+      "reminderClear": "リマインダーを解除",
+      "toast": {
+        "createSuccessTitle": "習慣を作成しました",
+        "createSuccessDescription": "「{{name}}」が追加されました",
+        "createErrorTitle": "習慣の作成に失敗しました",
+        "updateSuccessTitle": "習慣を更新しました",
+        "updateSuccessDescription": "「{{name}}」を更新しました",
+        "updateErrorTitle": "習慣の更新に失敗しました"
+      }
+    },
+    "dialog": {
+      "cancel": "キャンセル",
+      "delete": {
+        "trigger": "完全に削除",
+        "title": "習慣を完全に削除しますか？",
+        "description": "「{{habitName}}」を完全に削除すると、この習慣と関連する全ての記録が削除されます。この操作は取り消せません。",
+        "confirm": "完全に削除する",
+        "success": "習慣を完全に削除しました",
+        "error": "削除に失敗しました"
+      },
+      "archive": {
+        "trigger": "アーカイブ",
+        "title": "習慣をアーカイブしますか？",
+        "description": "「{{habitName}}」をアーカイブすると、一覧から非表示になります。後で復元することができます。",
+        "confirm": "アーカイブする",
+        "success": "習慣をアーカイブしました",
+        "error": "アーカイブに失敗しました"
+      },
+      "reset": {
+        "trigger": "進捗をリセット",
+        "title": "進捗をリセットしますか？",
+        "description": "「{{habitName}}」の今日のチェックインを削除して、進捗を0に戻します",
+        "confirm": "リセット",
+        "success": "進捗をリセットしました",
+        "error": "進捗のリセットに失敗しました"
+      }
+    },
+    "presetSelector": {
+      "closeLabel": "習慣追加を閉じる",
+      "title": "習慣を追加",
+      "customNamePlaceholder": "習慣の名前を入力...",
+      "orPreset": "またはプリセットから選ぶ",
+      "categoryLabel": "{{label}}カテゴリを表示",
+      "empty": "プリセットが見つかりません"
+    },
+    "newPage": {
+      "metaTitle": "新しい習慣を追加 - KeepOn",
+      "metaDescription": "新しい習慣を作成する",
+      "heading": "新しい習慣を追加",
+      "subheading": "続けたい習慣を登録しましょう"
+    }
+  },
+  "navigation": {
+    "dashboard": "ダッシュボード",
+    "habits": "習慣",
+    "analytics": "アナリティクス",
+    "settings": "設定",
+    "help": "ヘルプ"
+  }
+}

@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 
 import {
   SidebarGroup,
@@ -15,21 +16,23 @@ export function NavMain({
   items,
 }: {
   items: {
-    title: string
+    titleKey: string
     url: string
     icon?: LucideIcon
   }[]
 }) {
+  const { t } = useTranslation()
+
   return (
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild tooltip={item.title}>
+            <SidebarMenuItem key={item.titleKey}>
+              <SidebarMenuButton asChild tooltip={t(item.titleKey)}>
                 <Link href={item.url} prefetch={false}>
                   {item.icon && <item.icon />}
-                  <span>{item.title}</span>
+                  <span>{t(item.titleKey)}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

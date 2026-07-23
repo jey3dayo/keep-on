@@ -3,6 +3,7 @@
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { type ReactNode, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -79,6 +80,7 @@ export function HabitActionDialog({
   defaultOpen,
   onOpenChange,
 }: HabitActionDialogProps) {
+  const { t } = useTranslation()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(defaultOpen ?? false)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -137,7 +139,7 @@ export function HabitActionDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isProcessing}>キャンセル</AlertDialogCancel>
+          <AlertDialogCancel disabled={isProcessing}>{t('habits.dialog.cancel')}</AlertDialogCancel>
           <AlertDialogAction className={confirmClassName} disabled={isProcessing} onClick={handleConfirm}>
             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : confirmLabel}
           </AlertDialogAction>

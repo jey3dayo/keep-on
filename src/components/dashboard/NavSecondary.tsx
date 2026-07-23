@@ -3,6 +3,7 @@
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import type * as React from 'react'
+import { useTranslation } from 'react-i18next'
 
 import {
   SidebarGroup,
@@ -17,21 +18,23 @@ export function NavSecondary({
   ...props
 }: {
   items: {
-    title: string
+    titleKey: string
     url: string
     icon: LucideIcon
   }[]
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
+  const { t } = useTranslation()
+
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
+            <SidebarMenuItem key={item.titleKey}>
               <SidebarMenuButton asChild>
                 <Link href={item.url} prefetch={false}>
                   <item.icon />
-                  <span>{item.title}</span>
+                  <span>{t(item.titleKey)}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

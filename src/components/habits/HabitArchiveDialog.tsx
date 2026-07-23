@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from 'react-i18next'
 import { archiveHabitAction } from '@/app/actions/habits/archive'
 import { Button } from '@/components/ui/button'
 import { HabitActionDialog } from './HabitActionDialog'
@@ -14,28 +15,29 @@ export function HabitArchiveDialog({
   defaultOpen,
   onOpenChange,
 }: HabitDialogProps) {
+  const { t } = useTranslation()
   const shouldUseDefaultTrigger = trigger === undefined && open === undefined
   const resolvedTrigger =
     trigger ??
     (shouldUseDefaultTrigger ? (
       <Button className="col-span-2" variant="outline">
-        アーカイブ
+        {t('habits.dialog.archive.trigger')}
       </Button>
     ) : undefined)
 
   return (
     <HabitActionDialog
       action={archiveHabitAction}
-      confirmLabel="アーカイブする"
+      confirmLabel={t('habits.dialog.archive.confirm')}
       defaultOpen={defaultOpen}
-      description={<>「{habitName}」をアーカイブすると、一覧から非表示になります。後で復元することができます。</>}
-      errorMessage="アーカイブに失敗しました"
+      description={t('habits.dialog.archive.description', { habitName })}
+      errorMessage={t('habits.dialog.archive.error')}
       habitId={habitId}
       onOpenChange={onOpenChange}
       onOptimistic={onOptimistic}
       open={open}
-      successMessage="習慣をアーカイブしました"
-      title="習慣をアーカイブしますか？"
+      successMessage={t('habits.dialog.archive.success')}
+      title={t('habits.dialog.archive.title')}
       trigger={resolvedTrigger}
     />
   )

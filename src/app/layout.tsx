@@ -6,6 +6,7 @@ import { ColorThemeScript } from '@/components/basics/ColorThemeScript'
 import { ThemeModeScript } from '@/components/basics/ThemeModeScript'
 import { ThemeProvider } from '@/components/basics/ThemeProvider'
 import { DevAgentationToolbar } from '@/components/dev/DevAgentationToolbar'
+import { I18nProvider } from '@/components/providers/I18nProvider'
 import { SyncProviderWrapper } from '@/components/providers/SyncProviderWrapper'
 import { A2HSPrompt } from '@/components/pwa/A2HSPrompt'
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration'
@@ -107,14 +108,16 @@ export default async function RootLayout({
           >
             本文へスキップ
           </a>
-          <SyncProviderWrapper>
-            <ThemeProvider defaultTheme={themeMode}>
-              <div id="main-content" tabIndex={-1}>
-                {children}
-              </div>
-              <Toaster position="bottom-right" richColors />
-            </ThemeProvider>
-          </SyncProviderWrapper>
+          <I18nProvider>
+            <SyncProviderWrapper>
+              <ThemeProvider defaultTheme={themeMode}>
+                <div id="main-content" tabIndex={-1}>
+                  {children}
+                </div>
+                <Toaster position="bottom-right" richColors />
+              </ThemeProvider>
+            </SyncProviderWrapper>
+          </I18nProvider>
           <ServiceWorkerRegistration />
           <A2HSPrompt />
           <DevAgentationToolbar />

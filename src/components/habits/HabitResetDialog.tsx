@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from 'react-i18next'
 import { resetHabitProgressAction } from '@/app/actions/habits/reset'
 import { Button } from '@/components/ui/button'
 import { HabitActionDialog } from './HabitActionDialog'
@@ -14,12 +15,13 @@ export function HabitResetDialog({
   onOpenChange,
   onOptimistic,
 }: HabitDialogProps) {
+  const { t } = useTranslation()
   const shouldUseDefaultTrigger = trigger === undefined && open === undefined
   const resolvedTrigger =
     trigger ??
     (shouldUseDefaultTrigger ? (
       <Button className="col-span-2" variant="outline">
-        進捗をリセット
+        {t('habits.dialog.reset.trigger')}
       </Button>
     ) : null)
 
@@ -27,16 +29,16 @@ export function HabitResetDialog({
     <HabitActionDialog
       action={resetHabitProgressAction}
       confirmClassName="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-      confirmLabel="リセット"
+      confirmLabel={t('habits.dialog.reset.confirm')}
       defaultOpen={defaultOpen}
-      description={<>「{habitName}」の今日のチェックインを削除して、進捗を0に戻します</>}
-      errorMessage="進捗のリセットに失敗しました"
+      description={t('habits.dialog.reset.description', { habitName })}
+      errorMessage={t('habits.dialog.reset.error')}
       habitId={habitId}
       onOpenChange={onOpenChange}
       onOptimistic={onOptimistic}
       open={open}
-      successMessage="進捗をリセットしました"
-      title="進捗をリセットしますか？"
+      successMessage={t('habits.dialog.reset.success')}
+      title={t('habits.dialog.reset.title')}
       trigger={resolvedTrigger}
     />
   )

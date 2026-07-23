@@ -4,13 +4,14 @@ import { HabitFormServer } from '@/components/habits/HabitFormServer'
 import { HabitPresetSelectorWrapper } from '@/components/habits/HabitPresetSelectorWrapper'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { habitPresets } from '@/constants/habit-data'
+import i18n from '@/lib/i18n'
 import { createRequestMeta, logInfo, logSpanOptional } from '@/lib/logging'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 
 export const metadata: Metadata = {
-  title: '新しい習慣を追加 - KeepOn',
-  description: '新しい習慣を作成する',
+  title: i18n.t('habits.newPage.metaTitle'),
+  description: i18n.t('habits.newPage.metaDescription'),
 }
 
 export default async function NewHabitPage({
@@ -50,8 +51,8 @@ export default async function NewHabitPage({
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">
       <div className="space-y-2">
-        <h1 className="font-bold text-3xl text-foreground">新しい習慣を追加</h1>
-        <p className="text-muted-foreground">続けたい習慣を登録しましょう</p>
+        <h1 className="font-bold text-3xl text-foreground">{i18n.t('habits.newPage.heading')}</h1>
+        <p className="text-muted-foreground">{i18n.t('habits.newPage.subheading')}</p>
       </div>
 
       <div className="mx-auto w-full max-w-md">

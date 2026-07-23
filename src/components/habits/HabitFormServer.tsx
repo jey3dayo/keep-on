@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
 import { updateHabitAction } from '@/app/actions/habits/update'
@@ -42,11 +43,13 @@ export function HabitFormServer({
   initialData,
   onSubmit,
   onSuccess = 'redirect',
-  submitLabel = '保存',
+  submitLabel,
   hideHeader = false,
 }: HabitFormServerProps = {}) {
+  const { t } = useTranslation()
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
+  const resolvedSubmitLabel = submitLabel ?? t('habits.form.save')
 
   // 初期値を設定（メモ化して不要な再計算を防ぐ）
   const defaultValues: HabitFormValues = useMemo(() => getHabitFormDefaults(initialData), [initialData])
@@ -74,7 +77,7 @@ export function HabitFormServer({
   const selectedColorForeground = getColorById(watchedColor || DEFAULT_HABIT_COLOR).foreground
   const SelectedIconComponent = getIconById(watchedIcon || DEFAULT_HABIT_ICON).icon
   const currentPeriod = getPeriodById(watchedPeriod || DEFAULT_HABIT_PERIOD)
-  const submitContent = isSaving ? <Check className="h-5 w-5" /> : submitLabel
+  const submitContent = isSaving ? <Check className="h-5 w-5" /> : resolvedSubmitLabel
 
   async function handleExternalSubmit(data: FormValues) {
     if (!onSubmit) {
@@ -100,8 +103,10 @@ export function HabitFormServer({
     setIsSaving(false)
 
     if (result.ok) {
-      toast.success(isEdit ? '習慣を更新しました' : '習慣を作成しました', {
-        description: isEdit ? `「${data.name}」を更新しました` : `「${data.name}」が追加されました`,
+      toast.success(isEdit ? t('habits.form.toast.updateSuccessTitle') : t('habits.form.toast.createSuccessTitle'), {
+        description: isEdit
+          ? t('habits.form.toast.updateSuccessDescription', { name: data.name })
+          : t('habits.form.toast.createSuccessDescription', { name: data.name }),
       })
       form.reset()
 
@@ -111,7 +116,7 @@ export function HabitFormServer({
         router.push('/dashboard')
       }
     } else {
-      toast.error(isEdit ? '習慣の更新に失敗しました' : '習慣の作成に失敗しました', {
+      toast.error(isEdit ? t('habits.form.toast.updateErrorTitle') : t('habits.form.toast.createErrorTitle'), {
         description: formatSerializableError(result.error),
       })
     }
@@ -137,9 +142,11 @@ export function HabitFormServer({
             variant="ghost"
           >
             <ChevronLeft className="h-5 w-5" />
-            <span className="text-sm">戻る</span>
+            <span className="text-sm">{t('habits.form.back')}</span>
           </Button>
-          <h1 className="font-semibold text-foreground text-lg">{isEdit ? '習慣を編集' : '新しい習慣'}</h1>
+          <h1 className="font-semibold text-foreground text-lg">
+            {isEdit ? t('habits.form.titleEdit') : t('habits.form.titleNew')}
+          </h1>
           <Button
             className={cn(
               'h-auto p-0 hover:bg-transparent',
@@ -171,11 +178,13 @@ export function HabitFormServer({
           name="name"
           render={({ field, fieldState }) => (
             <div className="space-y-2">
-              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">習慣の名前</div>
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                {t('habits.form.nameLabel')}
+              </div>
               <input
                 {...field}
                 className="w-full rounded-xl border border-border bg-card px-4 py-3 text-foreground transition-all placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring/50"
-                placeholder="例: 毎日水を8杯飲む"
+                placeholder={t('habits.form.namePlaceholder')}
                 style={{ '--tw-ring-color': selectedColorValue } as React.CSSProperties}
                 type="text"
               />
@@ -190,7 +199,9 @@ export function HabitFormServer({
           name="icon"
           render={({ field }) => (
             <div className="space-y-3">
-              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">アイコン</div>
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                {t('habits.form.iconLabel')}
+              </div>
               <div className="grid grid-cols-6 gap-3">
                 {habitIcons.map((item) => {
                   const IconComponent = item.icon
@@ -233,7 +244,9 @@ export function HabitFormServer({
           name="period"
           render={({ field }) => (
             <div className="space-y-3">
-              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">頻度</div>
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                {t('habits.form.periodLabel')}
+              </div>
               <div className="grid grid-cols-3 gap-2">
                 {taskPeriods.map((period) => {
                   const isSelected = field.value === period.id
@@ -282,7 +295,9 @@ export function HabitFormServer({
           name="color"
           render={({ field }) => (
             <div className="space-y-3">
-              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">カラー</div>
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                {t('habits.form.colorLabel')}
+              </div>
               <div className="scrollbar-hide flex gap-3 overflow-x-auto px-1 pt-1 pb-2">
                 {habitColors.map((color) => {
                   const isSelected = field.value === color.id
@@ -319,7 +334,9 @@ export function HabitFormServer({
           name="frequency"
           render={({ field }) => (
             <div className="space-y-3">
-              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">目標回数</div>
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                {t('habits.form.frequencyLabel')}
+              </div>
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-center justify-between">
                   <Button
@@ -358,7 +375,9 @@ export function HabitFormServer({
           name="reminderTime"
           render={({ field }) => (
             <div className="space-y-3">
-              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">リマインダー</div>
+              <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                {t('habits.form.reminderLabel')}
+              </div>
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-center gap-3">
                   <div
@@ -369,8 +388,8 @@ export function HabitFormServer({
                   </div>
                   <div className="flex flex-1 items-center justify-between gap-3">
                     <div className="text-left">
-                      <p className="font-medium text-foreground">通知時刻</p>
-                      <p className="text-muted-foreground text-sm">未設定の場合はリマインドなし</p>
+                      <p className="font-medium text-foreground">{t('habits.form.reminderTitle')}</p>
+                      <p className="text-muted-foreground text-sm">{t('habits.form.reminderDescription')}</p>
                     </div>
                     <input
                       className="rounded-lg border border-border bg-background px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring/50"
@@ -387,7 +406,7 @@ export function HabitFormServer({
                     onClick={() => field.onChange(null)}
                     type="button"
                   >
-                    リマインダーを解除
+                    {t('habits.form.reminderClear')}
                   </button>
                 )}
               </div>

@@ -2,6 +2,7 @@
 
 import { ChevronRight, X } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/basics/Button'
 import {
   getColorById,
@@ -20,6 +21,7 @@ interface HabitPresetSelectorProps {
 }
 
 export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }: HabitPresetSelectorProps) {
+  const { t } = useTranslation()
   const [selectedCategory, setSelectedCategory] = useState<PresetCategory>('all')
 
   const bgColor = 'var(--orange-9)'
@@ -34,7 +36,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
       <header className="sticky top-0 z-10 px-4 pt-3 pb-4">
         <div className="relative flex items-center justify-center">
           <Button
-            aria-label="習慣追加を閉じる"
+            aria-label={t('habits.presetSelector.closeLabel')}
             className="absolute left-0 h-10 w-10 rounded-full p-0"
             onClick={onClose}
             size="icon"
@@ -45,7 +47,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
             <X className="h-5 w-5 text-white" />
           </Button>
 
-          <h1 className="font-semibold text-lg text-white">習慣を追加</h1>
+          <h1 className="font-semibold text-lg text-white">{t('habits.presetSelector.title')}</h1>
         </div>
       </header>
 
@@ -57,14 +59,14 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
           type="button"
           variant="ghost"
         >
-          習慣の名前を入力...
+          {t('habits.presetSelector.customNamePlaceholder')}
         </Button>
       </div>
 
       <div className="px-4 pb-4">
         <div className="mb-4 flex items-center gap-3">
           <div className="h-px flex-1 bg-white/20" />
-          <p className="text-sm text-white/50">またはプリセットから選ぶ</p>
+          <p className="text-sm text-white/50">{t('habits.presetSelector.orPreset')}</p>
           <div className="h-px flex-1 bg-white/20" />
         </div>
 
@@ -74,7 +76,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
             const isSelected = selectedCategory === category.id
             return (
               <Button
-                aria-label={`${category.label}カテゴリを表示`}
+                aria-label={t('habits.presetSelector.categoryLabel', { label: category.label })}
                 aria-pressed={isSelected}
                 className={cn(
                   'h-14 w-14 flex-shrink-0 rounded-full p-0 transition-all',
@@ -129,7 +131,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
 
         {filteredPresets.length === 0 && (
           <div className="py-8 text-center">
-            <p className="text-white/60">プリセットが見つかりません</p>
+            <p className="text-white/60">{t('habits.presetSelector.empty')}</p>
           </div>
         )}
       </div>
