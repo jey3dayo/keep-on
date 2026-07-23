@@ -39,6 +39,20 @@
       }
     }
   },
+  "overrides": [
+    {
+      // valibot スキーマはオブジェクトのキー定義順がそのまま検証・issue 収集順になるため、
+      // キーソートを適用すると最初に報告されるバリデーションエラーのフィールドが変わる
+      "includes": ["src/schemas/**"],
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedKeys": "off"
+          }
+        }
+      }
+    }
+  ],
   "vcs": {
     "enabled": true,
     "clientKind": "git",

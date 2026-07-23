@@ -28,27 +28,28 @@ const ReminderTimeSchema = v.optional(
  * 習慣入力のバリデーションスキーマ
  */
 export const HabitInputSchema = v.pipe(
+  // キー順 = 検証順。最初に報告するエラーを name 優先にするため意図的に並べている
   v.object({
-    color: v.pipe(
-      v.nullable(v.optional(v.string())),
-      v.transform((val): string | null => (val?.trim() ? val.trim() : null))
-    ),
-    frequency: v.pipe(
-      v.number(),
-      v.minValue(1, 'Frequency must be at least 1'),
-      v.maxValue(100, 'Frequency is too large (max 100)')
-    ),
-    icon: v.pipe(
-      v.nullable(v.optional(v.string())),
-      v.transform((val): string | null => (val?.trim() ? val.trim() : null))
-    ),
     name: v.pipe(
       v.string(),
       v.trim(),
       v.minLength(1, 'Name is required'),
       v.maxLength(100, 'Name is too long (max 100 characters)')
     ),
+    icon: v.pipe(
+      v.nullable(v.optional(v.string())),
+      v.transform((val): string | null => (val?.trim() ? val.trim() : null))
+    ),
+    color: v.pipe(
+      v.nullable(v.optional(v.string())),
+      v.transform((val): string | null => (val?.trim() ? val.trim() : null))
+    ),
     period: v.optional(PeriodSchema, DEFAULT_HABIT_PERIOD),
+    frequency: v.pipe(
+      v.number(),
+      v.minValue(1, 'Frequency must be at least 1'),
+      v.maxValue(100, 'Frequency is too large (max 100)')
+    ),
     reminderTime: ReminderTimeSchema,
   })
 )
