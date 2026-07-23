@@ -530,8 +530,10 @@ function SidebarMenuButton({
       data-active={isActive}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
       {...props}
-      onClick={(e) => {
-        props.onClick?.(e)
+      onClick={(e: React.MouseEvent<HTMLElement>) => {
+        // Comp は Slot | "button" の多態コンポーネントのため、
+        // 実行時には常に button 要素の click イベントとして扱える
+        props.onClick?.(e as React.MouseEvent<HTMLButtonElement>)
         if (isMobile) {
           setOpenMobile(false)
         }
