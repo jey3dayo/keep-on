@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { cn } from '@/lib/utils'
 import { DashboardViewToggle } from './DashboardViewToggle'
 import { HabitListView } from './HabitListView'
 import { HabitSimpleView } from './HabitSimpleView'
@@ -81,7 +82,15 @@ export function StreakDashboard({
         </div>
       )}
 
-      <div className="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50">
+      <div
+        className={cn(
+          'fixed right-4 z-50',
+          // simple ビューのみ下部固定 nav があるため、その分を回避する
+          currentView === 'simple'
+            ? 'bottom-[calc(5.5rem+env(safe-area-inset-bottom))]'
+            : 'bottom-[calc(1.5rem+env(safe-area-inset-bottom))]'
+        )}
+      >
         <div className="flex items-center gap-3">
           <DashboardViewToggle
             activeButtonClassName="bg-foreground text-background"

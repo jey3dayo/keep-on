@@ -104,6 +104,7 @@ export function HabitListCard({
       onClick={handleCardClick}
       onContextMenu={handleContextMenu}
       onKeyDown={handleKeyDown}
+      onPointerCancel={handleLongPressEnd}
       onPointerDown={handleLongPressStart}
       onPointerLeave={handleLongPressEnd}
       onPointerMove={handleLongPressMove}
@@ -133,7 +134,7 @@ export function HabitListCard({
       </Button>
       <div className="flex items-center gap-4">
         <CheckInButton
-          aria-label={completed ? '達成済み' : `${habit.name}をチェックイン`}
+          aria-label={completed ? `${habit.name}のチェックインを取り消す` : `${habit.name}をチェックイン`}
           aria-pressed={completed}
           completed={completed}
           disabled={false}
