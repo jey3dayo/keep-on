@@ -19,6 +19,7 @@
     "out",
     "src/generated",
     ".worktrees",
-    "apm_modules"
+    "apm_modules",
+    ".claude/skills"
   ]
 }
