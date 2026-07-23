@@ -1,0 +1,35 @@
+# Git hooks（インストール: mise run hooks:install）
+# pre-commit は staged ファイルの高速整形のみ、CI 相当の重いゲートは pre-push に置く
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: biome
+      glob: "*.{js,jsx,ts,tsx,json,jsonc,css}"
+      run: pnpm exec biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+    - name: markdownlint
+      glob: "*.md"
+      # --no-globs: 設定ファイルの globs（リポジトリ全体）をマージさせず staged のみ対象にする
+      run: pnpm exec markdownlint-cli2 --no-globs --fix {staged_files}
+      stage_fixed: true
+    - name: taplo
+      glob: "*.toml"
+      run: mise exec -- taplo fmt {staged_files}
+      stage_fixed: true
+    - name: yamllint
+      glob: ".github/**/*.{yml,yaml}"
+      run: mise exec -- yamllint -c .yamllint {staged_files}
+
+# mise run ci（lint:types → lint:biome → test:ci → build:ci）と同じ段階を
+# ジョブ分割して実行する。順序は fail-fast のため ci の定義順に合わせる
+pre-push:
+  jobs:
+    - name: lint:types
+      run: mise run lint:types
+    - name: lint:biome
+      run: mise run lint:biome
+    - name: test:ci
+      run: mise run test:ci
+    - name: build:ci
+      run: mise run build:ci
