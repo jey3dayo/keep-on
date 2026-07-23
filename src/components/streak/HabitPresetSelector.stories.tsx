@@ -3,12 +3,12 @@ import { storybookToast } from '@/lib/storybook'
 import { HabitPresetSelector } from './HabitPresetSelector'
 
 const meta = {
-  title: 'Streak/HabitPresetSelector',
   component: HabitPresetSelector,
   parameters: {
     layout: 'fullscreen',
   },
   tags: ['autodocs'],
+  title: 'Streak/HabitPresetSelector',
 } satisfies Meta<typeof HabitPresetSelector>
 
 export default meta

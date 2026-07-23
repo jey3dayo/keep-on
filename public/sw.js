@@ -211,9 +211,9 @@ self.addEventListener('sync', (event) => {
 
         for (const item of sorted) {
           const res = await fetch('/api/checkin', {
-            method: 'POST',
+            body: JSON.stringify({ action: item.action, dateKey: item.dateKey, habitId: item.habitId }),
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ habitId: item.habitId, action: item.action, dateKey: item.dateKey }),
+            method: 'POST',
           })
           if (res.ok) {
             await deleteItem(db, item.id)
@@ -239,7 +239,7 @@ self.addEventListener('sync', (event) => {
       if (replayedCount > 0) {
         const clients = await self.clients.matchAll({ type: 'window' })
         for (const client of clients) {
-          client.postMessage({ type: 'SYNC_CHECKINS_COMPLETE', replayedCount })
+          client.postMessage({ replayedCount, type: 'SYNC_CHECKINS_COMPLETE' })
         }
       }
 

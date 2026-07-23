@@ -4,12 +4,7 @@ import type { HabitWithProgress } from '@/types/habit'
 import { TaskGrid } from './TaskGrid'
 
 const meta = {
-  title: 'Streak/TaskGrid',
   component: TaskGrid,
-  parameters: {
-    layout: 'fullscreen',
-  },
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div className="min-h-screen bg-slate-950 text-white">
@@ -17,59 +12,64 @@ const meta = {
       </div>
     ),
   ],
+  parameters: {
+    layout: 'fullscreen',
+  },
+  tags: ['autodocs'],
+  title: 'Streak/TaskGrid',
 } satisfies Meta<typeof TaskGrid>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 const createHabit = (overrides: Partial<HabitWithProgress> = {}): HabitWithProgress => ({
-  id: 'habit-1',
-  name: '水を8杯飲む',
-  icon: 'droplets',
-  color: 'cyan',
-  period: 'daily',
-  frequency: 8,
-  currentProgress: 5,
-  streak: 12,
-  completionRate: 62,
   archived: false,
   archivedAt: null,
-  userId: 'user-1',
+  color: 'cyan',
+  completionRate: 62,
   createdAt: new Date('2025-01-01'),
+  currentProgress: 5,
+  frequency: 8,
+  icon: 'droplets',
+  id: 'habit-1',
+  name: '水を8杯飲む',
+  period: 'daily',
+  streak: 12,
   updatedAt: new Date('2025-01-28'),
+  userId: 'user-1',
   ...overrides,
 })
 
 const habits = [
   createHabit(),
   createHabit({
+    color: 'orange',
+    completionRate: 100,
+    currentProgress: 1,
+    frequency: 1,
+    icon: 'dumbbell',
     id: 'habit-2',
     name: '30分運動',
-    icon: 'dumbbell',
-    color: 'orange',
-    frequency: 1,
-    currentProgress: 1,
-    completionRate: 100,
     streak: 7,
   }),
   createHabit({
+    color: 'purple',
+    completionRate: 0,
+    currentProgress: 0,
+    frequency: 1,
+    icon: 'book-open',
     id: 'habit-3',
     name: '読書',
-    icon: 'book-open',
-    color: 'purple',
-    frequency: 1,
-    currentProgress: 0,
-    completionRate: 0,
     streak: 5,
   }),
   createHabit({
+    color: 'teal',
+    completionRate: 100,
+    currentProgress: 1,
+    frequency: 1,
+    icon: 'brain',
     id: 'habit-4',
     name: '瞑想する',
-    icon: 'brain',
-    color: 'teal',
-    frequency: 1,
-    currentProgress: 1,
-    completionRate: 100,
     streak: 18,
   }),
 ]
@@ -78,26 +78,26 @@ const completedHabitIds = new Set(habits.filter((habit) => habit.currentProgress
 
 export const Default: Story = {
   args: {
-    habits,
     completedHabitIds,
-    onToggleHabit: (habitId) => {
-      storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
-    },
+    habits,
     onAddClick: () => {
       storybookToast.success('タスクを追加', 'Storybookでのデモです')
+    },
+    onToggleHabit: (habitId) => {
+      storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
     },
   },
 }
 
 export const WithFewHabits: Story = {
   args: {
-    habits: habits.slice(0, 2),
     completedHabitIds: new Set([habits[1]?.id].filter(Boolean)),
-    onToggleHabit: (habitId) => {
-      storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
-    },
+    habits: habits.slice(0, 2),
     onAddClick: () => {
       storybookToast.success('タスクを追加', 'Storybookでのデモです')
+    },
+    onToggleHabit: (habitId) => {
+      storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
     },
   },
 }

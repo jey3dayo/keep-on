@@ -30,8 +30,8 @@ export function extractSchemaComments(schemaPath: string): SchemaComments {
     const tableInfo = extractTableInfo(node, sourceFile)
     if (tableInfo) {
       result.tables[tableInfo.sqlTableName] = {
-        comment: tableInfo.tableComment,
         columns: tableInfo.columns,
+        comment: tableInfo.tableComment,
       }
     }
   })
@@ -96,7 +96,7 @@ function extractTableInfo(
     }
   }
 
-  return { sqlTableName, tableComment, columns }
+  return { columns, sqlTableName, tableComment }
 }
 
 /**
@@ -163,6 +163,4 @@ function extractSqlColumnName(property: ts.PropertyAssignment): string | undefin
     }
     break
   }
-
-  return
 }

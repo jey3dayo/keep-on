@@ -12,8 +12,8 @@ import { cn } from '@/lib/utils'
 import { appToast } from '@/lib/utils/toast'
 
 const WEEK_START_OPTIONS: Array<{ value: WeekStart; label: string; description: string }> = [
-  { value: 'monday', label: '月曜日', description: '週次集計を月曜起点で計算します。' },
-  { value: 'sunday', label: '日曜日', description: 'カレンダー表示に合わせた週の区切りです。' },
+  { description: '週次集計を月曜起点で計算します。', label: '月曜日', value: 'monday' },
+  { description: 'カレンダー表示に合わせた週の区切りです。', label: '日曜日', value: 'sunday' },
 ]
 
 export function WeekStartSettings() {

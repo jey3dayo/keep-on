@@ -18,7 +18,7 @@ export function buildCacheKey(userId: string): string {
  * キャッシュデータをJSON文字列に変換
  */
 export function serializeCacheData(total: number): string {
-  return JSON.stringify({ total, timestamp: Date.now() })
+  return JSON.stringify({ timestamp: Date.now(), total })
 }
 
 /**

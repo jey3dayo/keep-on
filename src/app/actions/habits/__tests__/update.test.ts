@@ -34,8 +34,8 @@ describe('updateHabitAction', () => {
 
     const mockHabit = {
       id: habitId,
-      userId,
       name: 'Test Habit',
+      userId,
     }
     vi.mocked(getHabitById).mockResolvedValue(mockHabit as any)
 
@@ -101,8 +101,8 @@ describe('updateHabitAction', () => {
 
     const mockHabit = {
       id: habitId,
-      userId,
       name: 'Test Habit',
+      userId,
     }
     vi.mocked(getHabitById).mockResolvedValue(mockHabit as any)
 

@@ -22,11 +22,11 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
   // クエリを並列実行してレイテンシを削減
   const [habit, weekStartDay] = await Promise.all([
     requireHabitForUserWithRetry({
+      actionName: 'action.habits.removeCheckin',
       habitId,
-      userId,
       meta: metaWithUser,
       runWithRetry: spans.runWithRetry,
-      actionName: 'action.habits.removeCheckin',
+      userId,
     }),
     resolveCheckinWeekStartDay('action.habits.removeCheckin', userId, metaWithUser, spans.runWithRetry),
   ])
@@ -44,7 +44,7 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
   )
 
   if (!deleted) {
-    return { deleted: false, currentCount }
+    return { currentCount, deleted: false }
   }
 
   // チェックイン削除直後: 同期的にキャッシュ無効化
@@ -54,7 +54,7 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
   const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
   await invalidateAnalyticsCache(userId)
 
-  return { deleted: true, currentCount }
+  return { currentCount, deleted: true }
 }
 
 export async function removeCheckinAction(
@@ -62,12 +62,12 @@ export async function removeCheckinAction(
   dateKey?: string
 ): HabitActionResult<RemoveCheckinResultData> {
   return await runTimedHabitAction(
-    { habitId, dateKey },
+    { dateKey, habitId },
     {
       actionName: 'action.habits.removeCheckin',
       errorDetail: 'チェックインの削除に失敗しました',
       run: async ({ input, baseMeta, spans }) =>
-        await performRemoveCheckin({ habitId: input.habitId, dateKey: input.dateKey, baseMeta, spans }),
+        await performRemoveCheckin({ baseMeta, dateKey: input.dateKey, habitId: input.habitId, spans }),
     }
   )
 }

@@ -3,8 +3,8 @@ import * as v from 'valibot'
 const envSchema = v.object({
   // Server
   CLERK_SECRET_KEY: v.pipe(v.string(), v.minLength(1)),
-  CLOUDFLARE_API_TOKEN: v.optional(v.string()),
   CLOUDFLARE_ACCOUNT_ID: v.optional(v.string()),
+  CLOUDFLARE_API_TOKEN: v.optional(v.string()),
 
   // Client (NEXT_PUBLIC_*)
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: v.pipe(v.string(), v.minLength(1)),

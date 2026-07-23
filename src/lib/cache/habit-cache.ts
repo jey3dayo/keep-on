@@ -36,16 +36,16 @@ export async function getHabitsCacheSnapshot(userId: string): Promise<HabitsCach
 
     if (!parseResult.success) {
       logWarn('habit-cache:invalid-data', {
-        userId,
         error: 'Schema validation failed',
         issues: parseResult.issues,
+        userId,
       })
       return null
     }
 
     return parseResult.output as HabitsCacheData
   } catch (error) {
-    logWarn('habit-cache:error:read', { userId, error: formatError(error) })
+    logWarn('habit-cache:error:read', { error: formatError(error), userId })
     return null
   }
 }
@@ -59,8 +59,8 @@ export async function setHabitsCache(userId: string, dateKey: string, habits: Ha
   try {
     const key = getCacheKey(userId)
     const data: HabitsCacheData = {
-      habits,
       dateKey,
+      habits,
       timestamp: Date.now(),
     }
 
@@ -68,9 +68,9 @@ export async function setHabitsCache(userId: string, dateKey: string, habits: Ha
       expirationTtl: CACHE_TTL_SECONDS,
     })
 
-    logInfo('habit-cache:set', { userId, habitCount: habits.length, ttl: CACHE_TTL_SECONDS })
+    logInfo('habit-cache:set', { habitCount: habits.length, ttl: CACHE_TTL_SECONDS, userId })
   } catch (error) {
-    logWarn('habit-cache:error:write', { userId, error: formatError(error) })
+    logWarn('habit-cache:error:write', { error: formatError(error), userId })
   }
 }
 
@@ -92,9 +92,9 @@ export async function invalidateHabitsCache(userId: string): Promise<void> {
     if (!parseResult.success) {
       await kv.delete(key)
       logWarn('habit-cache:invalidate:drop', {
-        userId,
         error: 'Schema validation failed',
         issues: parseResult.issues,
+        userId,
       })
       return
     }
@@ -110,14 +110,14 @@ export async function invalidateHabitsCache(userId: string): Promise<void> {
     })
 
     logInfo('habit-cache:invalidate:stale', {
-      userId,
-      mode: 'stale',
       cachedDateKey: data.dateKey,
+      mode: 'stale',
       staleAt: staleData.staleAt,
+      userId,
     })
   } catch (error) {
     // KV delete のエラーは通常発生しないが、念のためログに記録
-    logWarn('habit-cache:error:invalidate', { userId, error: formatError(error) })
+    logWarn('habit-cache:error:invalidate', { error: formatError(error), userId })
     // エラーを上位に伝播させない（キャッシュ無効化の失敗は致命的ではない）
   }
 }

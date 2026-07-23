@@ -29,10 +29,10 @@ describe('archiveHabitAction', () => {
     vi.mocked(getCurrentUserId).mockResolvedValue(userId)
 
     const mockHabit = {
-      id: habitId,
-      userId,
-      name: 'Test Habit',
       archived: false,
+      id: habitId,
+      name: 'Test Habit',
+      userId,
     }
     vi.mocked(getHabitById).mockResolvedValue(mockHabit as any)
     vi.mocked(archiveHabit).mockResolvedValue(true)
@@ -76,10 +76,10 @@ describe('archiveHabitAction', () => {
     vi.mocked(getCurrentUserId).mockResolvedValue(otherUserId)
 
     const mockHabit = {
-      id: habitId,
-      userId,
-      name: 'Test Habit',
       archived: false,
+      id: habitId,
+      name: 'Test Habit',
+      userId,
     }
     vi.mocked(getHabitById).mockResolvedValue(mockHabit as any)
     vi.mocked(archiveHabit).mockResolvedValue(false)

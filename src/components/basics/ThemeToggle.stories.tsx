@@ -4,12 +4,7 @@ import { ThemeProvider } from '@/components/basics/ThemeProvider'
 import { ThemeToggle } from './ThemeToggle'
 
 const meta = {
-  title: 'Basics/ThemeToggle',
   component: ThemeToggle,
-  parameters: {
-    layout: 'centered',
-  },
-  tags: ['autodocs'],
   decorators: [
     (Story: ComponentType) => (
       <ThemeProvider>
@@ -17,6 +12,11 @@ const meta = {
       </ThemeProvider>
     ),
   ],
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+  title: 'Basics/ThemeToggle',
 } satisfies Meta<typeof ThemeToggle>
 
 export default meta

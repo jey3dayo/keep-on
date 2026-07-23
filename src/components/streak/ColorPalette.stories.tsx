@@ -4,18 +4,18 @@ import { COLOR_THEMES, type ColorThemeName } from '@/constants/theme'
 import { ColorPalette } from './ColorPalette'
 
 const meta = {
-  title: 'Streak/ColorPalette',
-  component: ColorPalette,
-  parameters: {
-    layout: 'centered',
-  },
-  tags: ['autodocs'],
   argTypes: {
     currentTheme: {
       control: 'select',
       options: COLOR_THEMES,
     },
   },
+  component: ColorPalette,
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+  title: 'Streak/ColorPalette',
 } satisfies Meta<typeof ColorPalette>
 
 export default meta

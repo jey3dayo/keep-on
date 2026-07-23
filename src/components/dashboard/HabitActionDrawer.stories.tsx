@@ -47,24 +47,24 @@ function StorybookHabitActionDrawer({
 }
 
 const meta = {
-  title: 'Dashboard/HabitActionDrawer',
-  component: StorybookHabitActionDrawer,
-  parameters: {
-    layout: 'centered',
-  },
-  tags: ['autodocs'],
   argTypes: {
-    open: {
-      control: 'boolean',
-      description: 'Drawerの開閉状態',
-    },
     habit: {
       description: '操作対象の習慣データ',
     },
     onOpenChange: {
       description: '開閉状態が変化したときのコールバック',
     },
+    open: {
+      control: 'boolean',
+      description: 'Drawerの開閉状態',
+    },
   },
+  component: StorybookHabitActionDrawer,
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+  title: 'Dashboard/HabitActionDrawer',
 } satisfies Meta<typeof StorybookHabitActionDrawer>
 
 export default meta
@@ -72,102 +72,102 @@ type Story = StoryObj<typeof meta>
 
 // モック習慣データ
 const mockHabit = {
-  id: '1',
-  name: '毎日水を8杯飲む',
-  icon: 'droplets' as const,
-  color: 'blue',
-  period: 'daily' as const,
-  frequency: 8,
-  currentProgress: 3,
-  streak: 5,
-  completionRate: 37,
   archived: false,
   archivedAt: null,
-  userId: 'user1',
+  color: 'blue',
+  completionRate: 37,
   createdAt: new Date('2025-01-01'),
+  currentProgress: 3,
+  frequency: 8,
+  icon: 'droplets' as const,
+  id: '1',
+  name: '毎日水を8杯飲む',
+  period: 'daily' as const,
+  streak: 5,
   updatedAt: new Date('2025-01-28'),
+  userId: 'user1',
 }
 
 export const Default: Story = {
   args: {
-    open: true,
     habit: mockHabit,
     onOpenChange: (open) => console.log('Drawer opened:', open),
+    open: true,
   },
 }
 
 export const WeeklyHabit: Story = {
   args: {
-    open: true,
     habit: {
       ...mockHabit,
+      color: 'green',
+      completionRate: 33,
+      currentProgress: 1,
+      frequency: 3,
+      icon: 'dumbbell',
       id: '2',
       name: '週3回ジョギング',
-      icon: 'dumbbell',
-      color: 'green',
       period: 'weekly' as const,
-      frequency: 3,
-      currentProgress: 1,
       streak: 12,
-      completionRate: 33,
     },
     onOpenChange: (open) => console.log('Drawer opened:', open),
+    open: true,
   },
 }
 
 export const MonthlyHabit: Story = {
   args: {
-    open: true,
     habit: {
       ...mockHabit,
+      color: 'purple',
+      completionRate: 70,
+      currentProgress: 7,
+      frequency: 10,
+      icon: 'book-open',
       id: '3',
       name: '月10回読書',
-      icon: 'book-open',
-      color: 'purple',
       period: 'monthly' as const,
-      frequency: 10,
-      currentProgress: 7,
       streak: 3,
-      completionRate: 70,
     },
     onOpenChange: (open) => console.log('Drawer opened:', open),
+    open: true,
   },
 }
 
 export const Completed: Story = {
   args: {
-    open: true,
     habit: {
       ...mockHabit,
+      completionRate: 100,
+      currentProgress: 8,
       id: '4',
       name: '完了した習慣',
-      currentProgress: 8,
       streak: 30,
-      completionRate: 100,
     },
     onOpenChange: (open) => console.log('Drawer opened:', open),
+    open: true,
   },
 }
 
 export const Archived: Story = {
   args: {
-    open: true,
     habit: {
       ...mockHabit,
-      id: '5',
-      name: 'アーカイブされた習慣',
       archived: true,
       archivedAt: new Date('2025-01-15').toISOString(),
+      id: '5',
+      name: 'アーカイブされた習慣',
     },
     onOpenChange: (open) => console.log('Drawer opened:', open),
+    open: true,
   },
 }
 
 export const Closed: Story = {
   args: {
-    open: false,
     habit: mockHabit,
     onOpenChange: (open) => console.log('Drawer opened:', open),
+    open: false,
   },
 }
 

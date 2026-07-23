@@ -5,12 +5,6 @@ import { toast } from 'sonner'
  * SSR環境では何もしない
  */
 export const storybookToast = {
-  success: (message: string, description?: string) => {
-    if (typeof window === 'undefined') {
-      return
-    }
-    toast.success(message, { description })
-  },
   error: (message: string, description?: string) => {
     if (typeof window === 'undefined') {
       return
@@ -22,5 +16,11 @@ export const storybookToast = {
       return
     }
     toast.info(message, { description })
+  },
+  success: (message: string, description?: string) => {
+    if (typeof window === 'undefined') {
+      return
+    }
+    toast.success(message, { description })
   },
 }

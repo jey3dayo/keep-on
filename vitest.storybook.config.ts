@@ -4,11 +4,13 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(import.meta.dirname, './src'),
+    },
+  },
   test: {
     environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./vitest.setup.ts'],
-    include: ['**/*.stories.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
@@ -17,10 +19,8 @@ export default defineConfig({
       '**/.{idea,git,cache,output,temp}/**',
       '**/.worktrees/**',
     ],
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(import.meta.dirname, './src'),
-    },
+    globals: true,
+    include: ['**/*.stories.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    setupFiles: ['./vitest.setup.ts'],
   },
 })

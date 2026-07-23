@@ -32,7 +32,7 @@ export async function profileQuery<T>(
     return result
   } catch (error) {
     const ms = Math.round(nowMs() - start)
-    logError(`${name}:error`, { ...meta, ms, error: formatError(error) })
+    logError(`${name}:error`, { ...meta, error: formatError(error), ms })
     throw error
   }
 }

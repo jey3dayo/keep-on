@@ -3,12 +3,12 @@ import { format, subDays } from 'date-fns'
 import { HabitCalendarHeatmap } from './HabitCalendarHeatmap'
 
 const meta = {
-  title: 'Habits/HabitCalendarHeatmap',
   component: HabitCalendarHeatmap,
   parameters: {
     layout: 'padded',
   },
   tags: ['autodocs'],
+  title: 'Habits/HabitCalendarHeatmap',
 } satisfies Meta<typeof HabitCalendarHeatmap>
 
 export default meta
@@ -58,43 +58,43 @@ const gradientCheckinCounts = new Map<string, number>([
 const skipDates = [dateKey(4), dateKey(11), dateKey(18)]
 
 export const Frequency1: Story = {
-  name: '頻度1（バイナリ）',
   args: {
     accentColor: 'oklch(0.65 0.18 250)',
     checkinCounts: binaryCheckinCounts,
     frequency: 1,
-    skipDates,
     months: 3,
+    skipDates,
   },
+  name: '頻度1（バイナリ）',
 }
 
 export const Frequency3Gradient: Story = {
-  name: '頻度3（グラデーション）',
   args: {
     accentColor: 'oklch(0.70 0.18 145)',
     checkinCounts: gradientCheckinCounts,
     frequency: 3,
-    skipDates,
     months: 3,
+    skipDates,
   },
+  name: '頻度3（グラデーション）',
 }
 
 export const Empty: Story = {
-  name: '記録なし',
   args: {
     accentColor: 'oklch(0.70 0.18 45)',
     checkinCounts: new Map(),
     frequency: 2,
     months: 2,
   },
+  name: '記録なし',
 }
 
 export const AllComplete: Story = {
-  name: '全日達成',
   args: {
     accentColor: 'oklch(0.65 0.22 25)',
     checkinCounts: new Map(Array.from({ length: 30 }, (_, i) => [dateKey(i), 2] as [string, number])),
     frequency: 2,
     months: 2,
   },
+  name: '全日達成',
 }

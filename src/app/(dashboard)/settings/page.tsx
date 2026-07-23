@@ -6,14 +6,14 @@ import { WeekStartSettings } from '@/components/settings/WeekStartSettings'
 import { COLOR_THEME_COOKIE_KEY, isColorTheme } from '@/constants/theme'
 
 export const metadata: Metadata = {
-  title: '設定 - KeepOn',
   description:
     'アプリの表示設定、テーマカスタマイズ、週の開始日の設定など、KeepOnを快適に使うための各種設定を管理できます。',
   openGraph: {
-    title: '設定 - KeepOn',
     description: 'アプリの表示と動作をカスタマイズ',
+    title: '設定 - KeepOn',
     type: 'website',
   },
+  title: '設定 - KeepOn',
 }
 
 export default async function SettingsPage() {

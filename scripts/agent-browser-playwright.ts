@@ -51,9 +51,7 @@ function loadDotenvPrivateKey(): string | undefined {
     const envKeysContent = readFileSync(envKeysPath, 'utf-8')
     const match = envKeysContent.match(/^DOTENV_PRIVATE_KEY=(.+)$/m)
     return match ? match[1] : undefined
-  } catch {
-    return
-  }
+  } catch {}
 }
 
 function wait(ms: number): Promise<void> {
@@ -192,9 +190,9 @@ async function main() {
   // Step 3: Chrome起動（リモートデバッグ有効）
   console.log('🔍 Step 3: Chromeを起動中...')
   const browser = await chromium.launch({
-    headless: false,
     // セキュリティのため127.0.0.1にバインド（WSL2の場合は0.0.0.0が必要な場合がある）
     args: [`--remote-debugging-port=${REMOTE_DEBUGGING_PORT}`, '--remote-debugging-address=127.0.0.1'],
+    headless: false,
   })
   console.log('✅ Chrome launched with remote debugging')
   console.log(`   📡 Remote debugging port: ${REMOTE_DEBUGGING_PORT}`)

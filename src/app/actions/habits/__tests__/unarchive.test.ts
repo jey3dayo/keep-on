@@ -29,10 +29,10 @@ describe('unarchiveHabitAction', () => {
     vi.mocked(getCurrentUserId).mockResolvedValue(userId)
 
     const mockHabit = {
-      id: habitId,
-      userId,
-      name: 'Test Habit',
       archived: true,
+      id: habitId,
+      name: 'Test Habit',
+      userId,
     }
     vi.mocked(getHabitById).mockResolvedValue(mockHabit as any)
     vi.mocked(unarchiveHabit).mockResolvedValue(true)

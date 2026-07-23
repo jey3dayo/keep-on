@@ -4,97 +4,97 @@ import type { HabitWithProgress } from '@/types/habit'
 import { HabitSimpleView } from './HabitSimpleView'
 
 const meta = {
-  title: 'Streak/HabitSimpleView',
   component: HabitSimpleView,
   parameters: {
     layout: 'fullscreen',
   },
   tags: ['autodocs'],
+  title: 'Streak/HabitSimpleView',
 } satisfies Meta<typeof HabitSimpleView>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 const createHabit = (overrides: Partial<HabitWithProgress> = {}): HabitWithProgress => ({
-  id: 'habit-1',
-  name: '水を8杯飲む',
-  icon: 'droplets',
-  color: 'cyan',
-  period: 'daily',
-  frequency: 8,
-  currentProgress: 5,
-  streak: 12,
-  completionRate: 62,
   archived: false,
   archivedAt: null,
-  userId: 'user-1',
+  color: 'cyan',
+  completionRate: 62,
   createdAt: new Date('2025-01-01'),
+  currentProgress: 5,
+  frequency: 8,
+  icon: 'droplets',
+  id: 'habit-1',
+  name: '水を8杯飲む',
+  period: 'daily',
+  streak: 12,
   updatedAt: new Date('2025-01-28'),
+  userId: 'user-1',
   ...overrides,
 })
 
 const habits = [
   createHabit(),
   createHabit({
+    color: 'orange',
+    completionRate: 100,
+    currentProgress: 1,
+    frequency: 1,
+    icon: 'dumbbell',
     id: 'habit-2',
     name: '30分運動',
-    icon: 'dumbbell',
-    color: 'orange',
-    frequency: 1,
-    currentProgress: 1,
-    completionRate: 100,
     streak: 7,
   }),
   createHabit({
+    color: 'purple',
+    completionRate: 0,
+    currentProgress: 0,
+    frequency: 1,
+    icon: 'book-open',
     id: 'habit-3',
     name: '読書',
-    icon: 'book-open',
-    color: 'purple',
-    frequency: 1,
-    currentProgress: 0,
-    completionRate: 0,
     streak: 5,
   }),
   createHabit({
+    color: 'teal',
+    completionRate: 100,
+    currentProgress: 1,
+    frequency: 1,
+    icon: 'brain',
     id: 'habit-4',
     name: '瞑想する',
-    icon: 'brain',
-    color: 'teal',
-    frequency: 1,
-    currentProgress: 1,
-    completionRate: 100,
     streak: 18,
   }),
   createHabit({
+    color: 'blue',
+    completionRate: 0,
+    currentProgress: 0,
+    frequency: 1,
+    icon: 'target',
     id: 'habit-5',
     name: '週次レビュー',
-    icon: 'target',
-    color: 'blue',
     period: 'weekly',
-    frequency: 1,
-    currentProgress: 0,
-    completionRate: 0,
     streak: 4,
   }),
   createHabit({
+    color: 'pink',
+    completionRate: 0,
+    currentProgress: 0,
+    frequency: 1,
+    icon: 'clock',
     id: 'habit-6',
     name: '月の振り返り',
-    icon: 'clock',
-    color: 'pink',
     period: 'monthly',
-    frequency: 1,
-    currentProgress: 0,
-    completionRate: 0,
     streak: 2,
   }),
   createHabit({
+    color: 'lime',
+    completionRate: 100,
+    currentProgress: 1,
+    frequency: 1,
+    icon: 'palette',
     id: 'habit-7',
     name: '日記を書く',
-    icon: 'palette',
-    color: 'lime',
-    frequency: 1,
-    currentProgress: 1,
-    completionRate: 100,
     streak: 3,
   }),
 ]
@@ -103,32 +103,32 @@ const completedHabitIds = new Set(habits.filter((habit) => habit.currentProgress
 
 export const Default: Story = {
   args: {
-    habits,
     completedHabitIds,
-    onToggleHabit: (habitId) => {
-      storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
-    },
+    habits,
     onAddHabit: () => {
       storybookToast.success('タスクを追加', 'Storybookでのデモです')
     },
     onSettings: () => {
       storybookToast.info('設定', '設定ボタンがクリックされました')
     },
+    onToggleHabit: (habitId) => {
+      storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
+    },
   },
 }
 
 export const CustomBackground: Story = {
   args: {
-    habits: habits.slice(0, 4),
+    backgroundColor: 'var(--blue-9)',
     completedHabitIds: new Set([habits[1]?.id, habits[3]?.id].filter(Boolean)),
-    onToggleHabit: (habitId) => {
-      storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
-    },
+    habits: habits.slice(0, 4),
     onAddHabit: () => {
       storybookToast.success('タスクを追加', 'Storybookでのデモです')
     },
     onSettings: () => undefined,
-    backgroundColor: 'var(--blue-9)',
+    onToggleHabit: (habitId) => {
+      storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
+    },
   },
 }
 

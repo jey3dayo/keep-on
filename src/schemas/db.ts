@@ -17,8 +17,8 @@ export type ConnectionErrorType = v.InferOutput<typeof ConnectionErrorTypeSchema
  * エラーオブジェクトのスキーマ（メッセージプロパティを持つ）
  */
 export const ErrorWithMessageSchema = v.object({
-  message: v.string(),
   code: v.optional(v.string()),
+  message: v.string(),
 })
 
 /**

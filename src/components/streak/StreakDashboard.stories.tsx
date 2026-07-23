@@ -4,65 +4,65 @@ import type { HabitWithProgress } from '@/types/habit'
 import { StreakDashboard } from './StreakDashboard'
 
 const meta = {
-  title: 'Streak/StreakDashboard',
   component: StreakDashboard,
   parameters: {
     layout: 'fullscreen',
   },
   tags: ['autodocs'],
+  title: 'Streak/StreakDashboard',
 } satisfies Meta<typeof StreakDashboard>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 const createHabit = (overrides: Partial<HabitWithProgress> = {}): HabitWithProgress => ({
-  id: 'habit-1',
-  name: '水を8杯飲む',
-  icon: 'droplets',
-  color: 'cyan',
-  period: 'daily',
-  frequency: 8,
-  currentProgress: 5,
-  streak: 12,
-  completionRate: 62,
   archived: false,
   archivedAt: null,
-  userId: 'user-1',
+  color: 'cyan',
+  completionRate: 62,
   createdAt: new Date('2025-01-01'),
+  currentProgress: 5,
+  frequency: 8,
+  icon: 'droplets',
+  id: 'habit-1',
+  name: '水を8杯飲む',
+  period: 'daily',
+  streak: 12,
   updatedAt: new Date('2025-01-28'),
+  userId: 'user-1',
   ...overrides,
 })
 
 const habits = [
   createHabit(),
   createHabit({
+    color: 'orange',
+    completionRate: 100,
+    currentProgress: 1,
+    frequency: 1,
+    icon: 'dumbbell',
     id: 'habit-2',
     name: '30分運動',
-    icon: 'dumbbell',
-    color: 'orange',
-    frequency: 1,
-    currentProgress: 1,
-    completionRate: 100,
     streak: 7,
   }),
   createHabit({
+    color: 'purple',
+    completionRate: 0,
+    currentProgress: 0,
+    frequency: 1,
+    icon: 'book-open',
     id: 'habit-3',
     name: '読書',
-    icon: 'book-open',
-    color: 'purple',
-    frequency: 1,
-    currentProgress: 0,
-    completionRate: 0,
     streak: 5,
   }),
   createHabit({
+    color: 'teal',
+    completionRate: 100,
+    currentProgress: 1,
+    frequency: 1,
+    icon: 'brain',
     id: 'habit-4',
     name: '瞑想する',
-    icon: 'brain',
-    color: 'teal',
-    frequency: 1,
-    currentProgress: 1,
-    completionRate: 100,
     streak: 18,
   }),
 ]
@@ -70,7 +70,7 @@ const habits = [
 export const DashboardView: Story = {
   args: {
     habits,
-    todayLabel: '1月29日（木）',
+    initialView: 'dashboard',
     onAddHabit: (name) => {
       storybookToast.success('習慣を追加', name)
       return Promise.resolve()
@@ -79,14 +79,14 @@ export const DashboardView: Story = {
       storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
       return Promise.resolve()
     },
-    initialView: 'dashboard',
+    todayLabel: '1月29日（木）',
   },
 }
 
 export const SimpleView: Story = {
   args: {
     habits,
-    todayLabel: '1月29日（木）',
+    initialView: 'simple',
     onAddHabit: (name) => {
       storybookToast.success('習慣を追加', name)
       return Promise.resolve()
@@ -95,7 +95,7 @@ export const SimpleView: Story = {
       storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
       return Promise.resolve()
     },
-    initialView: 'simple',
+    todayLabel: '1月29日（木）',
   },
 }
 

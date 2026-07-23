@@ -14,7 +14,7 @@ export async function updateUserSettingsAction(
   const userId = await getCurrentUserId()
 
   if (!userId) {
-    return actionError({ name: 'UnauthorizedError', message: 'Unauthorized' })
+    return actionError({ message: 'Unauthorized', name: 'UnauthorizedError' })
   }
 
   try {
@@ -27,6 +27,6 @@ export async function updateUserSettingsAction(
     return actionOk(updated)
   } catch (error) {
     console.error('Failed to update user settings', error)
-    return actionError({ name: 'DatabaseError', message: 'ユーザー設定の更新に失敗しました' })
+    return actionError({ message: 'ユーザー設定の更新に失敗しました', name: 'DatabaseError' })
   }
 }

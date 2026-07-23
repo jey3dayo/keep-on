@@ -10,20 +10,20 @@ import { type ColorThemeName, DEFAULT_THEME_MODE } from '@/constants/theme'
 import { useColorTheme } from '@/hooks/use-color-theme'
 
 const MODE_LABELS = {
-  light: 'ライト',
   dark: 'ダーク',
+  light: 'ライト',
   system: 'システム',
 } as const
 
 const COLOR_THEME_META: Record<ColorThemeName, { label: string; swatch: string }> = {
-  teal: { label: 'ティール', swatch: 'var(--teal-9)' },
-  lime: { label: 'ライム', swatch: 'var(--lime-9)' },
-  orange: { label: 'オレンジ', swatch: 'var(--orange-9)' },
-  red: { label: 'レッド', swatch: 'var(--red-9)' },
-  pink: { label: 'ピンク', swatch: 'var(--pink-9)' },
-  purple: { label: 'パープル', swatch: 'var(--purple-9)' },
   blue: { label: 'ブルー', swatch: 'var(--blue-9)' },
   cyan: { label: 'シアン', swatch: 'var(--cyan-9)' },
+  lime: { label: 'ライム', swatch: 'var(--lime-9)' },
+  orange: { label: 'オレンジ', swatch: 'var(--orange-9)' },
+  pink: { label: 'ピンク', swatch: 'var(--pink-9)' },
+  purple: { label: 'パープル', swatch: 'var(--purple-9)' },
+  red: { label: 'レッド', swatch: 'var(--red-9)' },
+  teal: { label: 'ティール', swatch: 'var(--teal-9)' },
   yellow: { label: 'イエロー', swatch: 'var(--yellow-9)' },
 }
 

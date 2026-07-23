@@ -13,8 +13,8 @@ export function filterHabitsByPeriod<T extends { period: Period }>(habits: T[], 
 
 const PERIOD_LABELS: Record<Period, string> = {
   daily: '毎日',
-  weekly: '毎週',
   monthly: '毎月',
+  weekly: '毎週',
 }
 
 export function getPeriodLabel(period: Period): string {

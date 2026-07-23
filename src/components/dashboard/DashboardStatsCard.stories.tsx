@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { DashboardStatsCard } from './DashboardStatsCard'
 
 const meta = {
-  title: 'Dashboard/DashboardStatsCard',
   component: DashboardStatsCard,
   parameters: {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  title: 'Dashboard/DashboardStatsCard',
 } satisfies Meta<typeof DashboardStatsCard>
 
 export default meta
@@ -15,49 +15,49 @@ type Story = StoryObj<typeof meta>
 
 export const Progress: Story = {
   args: {
+    total: 8,
     type: 'progress',
     value: 5,
-    total: 8,
   },
 }
 
 export const ProgressCompleted: Story = {
   args: {
+    total: 8,
     type: 'progress',
     value: 8,
-    total: 8,
   },
 }
 
 export const ProgressZero: Story = {
   args: {
+    total: 5,
     type: 'progress',
     value: 0,
-    total: 5,
   },
 }
 
 export const Streak: Story = {
   args: {
+    suffix: '日',
     type: 'streak',
     value: 12,
-    suffix: '日',
   },
 }
 
 export const StreakLong: Story = {
   args: {
+    suffix: '日',
     type: 'streak',
     value: 100,
-    suffix: '日',
   },
 }
 
 export const StreakZero: Story = {
   args: {
+    suffix: '日',
     type: 'streak',
     value: 0,
-    suffix: '日',
   },
 }
 

@@ -51,11 +51,11 @@ export function createHabitCheckinSpans(timeoutMs: number): HabitCheckinSpans {
   }
 
   return {
-    timeoutMs,
     dbTimeoutMs,
     runWithDbTimeout,
     runWithRequestTimeout,
     runWithRetry,
+    timeoutMs,
   }
 }
 

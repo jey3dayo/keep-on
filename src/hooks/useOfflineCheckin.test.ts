@@ -96,7 +96,7 @@ describe('useOfflineCheckin', () => {
     })
 
     expect(fetch).toHaveBeenCalledTimes(1)
-    expect(onReplayComplete).toHaveBeenCalledWith({ replayed: 1, failed: 0 })
+    expect(onReplayComplete).toHaveBeenCalledWith({ failed: 0, replayed: 1 })
   })
 
   it('永続的な 4xx は破棄して後続 replay を継続する', async () => {
@@ -126,7 +126,7 @@ describe('useOfflineCheckin', () => {
 
     expect(mockRemoveQueuedCheckin).toHaveBeenNthCalledWith(1, 'queued-1')
     expect(mockRemoveQueuedCheckin).toHaveBeenNthCalledWith(2, 'queued-2')
-    expect(onReplayComplete).toHaveBeenCalledWith({ replayed: 1, failed: 1 })
+    expect(onReplayComplete).toHaveBeenCalledWith({ failed: 1, replayed: 1 })
   })
 
   it('retryable な失敗では replay を停止して後続を送らない', async () => {
@@ -149,6 +149,6 @@ describe('useOfflineCheckin', () => {
     })
 
     expect(mockRemoveQueuedCheckin).not.toHaveBeenCalled()
-    expect(onReplayComplete).toHaveBeenCalledWith({ replayed: 0, failed: 1 })
+    expect(onReplayComplete).toHaveBeenCalledWith({ failed: 1, replayed: 0 })
   })
 })

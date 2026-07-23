@@ -10,10 +10,10 @@ interface InputProps extends React.ComponentProps<'input'> {
 const Input = ({ className, error, disablePasswordManagers = true, ref, ...props }: InputProps) => {
   const passwordManagerProps = disablePasswordManagers
     ? {
-        'data-1p-ignore': true,
-        'data-lpignore': 'true',
-        'data-form-type': 'other',
         autoComplete: props.autoComplete || 'off',
+        'data-1p-ignore': true,
+        'data-form-type': 'other',
+        'data-lpignore': 'true',
       }
     : {}
 

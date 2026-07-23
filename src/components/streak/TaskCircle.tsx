@@ -16,21 +16,21 @@ interface TaskCircleProps {
 }
 
 const SIZE_CLASSES = {
-  sm: 'w-20 h-20',
-  md: 'w-32 h-32',
   lg: 'w-40 h-40',
+  md: 'w-32 h-32',
+  sm: 'w-20 h-20',
 } as const
 
 const ICON_SIZE_CLASSES = {
-  sm: 'w-8 h-8',
-  md: 'w-12 h-12',
   lg: 'w-16 h-16',
+  md: 'w-12 h-12',
+  sm: 'w-8 h-8',
 } as const
 
 const TEXT_SIZE_CLASSES = {
-  sm: 'text-xs',
-  md: 'text-sm',
   lg: 'text-base',
+  md: 'text-sm',
+  sm: 'text-xs',
 } as const
 
 const DEFAULT_BORDER_COLOR = 'rgba(255, 255, 255, 0.4)'

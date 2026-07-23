@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'オフライン - KeepOn',
   description: 'インターネット接続が必要です',
+  title: 'オフライン - KeepOn',
 }
 
 export default function OfflinePage() {

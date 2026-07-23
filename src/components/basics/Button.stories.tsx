@@ -2,29 +2,29 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Button } from './Button'
 
 const meta = {
-  title: 'Basics/Button',
-  component: Button,
-  parameters: {
-    layout: 'centered',
-  },
-  tags: ['autodocs'],
   argTypes: {
-    variant: {
-      control: 'select',
-      options: ['default', 'primary', 'destructive', 'outline', 'secondary', 'ghost', 'link'],
-    },
-    size: {
-      control: 'select',
-      options: ['default', 'sm', 'lg', 'icon'],
+    disabled: {
+      control: 'boolean',
     },
     scale: {
       control: 'select',
       options: ['none', 'sm', 'md', 'lg'],
     },
-    disabled: {
-      control: 'boolean',
+    size: {
+      control: 'select',
+      options: ['default', 'sm', 'lg', 'icon'],
+    },
+    variant: {
+      control: 'select',
+      options: ['default', 'primary', 'destructive', 'outline', 'secondary', 'ghost', 'link'],
     },
   },
+  component: Button,
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+  title: 'Basics/Button',
 } satisfies Meta<typeof Button>
 
 export default meta
@@ -124,8 +124,6 @@ export const WithIcon: Story = {
 
 export const IconOnly: Story = {
   args: {
-    size: 'icon',
-    variant: 'outline',
     children: (
       <svg
         aria-label="Add icon"
@@ -140,6 +138,8 @@ export const IconOnly: Story = {
         <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
+    size: 'icon',
+    variant: 'outline',
   },
 }
 

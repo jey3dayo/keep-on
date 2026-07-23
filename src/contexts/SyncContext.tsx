@@ -45,7 +45,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
 
   const isSyncing = pendingCount > 0
 
-  return <SyncContext.Provider value={{ pendingCount, startSync, endSync, isSyncing }}>{children}</SyncContext.Provider>
+  return <SyncContext.Provider value={{ endSync, isSyncing, pendingCount, startSync }}>{children}</SyncContext.Provider>
 }
 
 export function useSyncContext() {

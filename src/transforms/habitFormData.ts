@@ -21,11 +21,11 @@ export type HabitFormValues = Omit<HabitInputSchemaType, 'period'> & {
 export function getHabitFormDefaults(initialData?: Habit | HabitWithProgress | HabitPreset): HabitFormValues {
   if (!initialData) {
     return {
-      name: '',
-      icon: DEFAULT_HABIT_ICON,
       color: DEFAULT_HABIT_COLOR,
-      period: DEFAULT_HABIT_PERIOD,
       frequency: DEFAULT_HABIT_FREQUENCY,
+      icon: DEFAULT_HABIT_ICON,
+      name: '',
+      period: DEFAULT_HABIT_PERIOD,
       reminderTime: null,
     }
   }
@@ -33,22 +33,22 @@ export function getHabitFormDefaults(initialData?: Habit | HabitWithProgress | H
   // HabitPreset の場合は iconId/colorId を使用
   if ('category' in initialData) {
     return {
-      name: initialData.name,
-      icon: initialData.iconId,
       color: initialData.colorId,
-      period: initialData.period,
       frequency: initialData.frequency,
+      icon: initialData.iconId,
+      name: initialData.name,
+      period: initialData.period,
       reminderTime: null,
     }
   }
 
   // 既存のHabitの場合（編集時）
   return {
-    name: initialData.name,
-    icon: initialData.icon ?? DEFAULT_HABIT_ICON,
     color: initialData.color ?? DEFAULT_HABIT_COLOR,
-    period: initialData.period,
     frequency: initialData.frequency,
+    icon: initialData.icon ?? DEFAULT_HABIT_ICON,
+    name: initialData.name,
+    period: initialData.period,
     reminderTime: initialData.reminderTime ?? null,
   }
 }
@@ -98,11 +98,11 @@ export function transformHabitInput(formData: FormData) {
   }
 
   return {
-    name: getRequiredString('name'),
-    icon: getString('icon'),
     color: getString('color'),
-    period: periodRaw,
     frequency,
+    icon: getString('icon'),
+    name: getRequiredString('name'),
+    period: periodRaw,
     reminderTime: getString('reminderTime'),
   }
 }

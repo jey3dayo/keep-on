@@ -47,10 +47,10 @@ function normalizePeriod(period: unknown, options: HabitNormalizationOptions): P
   }
 
   logWarn('habit.period:invalid', {
-    habitId: options.habitId,
     context: options.context,
-    period: typeof period === 'string' ? period : String(period),
     fallback: DEFAULT_HABIT_PERIOD,
+    habitId: options.habitId,
+    period: typeof period === 'string' ? period : String(period),
   })
   return DEFAULT_HABIT_PERIOD
 }
@@ -58,10 +58,10 @@ function normalizePeriod(period: unknown, options: HabitNormalizationOptions): P
 function normalizeFrequency(frequency: number, options: HabitNormalizationOptions): number {
   if (!Number.isFinite(frequency) || frequency < MIN_HABIT_FREQUENCY) {
     logWarn('habit.frequency:invalid', {
-      habitId: options.habitId,
       context: options.context,
-      frequency,
       fallback: MIN_HABIT_FREQUENCY,
+      frequency,
+      habitId: options.habitId,
     })
     return MIN_HABIT_FREQUENCY
   }
@@ -71,13 +71,13 @@ function normalizeFrequency(frequency: number, options: HabitNormalizationOption
 
 function normalizeHabitSchedule(schedule: HabitNormalizationTarget, context: string): NormalizedHabitSchedule {
   const options: HabitNormalizationOptions = {
-    habitId: schedule.habitId,
     context,
+    habitId: schedule.habitId,
   }
 
   return {
-    period: normalizePeriod(schedule.period, options),
     frequency: normalizeFrequency(schedule.frequency, options),
+    period: normalizePeriod(schedule.period, options),
   }
 }
 
@@ -192,15 +192,15 @@ export async function getHabitsWithProgress(
 
   if (cacheSnapshot) {
     if (!cacheSnapshot.staleAt && cacheSnapshot.dateKey === dateKey) {
-      logInfo('getHabitsWithProgress:cache-hit', { userId, dateKey })
+      logInfo('getHabitsWithProgress:cache-hit', { dateKey, userId })
       return cacheSnapshot.habits
     }
     staleSnapshot = cacheSnapshot
     logInfo('habit-cache:stale', {
-      userId,
       cachedDateKey: cacheSnapshot.dateKey,
-      requestedDateKey: dateKey,
       reason: cacheSnapshot.staleAt ? 'invalidated' : 'date-key',
+      requestedDateKey: dateKey,
+      userId,
     })
   } else {
     logInfo('habit-cache:miss', { userId })
@@ -210,7 +210,7 @@ export async function getHabitsWithProgress(
     const dbStart = nowMs()
     const db = getDb()
     const dbMs = Math.round(nowMs() - dbStart)
-    logInfo('getHabitsWithProgress:db-acquisition', { userId, ms: dbMs })
+    logInfo('getHabitsWithProgress:db-acquisition', { ms: dbMs, userId })
 
     const queryStart = nowMs()
 
@@ -284,9 +284,9 @@ export async function getHabitsWithProgress(
 
       const streak = calculateStreakFromCheckins(
         {
+          frequency: normalizedFrequency,
           id: habit.id,
           period: normalizedPeriod,
-          frequency: normalizedFrequency,
         },
         habitCheckins,
         weekStartDay,
@@ -301,12 +301,12 @@ export async function getHabitsWithProgress(
 
       return {
         ...habit,
-        period: normalizedPeriod,
-        frequency: normalizedFrequency,
+        completionRate,
         currentProgress,
+        frequency: normalizedFrequency,
+        period: normalizedPeriod,
         skippedToday,
         streak,
-        completionRate,
       }
     })
 
@@ -315,22 +315,22 @@ export async function getHabitsWithProgress(
     const queryMs = Math.round(nowMs() - queryStart)
     const totalMs = Math.round(nowMs() - totalStart)
     logInfo('getHabitsWithProgress:complete', {
-      userId,
       dateKey,
       dbMs,
+      habits: habitsWithProgress.length,
       queryMs,
       totalMs,
-      habits: habitsWithProgress.length,
+      userId,
     })
 
     return habitsWithProgress
   } catch (error) {
     if (staleSnapshot && isDatabaseError(error)) {
       logWarn('getHabitsWithProgress:stale-fallback', {
-        userId,
         cachedDateKey: staleSnapshot.dateKey,
-        requestedDateKey: dateKey,
         error: formatError(error),
+        requestedDateKey: dateKey,
+        userId,
       })
       return staleSnapshot.habits
     }
@@ -405,8 +405,8 @@ function calculateStreakFromCheckins(
 
   logWarn('habit.streak:iteration-limit', {
     habitId: habit.id,
-    period: normalizedPeriod,
     maxIterations: MAX_STREAK_ITERATIONS,
+    period: normalizedPeriod,
   })
 
   return streak

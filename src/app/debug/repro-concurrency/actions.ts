@@ -67,9 +67,9 @@ async function runTimed(action: () => Promise<void>): Promise<TimedCheck> {
   const start = Date.now()
   try {
     await action()
-    return { ok: true, durationMs: Date.now() - start }
+    return { durationMs: Date.now() - start, ok: true }
   } catch (error) {
-    return { ok: false, durationMs: Date.now() - start, error: formatError(error).message }
+    return { durationMs: Date.now() - start, error: formatError(error).message, ok: false }
   }
 }
 
@@ -122,9 +122,9 @@ async function runTask(
   }
 
   return {
-    ok: errors.length === 0,
     durationMs: Date.now() - start,
     errors,
+    ok: errors.length === 0,
   }
 }
 
@@ -160,21 +160,21 @@ export async function runConcurrencyChecks(params: ConcurrencyParams): Promise<C
     const errors = uniqueErrors(results.flatMap((result) => result.errors))
 
     batches.push({
-      index: index + 1,
-      ok: okCount,
-      error: errorCount,
-      minMs,
-      maxMs,
       avgMs,
+      error: errorCount,
       errors,
+      index: index + 1,
+      maxMs,
+      minMs,
+      ok: okCount,
     })
   }
 
   return {
+    batches,
     concurrency,
+    finishedAt: new Date().toISOString(),
     iterations,
     startedAt,
-    finishedAt: new Date().toISOString(),
-    batches,
   }
 }

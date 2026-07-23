@@ -6,16 +6,16 @@ describe('formatErrorObject', () => {
     const error = new Error('something went wrong')
     const result = formatErrorObject(error)
 
-    expect(result).toEqual({ name: 'Error', message: 'something went wrong' })
+    expect(result).toEqual({ message: 'something went wrong', name: 'Error' })
   })
 
   it('PostgresError ライクなオブジェクトから DB フィールドを抽出する', () => {
     const error = {
-      name: 'PostgresError',
-      message: 'duplicate key value violates unique constraint',
       code: '23505',
-      severity: 'ERROR',
       constraint_name: 'Checkin_habitId_date_unique',
+      message: 'duplicate key value violates unique constraint',
+      name: 'PostgresError',
+      severity: 'ERROR',
       table_name: 'Checkin',
     }
     const result = formatErrorObject(error)
@@ -50,8 +50,8 @@ describe('formatErrorObject', () => {
 
     const error = new PostgresError('duplicate key value violates unique constraint', {
       code: '23505',
-      severity: 'ERROR',
       constraint_name: 'Checkin_habitId_date_unique',
+      severity: 'ERROR',
       table_name: 'Checkin',
     })
     const result = formatErrorObject(error)
@@ -66,26 +66,26 @@ describe('formatErrorObject', () => {
 
   it('cause チェーンは1レベルだけ含める', () => {
     const error = {
-      name: 'DatabaseError',
-      message: 'query failed',
       cause: {
-        message: 'duplicate key',
-        code: '23505',
         cause: {
           message: 'nested cause should be ignored',
         },
+        code: '23505',
+        message: 'duplicate key',
       },
+      message: 'query failed',
+      name: 'DatabaseError',
     }
     const result = formatErrorObject(error)
 
-    expect(result.cause).toEqual({ message: 'duplicate key', code: '23505' })
+    expect(result.cause).toEqual({ code: '23505', message: 'duplicate key' })
   })
 
   it('長い query は200文字で切り詰める', () => {
     const longQuery = `SELECT ${'x'.repeat(300)}`
     const error = {
-      name: 'PostgresError',
       message: 'syntax error',
+      name: 'PostgresError',
       query: longQuery,
     }
     const result = formatErrorObject(error)
@@ -98,8 +98,8 @@ describe('formatErrorObject', () => {
   it('200文字以下の query はそのまま含める', () => {
     const shortQuery = 'SELECT * FROM habits'
     const error = {
-      name: 'PostgresError',
       message: 'error',
+      name: 'PostgresError',
       query: shortQuery,
     }
     const result = formatErrorObject(error)
@@ -109,9 +109,9 @@ describe('formatErrorObject', () => {
 
   it('parameters プロパティは出力に含めない', () => {
     const error = {
-      name: 'PostgresError',
-      message: 'error',
       code: '23505',
+      message: 'error',
+      name: 'PostgresError',
       parameters: ['user-secret-data', 'another-secret'],
     }
     const result = formatErrorObject(error)
@@ -122,12 +122,12 @@ describe('formatErrorObject', () => {
 
   it('空文字のフィールドは出力に含めない', () => {
     const error = {
-      name: 'PostgresError',
-      message: 'error',
       code: '23505',
-      severity: '',
-      detail: '',
       constraint_name: 'some_constraint',
+      detail: '',
+      message: 'error',
+      name: 'PostgresError',
+      severity: '',
     }
     const result = formatErrorObject(error)
 
@@ -138,13 +138,13 @@ describe('formatErrorObject', () => {
   })
 
   it('Error インスタンスの cause も抽出する', () => {
-    const cause = { message: 'connection refused', code: '08006' }
+    const cause = { code: '08006', message: 'connection refused' }
     const error = new Error('query failed')
     ;(error as unknown as { cause: unknown }).cause = cause
     const result = formatErrorObject(error)
 
     expect(result.name).toBe('Error')
-    expect(result.cause).toEqual({ message: 'connection refused', code: '08006' })
+    expect(result.cause).toEqual({ code: '08006', message: 'connection refused' })
   })
 
   it('非オブジェクトのエラーは UnknownError として処理する', () => {

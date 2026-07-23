@@ -41,7 +41,7 @@ export function useColorTheme(initialTheme?: ColorThemeName): UseColorTheme {
     applyTheme(newTheme)
   }
 
-  return { theme: theme ?? initialTheme ?? DEFAULT_COLOR_THEME, setTheme, ready: theme !== null }
+  return { ready: theme !== null, setTheme, theme: theme ?? initialTheme ?? DEFAULT_COLOR_THEME }
 }
 
 function getThemeFromStorage(): ColorThemeName | null {

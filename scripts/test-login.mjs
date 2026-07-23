@@ -49,9 +49,9 @@ async function testLogin() {
 
     // Step 1: サインインページへ遷移
     console.log('📍 Step 1: サインインページへ遷移')
-    await page.goto('http://localhost:3000/sign-in', { waitUntil: 'domcontentloaded', timeout: 10_000 })
+    await page.goto('http://localhost:3000/sign-in', { timeout: 10_000, waitUntil: 'domcontentloaded' })
     await page.waitForTimeout(2000) // レンダリング待機
-    await page.screenshot({ path: join(screenshotDir, '01-signin-page.png'), fullPage: true })
+    await page.screenshot({ fullPage: true, path: join(screenshotDir, '01-signin-page.png') })
     console.log('   ✓ サインインページを表示')
     console.log('')
 
@@ -60,7 +60,7 @@ async function testLogin() {
     const emailInput = page.locator('input[name="identifier"]').first()
     await emailInput.waitFor({ state: 'visible', timeout: 5000 })
     await emailInput.fill(TEST_EMAIL)
-    await page.screenshot({ path: join(screenshotDir, '02-email-filled.png'), fullPage: true })
+    await page.screenshot({ fullPage: true, path: join(screenshotDir, '02-email-filled.png') })
     console.log(`   ✓ メールアドレスを入力: ${TEST_EMAIL}`)
     console.log('')
 
@@ -69,7 +69,7 @@ async function testLogin() {
     const continueButton = page.locator('button[type="submit"]').first()
     await continueButton.click()
     await page.waitForTimeout(1000)
-    await page.screenshot({ path: join(screenshotDir, '03-after-email-submit.png'), fullPage: true })
+    await page.screenshot({ fullPage: true, path: join(screenshotDir, '03-after-email-submit.png') })
     console.log('   ✓ Continue をクリック')
     console.log('')
 
@@ -86,26 +86,26 @@ async function testLogin() {
     if (hasPassword) {
       console.log('   → パスワード認証を検出')
       await passwordInput.fill(TEST_PASSWORD)
-      await page.screenshot({ path: join(screenshotDir, '04-password-filled.png'), fullPage: true })
+      await page.screenshot({ fullPage: true, path: join(screenshotDir, '04-password-filled.png') })
       console.log('   ✓ パスワードを入力')
 
       const submitButton = page.locator('button[type="submit"]').first()
       await submitButton.click()
       await page.waitForTimeout(1000)
-      await page.screenshot({ path: join(screenshotDir, '05-after-password-submit.png'), fullPage: true })
+      await page.screenshot({ fullPage: true, path: join(screenshotDir, '05-after-password-submit.png') })
       console.log('   ✓ パスワードを送信')
     }
 
     if (hasCode) {
       console.log('   → OTP 認証を検出')
       await codeInput.fill(TEST_OTP)
-      await page.screenshot({ path: join(screenshotDir, '06-otp-filled.png'), fullPage: true })
+      await page.screenshot({ fullPage: true, path: join(screenshotDir, '06-otp-filled.png') })
       console.log(`   ✓ OTP を入力: ${TEST_OTP}`)
 
       const submitButton = page.locator('button[type="submit"]').first()
       await submitButton.click()
       await page.waitForTimeout(1000)
-      await page.screenshot({ path: join(screenshotDir, '07-after-otp-submit.png'), fullPage: true })
+      await page.screenshot({ fullPage: true, path: join(screenshotDir, '07-after-otp-submit.png') })
       console.log('   ✓ OTP を送信')
     }
 
@@ -117,13 +117,13 @@ async function testLogin() {
       if ((await codeInputAfter.count()) > 0) {
         console.log('   → OTP 入力画面に遷移')
         await codeInputAfter.fill(TEST_OTP)
-        await page.screenshot({ path: join(screenshotDir, '08-otp-after-password.png'), fullPage: true })
+        await page.screenshot({ fullPage: true, path: join(screenshotDir, '08-otp-after-password.png') })
         console.log(`   ✓ OTP を入力: ${TEST_OTP}`)
 
         const submitButton = page.locator('button[type="submit"]').first()
         await submitButton.click()
         await page.waitForTimeout(1000)
-        await page.screenshot({ path: join(screenshotDir, '09-after-otp-submit.png'), fullPage: true })
+        await page.screenshot({ fullPage: true, path: join(screenshotDir, '09-after-otp-submit.png') })
         console.log('   ✓ OTP を送信')
       }
     }
@@ -137,7 +137,7 @@ async function testLogin() {
     const currentUrl = page.url()
     console.log(`   現在の URL: ${currentUrl}`)
 
-    await page.screenshot({ path: join(screenshotDir, '10-final-page.png'), fullPage: true })
+    await page.screenshot({ fullPage: true, path: join(screenshotDir, '10-final-page.png') })
 
     if (currentUrl.includes('/dashboard')) {
       console.log('   ✅ ダッシュボードへのリダイレクト成功')

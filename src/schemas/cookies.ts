@@ -3,8 +3,8 @@ import * as v from 'valibot'
 export const CookieSameSiteSchema = v.picklist(['lax', 'strict', 'none'])
 
 export const CookieOptionsSchema = v.object({
-  path: v.optional(v.string()),
   maxAge: v.optional(v.pipe(v.number(), v.minValue(0))),
+  path: v.optional(v.string()),
   sameSite: v.optional(CookieSameSiteSchema),
 })
 

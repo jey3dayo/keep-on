@@ -29,5 +29,5 @@ export function extractDbErrorInfo(error: unknown): { message: string; code?: st
   }
 
   const message = causeMessage ? `${formatted.message} | ${causeMessage}` : formatted.message
-  return { message, code, causeCode }
+  return { causeCode, code, message }
 }

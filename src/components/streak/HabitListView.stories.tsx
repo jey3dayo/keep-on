@@ -4,12 +4,7 @@ import type { HabitWithProgress } from '@/types/habit'
 import { HabitListView } from './HabitListView'
 
 const meta = {
-  title: 'Streak/HabitListView',
   component: HabitListView,
-  parameters: {
-    layout: 'fullscreen',
-  },
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div className="min-h-screen bg-background">
@@ -17,71 +12,76 @@ const meta = {
       </div>
     ),
   ],
+  parameters: {
+    layout: 'fullscreen',
+  },
+  tags: ['autodocs'],
+  title: 'Streak/HabitListView',
 } satisfies Meta<typeof HabitListView>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 const createHabit = (overrides: Partial<HabitWithProgress> = {}): HabitWithProgress => ({
-  id: 'habit-1',
-  name: '水を8杯飲む',
-  icon: 'droplets',
-  color: 'cyan',
-  period: 'daily',
-  frequency: 8,
-  currentProgress: 5,
-  streak: 12,
-  completionRate: 62,
   archived: false,
   archivedAt: null,
-  userId: 'user-1',
+  color: 'cyan',
+  completionRate: 62,
   createdAt: new Date('2025-01-01'),
+  currentProgress: 5,
+  frequency: 8,
+  icon: 'droplets',
+  id: 'habit-1',
+  name: '水を8杯飲む',
+  period: 'daily',
+  streak: 12,
   updatedAt: new Date('2025-01-28'),
+  userId: 'user-1',
   ...overrides,
 })
 
 const habits = [
   createHabit(),
   createHabit({
+    color: 'orange',
+    completionRate: 100,
+    currentProgress: 1,
+    frequency: 1,
+    icon: 'dumbbell',
     id: 'habit-2',
     name: '30分運動',
-    icon: 'dumbbell',
-    color: 'orange',
-    frequency: 1,
-    currentProgress: 1,
-    completionRate: 100,
     streak: 7,
   }),
   createHabit({
+    color: 'purple',
+    completionRate: 0,
+    currentProgress: 0,
+    frequency: 1,
+    icon: 'book-open',
     id: 'habit-3',
     name: '読書',
-    icon: 'book-open',
-    color: 'purple',
-    frequency: 1,
-    currentProgress: 0,
-    completionRate: 0,
     streak: 5,
   }),
   createHabit({
+    color: 'blue',
+    completionRate: 0,
+    currentProgress: 0,
+    frequency: 1,
+    icon: 'target',
     id: 'habit-4',
     name: '週次レビュー',
-    icon: 'target',
-    color: 'blue',
     period: 'weekly',
-    frequency: 1,
-    currentProgress: 0,
-    completionRate: 0,
     streak: 4,
   }),
   createHabit({
+    color: 'pink',
+    completionRate: 0,
+    currentProgress: 0,
+    frequency: 1,
+    icon: 'clock',
     id: 'habit-5',
     name: '月の振り返り',
-    icon: 'clock',
-    color: 'pink',
     period: 'monthly',
-    frequency: 1,
-    currentProgress: 0,
-    completionRate: 0,
     streak: 2,
   }),
 ]
@@ -90,19 +90,19 @@ const completedHabitIds = new Set(habits.filter((habit) => habit.currentProgress
 
 export const Default: Story = {
   args: {
-    habits,
-    filteredHabits: habits,
     completedHabitIds,
-    periodFilter: 'all',
+    filteredHabits: habits,
+    habits,
+    onAddHabit: () => {
+      storybookToast.success('習慣を追加', 'Storybookでのデモです')
+    },
     onPeriodChange: (filter) => {
       storybookToast.info('フィルター変更', `filter: ${filter}`)
     },
     onToggleHabit: (habitId) => {
       storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
     },
-    onAddHabit: () => {
-      storybookToast.success('習慣を追加', 'Storybookでのデモです')
-    },
+    periodFilter: 'all',
     todayActive: 1,
     todayLabel: '1月29日（木）',
     totalDaily: 3,
@@ -112,15 +112,15 @@ export const Default: Story = {
 
 export const Empty: Story = {
   args: {
-    habits: [],
-    filteredHabits: [],
     completedHabitIds: new Set(),
-    periodFilter: 'all',
-    onPeriodChange: () => undefined,
-    onToggleHabit: () => undefined,
+    filteredHabits: [],
+    habits: [],
     onAddHabit: () => {
       storybookToast.success('習慣を追加', 'Storybookでのデモです')
     },
+    onPeriodChange: () => undefined,
+    onToggleHabit: () => undefined,
+    periodFilter: 'all',
     todayActive: 0,
     todayLabel: '1月29日（木）',
     totalDaily: 0,

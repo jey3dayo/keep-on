@@ -36,7 +36,7 @@ function logMissingSessionEmail(clerkId: string, claims: unknown): void {
 
   const claimKeys = claims && typeof claims === 'object' ? Object.keys(claims as Record<string, unknown>) : []
 
-  logWarn('clerk.sessionClaims:missing-email', { clerkId, claimKeys })
+  logWarn('clerk.sessionClaims:missing-email', { claimKeys, clerkId })
   globalForSessionClaims.__missingSessionEmailLogged = true
 }
 
@@ -49,9 +49,9 @@ function parseClerkApiResponseError(error: unknown) {
       : undefined
 
     return {
-      status: error.status,
       clerkTraceId: error.clerkTraceId ?? undefined,
       errors,
+      status: error.status,
     }
   }
 
@@ -91,7 +91,7 @@ function parseUserRecord(user: unknown, source: 'existing' | 'upsert', logClerkI
   }
   const parsed = safeParseUser(user)
   if (!parsed.success) {
-    logError('user.schema:invalid', { clerkId: logClerkId, source, issues: parsed.issues })
+    logError('user.schema:invalid', { clerkId: logClerkId, issues: parsed.issues, source })
     return null
   }
   return parsed.output
@@ -108,7 +108,7 @@ async function fetchExistingUserWithRetry(clerkId: string, dbTimeoutMs: number):
     if (!retryReason) {
       throw error
     }
-    logWarn('syncUser.getUserByClerkId:reset', { clerkId, timeoutMs: dbTimeoutMs, reason: retryReason })
+    logWarn('syncUser.getUserByClerkId:reset', { clerkId, reason: retryReason, timeoutMs: dbTimeoutMs })
     resetDb()
     return await fetchExisting('syncUser.getUserByClerkId.retry')
   }
@@ -213,8 +213,8 @@ export async function syncUser() {
   const emailFromClaims = getEmailFromSessionClaims(sessionClaims)
   const handledExisting = await handleExistingUser({
     clerkId,
-    existing: parsedExisting,
     emailFromClaims,
+    existing: parsedExisting,
     sessionClaims,
   })
   if (handledExisting) {

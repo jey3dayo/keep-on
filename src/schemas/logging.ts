@@ -23,24 +23,24 @@ export function parseLogLevel(rawLevel: unknown): LogLevel {
  * Cause オブジェクトのスキーマ（1レベルのみ）
  */
 const CauseSchema = v.object({
-  message: v.optional(v.string()),
   code: v.optional(v.string()),
+  message: v.optional(v.string()),
 })
 
 /**
  * PostgresError 風の詳細エラースキーマ
  */
 const DetailedErrorSchema = v.object({
-  name: v.optional(v.string()),
-  message: v.string(),
-  code: v.optional(v.string()),
-  severity: v.optional(v.string()),
-  constraint_name: v.optional(v.string()),
-  table_name: v.optional(v.string()),
-  column_name: v.optional(v.string()),
-  schema_name: v.optional(v.string()),
-  query: v.optional(v.string()),
   cause: v.optional(CauseSchema),
+  code: v.optional(v.string()),
+  column_name: v.optional(v.string()),
+  constraint_name: v.optional(v.string()),
+  message: v.string(),
+  name: v.optional(v.string()),
+  query: v.optional(v.string()),
+  schema_name: v.optional(v.string()),
+  severity: v.optional(v.string()),
+  table_name: v.optional(v.string()),
 })
 
 /**
@@ -55,7 +55,7 @@ export type FormattedError = v.InferOutput<typeof DetailedErrorSchema> & { name:
 export function formatErrorObject(error: unknown): FormattedError {
   // 非オブジェクトの場合
   if (typeof error !== 'object' || error === null) {
-    return { name: 'UnknownError', message: String(error) }
+    return { message: String(error), name: 'UnknownError' }
   }
 
   // Error インスタンス（PostgresError 等のサブクラスを含む）の場合
@@ -82,7 +82,7 @@ export function formatErrorObject(error: unknown): FormattedError {
 
   // パース失敗時は基本情報のみ（Error インスタンスは name/message を保証）
   if (error instanceof Error) {
-    return { name: error.name, message: error.message }
+    return { message: error.message, name: error.name }
   }
-  return { name: 'Error', message: String(error) }
+  return { message: String(error), name: 'Error' }
 }

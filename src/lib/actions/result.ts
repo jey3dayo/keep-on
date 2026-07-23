@@ -16,15 +16,15 @@ export function actionOk(): ServerActionResult<void, never>
 export function actionOk<T>(data: T): ServerActionResult<T, never>
 export function actionOk<T>(data?: T): ServerActionResult<T, never> {
   return {
-    ok: true,
     data: data as T,
+    ok: true,
   }
 }
 
 export function actionError<E>(error: E): ServerActionResult<never, E> {
   return {
-    ok: false,
     error,
+    ok: false,
   }
 }
 

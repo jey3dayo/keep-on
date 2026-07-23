@@ -16,31 +16,31 @@ import { syncUser } from '@/lib/user'
 import { formatDateKey, parseDateKey } from '@/lib/utils/date'
 
 export const metadata: Metadata = {
-  title: 'アナリティクス - KeepOn',
   description:
     '習慣の達成率、トレンド、統計情報を可視化。長期的なパフォーマンス分析で、より良い習慣形成のためのインサイトを得られます。',
   openGraph: {
-    title: 'アナリティクス - KeepOn',
     description: '習慣のトレンドと統計を分析・可視化',
+    title: 'アナリティクス - KeepOn',
     type: 'website',
   },
+  title: 'アナリティクス - KeepOn',
 }
 
 const periodStyles: Record<Period, { accent: string; bar: string; badge: string }> = {
   daily: {
     accent: 'text-emerald-600 dark:text-emerald-400',
-    bar: 'bg-emerald-500 dark:bg-emerald-400',
     badge: 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200',
-  },
-  weekly: {
-    accent: 'text-sky-600 dark:text-sky-400',
-    bar: 'bg-sky-500 dark:bg-sky-400',
-    badge: 'bg-sky-500/15 text-sky-700 dark:bg-sky-400/15 dark:text-sky-200',
+    bar: 'bg-emerald-500 dark:bg-emerald-400',
   },
   monthly: {
     accent: 'text-amber-600 dark:text-amber-400',
-    bar: 'bg-amber-500 dark:bg-amber-400',
     badge: 'bg-amber-500/15 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200',
+    bar: 'bg-amber-500 dark:bg-amber-400',
+  },
+  weekly: {
+    accent: 'text-sky-600 dark:text-sky-400',
+    badge: 'bg-sky-500/15 text-sky-700 dark:bg-sky-400/15 dark:text-sky-200',
+    bar: 'bg-sky-500 dark:bg-sky-400',
   },
 }
 
@@ -61,7 +61,7 @@ export default async function AnalyticsPage() {
   const baseDate = parseDateKey(dateKey)
   const startDateKey = formatDateKey(subDays(baseDate, 6))
   const endDateKey = formatDateKey(baseDate)
-  const dayFormatter = new Intl.DateTimeFormat('ja-JP', { month: 'numeric', day: 'numeric' })
+  const dayFormatter = new Intl.DateTimeFormat('ja-JP', { day: 'numeric', month: 'numeric' })
   const numberFormatter = new Intl.NumberFormat('ja-JP')
   const averageFormatter = new Intl.NumberFormat('ja-JP', { maximumFractionDigits: 1, minimumFractionDigits: 1 })
 
@@ -105,10 +105,10 @@ export default async function AnalyticsPage() {
     const rate = periodHabits.length > 0 ? Math.round((active / periodHabits.length) * 100) : 0
 
     return {
-      period,
-      total: periodHabits.length,
       active,
+      period,
       rate,
+      total: periodHabits.length,
     }
   })
 
@@ -117,9 +117,9 @@ export default async function AnalyticsPage() {
   const activityData = activityDays.map((day) => {
     const key = formatDateKey(day)
     return {
+      count: activityMap.get(key) ?? 0,
       key,
       label: dayFormatter.format(day),
-      count: activityMap.get(key) ?? 0,
     }
   })
   const rangeLabel =
@@ -131,7 +131,7 @@ export default async function AnalyticsPage() {
   const activityAverage = Math.round((activityTotal / activityData.length) * 10) / 10
   const activityAverageLabel = averageFormatter.format(activityAverage)
   const activityActiveDays = activityData.filter((entry) => entry.count > 0).length
-  const activityPeakFallback = { key: 'peak', label: '-', count: 0 }
+  const activityPeakFallback = { count: 0, key: 'peak', label: '-' }
   const activityPeak =
     activityData.length > 0
       ? activityData.reduce((best, entry) => (entry.count > best.count ? entry : best), activityData[0])

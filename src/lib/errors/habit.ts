@@ -5,9 +5,9 @@ import { ErrorFactory } from '@praha/error-factory'
  * ユーザーが認証されていない場合に発生
  */
 export class UnauthorizedError extends ErrorFactory({
-  name: 'UnauthorizedError',
-  message: ({ detail }) => detail ?? 'User is not authenticated',
   fields: ErrorFactory.fields<{ detail?: string }>(),
+  message: ({ detail }) => detail ?? 'User is not authenticated',
+  name: 'UnauthorizedError',
 }) {}
 
 /**
@@ -15,9 +15,9 @@ export class UnauthorizedError extends ErrorFactory({
  * リソースへのアクセス権がない場合に発生
  */
 export class AuthorizationError extends ErrorFactory({
-  name: 'AuthorizationError',
-  message: ({ detail }) => detail ?? 'User is not authorized',
   fields: ErrorFactory.fields<{ detail?: string }>(),
+  message: ({ detail }) => detail ?? 'User is not authorized',
+  name: 'AuthorizationError',
 }) {}
 
 /**
@@ -25,9 +25,9 @@ export class AuthorizationError extends ErrorFactory({
  * 入力値のバリデーションに失敗した場合に発生
  */
 export class ValidationError extends ErrorFactory({
-  name: 'ValidationError',
-  message: 'Validation failed',
   fields: ErrorFactory.fields<{ field: string; reason: string }>(),
+  message: 'Validation failed',
+  name: 'ValidationError',
 }) {}
 
 /**
@@ -35,9 +35,9 @@ export class ValidationError extends ErrorFactory({
  * データベース操作に失敗した場合に発生
  */
 export class DatabaseError extends ErrorFactory({
-  name: 'DatabaseError',
-  message: ({ detail }) => detail ?? 'Database operation failed',
   fields: ErrorFactory.fields<{ detail?: string }>(),
+  message: ({ detail }) => detail ?? 'Database operation failed',
+  name: 'DatabaseError',
 }) {}
 
 /**
@@ -45,9 +45,9 @@ export class DatabaseError extends ErrorFactory({
  * リソースが見つからない場合に発生
  */
 export class NotFoundError extends ErrorFactory({
-  name: 'NotFoundError',
-  message: ({ detail }) => detail ?? 'Resource not found',
   fields: ErrorFactory.fields<{ detail?: string }>(),
+  message: ({ detail }) => detail ?? 'Resource not found',
+  name: 'NotFoundError',
 }) {}
 
 /**

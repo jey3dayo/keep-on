@@ -146,21 +146,21 @@ export function normalizeIconName(name: unknown): IconName {
   }
   if (typeof name === 'string') {
     const legacyIconMap: Record<string, IconName> = {
-      water: 'droplets',
+      art: 'palette',
       exercise: 'dumbbell',
+      goal: 'target',
+      health: 'heart',
+      medicine: 'pill',
+      meditate: 'brain',
+      nutrition: 'apple',
+      photo: 'camera',
       read: 'book-open',
       sleep: 'moon',
-      health: 'heart',
-      nutrition: 'apple',
-      meditate: 'brain',
-      photo: 'camera',
-      art: 'palette',
-      walk: 'footprints',
-      medicine: 'pill',
-      time: 'clock',
       sparkle: 'sparkles',
-      goal: 'target',
       streak: 'flame',
+      time: 'clock',
+      walk: 'footprints',
+      water: 'droplets',
     }
 
     const mapped = legacyIconMap[name]

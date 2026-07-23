@@ -3,8 +3,8 @@ import type { Metadata } from 'next'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 
 export const metadata: Metadata = {
-  title: 'Health - KeepOn',
   description: 'Clerk と DB の設定状態を確認するヘルスチェックページ',
+  title: 'Health - KeepOn',
 }
 
 export const dynamic = 'force-dynamic'
@@ -32,27 +32,27 @@ interface EnvSnapshot {
 }
 
 const STATUS_BADGE_STYLES: Record<Status, string> = {
+  error: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300',
   ok: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
   warn: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  error: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300',
 }
 
 const STATUS_BADGE_ICONS: Record<Status, typeof CheckCircle2> = {
+  error: XCircle,
   ok: CheckCircle2,
   warn: AlertTriangle,
-  error: XCircle,
 }
 
 const STATUS_BADGE_LABELS: Record<Status, string> = {
+  error: 'ERROR',
   ok: 'OK',
   warn: 'WARN',
-  error: 'ERROR',
 }
 
 const STATUS_PILL_STYLES: Record<Status, string> = {
+  error: 'bg-red-500/10 text-red-700 dark:text-red-300',
   ok: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
   warn: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  error: 'bg-red-500/10 text-red-700 dark:text-red-300',
 }
 
 function getString(source: Record<string, unknown>, key: string): string | undefined {
@@ -100,13 +100,13 @@ async function getEnvSnapshot(): Promise<EnvSnapshot> {
 
   if (!isWorkersRuntime) {
     return {
-      runtime,
-      nextjsEnv: process.env.NEXTJS_ENV,
       clerkPublishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
       clerkSecretKey: process.env.CLERK_SECRET_KEY,
+      d1Binding: false,
+      nextjsEnv: process.env.NEXTJS_ENV,
+      runtime,
       signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
       signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
-      d1Binding: false,
     }
   }
 
@@ -116,23 +116,23 @@ async function getEnvSnapshot(): Promise<EnvSnapshot> {
     const envRecord = env as Record<string, unknown>
     const d1Binding = 'DB' in envRecord && envRecord.DB !== null && envRecord.DB !== undefined
     return {
-      runtime,
-      nextjsEnv: getString(envRecord, 'NEXTJS_ENV'),
       clerkPublishableKey: getString(envRecord, 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'),
       clerkSecretKey: getString(envRecord, 'CLERK_SECRET_KEY'),
+      d1Binding,
+      nextjsEnv: getString(envRecord, 'NEXTJS_ENV'),
+      runtime,
       signInUrl: getString(envRecord, 'NEXT_PUBLIC_CLERK_SIGN_IN_URL'),
       signUpUrl: getString(envRecord, 'NEXT_PUBLIC_CLERK_SIGN_UP_URL'),
-      d1Binding,
     }
   } catch {
     return {
-      runtime,
-      nextjsEnv: process.env.NEXTJS_ENV,
       clerkPublishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
       clerkSecretKey: process.env.CLERK_SECRET_KEY,
+      d1Binding: false,
+      nextjsEnv: process.env.NEXTJS_ENV,
+      runtime,
       signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
       signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
-      d1Binding: false,
     }
   }
 }
@@ -157,46 +157,46 @@ function buildHealthChecks(envSnapshot: EnvSnapshot): HealthCheck[] {
 
   return [
     {
+      description: runtimeDescription,
       id: 'runtime',
       label: 'Runtime',
-      status: runtimeStatus,
-      description: runtimeDescription,
       meta: envSnapshot.nextjsEnv ? `NEXTJS_ENV: ${envSnapshot.nextjsEnv}` : undefined,
+      status: runtimeStatus,
     },
     {
+      description: envSnapshot.clerkPublishableKey ? '設定済み' : '未設定',
       id: 'clerk-publishable',
       label: 'Clerk Publishable Key',
-      status: envSnapshot.clerkPublishableKey ? 'ok' : 'error',
-      description: envSnapshot.clerkPublishableKey ? '設定済み' : '未設定',
       meta: publishableMeta,
+      status: envSnapshot.clerkPublishableKey ? 'ok' : 'error',
     },
     {
+      description: envSnapshot.clerkSecretKey ? '設定済み' : '未設定',
       id: 'clerk-secret',
       label: 'Clerk Secret Key',
-      status: envSnapshot.clerkSecretKey ? 'ok' : 'error',
-      description: envSnapshot.clerkSecretKey ? '設定済み' : '未設定',
       meta: secretMeta,
+      status: envSnapshot.clerkSecretKey ? 'ok' : 'error',
     },
     {
+      description: clerkUrlsConfigured ? 'URL 設定済み' : 'URL 未設定',
       id: 'clerk-urls',
       label: 'Clerk URLs',
-      status: clerkUrlsConfigured ? 'ok' : 'warn',
-      description: clerkUrlsConfigured ? 'URL 設定済み' : 'URL 未設定',
       meta: `sign-in: ${envSnapshot.signInUrl ?? '-'} / sign-up: ${envSnapshot.signUpUrl ?? '-'}`,
+      status: clerkUrlsConfigured ? 'ok' : 'warn',
     },
     {
+      description: keyMismatch ? 'Publishable/Secret の mode が不一致' : 'Publishable/Secret の mode 一致',
       id: 'clerk-mode',
       label: 'Clerk Key Mode',
-      status: keyMismatch ? 'warn' : 'ok',
-      description: keyMismatch ? 'Publishable/Secret の mode が不一致' : 'Publishable/Secret の mode 一致',
       meta: `publishable: ${publishableMode} / secret: ${secretMode}`,
+      status: keyMismatch ? 'warn' : 'ok',
     },
     {
+      description: describeDbBinding(dbBinding),
       id: 'db-binding',
       label: 'DB Binding',
-      status: dbBinding === 'missing' ? 'error' : 'ok',
-      description: describeDbBinding(dbBinding),
       meta: dbBinding,
+      status: dbBinding === 'missing' ? 'error' : 'ok',
     },
   ]
 }
@@ -215,7 +215,7 @@ function summarizeChecks(checks: HealthCheck[]): { ok: number; warn: number; err
       }
       return acc
     },
-    { ok: 0, warn: 0, error: 0 }
+    { error: 0, ok: 0, warn: 0 }
   )
 }
 

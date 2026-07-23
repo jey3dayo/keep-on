@@ -45,11 +45,11 @@ export function setClientCookie(key: string, value: string, options: CookieOptio
   if ('cookieStore' in window) {
     const cookieStore = window.cookieStore
     cookieStore.set({
+      expires: typeof safeOptions.maxAge === 'number' ? Date.now() + safeOptions.maxAge * 1000 : undefined,
       name: key,
-      value,
       path,
       sameSite: safeOptions.sameSite,
-      expires: typeof safeOptions.maxAge === 'number' ? Date.now() + safeOptions.maxAge * 1000 : undefined,
+      value,
     })
     return
   }

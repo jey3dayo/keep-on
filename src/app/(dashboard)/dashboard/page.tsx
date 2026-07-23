@@ -23,14 +23,14 @@ import type { HabitWithProgress } from '@/types/habit'
 import { DashboardWrapper } from './DashboardWrapper'
 
 export const metadata: Metadata = {
-  title: 'ダッシュボード - KeepOn',
   description:
     'あなたの習慣追踪の進捗状況とアクティビティを一目で確認。今日の達成状況、習慣の連続記録（ストリーク）、統計情報をダッシュボードでチェック。',
   openGraph: {
-    title: 'ダッシュボード - KeepOn',
     description: '習慣追踪の進捗状況とアクティビティを一目で確認',
+    title: 'ダッシュボード - KeepOn',
     type: 'website',
   },
+  title: 'ダッシュボード - KeepOn',
 }
 
 export default async function DashboardPage() {
@@ -66,8 +66,8 @@ export default async function DashboardPage() {
     if (staleHabits && (isTimeoutError(error) || isDatabaseError(error))) {
       logWarn('dashboard.habits:stale-fallback', {
         cachedDateKey: cacheSnapshot?.dateKey,
-        requestedDateKey: dateKey,
         error: formatError(error),
+        requestedDateKey: dateKey,
       })
       habits = staleHabits
     } else {

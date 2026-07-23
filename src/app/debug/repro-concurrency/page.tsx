@@ -5,8 +5,8 @@ import { type ConcurrencyResult, runConcurrencyChecks } from './actions'
 import { CONCURRENCY_LIMITS, ITERATION_LIMITS } from './constants'
 
 export const metadata: Metadata = {
-  title: '並列実行再現 - KeepOn',
   description: 'Clerk API と DB クエリを並列実行して疎通・タイムアウトを検査するデバッグページ',
+  title: '並列実行再現 - KeepOn',
 }
 
 export const dynamic = 'force-dynamic'
@@ -16,27 +16,27 @@ type Status = 'ok' | 'warn' | 'error'
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
 
 const STATUS_BADGE_STYLES: Record<Status, string> = {
+  error: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300',
   ok: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
   warn: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  error: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300',
 }
 
 const STATUS_BADGE_ICONS: Record<Status, typeof CheckCircle2> = {
+  error: XCircle,
   ok: CheckCircle2,
   warn: AlertTriangle,
-  error: XCircle,
 }
 
 const STATUS_BADGE_LABELS: Record<Status, string> = {
+  error: 'ERROR',
   ok: 'OK',
   warn: 'WARN',
-  error: 'ERROR',
 }
 
 const STATUS_PILL_STYLES: Record<Status, string> = {
+  error: 'bg-red-500/10 text-red-700 dark:text-red-300',
   ok: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
   warn: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  error: 'bg-red-500/10 text-red-700 dark:text-red-300',
 }
 
 function getParamValue(value: string | string[] | undefined): string | undefined {
@@ -132,9 +132,9 @@ export default async function ReproConcurrencyPage({ searchParams }: { searchPar
           acc.error += batch.error
           return acc
         },
-        { ok: 0, error: 0 }
+        { error: 0, ok: 0 }
       )
-    : { ok: 0, error: 0 }
+    : { error: 0, ok: 0 }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/40">

@@ -21,11 +21,11 @@ async function performSkipMutation<TDbResult, TResult>(
   const metaWithUser = { ...baseMeta, userId }
 
   await requireHabitForUserWithRetry({
+    actionName: options.actionName,
     habitId: input.habitId,
-    userId,
     meta: metaWithUser,
     runWithRetry: spans.runWithRetry,
-    actionName: options.actionName,
+    userId,
   })
 
   const targetDate = input.dateKey ?? new Date()
@@ -42,17 +42,17 @@ async function performSkipMutation<TDbResult, TResult>(
 
 export async function addSkipAction(habitId: string, dateKey?: string): HabitActionResult<{ skipped: boolean }> {
   return await runTimedHabitAction(
-    { habitId, dateKey },
+    { dateKey, habitId },
     {
       actionName: 'action.habits.skip',
-      errorDetail: 'スキップの設定に失敗しました',
       buildBaseMeta: (input, requestMeta) => ({ ...requestMeta, habitId: input.habitId }),
+      errorDetail: 'スキップの設定に失敗しました',
       run: async ({ input, baseMeta, spans }) =>
         await performSkipMutation(input, baseMeta, spans, {
           actionName: 'action.habits.skip',
           dbActionName: 'action.habits.skip.createSkip',
-          mutate: createSkip,
           mapResult: (skip) => ({ skipped: skip !== null }),
+          mutate: createSkip,
         }),
     }
   )
@@ -60,17 +60,17 @@ export async function addSkipAction(habitId: string, dateKey?: string): HabitAct
 
 export async function removeSkipAction(habitId: string, dateKey?: string): HabitActionResult {
   return await runTimedHabitAction(
-    { habitId, dateKey },
+    { dateKey, habitId },
     {
       actionName: 'action.habits.remove-skip',
-      errorDetail: 'スキップの解除に失敗しました',
       buildBaseMeta: (input, requestMeta) => ({ ...requestMeta, habitId: input.habitId }),
+      errorDetail: 'スキップの解除に失敗しました',
       run: async ({ input, baseMeta, spans }) =>
         await performSkipMutation(input, baseMeta, spans, {
           actionName: 'action.habits.remove-skip',
           dbActionName: 'action.habits.remove-skip.deleteSkip',
-          mutate: deleteSkip,
           mapResult: () => undefined,
+          mutate: deleteSkip,
         }),
     }
   )

@@ -2,27 +2,22 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Input } from './Input'
 
 const meta = {
-  title: 'Basics/Input',
-  component: Input,
-  parameters: {
-    layout: 'centered',
-  },
-  tags: ['autodocs'],
   argTypes: {
-    type: {
-      control: 'select',
-      options: ['text', 'email', 'password', 'number', 'tel', 'url'],
-    },
-    error: {
-      control: 'boolean',
-    },
     disabled: {
       control: 'boolean',
     },
     disablePasswordManagers: {
       control: 'boolean',
     },
+    error: {
+      control: 'boolean',
+    },
+    type: {
+      control: 'select',
+      options: ['text', 'email', 'password', 'number', 'tel', 'url'],
+    },
   },
+  component: Input,
   decorators: [
     (Story) => (
       <div style={{ width: '400px' }}>
@@ -30,6 +25,11 @@ const meta = {
       </div>
     ),
   ],
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+  title: 'Basics/Input',
 } satisfies Meta<typeof Input>
 
 export default meta
@@ -51,17 +51,17 @@ export const WithValue: Story = {
 
 export const ErrorState: Story = {
   args: {
+    error: true,
     placeholder: 'Enter text...',
     type: 'text',
-    error: true,
   },
 }
 
 export const Disabled: Story = {
   args: {
+    disabled: true,
     placeholder: 'Disabled input',
     type: 'text',
-    disabled: true,
   },
 }
 
@@ -87,6 +87,10 @@ export const NumberInput: Story = {
 }
 
 export const WithLabel: Story = {
+  args: {
+    placeholder: 'Enter username',
+    type: 'text',
+  },
   render: (args) => (
     <div className="space-y-2">
       <label className="font-medium text-sm" htmlFor="input-with-label">
@@ -95,13 +99,14 @@ export const WithLabel: Story = {
       <Input id="input-with-label" {...args} />
     </div>
   ),
-  args: {
-    placeholder: 'Enter username',
-    type: 'text',
-  },
 }
 
 export const WithErrorMessage: Story = {
+  args: {
+    error: true,
+    placeholder: 'your.email@example.com',
+    type: 'email',
+  },
   render: (args) => (
     <div className="space-y-2">
       <label className="font-medium text-sm" htmlFor="input-with-error">
@@ -111,26 +116,21 @@ export const WithErrorMessage: Story = {
       <p className="text-destructive text-sm">This email is already taken</p>
     </div>
   ),
-  args: {
-    placeholder: 'your.email@example.com',
-    type: 'email',
-    error: true,
-  },
 }
 
 export const WithPasswordManagers: Story = {
   args: {
+    disablePasswordManagers: false,
     placeholder: 'Password managers enabled',
     type: 'password',
-    disablePasswordManagers: false,
   },
 }
 
 export const WithoutPasswordManagers: Story = {
   args: {
+    disablePasswordManagers: true,
     placeholder: 'Password managers disabled (default)',
     type: 'password',
-    disablePasswordManagers: true,
   },
 }
 

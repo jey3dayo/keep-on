@@ -10,8 +10,8 @@ import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 
 export const metadata: Metadata = {
-  title: i18n.t('habits.newPage.metaTitle'),
   description: i18n.t('habits.newPage.metaDescription'),
+  title: i18n.t('habits.newPage.metaTitle'),
 }
 
 export default async function NewHabitPage({

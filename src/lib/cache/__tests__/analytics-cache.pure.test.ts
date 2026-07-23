@@ -45,7 +45,7 @@ describe('analytics-cache.pure', () => {
 
   describe('validateCachedData', () => {
     it('should return total when data is valid', () => {
-      const validData = { total: 42, timestamp: Date.now() }
+      const validData = { timestamp: Date.now(), total: 42 }
       const result = validateCachedData(validData)
 
       expect(result).toBe(42)
@@ -71,21 +71,21 @@ describe('analytics-cache.pure', () => {
     })
 
     it('should return null when total is negative', () => {
-      const invalidData = { total: -1, timestamp: Date.now() }
+      const invalidData = { timestamp: Date.now(), total: -1 }
       const result = validateCachedData(invalidData)
 
       expect(result).toBeNull()
     })
 
     it('should return null when total is not an integer', () => {
-      const invalidData = { total: 42.5, timestamp: Date.now() }
+      const invalidData = { timestamp: Date.now(), total: 42.5 }
       const result = validateCachedData(invalidData)
 
       expect(result).toBeNull()
     })
 
     it('should return null when total is not a number', () => {
-      const invalidData = { total: '42', timestamp: Date.now() }
+      const invalidData = { timestamp: Date.now(), total: '42' }
       const result = validateCachedData(invalidData)
 
       expect(result).toBeNull()
@@ -99,7 +99,7 @@ describe('analytics-cache.pure', () => {
     })
 
     it('should handle zero total', () => {
-      const validData = { total: 0, timestamp: Date.now() }
+      const validData = { timestamp: Date.now(), total: 0 }
       const result = validateCachedData(validData)
 
       expect(result).toBe(0)

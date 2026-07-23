@@ -36,13 +36,13 @@ async function main() {
 
     // UserSettings を作成
     await db.insert(userSettings).values({
+      colorTheme: 'teal',
+      createdAt: new Date().toISOString(),
       id: createId(),
+      themeMode: 'system',
+      updatedAt: new Date().toISOString(),
       userId: user.id,
       weekStart: user.weekStart,
-      colorTheme: 'teal',
-      themeMode: 'system',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     })
 
     console.log(`Migrated user ${user.id}`)

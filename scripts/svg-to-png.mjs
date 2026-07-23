@@ -23,8 +23,8 @@ async function convertSvgToPng() {
     // 1024x1024の透過PNGに変換
     await sharp(svgBuffer)
       .resize(SIZE, SIZE, {
+        background: { alpha: 0, b: 0, g: 0, r: 0 }, // 透過背景
         fit: 'contain',
-        background: { r: 0, g: 0, b: 0, alpha: 0 }, // 透過背景
       })
       .png()
       .toFile(OUTPUT_PNG)

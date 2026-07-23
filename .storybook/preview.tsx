@@ -16,9 +16,9 @@ if (
   Object.defineProperty(globalThis, STORYBOOK_JEST_MATCHERS, {
     configurable: true,
     get: () => ({
-      state: {},
-      matchers,
       customEqualityTesters,
+      matchers,
+      state: {},
     }),
   })
 }
@@ -27,7 +27,35 @@ const colorThemes = Object.fromEntries(COLOR_THEMES.map((theme) => [theme, theme
 const classThemes = Object.fromEntries(COLOR_THEMES.map((theme) => [theme, '']))
 
 const preview: Preview = {
+  decorators: [
+    withThemeByClassName({
+      defaultTheme: DEFAULT_COLOR_THEME,
+      themes: {
+        ...classThemes,
+        dark: 'dark',
+        light: '',
+      },
+    }),
+    withThemeByDataAttribute({
+      attributeName: 'data-theme',
+      defaultTheme: DEFAULT_COLOR_THEME,
+      themes: {
+        ...colorThemes,
+        dark: 'dark',
+        light: '',
+      },
+    }),
+    (Story) => (
+      <>
+        <Story />
+        <Toaster position="bottom-right" richColors />
+      </>
+    ),
+  ],
   parameters: {
+    backgrounds: {
+      disable: true,
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,
@@ -37,35 +65,7 @@ const preview: Preview = {
     nextjs: {
       appDirectory: true,
     },
-    backgrounds: {
-      disable: true,
-    },
   },
-  decorators: [
-    withThemeByClassName({
-      themes: {
-        ...classThemes,
-        light: '',
-        dark: 'dark',
-      },
-      defaultTheme: DEFAULT_COLOR_THEME,
-    }),
-    withThemeByDataAttribute({
-      themes: {
-        ...colorThemes,
-        light: '',
-        dark: 'dark',
-      },
-      defaultTheme: DEFAULT_COLOR_THEME,
-      attributeName: 'data-theme',
-    }),
-    (Story) => (
-      <>
-        <Story />
-        <Toaster position="bottom-right" richColors />
-      </>
-    ),
-  ],
 }
 
 export default preview

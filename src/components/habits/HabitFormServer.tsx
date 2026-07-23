@@ -58,8 +58,8 @@ export function HabitFormServer({
   const isEdit = useMemo(() => Boolean(initialData && !('category' in initialData)), [initialData])
 
   const form = useForm<FormValues>({
-    resolver: valibotResolver(HabitInputSchema) as Resolver<FormValues>,
     defaultValues,
+    resolver: valibotResolver(HabitInputSchema) as Resolver<FormValues>,
   })
 
   // initialData が変わった場合にフォームをリセット
@@ -217,8 +217,8 @@ export function HabitFormServer({
                       size="icon"
                       style={
                         {
-                          backgroundColor: isSelected ? selectedColorValue : undefined,
                           '--tw-ring-color': selectedColorValue,
+                          backgroundColor: isSelected ? selectedColorValue : undefined,
                         } as React.CSSProperties
                       }
                       type="button"
@@ -312,8 +312,8 @@ export function HabitFormServer({
                       size="icon"
                       style={
                         {
-                          backgroundColor: color.color,
                           '--tw-ring-color': color.color,
+                          backgroundColor: color.color,
                         } as React.CSSProperties
                       }
                       type="button"

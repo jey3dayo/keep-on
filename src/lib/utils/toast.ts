@@ -5,9 +5,6 @@ import { toast } from 'sonner'
  * エラー時はconsole.errorも出力する
  */
 export const appToast = {
-  success: (message: string, description?: string) => {
-    toast.success(message, { description })
-  },
   error: (message: string, error?: Error | { message: string } | unknown) => {
     // エラー詳細をコンソールに出力
     if (error) {
@@ -26,5 +23,8 @@ export const appToast = {
   },
   info: (message: string, description?: string) => {
     toast.info(message, { description })
+  },
+  success: (message: string, description?: string) => {
+    toast.success(message, { description })
   },
 }

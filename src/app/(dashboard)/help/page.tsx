@@ -3,14 +3,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'ヘルプ - KeepOn',
   description:
     'KeepOnの使い方ガイド、よくある質問、トラブルシューティング。アプリの活用方法を知りたい場合や、困ったときにご確認ください。',
   openGraph: {
-    title: 'ヘルプ - KeepOn',
     description: '使い方ガイドとよくある質問',
+    title: 'ヘルプ - KeepOn',
     type: 'website',
   },
+  title: 'ヘルプ - KeepOn',
 }
 
 export default function HelpPage() {

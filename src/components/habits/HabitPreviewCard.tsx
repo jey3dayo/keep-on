@@ -49,8 +49,8 @@ export function HabitPreviewCard({
             <div
               className="h-full rounded-full transition-all duration-300"
               style={{
-                width: '0%',
                 backgroundColor: selectedColorValue,
+                width: '0%',
               }}
             />
           </div>

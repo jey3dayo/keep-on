@@ -135,13 +135,13 @@ export async function runTimedHabitAction<T>(
       }
 
       return await Result.try({
+        catch: (error) => error,
         try: async () =>
           await spans.runWithRequestTimeout(
             options.actionName,
-            () => options.run({ input, baseMeta, spans }),
+            () => options.run({ baseMeta, input, spans }),
             baseMeta
           ),
-        catch: (error) => error,
       })
     }),
     Result.mapError((error) => serializeActionError(error, options.errorDetail))
@@ -160,7 +160,7 @@ export function serializeActionError(error: unknown, detail: string): Serializab
     return serializeHabitError(error)
   }
 
-  const databaseError = error instanceof DatabaseError ? error : new DatabaseError({ detail, cause: error })
+  const databaseError = error instanceof DatabaseError ? error : new DatabaseError({ cause: error, detail })
 
   return serializeHabitError(databaseError)
 }
@@ -185,7 +185,7 @@ export async function revalidateHabitPaths(userId: string, options: { sync?: boo
       ])
     } catch (error) {
       // キャッシュ無効化の失敗は致命的ではないため、ログを記録して継続
-      logWarn('revalidateHabitPaths:error', { userId, error: formatError(error) })
+      logWarn('revalidateHabitPaths:error', { error: formatError(error), userId })
     }
   }
 

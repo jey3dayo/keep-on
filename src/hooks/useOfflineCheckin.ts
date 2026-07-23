@@ -44,7 +44,7 @@ const replayQueue = async (prefetchedItems?: QueuedCheckin[]): Promise<ReplayRes
 
   const items = prefetchedItems ?? (await getAllQueuedCheckins())
   if (items.length === 0) {
-    return { replayed: 0, failed: 0 }
+    return { failed: 0, replayed: 0 }
   }
 
   // タイムスタンプ順に処理
@@ -53,9 +53,9 @@ const replayQueue = async (prefetchedItems?: QueuedCheckin[]): Promise<ReplayRes
   for (const item of sorted) {
     try {
       const res = await fetch('/api/checkin', {
-        method: 'POST',
+        body: JSON.stringify({ action: item.action, dateKey: item.dateKey, habitId: item.habitId }),
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ habitId: item.habitId, action: item.action, dateKey: item.dateKey }),
+        method: 'POST',
       })
       if (res.ok) {
         await removeQueuedCheckin(item.id)
@@ -76,7 +76,7 @@ const replayQueue = async (prefetchedItems?: QueuedCheckin[]): Promise<ReplayRes
     }
   }
 
-  return { replayed, failed }
+  return { failed, replayed }
 }
 
 interface UseOfflineCheckinOptions {
@@ -98,7 +98,7 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
 
     const handler = (event: MessageEvent) => {
       if (event.data?.type === SW_MSG_SYNC_COMPLETE) {
-        onReplayCompleteRef.current?.({ replayed: event.data.replayedCount ?? 0, failed: 0 })
+        onReplayCompleteRef.current?.({ failed: 0, replayed: event.data.replayedCount ?? 0 })
       }
     }
 
@@ -140,10 +140,10 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
   const enqueueCheckin = useCallback(
     async (habitId: string, action: 'add' | 'remove', dateKey: string): Promise<void> => {
       const item: QueuedCheckin = {
-        id: generateId(),
-        habitId,
         action,
         dateKey,
+        habitId,
+        id: generateId(),
         timestamp: Date.now(),
       }
       await enqueueOfflineCheckin(item)
@@ -155,5 +155,5 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
     []
   )
 
-  return { isOnline, enqueueCheckin }
+  return { enqueueCheckin, isOnline }
 }

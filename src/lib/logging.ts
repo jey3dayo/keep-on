@@ -3,9 +3,9 @@ import { formatErrorObject, parseLogLevel } from '@/schemas/logging'
 
 const LOG_LEVEL_ORDER: Record<LogLevel, number> = {
   debug: 10,
+  error: 40,
   info: 20,
   warn: 30,
-  error: 40,
 }
 
 class TimeoutError extends Error {
@@ -114,7 +114,7 @@ export function createRequestMeta(route: string): { route: string; requestId: st
       ? crypto.randomUUID()
       : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 
-  return { route, requestId }
+  return { requestId, route }
 }
 
 export async function logSpan<T>(
@@ -160,7 +160,7 @@ export async function logSpan<T>(
       throw error
     }
     const ms = Math.round(nowMs() - start)
-    logError(`${name}:error`, data ? { ...data, ms, error: formatError(error) } : { ms, error: formatError(error) })
+    logError(`${name}:error`, data ? { ...data, error: formatError(error), ms } : { error: formatError(error), ms })
     throw error
   } finally {
     if (timeoutId) {

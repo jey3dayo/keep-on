@@ -3,12 +3,16 @@ import { storybookToast } from '@/lib/storybook'
 import { TaskCircle } from './TaskCircle'
 
 const meta = {
-  title: 'Streak/TaskCircle',
-  component: TaskCircle,
-  parameters: {
-    layout: 'centered',
+  argTypes: {
+    completed: {
+      control: 'boolean',
+    },
+    size: {
+      control: 'select',
+      options: ['sm', 'md', 'lg'],
+    },
   },
-  tags: ['autodocs'],
+  component: TaskCircle,
   decorators: [
     (Story) => (
       <div className="rounded-2xl bg-slate-900 p-6">
@@ -16,29 +20,25 @@ const meta = {
       </div>
     ),
   ],
-  argTypes: {
-    size: {
-      control: 'select',
-      options: ['sm', 'md', 'lg'],
-    },
-    completed: {
-      control: 'boolean',
-    },
+  parameters: {
+    layout: 'centered',
   },
+  tags: ['autodocs'],
+  title: 'Streak/TaskCircle',
 } satisfies Meta<typeof TaskCircle>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 const baseArgs = {
+  completed: false,
   habitId: 'habit-1',
   habitName: '朝のストレッチ',
   icon: 'dumbbell',
-  completed: false,
-  size: 'md',
   onToggle: (habitId: string) => {
     storybookToast.info('切り替え', `habitId: ${habitId}`)
   },
+  size: 'md',
 } as const
 
 export const Default: Story = {

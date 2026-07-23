@@ -10,15 +10,15 @@ export interface ColorPaletteProps {
 }
 
 const colors: { name: ColorThemeName; bg: string }[] = [
-  { name: 'teal', bg: 'var(--teal-10)' },
-  { name: 'lime', bg: 'var(--lime-10)' },
-  { name: 'orange', bg: 'var(--orange-10)' },
-  { name: 'red', bg: 'var(--red-10)' },
-  { name: 'pink', bg: 'var(--pink-10)' },
-  { name: 'purple', bg: 'var(--purple-10)' },
-  { name: 'blue', bg: 'var(--blue-10)' },
-  { name: 'cyan', bg: 'var(--cyan-10)' },
-  { name: 'yellow', bg: 'var(--yellow-10)' },
+  { bg: 'var(--teal-10)', name: 'teal' },
+  { bg: 'var(--lime-10)', name: 'lime' },
+  { bg: 'var(--orange-10)', name: 'orange' },
+  { bg: 'var(--red-10)', name: 'red' },
+  { bg: 'var(--pink-10)', name: 'pink' },
+  { bg: 'var(--purple-10)', name: 'purple' },
+  { bg: 'var(--blue-10)', name: 'blue' },
+  { bg: 'var(--cyan-10)', name: 'cyan' },
+  { bg: 'var(--yellow-10)', name: 'yellow' },
 ]
 
 export function ColorPalette({ currentTheme, onThemeChange }: ColorPaletteProps) {

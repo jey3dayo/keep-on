@@ -4,12 +4,12 @@ import type { IconName } from '@/components/basics/Icon'
 import { IconPicker } from './IconPicker'
 
 const meta = {
-  title: 'Streak/IconPicker',
   component: IconPicker,
   parameters: {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  title: 'Streak/IconPicker',
 } satisfies Meta<typeof IconPicker>
 
 export default meta
@@ -26,8 +26,8 @@ export const Interactive: Story = {
 
 export const Selected: Story = {
   args: {
-    selectedIcon: 'book-open',
     onIconSelect: () => undefined,
+    selectedIcon: 'book-open',
   },
 }
 

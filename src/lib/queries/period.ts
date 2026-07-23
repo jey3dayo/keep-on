@@ -41,9 +41,9 @@ export function getPeriodDateRange(
   const end = getPeriodEnd(baseDate, period, weekStartDay)
 
   return {
-    start,
     end,
-    startKey: formatDateKey(start),
     endKey: formatDateKey(end),
+    start,
+    startKey: formatDateKey(start),
   }
 }

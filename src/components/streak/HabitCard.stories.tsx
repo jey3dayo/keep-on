@@ -4,12 +4,7 @@ import type { HabitWithProgress } from '@/types/habit'
 import { HabitCard } from './HabitCard'
 
 const meta = {
-  title: 'Streak/HabitCard',
   component: HabitCard,
-  parameters: {
-    layout: 'centered',
-  },
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div className="w-[320px]">
@@ -17,26 +12,31 @@ const meta = {
       </div>
     ),
   ],
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+  title: 'Streak/HabitCard',
 } satisfies Meta<typeof HabitCard>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 const createHabit = (overrides: Partial<HabitWithProgress> = {}): HabitWithProgress => ({
-  id: 'habit-1',
-  name: '水を8杯飲む',
-  icon: 'droplets',
-  color: 'cyan',
-  period: 'daily',
-  frequency: 8,
-  currentProgress: 5,
-  streak: 12,
-  completionRate: 62,
   archived: false,
   archivedAt: null,
-  userId: 'user-1',
+  color: 'cyan',
+  completionRate: 62,
   createdAt: new Date('2025-01-01'),
+  currentProgress: 5,
+  frequency: 8,
+  icon: 'droplets',
+  id: 'habit-1',
+  name: '水を8杯飲む',
+  period: 'daily',
+  streak: 12,
   updatedAt: new Date('2025-01-28'),
+  userId: 'user-1',
   ...overrides,
 })
 
@@ -44,8 +44,8 @@ const baseHabit = createHabit()
 
 export const Incomplete: Story = {
   args: {
-    habit: baseHabit,
     completed: false,
+    habit: baseHabit,
     onToggle: () => {
       storybookToast.info('チェックイン', baseHabit.name)
     },
@@ -54,12 +54,12 @@ export const Incomplete: Story = {
 
 export const Completed: Story = {
   args: {
+    completed: true,
     habit: createHabit({
-      currentProgress: 8,
       completionRate: 100,
+      currentProgress: 8,
       streak: 30,
     }),
-    completed: true,
     onToggle: () => {
       storybookToast.info('チェックイン', '完了済みを切り替えました')
     },
@@ -68,16 +68,16 @@ export const Completed: Story = {
 
 export const WithMenu: Story = {
   args: {
-    habit: baseHabit,
     completed: false,
-    onToggle: () => {
-      storybookToast.info('チェックイン', baseHabit.name)
+    habit: baseHabit,
+    onDelete: () => {
+      storybookToast.error('削除', '削除ボタンがクリックされました')
     },
     onEdit: () => {
       storybookToast.success('編集', '編集ボタンがクリックされました')
     },
-    onDelete: () => {
-      storybookToast.error('削除', '削除ボタンがクリックされました')
+    onToggle: () => {
+      storybookToast.info('チェックイン', baseHabit.name)
     },
   },
 }

@@ -22,24 +22,24 @@ import {
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'KeepOn - 習慣トラッキング',
-  description: 'シンプルな習慣トラッキングアプリ',
-  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'KeepOn',
   },
+  description: 'シンプルな習慣トラッキングアプリ',
   formatDetection: {
     telephone: false,
   },
   icons: {
-    icon: [
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
-    ],
     apple: '/apple-touch-icon.png',
+    icon: [
+      { sizes: '192x192', type: 'image/png', url: '/icon-192.png' },
+      { sizes: '512x512', type: 'image/png', url: '/icon-512.png' },
+    ],
   },
+  manifest: '/manifest.json',
+  title: 'KeepOn - 習慣トラッキング',
 }
 
 export const viewport: Viewport = {

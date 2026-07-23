@@ -28,8 +28,8 @@ export async function createHabit(formData: FormData): ServerActionResultAsync<{
     Result.andThen(
       async (validInput) =>
         await Result.try({
-          try: async () => await createHabitQuery(validInput),
           catch: (error) => new DatabaseError({ cause: error }),
+          try: async () => await createHabitQuery(validInput),
         })
     )
   )

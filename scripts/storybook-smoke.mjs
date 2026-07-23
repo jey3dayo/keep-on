@@ -14,7 +14,7 @@ const fetchJson = async (url, timeoutMs = 3000) => {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const response = await fetch(url, { signal: controller.signal, cache: 'no-store' })
+    const response = await fetch(url, { cache: 'no-store', signal: controller.signal })
     if (!response.ok) {
       return null
     }
@@ -45,8 +45,8 @@ const ensureServer = async () => {
   }
 
   const server = spawn('pnpm', ['storybook'], {
-    stdio: 'inherit',
     env: { ...process.env, STORYBOOK_DISABLE_TELEMETRY: '1' },
+    stdio: 'inherit',
   })
 
   const index = await waitForStorybook()
@@ -91,7 +91,7 @@ const classifyConsoleErrors = (consoleErrors) => {
       )
   )
 
-  return { ignoredErrors, transientErrors, remainingErrors }
+  return { ignoredErrors, remainingErrors, transientErrors }
 }
 
 const runStory = async (browser, id) => {
@@ -109,14 +109,14 @@ const runStory = async (browser, id) => {
   })
 
   const url = `${iframeUrl}?id=${encodeURIComponent(id)}&viewMode=story`
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+  await page.goto(url, { timeout: 60_000, waitUntil: 'domcontentloaded' })
   await page.waitForSelector('#storybook-root', { state: 'attached', timeout: 20_000 })
   await delay(300)
 
   await page.close()
 
   const { ignoredErrors, transientErrors, remainingErrors } = classifyConsoleErrors(consoleErrors)
-  return { pageErrors, transientErrors, consoleErrors: remainingErrors, ignoredErrors }
+  return { consoleErrors: remainingErrors, ignoredErrors, pageErrors, transientErrors }
 }
 
 const runStoryWithRetry = async (browser, id, maxRetries) => {
@@ -156,7 +156,7 @@ const collectFailures = async (browser, storyIds) => {
   for (const id of storyIds) {
     const result = await runStoryWithRetry(browser, id, maxRetries)
     if (result.errors.length > 0) {
-      failures.push({ id, errors: result.errors })
+      failures.push({ errors: result.errors, id })
     }
   }
 

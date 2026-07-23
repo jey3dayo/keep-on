@@ -11,9 +11,9 @@ export function formatDateKey(date: Date): string {
 export function formatDateLabel(date: Date, timeZone?: string): string {
   try {
     const parts = new Intl.DateTimeFormat('ja-JP', {
-      timeZone,
-      month: 'numeric',
       day: 'numeric',
+      month: 'numeric',
+      timeZone,
       weekday: 'short',
     }).formatToParts(date)
 
@@ -44,10 +44,10 @@ export function parseDateKey(dateKey: string): Date {
 
 export function getDateKeyInTimeZone(date: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
+    day: '2-digit',
+    month: '2-digit',
     timeZone,
     year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
   }).formatToParts(date)
 
   const year = parts.find((part) => part.type === 'year')?.value

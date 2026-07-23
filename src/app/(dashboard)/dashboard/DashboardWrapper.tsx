@@ -126,8 +126,8 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
         const wasCompleted = habit.currentProgress >= habit.frequency
         return {
           ...habit,
-          currentProgress: 0,
           completionRate: 0,
+          currentProgress: 0,
           streak: wasCompleted ? Math.max(0, habit.streak - 1) : habit.streak,
         }
       })
@@ -190,8 +190,8 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
         const completionRate = calculateCompletionRate(nextProgress, habit.frequency)
         return {
           ...habit,
-          currentProgress: nextProgress,
           completionRate,
+          currentProgress: nextProgress,
         }
       })
     )
@@ -248,7 +248,7 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
       }
       return { ok: false as const, result }
     } catch (error) {
-      return { ok: false as const, error }
+      return { error, ok: false as const }
     }
   }
 
@@ -260,7 +260,7 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
       }
       return { ok: false as const, result }
     } catch (error) {
-      return { ok: false as const, error }
+      return { error, ok: false as const }
     }
   }
 
@@ -396,8 +396,8 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
 
     addPendingCheckin(habitId)
     enqueueCheckin({
-      habitId,
       dateKey,
+      habitId,
       isRemove: options.isRemove,
       rollback: () => updateHabitProgress(habitId, -options.delta),
     })

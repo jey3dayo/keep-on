@@ -29,7 +29,7 @@ export async function getHabitCalendarData(habitId: string): Promise<HabitCalend
 
       const [checkinRows, skipRows] = await Promise.all([
         db
-          .select({ date: checkins.date, count: count() })
+          .select({ count: count(), date: checkins.date })
           .from(checkins)
           .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startDateKey)))
           .groupBy(checkins.date),

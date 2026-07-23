@@ -20,11 +20,11 @@ async function performCheckin(params: HabitCheckinParams): Promise<CheckinResult
   // クエリを並列実行してレイテンシを削減
   const [habit, weekStartDay] = await Promise.all([
     requireHabitForUserWithRetry({
+      actionName: 'action.habits.checkin',
       habitId,
-      userId,
       meta: metaWithUser,
       runWithRetry: spans.runWithRetry,
-      actionName: 'action.habits.checkin',
+      userId,
     }),
     resolveCheckinWeekStartDay('action.habits.checkin', userId, metaWithUser, spans.runWithRetry),
   ])
@@ -32,18 +32,18 @@ async function performCheckin(params: HabitCheckinParams): Promise<CheckinResult
   const targetDate = dateKey ?? new Date()
   const countMeta = {
     ...metaWithUser,
-    period: habit.period,
     frequency: habit.frequency,
+    period: habit.period,
   }
 
   const result = await spans.runWithDbTimeout(
     'action.habits.checkin.createCheckin',
     () =>
       createCheckinWithLimit({
-        habitId,
         date: targetDate,
-        period: habit.period,
         frequency: habit.frequency,
+        habitId,
+        period: habit.period,
         weekStartDay,
       }),
     countMeta
@@ -62,12 +62,12 @@ async function performCheckin(params: HabitCheckinParams): Promise<CheckinResult
 
 export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult<CheckinResultData> {
   return await runTimedHabitAction(
-    { habitId, dateKey },
+    { dateKey, habitId },
     {
       actionName: 'action.habits.checkin',
       errorDetail: 'チェックインの切り替えに失敗しました',
       run: async ({ input, baseMeta, spans }) =>
-        await performCheckin({ habitId: input.habitId, dateKey: input.dateKey, baseMeta, spans }),
+        await performCheckin({ baseMeta, dateKey: input.dateKey, habitId: input.habitId, spans }),
     }
   )
 }

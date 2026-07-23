@@ -10,27 +10,11 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
-  // Turbopack はデフォルト有効（Next.js 16+）。webpack 設定と共存させるために明示する
-  turbopack: {},
-  webpack: (config) => {
-    // Cloudflare Workers ビルド時のみ、不要な WASM ファイルをバンドルから除外する
-    // blake3-wasm のみを対象にし、@vercel/og (yoga.wasm / resvg.wasm) は除外しない
-    if (process.env.CF_BUILD === '1') {
-      config.module.rules.push({
-        test: /\.wasm$/,
-        include: [/blake3-wasm/],
-        type: 'javascript/auto',
-        loader: require.resolve('next/dist/build/webpack/loaders/empty-loader.js'),
-      })
-    }
-    return config
-  },
   async headers() {
     const isDev = process.env.NODE_ENV === 'development'
 
     return [
       {
-        source: '/:path*',
         headers: [
           { key: 'Cache-Control', value: 'no-store, max-age=0' },
           { key: 'CDN-Cache-Control', value: 'no-store' },
@@ -60,39 +44,55 @@ const nextConfig: NextConfig = {
             value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
           },
         ],
+        source: '/:path*',
       },
       {
-        source: '/_next/static/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
           { key: 'CDN-Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
+        source: '/_next/static/:path*',
       },
       {
-        source: '/manifest.json',
         headers: [
           { key: 'Content-Type', value: 'application/manifest+json' },
           { key: 'Cache-Control', value: 'public, max-age=86400' },
           { key: 'CDN-Cache-Control', value: 'public, max-age=86400' },
         ],
+        source: '/manifest.json',
       },
       {
-        source: '/sw.js',
         headers: [
           { key: 'Content-Type', value: 'application/javascript' },
           { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
           { key: 'CDN-Cache-Control', value: 'public, max-age=0, must-revalidate' },
           { key: 'Service-Worker-Allowed', value: '/' },
         ],
+        source: '/sw.js',
       },
       {
-        source: '/api/:path*',
         headers: [
           { key: 'Cache-Control', value: 'no-cache, must-revalidate' },
           { key: 'CDN-Cache-Control', value: 'no-store' },
         ],
+        source: '/api/:path*',
       },
     ]
+  },
+  // Turbopack はデフォルト有効（Next.js 16+）。webpack 設定と共存させるために明示する
+  turbopack: {},
+  webpack: (config) => {
+    // Cloudflare Workers ビルド時のみ、不要な WASM ファイルをバンドルから除外する
+    // blake3-wasm のみを対象にし、@vercel/og (yoga.wasm / resvg.wasm) は除外しない
+    if (process.env.CF_BUILD === '1') {
+      config.module.rules.push({
+        include: [/blake3-wasm/],
+        loader: require.resolve('next/dist/build/webpack/loaders/empty-loader.js'),
+        test: /\.wasm$/,
+        type: 'javascript/auto',
+      })
+    }
+    return config
   },
 }
 

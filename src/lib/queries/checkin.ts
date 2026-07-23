@@ -48,7 +48,7 @@ export async function getCheckinsByUserAndDate(userId: string, date: Date | stri
 
       return result.map((row) => row.Checkin)
     },
-    { userId, date: normalizeDateKey(date) }
+    { date: normalizeDateKey(date), userId }
   )
 }
 
@@ -62,8 +62,8 @@ export async function createCheckin(input: CreateCheckinInput) {
       const [checkin] = await db
         .insert(checkins)
         .values({
-          habitId: input.habitId,
           date: dateKey,
+          habitId: input.habitId,
         })
         .returning()
 
@@ -91,9 +91,9 @@ function parseInsertedCheckinRow(row: Record<string, unknown>, currentCount: num
   }
 
   return {
+    checkin: { createdAt, date, habitId, id },
     created: true,
     currentCount,
-    checkin: { id, habitId, date, createdAt },
   }
 }
 
@@ -136,7 +136,7 @@ export async function createCheckinWithLimit(
         return parseInsertedCheckinRow(insertedRow, currentCount)
       }
 
-      return { created: false, currentCount, checkin: null }
+      return { checkin: null, created: false, currentCount }
     },
     { habitId: input.habitId, period: input.period }
   )
@@ -184,7 +184,7 @@ export async function deleteLatestCheckinByHabitAndPeriod(
 
       // 2. 削除対象が存在しない場合はDELETEを発行せず早期リターン
       if (currentCount === 0) {
-        return { deleted: false, currentCount: 0, checkin: null }
+        return { checkin: null, currentCount: 0, deleted: false }
       }
 
       // 3. DELETE ... WHERE id = (期間内最新1件のサブクエリ) + RETURNING で select→delete の2往復を1往復に統合
@@ -201,11 +201,11 @@ export async function deleteLatestCheckinByHabitAndPeriod(
         .returning()
 
       if (!deleted) {
-        return { deleted: false, currentCount, checkin: null }
+        return { checkin: null, currentCount, deleted: false }
       }
 
       // 4. 削除成功後のカウントは事前チェック値から算出する（再カウントのD1往復を削減）
-      return { deleted: true, currentCount: currentCount - 1, checkin: deleted }
+      return { checkin: deleted, currentCount: currentCount - 1, deleted: true }
     },
     { habitId, period }
   )
@@ -269,7 +269,7 @@ export async function getCheckinCountsByDateRange(userId: string, startDateKey: 
     async () => {
       const db = getDb()
       const results = await db
-        .select({ date: checkins.date, count: sql<number>`CAST(count(*) AS INTEGER)` })
+        .select({ count: sql<number>`CAST(count(*) AS INTEGER)`, date: checkins.date })
         .from(checkins)
         .innerJoin(habits, eq(checkins.habitId, habits.id))
         .where(and(eq(habits.userId, userId), gte(checkins.date, startDateKey), lte(checkins.date, endDateKey)))
@@ -278,6 +278,6 @@ export async function getCheckinCountsByDateRange(userId: string, startDateKey: 
 
       return results
     },
-    { userId, startDateKey, endDateKey }
+    { endDateKey, startDateKey, userId }
   )
 }

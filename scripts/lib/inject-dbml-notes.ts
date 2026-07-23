@@ -89,10 +89,10 @@ function findTableBlock(
       depth -= 1
       if (depth === 0) {
         return {
-          start,
+          body: source.slice(headerEnd, i),
           end: i,
           header: source.slice(start, headerEnd),
-          body: source.slice(headerEnd, i),
+          start,
         }
       }
     }

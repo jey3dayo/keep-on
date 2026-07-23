@@ -18,8 +18,8 @@ describe('serializeHabitError', () => {
     const serialized = serializeHabitError(error)
 
     expect(serialized).toEqual({
-      name: 'ValidationError',
       field: 'name',
+      name: 'ValidationError',
       reason: 'Name is required',
     })
   })
@@ -29,8 +29,8 @@ describe('serializeHabitError', () => {
     const serialized = serializeHabitError(error)
 
     expect(serialized).toEqual({
-      name: 'AuthorizationError',
       message: 'No access',
+      name: 'AuthorizationError',
     })
   })
 
@@ -44,8 +44,8 @@ describe('serializeHabitError', () => {
     const serialized = serializeHabitError(error)
 
     expect(serialized).toEqual({
-      name: 'DatabaseError',
       message: 'Database operation failed',
+      name: 'DatabaseError',
     })
     expect(consoleErrorSpy).toHaveBeenCalledWith('Database error:', originalError)
 
@@ -63,8 +63,8 @@ describe('formatSerializableError', () => {
 
   it('ValidationErrorをreasonフィールドの値に変換', () => {
     const error = {
-      name: 'ValidationError' as const,
       field: 'name',
+      name: 'ValidationError' as const,
       reason: 'Name is required',
     }
     const message = formatSerializableError(error)
@@ -74,8 +74,8 @@ describe('formatSerializableError', () => {
 
   it('AuthorizationErrorをmessageフィールドの値に変換', () => {
     const error = {
-      name: 'AuthorizationError' as const,
       message: 'No access',
+      name: 'AuthorizationError' as const,
     }
     const message = formatSerializableError(error)
 
@@ -84,8 +84,8 @@ describe('formatSerializableError', () => {
 
   it('DatabaseErrorをmessageフィールドの値に変換', () => {
     const error = {
-      name: 'DatabaseError' as const,
       message: 'Database operation failed',
+      name: 'DatabaseError' as const,
     }
     const message = formatSerializableError(error)
 

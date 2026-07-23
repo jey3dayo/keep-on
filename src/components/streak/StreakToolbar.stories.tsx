@@ -4,12 +4,7 @@ import type { ColorThemeName } from '@/constants/theme'
 import { StreakToolbar } from './StreakToolbar'
 
 const meta = {
-  title: 'Streak/StreakToolbar',
   component: StreakToolbar,
-  parameters: {
-    layout: 'fullscreen',
-  },
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div className="min-h-[220px] bg-slate-950">
@@ -17,6 +12,11 @@ const meta = {
       </div>
     ),
   ],
+  parameters: {
+    layout: 'fullscreen',
+  },
+  tags: ['autodocs'],
+  title: 'Streak/StreakToolbar',
 } satisfies Meta<typeof StreakToolbar>
 
 export default meta

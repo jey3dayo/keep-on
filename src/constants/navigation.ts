@@ -13,43 +13,43 @@ export const NAV_ITEMS: {
 } = {
   main: [
     {
+      icon: LayoutDashboard,
       titleKey: 'navigation.dashboard',
       url: '/dashboard',
-      icon: LayoutDashboard,
     },
     {
+      icon: ListChecks,
       titleKey: 'navigation.habits',
       url: '/habits',
-      icon: ListChecks,
     },
     {
+      icon: BarChart3,
       titleKey: 'navigation.analytics',
       url: '/analytics',
-      icon: BarChart3,
     },
   ],
   secondary: [
     {
+      icon: Settings,
       titleKey: 'navigation.settings',
       url: '/settings',
-      icon: Settings,
     },
     {
+      icon: HelpCircle,
       titleKey: 'navigation.help',
       url: '/help',
-      icon: HelpCircle,
     },
   ],
 }
 
 // パスからページタイトルの翻訳キーを取得するマッピング
 export const PAGE_TITLE_KEYS: Record<string, string> = {
-  '/dashboard': 'navigation.dashboard',
   '/': 'navigation.dashboard',
-  '/habits': 'navigation.habits',
-  '/settings': 'navigation.settings',
   '/analytics': 'navigation.analytics',
+  '/dashboard': 'navigation.dashboard',
+  '/habits': 'navigation.habits',
   '/help': 'navigation.help',
+  '/settings': 'navigation.settings',
 }
 
 export function getPageTitleKey(pathname: string): string {

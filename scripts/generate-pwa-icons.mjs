@@ -12,11 +12,11 @@ const INPUT_LOGO = join(projectRoot, 'assets/logos/original.png')
 const OUTPUT_DIR = join(projectRoot, 'public')
 
 const icons = [
-  { name: 'icon-192.png', size: 192, maskable: false },
-  { name: 'icon-512.png', size: 512, maskable: false },
-  { name: 'icon-maskable-192.png', size: 192, maskable: true },
-  { name: 'icon-maskable-512.png', size: 512, maskable: true },
-  { name: 'apple-touch-icon.png', size: 180, maskable: false },
+  { maskable: false, name: 'icon-192.png', size: 192 },
+  { maskable: false, name: 'icon-512.png', size: 512 },
+  { maskable: true, name: 'icon-maskable-192.png', size: 192 },
+  { maskable: true, name: 'icon-maskable-512.png', size: 512 },
+  { maskable: false, name: 'apple-touch-icon.png', size: 180 },
 ]
 
 async function generateIcons() {
@@ -36,18 +36,18 @@ async function generateIcons() {
         await image
           .resize(resizedSize, resizedSize, { fit: 'contain' })
           .extend({
-            top: padding,
+            background: { alpha: 1, b: 0, g: 0, r: 0 },
             bottom: padding,
             left: padding,
             right: padding,
-            background: { r: 0, g: 0, b: 0, alpha: 1 },
+            top: padding,
           })
           .png()
           .toFile(outputPath)
       } else {
         // 通常アイコン: 中央配置でリサイズ
         await image
-          .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+          .resize(size, size, { background: { alpha: 0, b: 0, g: 0, r: 0 }, fit: 'contain' })
           .png()
           .toFile(outputPath)
       }

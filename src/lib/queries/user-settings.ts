@@ -40,15 +40,15 @@ async function updateUsersWeekStartWithRetry(
       // Don't retry non-transient errors (user existence, validation errors, etc.)
       const errorMessage = error instanceof Error ? error.message : String(error)
       if (errorMessage.includes('User not found')) {
-        console.error('updateUsersWeekStartWithRetry: non-retryable error', { userId, error: errorMessage })
+        console.error('updateUsersWeekStartWithRetry: non-retryable error', { error: errorMessage, userId })
         throw error
       }
 
       retryCount++
       console.error(`updateUsersWeekStartWithRetry: attempt ${retryCount}/${maxRetries} failed`, {
+        error: errorMessage,
         userId,
         weekStart,
-        error: errorMessage,
       })
 
       if (retryCount >= maxRetries) {
@@ -84,25 +84,25 @@ async function rollbackUserSettings(
       await db
         .update(userSettings)
         .set({
-          weekStart: previousSettings.weekStart,
           colorTheme: previousSettings.colorTheme,
           themeMode: previousSettings.themeMode,
           updatedAt: previousSettings.updatedAt,
+          weekStart: previousSettings.weekStart,
         })
         .where(eq(userSettings.id, settingsId))
 
-      console.error('rollbackUserSettings: restored previous settings', { userId, settingsId })
+      console.error('rollbackUserSettings: restored previous settings', { settingsId, userId })
     } else {
       // INSERT case: delete the newly created record
       await db.delete(userSettings).where(eq(userSettings.id, settingsId))
-      console.error('rollbackUserSettings: deleted newly created settings', { userId, settingsId })
+      console.error('rollbackUserSettings: deleted newly created settings', { settingsId, userId })
     }
   } catch (rollbackError) {
     console.error('rollbackUserSettings: rollback failed - manual intervention required', {
-      userId,
-      settingsId,
       hadPreviousSettings: !!previousSettings,
       rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+      settingsId,
+      userId,
     })
     throw new Error('Critical: Failed to rollback userSettings. Manual database intervention required.')
   }
@@ -132,19 +132,19 @@ async function upsertUserSettings(
   const [nextSettings] = await db
     .insert(userSettings)
     .values({
+      colorTheme: settings.colorTheme ?? DEFAULT_COLOR_THEME,
+      createdAt: now,
+      themeMode: settings.themeMode ?? DEFAULT_THEME_MODE,
+      updatedAt: now,
       userId,
       weekStart: settings.weekStart ?? DEFAULT_WEEK_START,
-      colorTheme: settings.colorTheme ?? DEFAULT_COLOR_THEME,
-      themeMode: settings.themeMode ?? DEFAULT_THEME_MODE,
-      createdAt: now,
-      updatedAt: now,
     })
     .onConflictDoUpdate({
-      target: userSettings.userId,
       set: {
         ...settings,
         updatedAt: now,
       },
+      target: userSettings.userId,
     })
     .returning()
 
@@ -179,9 +179,9 @@ async function updateWeekStartAndCache(
       } catch (cacheError) {
         // Cache invalidation failure is non-critical; log but don't fail the operation
         console.warn('updateWeekStartAndCache: cache invalidation failed (non-critical)', {
-          userId,
           clerkId,
           error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+          userId,
         })
       }
     }
@@ -189,8 +189,8 @@ async function updateWeekStartAndCache(
     return clerkId
   } catch {
     console.error('updateWeekStartAndCache: users.weekStart update failed, rolling back', {
-      userId,
       settingsId,
+      userId,
     })
     await rollbackUserSettings(userId, settingsId, previousSettings)
     throw new Error('Failed to update users.weekStart. Settings have been rolled back.')
@@ -230,8 +230,8 @@ export async function updateUserSettings(
         const parsed = v.safeParse(UserSettingsSchema, nextSettings)
         if (!parsed.success) {
           console.error('updateUserSettings: validation failed', {
-            userId,
             issues: parsed.issues,
+            userId,
           })
           throw new Error('Failed to update user settings: invalid data')
         }
@@ -240,15 +240,15 @@ export async function updateUserSettings(
       } catch (error) {
         // Enhanced error logging for monitoring and debugging
         console.error('updateUserSettings: operation failed', {
-          userId,
-          settings,
           error: error instanceof Error ? error.message : String(error),
+          settings,
           stack: error instanceof Error ? error.stack : undefined,
+          userId,
         })
 
         throw error
       }
     },
-    { userId, settings }
+    { settings, userId }
   )
 }

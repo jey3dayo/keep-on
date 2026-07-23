@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('drizzle-orm', () => ({
-  and: (...conditions: unknown[]) => ({ op: 'and', conditions }),
-  eq: (left: unknown, right: unknown) => ({ op: 'eq', left, right }),
-  gte: (left: unknown, right: unknown) => ({ op: 'gte', left, right }),
-  lte: (left: unknown, right: unknown) => ({ op: 'lte', left, right }),
+  and: (...conditions: unknown[]) => ({ conditions, op: 'and' }),
   desc: (value: unknown) => ({ op: 'desc', value }),
+  eq: (left: unknown, right: unknown) => ({ left, op: 'eq', right }),
+  gte: (left: unknown, right: unknown) => ({ left, op: 'gte', right }),
+  lte: (left: unknown, right: unknown) => ({ left, op: 'lte', right }),
   sql: Object.assign((...values: unknown[]) => ({ sql: values }), {
     mapWith: (fn: unknown) => fn,
     raw: (str: string) => ({ raw: str }),
@@ -30,18 +30,18 @@ vi.mock('@/lib/queries/period', async (importOriginal) => {
 
 vi.mock('@/lib/db', () => {
   const mockDbMethods = {
-    select: vi.fn().mockReturnThis(),
+    all: vi.fn().mockResolvedValue([]),
+    delete: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
     innerJoin: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue([]),
     insert: vi.fn().mockReturnThis(),
-    values: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue([]),
+    orderBy: vi.fn().mockReturnThis(),
     returning: vi.fn().mockResolvedValue([]),
-    delete: vi.fn().mockReturnThis(),
     run: vi.fn().mockResolvedValue({}),
-    all: vi.fn().mockResolvedValue([]),
+    select: vi.fn().mockReturnThis(),
+    values: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
   }
 
   return {
@@ -78,16 +78,16 @@ describe('getCheckinsByUserAndDate', () => {
     const normalizedDate = formatDateKey(targetDate)
     const mockCheckins = [
       {
-        id: 'checkin-1',
-        habitId: 'habit-1',
-        date: '2024-01-01',
         createdAt: new Date('2024-01-01T09:00:00Z'),
+        date: '2024-01-01',
+        habitId: 'habit-1',
+        id: 'checkin-1',
       },
       {
-        id: 'checkin-2',
-        habitId: 'habit-2',
-        date: '2024-01-01',
         createdAt: new Date('2024-01-01T10:00:00Z'),
+        date: '2024-01-01',
+        habitId: 'habit-2',
+        id: 'checkin-2',
       },
     ]
 
@@ -122,20 +122,20 @@ describe('createCheckin', () => {
     const targetDate = new Date(2024, 0, 2)
     const normalizedDate = formatDateKey(targetDate)
     const createdCheckin = {
-      id: 'checkin-3',
-      habitId: 'habit-3',
-      date: '2024-01-02',
       createdAt: new Date('2024-01-02T08:00:00Z'),
+      date: '2024-01-02',
+      habitId: 'habit-3',
+      id: 'checkin-3',
     }
 
     vi.mocked(db.returning).mockResolvedValueOnce([createdCheckin])
 
-    const result = await createCheckin({ habitId: 'habit-3', date: targetDate })
+    const result = await createCheckin({ date: targetDate, habitId: 'habit-3' })
 
     expect(result).toEqual(createdCheckin)
     expect(vi.mocked(normalizeDateKey)).toHaveBeenCalledWith(targetDate)
     expect(db.insert).toHaveBeenCalledTimes(1)
-    expect(db.values).toHaveBeenCalledWith({ habitId: 'habit-3', date: normalizedDate })
+    expect(db.values).toHaveBeenCalledWith({ date: normalizedDate, habitId: 'habit-3' })
     expect(db.values).toHaveBeenCalledTimes(1)
     expect(db.returning).toHaveBeenCalledTimes(1)
   })
@@ -155,7 +155,7 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
 
     const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', targetDate, 'daily')
 
-    expect(result).toEqual({ deleted: false, currentCount: 0, checkin: null })
+    expect(result).toEqual({ checkin: null, currentCount: 0, deleted: false })
     expect(vi.mocked(getPeriodDateRange)).toHaveBeenCalledWith(targetDate, 'daily', 1)
     expect(db.delete).not.toHaveBeenCalled()
     expect(db.where).toHaveBeenCalledTimes(1)
@@ -170,17 +170,17 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
 
     const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', targetDate, 'weekly', weekStartDay)
 
-    expect(result).toEqual({ deleted: false, currentCount: 0, checkin: null })
+    expect(result).toEqual({ checkin: null, currentCount: 0, deleted: false })
     expect(vi.mocked(getPeriodDateRange)).toHaveBeenCalledWith(targetDate, 'weekly', weekStartDay)
   })
 
   it('deletes the latest checkin and returns count-1 without re-counting (事前カウント値から算出)', async () => {
     const db = getDb()
     const latestCheckin = {
-      id: 'checkin-4',
-      habitId: 'habit-1',
-      date: '2024-01-01',
       createdAt: new Date('2024-01-01T12:00:00Z'),
+      date: '2024-01-01',
+      habitId: 'habit-1',
+      id: 'checkin-4',
     }
 
     // 事前カウント取得: 2件
@@ -189,7 +189,7 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
 
     const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', new Date('2024-01-01'), 'daily')
 
-    expect(result).toEqual({ deleted: true, currentCount: 1, checkin: latestCheckin })
+    expect(result).toEqual({ checkin: latestCheckin, currentCount: 1, deleted: true })
     expect(db.delete).toHaveBeenCalledTimes(1)
     // 事前カウント取得(1回) + サブクエリDELETEのwhere()呼び出し(1回) の計2回
     expect(db.where).toHaveBeenCalledTimes(2)
@@ -204,7 +204,7 @@ describe('deleteLatestCheckinByHabitAndPeriod', () => {
 
     const result = await deleteLatestCheckinByHabitAndPeriod('habit-1', new Date('2024-01-01'), 'daily')
 
-    expect(result).toEqual({ deleted: false, currentCount: 1, checkin: null })
+    expect(result).toEqual({ checkin: null, currentCount: 1, deleted: false })
   })
 })
 
@@ -253,31 +253,31 @@ describe('createCheckinWithLimit', () => {
     const targetDate = new Date(2024, 0, 1)
     const normalizedDate = formatDateKey(targetDate)
     const insertedRow = {
-      id: 'checkin-5',
-      habitId: 'habit-5',
-      date: normalizedDate,
       createdAt: '2024-01-01T10:00:00.000Z',
+      date: normalizedDate,
+      habitId: 'habit-5',
+      id: 'checkin-5',
     }
 
     vi.mocked(db.all).mockResolvedValueOnce([insertedRow])
     vi.mocked(db.where).mockResolvedValueOnce([{ count: 3 }])
 
     const result = await createCheckinWithLimit({
-      habitId: 'habit-5',
       date: targetDate,
-      period: 'daily',
       frequency: 3,
+      habitId: 'habit-5',
+      period: 'daily',
     })
 
     expect(result).toEqual({
+      checkin: {
+        createdAt: '2024-01-01T10:00:00.000Z',
+        date: normalizedDate,
+        habitId: 'habit-5',
+        id: 'checkin-5',
+      },
       created: true,
       currentCount: 3,
-      checkin: {
-        id: 'checkin-5',
-        habitId: 'habit-5',
-        date: normalizedDate,
-        createdAt: '2024-01-01T10:00:00.000Z',
-      },
     })
     expect(db.all).toHaveBeenCalledTimes(1)
     expect(db.select).toHaveBeenCalledTimes(1)
@@ -294,16 +294,16 @@ describe('createCheckinWithLimit', () => {
     vi.mocked(db.where).mockResolvedValueOnce([{ count: 3 }])
 
     const result = await createCheckinWithLimit({
-      habitId: 'habit-6',
       date: targetDate,
-      period: 'daily',
       frequency: 3,
+      habitId: 'habit-6',
+      period: 'daily',
     })
 
     expect(result).toEqual({
+      checkin: null,
       created: false,
       currentCount: 3,
-      checkin: null,
     })
     expect(db.all).toHaveBeenCalledTimes(1)
     expect(db.select).toHaveBeenCalledTimes(1)
@@ -317,10 +317,10 @@ describe('createCheckinWithLimit', () => {
 
     await expect(
       createCheckinWithLimit({
-        habitId: 'habit-8',
         date: targetDate,
-        period: 'daily',
         frequency: 3,
+        habitId: 'habit-8',
+        period: 'daily',
       })
     ).rejects.toThrow('database is locked')
   })
@@ -329,14 +329,14 @@ describe('createCheckinWithLimit', () => {
     const db = getDb()
     const targetDate = new Date(2024, 0, 5)
 
-    vi.mocked(db.all).mockResolvedValueOnce([{ id: 'checkin-9', habitId: 'habit-9' }])
+    vi.mocked(db.all).mockResolvedValueOnce([{ habitId: 'habit-9', id: 'checkin-9' }])
 
     await expect(
       createCheckinWithLimit({
-        habitId: 'habit-9',
         date: targetDate,
-        period: 'daily',
         frequency: 3,
+        habitId: 'habit-9',
+        period: 'daily',
       })
     ).rejects.toThrow('Unexpected checkin insert row shape')
   })

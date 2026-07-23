@@ -19,7 +19,7 @@ export async function createSkip(habitId: string, date: Date | string) {
       const dateKey = normalizeDateKey(date)
 
       try {
-        const [skip] = await db.insert(habitSkips).values({ habitId, date: dateKey }).returning()
+        const [skip] = await db.insert(habitSkips).values({ date: dateKey, habitId }).returning()
         return skip ?? null
       } catch (error) {
         const errorMessage = String(error)

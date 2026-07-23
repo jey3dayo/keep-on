@@ -18,13 +18,13 @@ describe('validateHabitInput', () => {
     expect(Result.isSuccess(result)).toBe(true)
     if (Result.isSuccess(result)) {
       expect(result.value).toEqual({
-        userId: 'user-123',
-        name: '朝の運動',
-        icon: 'footprints',
         color: null,
-        period: 'daily',
         frequency: 1,
+        icon: 'footprints',
+        name: '朝の運動',
+        period: 'daily',
         reminderTime: null,
+        userId: 'user-123',
       })
     }
   })

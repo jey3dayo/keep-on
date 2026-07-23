@@ -7,21 +7,21 @@ const ClerkApiErrorEntrySchema = v.object({
 })
 
 export const ClerkApiResponseErrorSchema = v.object({
-  name: v.optional(v.string()),
-  status: v.optional(v.number()),
   clerkTraceId: v.optional(v.nullable(v.string())),
   errors: v.optional(v.array(v.optional(ClerkApiErrorEntrySchema))),
+  name: v.optional(v.string()),
+  status: v.optional(v.number()),
 })
 
 const UserDateSchema = v.pipe(v.union([v.date(), v.string()]), v.toDate())
 
 export const UserSchema = v.object({
-  id: v.string(),
   clerkId: v.string(),
-  email: v.string(),
-  weekStart: v.picklist(['monday', 'sunday']),
   createdAt: UserDateSchema,
+  email: v.string(),
+  id: v.string(),
   updatedAt: UserDateSchema,
+  weekStart: v.picklist(['monday', 'sunday']),
 })
 
 interface ClerkApiResponseErrorPayload extends Record<string, unknown> {
@@ -45,11 +45,11 @@ export function parseClerkApiResponseErrorPayload(error: unknown): ClerkApiRespo
   const { status, clerkTraceId, errors } = parsed.output
 
   return {
-    status,
     clerkTraceId: clerkTraceId ?? undefined,
     errors: errors
       ?.filter((entry): entry is { code?: string; message?: string } => entry !== undefined)
       .map((entry) => ({ code: entry.code, message: entry.message })),
+    status,
   }
 }
 

@@ -5,20 +5,20 @@ import { vi } from 'vitest'
 const createLocalStorageMock = () => {
   let store: Record<string, string> = {}
   return {
+    clear: (): void => {
+      store = {}
+    },
     getItem: (key: string): string | null => store[key] ?? null,
-    setItem: (key: string, value: string): void => {
-      store[key] = String(value)
+    key: (index: number): string | null => Object.keys(store)[index] ?? null,
+    get length(): number {
+      return Object.keys(store).length
     },
     removeItem: (key: string): void => {
       delete store[key]
     },
-    clear: (): void => {
-      store = {}
+    setItem: (key: string, value: string): void => {
+      store[key] = String(value)
     },
-    get length(): number {
-      return Object.keys(store).length
-    },
-    key: (index: number): string | null => Object.keys(store)[index] ?? null,
   }
 }
 
@@ -29,17 +29,17 @@ Object.defineProperty(window, 'localStorage', {
 
 // window.matchMedia モック (next-themes用)
 Object.defineProperty(window, 'matchMedia', {
-  writable: true,
   value: vi.fn().mockImplementation((query) => ({
+    addEventListener: vi.fn(),
+    addListener: vi.fn(),
+    dispatchEvent: vi.fn(),
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
+    removeListener: vi.fn(),
   })),
+  writable: true,
 })
 
 // Vaul (Drawer) コンポーネントの jsdom 環境での未ハンドルエラーを抑制
@@ -58,18 +58,18 @@ vi.mock('vaul', async () => {
 
 // next/navigation を最低限モックして App Router 依存を回避
 vi.mock('next/navigation', () => ({
+  notFound: vi.fn(),
+  redirect: vi.fn(),
+  usePathname: () => '/',
   useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
     back: vi.fn(),
     forward: vi.fn(),
-    refresh: vi.fn(),
     prefetch: vi.fn(),
+    push: vi.fn(),
+    refresh: vi.fn(),
+    replace: vi.fn(),
   }),
-  usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
-  redirect: vi.fn(),
-  notFound: vi.fn(),
 }))
 
 // UI Drawer コンポーネントをモック
@@ -79,15 +79,15 @@ vi.mock('@/components/ui/drawer', () => ({
       {children}
     </div>
   ),
-  DrawerTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DrawerClose: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DrawerContent: ({ children }: { children: ReactNode }) => (
     <div data-state="open" data-vaul-drawer="">
       {children}
     </div>
   ),
-  DrawerHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DrawerFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DrawerTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
   DrawerDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
+  DrawerFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DrawerHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DrawerTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
+  DrawerTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }))

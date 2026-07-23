@@ -23,32 +23,32 @@ export function serializeHabitError(error: HabitError): SerializableHabitError {
       return { name: 'UnauthorizedError' }
     case 'AuthorizationError':
       return {
-        name: 'AuthorizationError',
         message: error.message,
+        name: 'AuthorizationError',
       }
     case 'ValidationError':
       return {
-        name: 'ValidationError',
         field: error.field,
+        name: 'ValidationError',
         reason: error.reason,
       }
     case 'DatabaseError':
       console.error('Database error:', error.cause)
       return {
-        name: 'DatabaseError',
         message: error.message,
+        name: 'DatabaseError',
       }
     case 'NotFoundError':
       return {
-        name: 'NotFoundError',
         message: error.message,
+        name: 'NotFoundError',
       }
     default: {
       const _exhaustive: never = error
       console.error('Unexpected error:', _exhaustive)
       return {
-        name: 'DatabaseError',
         message: 'An unexpected error occurred',
+        name: 'DatabaseError',
       }
     }
   }

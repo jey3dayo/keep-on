@@ -43,13 +43,13 @@ async function testDashboard() {
     // Step 1: ダッシュボードへ遷移
     console.log('📍 Step 1: ダッシュボードへ遷移')
     await page.goto('http://localhost:3000/dashboard', {
-      waitUntil: 'domcontentloaded',
       timeout: 10_000,
+      waitUntil: 'domcontentloaded',
     })
     await page.waitForTimeout(2000)
     await page.screenshot({
-      path: join(screenshotDir, '01-dashboard.png'),
       fullPage: true,
+      path: join(screenshotDir, '01-dashboard.png'),
     })
     console.log('   ✓ ダッシュボードを表示')
     console.log('')
@@ -85,13 +85,13 @@ async function testDashboard() {
     console.log('')
     console.log('📍 Step 4: 習慣ページへ遷移')
     await page.goto('http://localhost:3000/habits', {
-      waitUntil: 'domcontentloaded',
       timeout: 10_000,
+      waitUntil: 'domcontentloaded',
     })
     await page.waitForTimeout(2000)
     await page.screenshot({
-      path: join(screenshotDir, '02-habits-page.png'),
       fullPage: true,
+      path: join(screenshotDir, '02-habits-page.png'),
     })
     console.log('   ✓ 習慣ページを表示')
 
@@ -105,8 +105,8 @@ async function testDashboard() {
     console.log(`   🌐 現在の URL: ${currentUrl}`)
 
     await page.screenshot({
-      path: join(screenshotDir, '03-final-state.png'),
       fullPage: true,
+      path: join(screenshotDir, '03-final-state.png'),
     })
 
     console.log('')

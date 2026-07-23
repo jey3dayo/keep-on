@@ -11,14 +11,14 @@ import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 
 export const metadata: Metadata = {
-  title: '習慣 - KeepOn',
   description:
     'あなたの習慣を一元管理。新しい習慣の作成、既存の習慣の編集・削除、カテゴリ別の整理、絵文字やカラーのカスタマイズができます。',
   openGraph: {
-    title: '習慣管理 - KeepOn',
     description: '習慣の作成、編集、管理を簡単に',
+    title: '習慣管理 - KeepOn',
     type: 'website',
   },
+  title: '習慣 - KeepOn',
 }
 
 export default async function HabitsPage() {

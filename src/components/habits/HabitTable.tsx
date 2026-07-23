@@ -45,8 +45,8 @@ export async function HabitTable({ userId, clerkId, requestMeta }: HabitTablePro
       logWarn('habits.table.query:stale-fallback', {
         ...meta,
         cachedDateKey: cacheSnapshot?.dateKey,
-        requestedDateKey: dateKey,
         error: formatError(error),
+        requestedDateKey: dateKey,
       })
       activeHabits = staleHabits
     } else {
@@ -70,10 +70,10 @@ export async function HabitTable({ userId, clerkId, requestMeta }: HabitTablePro
   // アーカイブ済み習慣に進捗情報を付与（ダミー値）
   const archivedHabitsWithProgress: HabitWithProgress[] = archivedHabits.map((habit) => ({
     ...habit,
-    currentProgress: 0,
-    streak: 0,
     completionRate: 0,
+    currentProgress: 0,
     skippedToday: false,
+    streak: 0,
   }))
 
   // 両方をマージ

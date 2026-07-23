@@ -31,7 +31,7 @@ export function useWeekStart(): UseWeekStart {
     localStorage.setItem(STORAGE_KEY, newWeekStart)
   }
 
-  return { weekStart: weekStart ?? DEFAULT_WEEK_START, setWeekStart, ready: weekStart !== null }
+  return { ready: weekStart !== null, setWeekStart, weekStart: weekStart ?? DEFAULT_WEEK_START }
 }
 
 function isValidWeekStart(value: string): value is WeekStart {

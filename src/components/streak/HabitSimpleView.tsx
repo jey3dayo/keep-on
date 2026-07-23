@@ -62,8 +62,8 @@ export function HabitSimpleView({
   const [resetConfirm, setResetConfirm] = useState<{ habitId: string; habitName: string } | null>(null)
   const [isResetting, setIsResetting] = useState(false)
   const [drawerState, setDrawerState] = useState<{ open: boolean; habit: HabitWithProgress | null }>({
-    open: false,
     habit: null,
+    open: false,
   })
   const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -137,7 +137,7 @@ export function HabitSimpleView({
       }
     }
 
-    return { ok: false as const, error: lastError }
+    return { error: lastError, ok: false as const }
   }
 
   const handleResetConfirm = async () => {
@@ -176,11 +176,11 @@ export function HabitSimpleView({
 
   const openDrawer = (habit: HabitWithProgress) => {
     setDrawerHabitId(habit.id)
-    setDrawerState({ open: true, habit })
+    setDrawerState({ habit, open: true })
   }
 
   const closeDrawer = () => {
-    setDrawerState({ open: false, habit: null })
+    setDrawerState({ habit: null, open: false })
   }
 
   const handleLongPressStart = (habit: HabitWithProgress, event: React.PointerEvent<HTMLButtonElement>) => {

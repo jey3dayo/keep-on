@@ -43,8 +43,8 @@ export function isClerkAPIResponseError(_error: unknown): boolean {
 
 export function currentUser(): Promise<ClerkUser | null> {
   return Promise.resolve({
-    id: 'storybook-user',
     emailAddresses: [{ emailAddress: 'storybook@example.com' }],
+    id: 'storybook-user',
   })
 }
 

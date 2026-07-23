@@ -5,13 +5,13 @@ import { COLOR_THEMES } from '@/constants/theme'
  * ユーザー設定スキーマ（完全版）
  */
 export const UserSettingsSchema = v.object({
+  colorTheme: v.picklist(COLOR_THEMES),
+  createdAt: v.string(),
   id: v.string(),
+  themeMode: v.picklist(['light', 'dark', 'system']),
+  updatedAt: v.string(),
   userId: v.string(),
   weekStart: v.picklist(['monday', 'sunday']),
-  colorTheme: v.picklist(COLOR_THEMES),
-  themeMode: v.picklist(['light', 'dark', 'system']),
-  createdAt: v.string(),
-  updatedAt: v.string(),
 })
 
 export type UserSettingsSchemaType = v.InferOutput<typeof UserSettingsSchema>
@@ -21,9 +21,9 @@ export type UserSettingsSchemaType = v.InferOutput<typeof UserSettingsSchema>
  */
 export const UpdateUserSettingsSchema = v.partial(
   v.object({
-    weekStart: v.picklist(['monday', 'sunday']),
     colorTheme: v.picklist(COLOR_THEMES),
     themeMode: v.picklist(['light', 'dark', 'system']),
+    weekStart: v.picklist(['monday', 'sunday']),
   })
 )
 

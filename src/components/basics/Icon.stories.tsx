@@ -3,12 +3,12 @@ import { Button } from '@/components/basics/Button'
 import { Icon, type IconName } from './Icon'
 
 const meta = {
-  title: 'Basics/Icon',
   component: Icon,
   parameters: {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  title: 'Basics/Icon',
 } satisfies Meta<typeof Icon>
 
 export default meta

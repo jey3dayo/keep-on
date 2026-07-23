@@ -47,5 +47,5 @@ export function validateHabitActionInput(input: {
     return Result.fail(toValidationError(dateKeyResult.issues[0], 'dateKey'))
   }
 
-  return Result.succeed({ habitId: habitIdResult.value, dateKey: dateKeyResult.output })
+  return Result.succeed({ dateKey: dateKeyResult.output, habitId: habitIdResult.value })
 }

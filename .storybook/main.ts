@@ -5,16 +5,16 @@ import type { StorybookConfig } from '@storybook/nextjs-vite'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const config: StorybookConfig = {
-  stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   addons: ['@storybook/addon-docs', '@storybook/addon-themes', '@storybook/addon-a11y'],
-  staticDirs: ['../public'],
+  docs: {
+    autodocs: 'tag',
+  },
   framework: {
     name: '@storybook/nextjs-vite',
     options: {},
   },
-  docs: {
-    autodocs: 'tag',
-  },
+  staticDirs: ['../public'],
+  stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   typescript: {
     check: false,
   },

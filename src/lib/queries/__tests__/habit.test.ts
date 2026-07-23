@@ -7,21 +7,21 @@ type Habit = InferSelectModel<typeof import('@/db/schema').habits>
 // Drizzle ORMのモック
 vi.mock('@/lib/db', () => ({
   getDb: vi.fn().mockReturnValue({
+    delete: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    groupBy: vi.fn().mockReturnThis(),
+    innerJoin: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue([]),
+    onConflictDoUpdate: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockResolvedValue([]),
+    returning: vi.fn().mockResolvedValue([]),
     select: vi.fn().mockReturnThis(),
     selectDistinctOn: vi.fn().mockReturnThis(),
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockResolvedValue([]),
-    insert: vi.fn().mockReturnThis(),
-    values: vi.fn().mockReturnThis(),
-    returning: vi.fn().mockResolvedValue([]),
-    onConflictDoUpdate: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
     set: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    innerJoin: vi.fn().mockReturnThis(),
-    groupBy: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockReturnThis(),
+    values: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
   }),
 }))
 
@@ -43,26 +43,26 @@ describe('getHabitsWithProgress', () => {
   const baseDate = new Date(2024, 0, 17, 12, 0, 0)
   const habits: Habit[] = [
     {
-      id: 'habit-daily',
-      userId: 'user-123',
-      name: '朝の運動',
-      icon: 'footprints',
       color: 'orange',
-      period: 'daily',
-      frequency: 1,
       createdAt: new Date('2024-01-01'),
+      frequency: 1,
+      icon: 'footprints',
+      id: 'habit-daily',
+      name: '朝の運動',
+      period: 'daily',
       updatedAt: new Date('2024-01-01'),
+      userId: 'user-123',
     },
     {
-      id: 'habit-weekly',
-      userId: 'user-123',
-      name: '読書',
-      icon: 'book-open',
       color: 'blue',
-      period: 'weekly',
-      frequency: 3,
       createdAt: new Date('2024-01-02'),
+      frequency: 3,
+      icon: 'book-open',
+      id: 'habit-weekly',
+      name: '読書',
+      period: 'weekly',
       updatedAt: new Date('2024-01-02'),
+      userId: 'user-123',
     },
   ]
 
@@ -90,8 +90,8 @@ describe('getHabitsWithProgress', () => {
     vi.mocked(db.orderBy)
       .mockResolvedValueOnce(habits)
       .mockResolvedValueOnce([
-        { id: 'checkin-1', habitId: 'habit-daily', date: new Date(2024, 0, 17), createdAt: baseDate },
-        { id: 'checkin-5', habitId: 'habit-weekly', date: new Date(2024, 0, 17), createdAt: baseDate },
+        { createdAt: baseDate, date: new Date(2024, 0, 17), habitId: 'habit-daily', id: 'checkin-1' },
+        { createdAt: baseDate, date: new Date(2024, 0, 17), habitId: 'habit-weekly', id: 'checkin-5' },
       ])
     // スキップクエリ（3回目の where() 呼び出し）のモック
     vi.mocked(db.where)
@@ -119,15 +119,15 @@ describe('getHabitsWithProgress', () => {
     const sundayBaseDate = new Date(2024, 0, 7, 12, 0, 0)
     const sundayHabits: Habit[] = [
       {
-        id: 'habit-weekly-sun',
-        userId: 'user-123',
-        name: '週次の習慣',
-        icon: 'calendar-check',
         color: 'green',
-        period: 'weekly',
-        frequency: 1,
         createdAt: new Date('2024-01-01'),
+        frequency: 1,
+        icon: 'calendar-check',
+        id: 'habit-weekly-sun',
+        name: '週次の習慣',
+        period: 'weekly',
         updatedAt: new Date('2024-01-01'),
+        userId: 'user-123',
       },
     ]
 
@@ -136,7 +136,7 @@ describe('getHabitsWithProgress', () => {
     vi.mocked(db.orderBy)
       .mockResolvedValueOnce(sundayHabits)
       .mockResolvedValueOnce([
-        { id: 'checkin-mon', habitId: 'habit-weekly-sun', date: new Date(2024, 0, 8), createdAt: sundayBaseDate },
+        { createdAt: sundayBaseDate, date: new Date(2024, 0, 8), habitId: 'habit-weekly-sun', id: 'checkin-mon' },
       ])
     // スキップクエリ（3回目の where() 呼び出し）のモック
     vi.mocked(db.where)
@@ -154,15 +154,15 @@ describe('getHabitsWithProgress', () => {
     const invalidDate = new Date(2024, 0, 20, 12, 0, 0)
     const invalidHabits: Habit[] = [
       {
-        id: 'habit-invalid',
-        userId: 'user-123',
-        name: '不正データ',
-        icon: 'footprints',
         color: 'orange',
-        period: 'invalid-period' as unknown as Habit['period'],
-        frequency: 0,
         createdAt: new Date('2024-01-03'),
+        frequency: 0,
+        icon: 'footprints',
+        id: 'habit-invalid',
+        name: '不正データ',
+        period: 'invalid-period' as unknown as Habit['period'],
         updatedAt: new Date('2024-01-03'),
+        userId: 'user-123',
       },
     ]
 
@@ -170,7 +170,7 @@ describe('getHabitsWithProgress', () => {
     vi.mocked(db.orderBy)
       .mockResolvedValueOnce(invalidHabits)
       .mockResolvedValueOnce([
-        { id: 'checkin-invalid', habitId: 'habit-invalid', date: new Date(2024, 0, 20), createdAt: invalidDate },
+        { createdAt: invalidDate, date: new Date(2024, 0, 20), habitId: 'habit-invalid', id: 'checkin-invalid' },
       ])
     // スキップクエリ（3回目の where() 呼び出し）のモック
     vi.mocked(db.where)
@@ -191,12 +191,12 @@ describe('getHabitsWithProgress', () => {
 
 describe('getHabitById', () => {
   const mockHabit: Habit = {
-    id: 'habit-1',
-    userId: 'user-123',
-    name: '朝の運動',
-    icon: 'footprints',
     createdAt: new Date('2024-01-01'),
+    icon: 'footprints',
+    id: 'habit-1',
+    name: '朝の運動',
     updatedAt: new Date('2024-01-01'),
+    userId: 'user-123',
   }
 
   beforeEach(() => {

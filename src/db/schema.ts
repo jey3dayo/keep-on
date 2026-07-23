@@ -14,24 +14,24 @@ import { DEFAULT_COLOR_THEME, DEFAULT_THEME_MODE } from '@/constants/theme'
  * Clerkで認証されたユーザーのデータを管理
  */
 export const users = sqliteTable('User', {
-  /** ユーザーID (CUID2形式) */
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => createId()),
   /** Clerk認証ID */
   clerkId: text('clerkId').notNull().unique(),
-  /** メールアドレス */
-  email: text('email').notNull().unique(),
-  /** 週の開始曜日 (0: 日曜, 1: 月曜) */
-  weekStart: text('weekStart').default(DEFAULT_WEEK_START).notNull(),
   /** レコード作成日時 (ISO8601形式) */
   createdAt: text('createdAt')
     .$defaultFn(() => new Date().toISOString())
     .notNull(),
+  /** メールアドレス */
+  email: text('email').notNull().unique(),
+  /** ユーザーID (CUID2形式) */
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   /** レコード更新日時 (ISO8601形式) */
   updatedAt: text('updatedAt')
     .$defaultFn(() => new Date().toISOString())
     .notNull(),
+  /** 週の開始曜日 (0: 日曜, 1: 月曜) */
+  weekStart: text('weekStart').default(DEFAULT_WEEK_START).notNull(),
 })
 
 /**
@@ -39,10 +39,22 @@ export const users = sqliteTable('User', {
  * ユーザーごとの設定情報を管理
  */
 export const userSettings = sqliteTable('UserSettings', {
+  /** カラーテーマ ('teal' | 'lime' | ...) */
+  colorTheme: text('colorTheme').default(DEFAULT_COLOR_THEME).notNull(),
+  /** レコード作成日時 (ISO8601形式) */
+  createdAt: text('createdAt')
+    .$defaultFn(() => new Date().toISOString())
+    .notNull(),
   /** 設定ID (CUID2形式) */
   id: text('id')
     .primaryKey()
     .$defaultFn(() => createId()),
+  /** テーマモード ('light' | 'dark' | 'system') */
+  themeMode: text('themeMode').default(DEFAULT_THEME_MODE).notNull(),
+  /** レコード更新日時 (ISO8601形式) */
+  updatedAt: text('updatedAt')
+    .$defaultFn(() => new Date().toISOString())
+    .notNull(),
   /** ユーザーID (外部キー: users.id, UNIQUE) */
   userId: text('userId')
     .notNull()
@@ -50,18 +62,6 @@ export const userSettings = sqliteTable('UserSettings', {
     .references(() => users.id, { onDelete: 'cascade' }),
   /** 週の開始曜日 ('monday' | 'sunday') */
   weekStart: text('weekStart').default(DEFAULT_WEEK_START).notNull(),
-  /** カラーテーマ ('teal' | 'lime' | ...) */
-  colorTheme: text('colorTheme').default(DEFAULT_COLOR_THEME).notNull(),
-  /** テーマモード ('light' | 'dark' | 'system') */
-  themeMode: text('themeMode').default(DEFAULT_THEME_MODE).notNull(),
-  /** レコード作成日時 (ISO8601形式) */
-  createdAt: text('createdAt')
-    .$defaultFn(() => new Date().toISOString())
-    .notNull(),
-  /** レコード更新日時 (ISO8601形式) */
-  updatedAt: text('updatedAt')
-    .$defaultFn(() => new Date().toISOString())
-    .notNull(),
 })
 
 /**
@@ -71,40 +71,40 @@ export const userSettings = sqliteTable('UserSettings', {
 export const habits = sqliteTable(
   'Habit',
   {
-    /** 習慣ID (CUID2形式) */
-    id: text('id')
-      .primaryKey()
-      .$defaultFn(() => createId()),
-    /** ユーザーID (外部キー: users.id) */
-    userId: text('userId')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    /** 習慣名 */
-    name: text('name').notNull(),
-    /** アイコン識別子 (lucide-react icon name) */
-    icon: text('icon').default(DEFAULT_HABIT_ICON),
-    /** 表示色 (Radix Colors) */
-    color: text('color').default(DEFAULT_HABIT_COLOR),
-    /** 習慣の期間 (daily: 毎日, weekly: 毎週, monthly: 毎月) */
-    period: text('period', { enum: ['daily', 'weekly', 'monthly'] })
-      .default(DEFAULT_HABIT_PERIOD)
-      .notNull(),
-    /** 期間内の目標回数 */
-    frequency: integer('frequency').default(DEFAULT_HABIT_FREQUENCY).notNull(),
-    /** リマインダー時刻 (HH:MM形式, nullable) */
-    reminderTime: text('reminderTime'),
     /** アーカイブ済みフラグ */
     archived: integer('archived', { mode: 'boolean' }).default(false).notNull(),
     /** アーカイブ日時 (ISO8601形式) */
     archivedAt: text('archivedAt'),
+    /** 表示色 (Radix Colors) */
+    color: text('color').default(DEFAULT_HABIT_COLOR),
     /** レコード作成日時 (ISO8601形式) */
     createdAt: text('createdAt')
       .$defaultFn(() => new Date().toISOString())
       .notNull(),
+    /** 期間内の目標回数 */
+    frequency: integer('frequency').default(DEFAULT_HABIT_FREQUENCY).notNull(),
+    /** アイコン識別子 (lucide-react icon name) */
+    icon: text('icon').default(DEFAULT_HABIT_ICON),
+    /** 習慣ID (CUID2形式) */
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    /** 習慣名 */
+    name: text('name').notNull(),
+    /** 習慣の期間 (daily: 毎日, weekly: 毎週, monthly: 毎月) */
+    period: text('period', { enum: ['daily', 'weekly', 'monthly'] })
+      .default(DEFAULT_HABIT_PERIOD)
+      .notNull(),
+    /** リマインダー時刻 (HH:MM形式, nullable) */
+    reminderTime: text('reminderTime'),
     /** レコード更新日時 (ISO8601形式) */
     updatedAt: text('updatedAt')
       .$defaultFn(() => new Date().toISOString())
       .notNull(),
+    /** ユーザーID (外部キー: users.id) */
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
   },
   (table) => ({
     userIdIndex: index('Habit_userId_idx').on(table.userId),
@@ -118,20 +118,20 @@ export const habits = sqliteTable(
 export const checkins = sqliteTable(
   'Checkin',
   {
-    /** チェックインID (CUID2形式) */
-    id: text('id')
-      .primaryKey()
-      .$defaultFn(() => createId()),
-    /** 習慣ID (外部キー: habits.id) */
-    habitId: text('habitId')
-      .notNull()
-      .references(() => habits.id, { onDelete: 'cascade' }),
-    /** チェックイン日付 (YYYY-MM-DD形式) */
-    date: text('date').notNull(),
     /** レコード作成日時 (ISO8601形式) */
     createdAt: text('createdAt')
       .$defaultFn(() => new Date().toISOString())
       .notNull(),
+    /** チェックイン日付 (YYYY-MM-DD形式) */
+    date: text('date').notNull(),
+    /** 習慣ID (外部キー: habits.id) */
+    habitId: text('habitId')
+      .notNull()
+      .references(() => habits.id, { onDelete: 'cascade' }),
+    /** チェックインID (CUID2形式) */
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
   },
   (table) => ({
     habitDateIndex: index('Checkin_habitId_date_idx').on(table.habitId, table.date),
@@ -145,20 +145,20 @@ export const checkins = sqliteTable(
 export const habitSkips = sqliteTable(
   'HabitSkip',
   {
-    /** スキップID (CUID2形式) */
-    id: text('id')
-      .primaryKey()
-      .$defaultFn(() => createId()),
-    /** 習慣ID (外部キー: habits.id) */
-    habitId: text('habitId')
-      .notNull()
-      .references(() => habits.id, { onDelete: 'cascade' }),
-    /** スキップ日付 (YYYY-MM-DD形式) */
-    date: text('date').notNull(),
     /** レコード作成日時 (ISO8601形式) */
     createdAt: text('createdAt')
       .$defaultFn(() => new Date().toISOString())
       .notNull(),
+    /** スキップ日付 (YYYY-MM-DD形式) */
+    date: text('date').notNull(),
+    /** 習慣ID (外部キー: habits.id) */
+    habitId: text('habitId')
+      .notNull()
+      .references(() => habits.id, { onDelete: 'cascade' }),
+    /** スキップID (CUID2形式) */
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
   },
   (table) => ({
     habitDateUniqueIndex: uniqueIndex('HabitSkip_habitId_date_unique').on(table.habitId, table.date),

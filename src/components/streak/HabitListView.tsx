@@ -60,8 +60,8 @@ export function HabitListView({
   totalStreak,
 }: HabitListViewProps) {
   const [drawerState, setDrawerState] = useState<{ open: boolean; habit: HabitWithProgress | null }>({
-    open: false,
     habit: null,
+    open: false,
   })
   const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
 
@@ -78,16 +78,16 @@ export function HabitListView({
           }
           return acc
         },
-        { dailyCount: 0, weeklyCount: 0, monthlyCount: 0 }
+        { dailyCount: 0, monthlyCount: 0, weeklyCount: 0 }
       ),
     [habits]
   )
 
   const sortedHabits = useMemo(() => {
     return filteredHabits.map((habit, index) => ({
+      completed: completedHabitIds.has(habit.id),
       habit,
       index,
-      completed: completedHabitIds.has(habit.id),
     }))
     // 完了状態によるソートを無効化（位置を保持してガタつきを防止）
   }, [filteredHabits, completedHabitIds])
@@ -151,7 +151,7 @@ export function HabitListView({
                 onAdd={onAddCheckin ? () => onAddCheckin(habit.id) : undefined}
                 onLongPressOrContextMenu={() => {
                   setDrawerHabitId(habit.id)
-                  setDrawerState({ open: true, habit })
+                  setDrawerState({ habit, open: true })
                 }}
                 onRemove={onRemoveCheckin ? () => onRemoveCheckin(habit.id) : undefined}
               />
@@ -176,7 +176,7 @@ export function HabitListView({
         onDeleteOptimistic={drawerHabitId && onDeleteOptimistic ? () => onDeleteOptimistic(drawerHabitId) : undefined}
         onOpenChange={(open) => {
           if (!open) {
-            setDrawerState({ open: false, habit: null })
+            setDrawerState({ habit: null, open: false })
           }
         }}
         onResetOptimistic={drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined}

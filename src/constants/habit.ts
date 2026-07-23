@@ -13,8 +13,8 @@ export type Period = (typeof PERIODS)[number]
  */
 export const PERIOD_LABEL: Record<Period, string> = {
   daily: '日',
-  weekly: '週',
   monthly: 'ヶ月',
+  weekly: '週',
 } as const
 
 /**
@@ -22,8 +22,8 @@ export const PERIOD_LABEL: Record<Period, string> = {
  */
 export const PERIOD_DISPLAY_NAME: Record<Period, string> = {
   daily: 'デイリー',
-  weekly: '週次',
   monthly: '月次',
+  weekly: '週次',
 } as const
 
 /**

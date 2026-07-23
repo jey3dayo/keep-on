@@ -27,20 +27,20 @@ vi.mock('@/components/habits/HabitDeleteDialog', () => ({
 }))
 
 const mockHabit = {
-  id: '1',
-  name: '毎日水を8杯飲む',
-  icon: 'droplets' as const,
-  color: 'blue',
-  period: 'daily' as const,
-  frequency: 8,
-  currentProgress: 3,
-  streak: 5,
-  completionRate: 37,
   archived: false,
   archivedAt: null,
-  userId: 'user1',
+  color: 'blue',
+  completionRate: 37,
   createdAt: new Date('2025-01-01'),
+  currentProgress: 3,
+  frequency: 8,
+  icon: 'droplets' as const,
+  id: '1',
+  name: '毎日水を8杯飲む',
+  period: 'daily' as const,
+  streak: 5,
   updatedAt: new Date('2025-01-28'),
+  userId: 'user1',
 }
 
 describe('HabitActionDrawer', () => {

@@ -145,9 +145,9 @@ export function HabitListCard({
           }}
           style={
             {
+              '--tw-ring-color': colorData.color,
               backgroundColor: colorData.color,
               opacity: completed ? 1 : 0.85,
-              '--tw-ring-color': colorData.color,
             } as CSSProperties
           }
         >
@@ -177,8 +177,8 @@ export function HabitListCard({
               <div
                 className="h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none"
                 style={{
-                  width: `${progressPercent}%`,
                   backgroundColor: colorData.color,
+                  width: `${progressPercent}%`,
                 }}
               />
             </div>

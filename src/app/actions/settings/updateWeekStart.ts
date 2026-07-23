@@ -17,7 +17,7 @@ export async function updateWeekStartAction(
   const result = await updateUserSettingsAction({ weekStart })
 
   if (result.ok) {
-    return { ok: true, data: undefined }
+    return { data: undefined, ok: true }
   }
 
   return result

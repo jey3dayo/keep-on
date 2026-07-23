@@ -13,9 +13,10 @@ import { type HabitActionResult, revalidateHabitPaths, serializeActionError } fr
 
 export async function resetHabitProgressAction(habitId: string, dateKey?: string): HabitActionResult {
   const result = await Result.pipe(
-    validateHabitActionInput({ habitId, dateKey }),
+    validateHabitActionInput({ dateKey, habitId }),
     Result.andThen(async (input) => {
       return await Result.try({
+        catch: (error) => error,
         try: async () => {
           // 認証チェック
           const userId = await getCurrentUserId()
@@ -45,9 +46,7 @@ export async function resetHabitProgressAction(habitId: string, dateKey?: string
           await invalidateAnalyticsCache(userId)
 
           await revalidateHabitPaths(userId)
-          return
         },
-        catch: (error) => error,
       })
     }),
     Result.mapError((error) => serializeActionError(error, '進捗のリセットに失敗しました'))

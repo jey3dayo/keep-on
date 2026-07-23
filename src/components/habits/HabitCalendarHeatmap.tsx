@@ -43,11 +43,10 @@ function getCellStyle(cell: DayCell, accentColor: string, frequency: number) {
   }
   if (cell.isSkip) {
     return {
-      border: `2px dashed ${accentColor}`,
       backgroundColor: `color-mix(in srgb, ${accentColor} 12%, transparent)`,
+      border: `2px dashed ${accentColor}`,
     }
   }
-  return
 }
 
 function getCellTitle(cell: DayCell, frequency: number): string {
@@ -90,7 +89,7 @@ function buildMonthGrid(
 ): DayCell[][] {
   const start = startOfMonth(month)
   const end = endOfMonth(month)
-  const days = eachDayOfInterval({ start, end })
+  const days = eachDayOfInterval({ end, start })
 
   // 月曜始まり: 0=Mon, 1=Tue, ..., 6=Sun
   const startWeekday = (getDay(start) + 6) % 7 // 0=Mon
@@ -103,24 +102,24 @@ function buildMonthGrid(
     const d = addDays(start, -(prefixCount - i))
     const dateKey = format(d, 'yyyy-MM-dd')
     cells.push({
+      count: checkinCounts.get(dateKey) ?? 0,
       date: d,
       dateKey,
-      count: checkinCounts.get(dateKey) ?? 0,
-      isSkip: skipSet.has(dateKey),
       isCurrentMonth: false,
       isFuture: d > today,
+      isSkip: skipSet.has(dateKey),
     })
   }
 
   for (const day of days) {
     const dateKey = format(day, 'yyyy-MM-dd')
     cells.push({
+      count: checkinCounts.get(dateKey) ?? 0,
       date: day,
       dateKey,
-      count: checkinCounts.get(dateKey) ?? 0,
-      isSkip: skipSet.has(dateKey),
       isCurrentMonth: true,
       isFuture: day > today,
+      isSkip: skipSet.has(dateKey),
     })
   }
 
@@ -129,12 +128,12 @@ function buildMonthGrid(
     const d = addDays(end, cells.length - prefixCount - days.length + 1)
     const dateKey = format(d, 'yyyy-MM-dd')
     cells.push({
+      count: checkinCounts.get(dateKey) ?? 0,
       date: d,
       dateKey,
-      count: checkinCounts.get(dateKey) ?? 0,
-      isSkip: skipSet.has(dateKey),
       isCurrentMonth: false,
       isFuture: d > today,
+      isSkip: skipSet.has(dateKey),
     })
   }
 

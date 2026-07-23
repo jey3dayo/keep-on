@@ -29,18 +29,18 @@ export async function getTotalCheckinsFromCache(userId: string): Promise<number 
 
     if (total === null) {
       logWarn('analytics-cache:invalid-data', {
-        userId,
         error: 'Schema validation failed',
+        userId,
       })
       return null
     }
 
-    logInfo('analytics-cache:hit', { userId, totalCheckins: total })
+    logInfo('analytics-cache:hit', { totalCheckins: total, userId })
     return total
   } catch (error) {
     logWarn('analytics-cache:error:read', {
-      userId,
       error: formatError(error),
+      userId,
     })
     return null
   }
@@ -64,11 +64,11 @@ export async function setTotalCheckinsCache(userId: string, total: number): Prom
     await kv.put(key, value, {
       expirationTtl: ANALYTICS_CACHE_TTL_SECONDS,
     })
-    logInfo('analytics-cache:set', { userId, total, ttl: ANALYTICS_CACHE_TTL_SECONDS })
+    logInfo('analytics-cache:set', { total, ttl: ANALYTICS_CACHE_TTL_SECONDS, userId })
   } catch (error) {
     logWarn('analytics-cache:error:write', {
-      userId,
       error: formatError(error),
+      userId,
     })
   }
 }
@@ -90,8 +90,8 @@ export async function invalidateAnalyticsCache(userId: string): Promise<void> {
     logInfo('analytics-cache:invalidate', { userId })
   } catch (error) {
     logWarn('analytics-cache:error:invalidate', {
-      userId,
       error: formatError(error),
+      userId,
     })
   }
 }

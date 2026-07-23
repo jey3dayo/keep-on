@@ -3,18 +3,18 @@ import type { HabitWithProgress } from '@/types/habit'
 import { HabitCircleItem } from './HabitCircleItem'
 
 const mockHabit: HabitWithProgress = {
-  id: '1',
-  name: '水を飲む',
-  icon: 'droplets',
-  color: 'blue',
-  frequency: 1,
-  currentProgress: 0,
-  completionRate: 0,
-  streak: 3,
-  period: 'daily',
   archived: false,
   archivedAt: null,
+  color: 'blue',
+  completionRate: 0,
   createdAt: new Date().toISOString(),
+  currentProgress: 0,
+  frequency: 1,
+  icon: 'droplets',
+  id: '1',
+  name: '水を飲む',
+  period: 'daily',
+  streak: 3,
   updatedAt: new Date().toISOString(),
   userId: 'user1',
 }
@@ -23,26 +23,26 @@ const bgColor = '#3b82f6'
 const ringBgColor = 'rgba(255,255,255,0.2)'
 
 const meta = {
-  title: 'Streak/HabitCircleItem',
+  args: {
+    bgColor,
+    habit: mockHabit,
+    isCompleted: false,
+    onCheckin: () => undefined,
+    onContextMenu: () => undefined,
+    onLongPressEnd: () => undefined,
+    onLongPressStart: () => undefined,
+    ringBgColor,
+  },
   component: HabitCircleItem,
   parameters: {
-    layout: 'centered',
     backgrounds: {
       default: 'habit',
       values: [{ name: 'habit', value: bgColor }],
     },
+    layout: 'centered',
   },
   tags: ['autodocs'],
-  args: {
-    habit: mockHabit,
-    isCompleted: false,
-    bgColor,
-    ringBgColor,
-    onCheckin: () => undefined,
-    onContextMenu: () => undefined,
-    onLongPressStart: () => undefined,
-    onLongPressEnd: () => undefined,
-  },
+  title: 'Streak/HabitCircleItem',
 } satisfies Meta<typeof HabitCircleItem>
 
 export default meta
@@ -52,14 +52,14 @@ export const Incomplete: Story = {}
 
 export const Completed: Story = {
   args: {
+    habit: { ...mockHabit, completionRate: 100, currentProgress: 1 },
     isCompleted: true,
-    habit: { ...mockHabit, currentProgress: 1, completionRate: 100 },
   },
 }
 
 export const WithFrequency: Story = {
   args: {
-    habit: { ...mockHabit, name: '水を飲む', icon: 'droplets', frequency: 3, currentProgress: 1 },
+    habit: { ...mockHabit, currentProgress: 1, frequency: 3, icon: 'droplets', name: '水を飲む' },
   },
 }
 

@@ -16,16 +16,16 @@ interface IconCategory {
 
 const categories: IconCategory[] = [
   {
-    name: '健康・運動',
     icons: ['footprints', 'pill', 'heart', 'dumbbell', 'bike', 'droplets', 'apple', 'bed'],
+    name: '健康・運動',
   },
   {
-    name: '生産性・学習',
     icons: ['book-open', 'pencil', 'brain', 'clock', 'target', 'timer'],
+    name: '生産性・学習',
   },
   {
-    name: 'ライフスタイル',
     icons: ['coffee', 'music', 'sun', 'ban', 'smile', 'users'],
+    name: 'ライフスタイル',
   },
 ]
 

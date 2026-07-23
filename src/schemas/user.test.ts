@@ -4,12 +4,12 @@ import { safeParseUser } from './user'
 describe('safeParseUser', () => {
   it('文字列の日時をDateに変換できる', () => {
     const result = safeParseUser({
-      id: 'user-123',
       clerkId: 'clerk-123',
-      email: 'test@example.com',
-      weekStart: 'monday',
       createdAt: '2024-01-01T00:00:00.000Z',
+      email: 'test@example.com',
+      id: 'user-123',
       updatedAt: '2024-01-02T00:00:00.000Z',
+      weekStart: 'monday',
     })
 
     expect(result.success).toBe(true)
@@ -21,12 +21,12 @@ describe('safeParseUser', () => {
 
   it('不正な日時文字列はエラーになる', () => {
     const result = safeParseUser({
-      id: 'user-789',
       clerkId: 'clerk-789',
-      email: 'invalid@example.com',
-      weekStart: 'monday',
       createdAt: 'invalid-date',
+      email: 'invalid@example.com',
+      id: 'user-789',
       updatedAt: '2024-01-02T00:00:00.000Z',
+      weekStart: 'monday',
     })
 
     expect(result.success).toBe(false)
@@ -35,12 +35,12 @@ describe('safeParseUser', () => {
   it('Date型の日時も許可する', () => {
     const now = new Date()
     const result = safeParseUser({
-      id: 'user-456',
       clerkId: 'clerk-456',
-      email: 'test2@example.com',
-      weekStart: 'sunday',
       createdAt: now,
+      email: 'test2@example.com',
+      id: 'user-456',
       updatedAt: now,
+      weekStart: 'sunday',
     })
 
     expect(result.success).toBe(true)

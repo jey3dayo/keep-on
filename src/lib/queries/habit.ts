@@ -20,18 +20,18 @@ export async function createHabit(input: HabitInput) {
       const [habit] = await db
         .insert(habits)
         .values({
-          userId: input.userId,
-          name: input.name,
-          icon: input.icon,
           color: input.color,
-          period: input.period,
           frequency: input.frequency,
+          icon: input.icon,
+          name: input.name,
+          period: input.period,
           reminderTime: input.reminderTime,
+          userId: input.userId,
         })
         .returning()
       return habit
     },
-    { userId: input.userId, name: input.name }
+    { name: input.name, userId: input.userId }
   )
 }
 
