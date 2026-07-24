@@ -253,9 +253,112 @@
   @apply ring-2 ring-white ring-offset-2 ring-offset-primary;
 }
 
+/* 長押し進行（Hold to confirm） */
+.long-press-fill {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 200ms ease-out;
+}
+
+.long-press-fill[data-active="true"] {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path var(--long-press-fill-ms, 500ms) linear;
+}
+
+/* サーフェス入退場 */
+.surface-from-bottom {
+  opacity: 0;
+  transform: translateY(100%);
+  transition:
+    opacity 300ms ease-out,
+    transform 300ms ease-out;
+}
+
+.surface-from-bottom[data-entered="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.surface-from-top {
+  opacity: 0;
+  transform: translateY(-100%);
+  transition:
+    opacity 200ms ease-out,
+    transform 200ms ease-out;
+}
+
+.surface-from-top[data-entered="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dialog-scale-in {
+  opacity: 0;
+  transform: scale(0.97);
+  transition:
+    opacity 200ms ease-out,
+    transform 200ms ease-out;
+}
+
+.dialog-scale-in[data-entered="true"] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.dialog-backdrop {
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+
+.dialog-backdrop[data-entered="true"] {
+  opacity: 1;
+}
+
+/* FAQ accordion */
+.faq-answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 200ms ease-out;
+}
+
+.faq-answer[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.faq-answer > div {
+  overflow: hidden;
+}
+
 /* reduced-motion 対応 */
 @media (prefers-reduced-motion: reduce) {
   .streak-bg {
     transition: none;
+  }
+
+  .long-press-fill {
+    opacity: 0;
+    clip-path: none;
+    transition: opacity 150ms ease-out;
+  }
+
+  .long-press-fill[data-active="true"] {
+    opacity: 0.4;
+    transition: opacity 150ms ease-out;
+  }
+
+  .surface-from-bottom,
+  .surface-from-top,
+  .dialog-scale-in,
+  .dialog-backdrop,
+  .faq-answer {
+    transition-duration: 150ms;
+  }
+
+  .surface-from-bottom,
+  .surface-from-top {
+    transform: none;
+  }
+
+  .dialog-scale-in {
+    transform: none;
   }
 }
