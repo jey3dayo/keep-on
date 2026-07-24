@@ -6,11 +6,9 @@ import { Button, CheckInButton } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById, getIconById, getPeriodById } from '@/constants/habit-data'
+import { LONG_PRESS_DURATION_MS, LONG_PRESS_MOVE_THRESHOLD_PX } from '@/constants/interaction'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
-
-// スクロール操作を長押しと誤検知しないための移動許容量
-const LONG_PRESS_MOVE_THRESHOLD_PX = 10
 
 interface HabitListCardProps {
   completed: boolean
@@ -47,7 +45,7 @@ export function HabitListCard({
     longPressTimerRef.current = setTimeout(() => {
       longPressTriggeredRef.current = true
       onLongPressOrContextMenu()
-    }, 500)
+    }, LONG_PRESS_DURATION_MS)
   }
 
   const handleLongPressMove = (event: ReactPointerEvent<HTMLDivElement>) => {
