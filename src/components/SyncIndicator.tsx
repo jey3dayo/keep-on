@@ -5,11 +5,16 @@ import { useEffect, useRef, useState } from 'react'
 import { SYNC_INDICATOR_DELAY_MS, SYNC_INDICATOR_MIN_DISPLAY_MS } from '@/constants/sync'
 import { useSyncContext } from '@/contexts/SyncContext'
 
+const FADE_MS = 150
+
 export function SyncIndicator() {
   const { isSyncing } = useSyncContext()
   const [showSyncIcon, setShowSyncIcon] = useState(false)
+  const [shouldRender, setShouldRender] = useState(false)
+  const [entered, setEntered] = useState(false)
   const delayTimerRef = useRef<NodeJS.Timeout | null>(null)
   const minDisplayTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const fadeTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isDisplayingRef = useRef(false)
 
   useEffect(() => {
@@ -58,6 +63,36 @@ export function SyncIndicator() {
     }
   }, [isSyncing])
 
+  useEffect(() => {
+    if (fadeTimerRef.current) {
+      clearTimeout(fadeTimerRef.current)
+      fadeTimerRef.current = null
+    }
+
+    if (showSyncIcon) {
+      setShouldRender(true)
+      const frame = requestAnimationFrame(() => {
+        setEntered(true)
+      })
+      return () => cancelAnimationFrame(frame)
+    }
+
+    setEntered(false)
+    fadeTimerRef.current = setTimeout(() => {
+      setShouldRender(false)
+      fadeTimerRef.current = null
+    }, FADE_MS)
+  }, [showSyncIcon])
+
+  useEffect(
+    () => () => {
+      if (fadeTimerRef.current) {
+        clearTimeout(fadeTimerRef.current)
+      }
+    },
+    []
+  )
+
   return (
     <div
       aria-atomic="true"
@@ -66,7 +101,9 @@ export function SyncIndicator() {
       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-foreground/80"
       role="status"
     >
-      {showSyncIcon ? <CloudUpload className="h-5 w-5" /> : null}
+      {shouldRender ? (
+        <CloudUpload className="surface-fade h-5 w-5" data-entered={entered ? 'true' : undefined} />
+      ) : null}
     </div>
   )
 }
