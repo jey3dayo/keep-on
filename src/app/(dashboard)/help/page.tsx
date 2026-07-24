@@ -1,6 +1,7 @@
-import { ArrowUpRight, ChevronDown } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { FaqCard } from '@/components/help/FaqCard'
 
 export const metadata: Metadata = {
   description:
@@ -190,20 +191,5 @@ function StepCard({ step, title, description }: { step: string; title: string; d
         <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
       </div>
     </div>
-  )
-}
-
-function FaqCard({ question, answer }: { question: string; answer: string }) {
-  return (
-    <details className="group rounded-lg border border-border bg-card p-4 open:bg-muted/30">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-        <span>Q. {question}</span>
-        <ChevronDown
-          aria-hidden="true"
-          className="h-4 w-4 text-muted-foreground transition group-open:rotate-180 motion-reduce:transition-none"
-        />
-      </summary>
-      <p className="mt-3 text-muted-foreground text-sm leading-relaxed">A. {answer}</p>
-    </details>
   )
 }
