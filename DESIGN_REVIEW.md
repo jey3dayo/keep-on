@@ -23,9 +23,9 @@ KeepOn の UI 変更をレビューし、ルールの置き場所を決めるた
 
 次の順で置く場所を決める。
 
-1. **複数画面で再利用する視覚ルール** → `DESIGN.md`
-2. **セマンティクス・状態モデル・a11y が揃った実装** → shared（`src/components/` のラッパー、または既存 primitives の利用）
-3. **単画面・実験・一時対応** → feature-local（その機能配下に閉じる）
+1. 複数画面で再利用する視覚ルール → `DESIGN.md`
+2. セマンティクス・状態モデル・a11y が揃った実装 → shared（`src/components/` のラッパー、または既存 primitives の利用）
+3. 単画面・実験・一時対応 → feature-local（その機能配下に閉じる）
 
 ### `DESIGN.md` に入れる
 
