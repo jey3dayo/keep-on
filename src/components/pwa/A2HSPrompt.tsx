@@ -2,7 +2,7 @@
 
 import { X } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 
 interface BeforeInstallPromptEvent extends Event {
@@ -11,12 +11,18 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const IOS_REGEX = /iPad|iPhone|iPod/
+const SURFACE_EXIT_MS = 300
 
 export function A2HSPrompt() {
   const pathname = usePathname()
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showIOSPrompt, setShowIOSPrompt] = useState(false)
   const [dismissed, setDismissed] = useState(false)
+  const [shouldRender, setShouldRender] = useState(false)
+  const [entered, setEntered] = useState(false)
+  const exitTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const isVisible = !dismissed && pathname === '/dashboard' && (Boolean(deferredPrompt) || showIOSPrompt)
 
   useEffect(() => {
     // 既にPWAとして起動している場合は非表示
@@ -45,6 +51,36 @@ export function A2HSPrompt() {
     return () => window.removeEventListener('beforeinstallprompt', handlePrompt)
   }, [])
 
+  useEffect(() => {
+    if (exitTimerRef.current) {
+      clearTimeout(exitTimerRef.current)
+      exitTimerRef.current = null
+    }
+
+    if (isVisible) {
+      setShouldRender(true)
+      const frame = requestAnimationFrame(() => {
+        setEntered(true)
+      })
+      return () => cancelAnimationFrame(frame)
+    }
+
+    setEntered(false)
+    exitTimerRef.current = setTimeout(() => {
+      setShouldRender(false)
+      exitTimerRef.current = null
+    }, SURFACE_EXIT_MS)
+  }, [isVisible])
+
+  useEffect(
+    () => () => {
+      if (exitTimerRef.current) {
+        clearTimeout(exitTimerRef.current)
+      }
+    },
+    []
+  )
+
   const handleInstall = async () => {
     if (!deferredPrompt) {
       return
@@ -61,60 +97,49 @@ export function A2HSPrompt() {
     localStorage.setItem('a2hs-dismissed', 'true')
   }
 
-  if (dismissed || pathname !== '/dashboard') {
+  if (!shouldRender) {
     return null
   }
 
-  // Android/Chrome向けプロンプト
-  if (deferredPrompt) {
-    return (
-      <div className="fixed right-4 bottom-4 left-4 z-50 rounded-lg border border-border bg-card p-4 shadow-lg sm:left-auto sm:w-80">
-        <Button
-          aria-label="閉じる"
-          className="absolute top-2 right-2 text-muted-foreground hover:bg-transparent hover:text-foreground"
-          onClick={handleDismiss}
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-        <p className="pr-6 font-medium text-foreground text-sm">ホーム画面に追加</p>
-        <p className="mt-1 text-muted-foreground text-xs">アプリのようにすぐアクセスできます</p>
-        <Button className="mt-3 w-full" onClick={handleInstall} type="button" variant="default">
-          インストール
-        </Button>
-      </div>
-    )
-  }
+  const promptBody = deferredPrompt ? (
+    <>
+      <p className="pr-6 font-medium text-foreground text-sm">ホーム画面に追加</p>
+      <p className="mt-1 text-muted-foreground text-xs">アプリのようにすぐアクセスできます</p>
+      <Button className="mt-3 w-full" onClick={handleInstall} type="button" variant="default">
+        インストール
+      </Button>
+    </>
+  ) : (
+    <>
+      <p className="pr-6 font-medium text-foreground text-sm">ホーム画面に追加</p>
+      <p className="mt-2 text-muted-foreground text-xs">
+        <span className="inline-flex items-center gap-1">
+          <span>1. 下部の</span>
+          <span className="inline-block rounded bg-muted px-1">共有</span>
+          <span>ボタンをタップ</span>
+        </span>
+        <br />
+        <span>2. 「ホーム画面に追加」を選択</span>
+      </p>
+    </>
+  )
 
-  // iOS Safari向けプロンプト
-  if (showIOSPrompt) {
-    return (
-      <div className="fixed right-4 bottom-4 left-4 z-50 rounded-lg border border-border bg-card p-4 shadow-lg sm:left-auto sm:w-80">
-        <Button
-          aria-label="閉じる"
-          className="absolute top-2 right-2 text-muted-foreground hover:bg-transparent hover:text-foreground"
-          onClick={handleDismiss}
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-        <p className="pr-6 font-medium text-foreground text-sm">ホーム画面に追加</p>
-        <p className="mt-2 text-muted-foreground text-xs">
-          <span className="inline-flex items-center gap-1">
-            <span>1. 下部の</span>
-            <span className="inline-block rounded bg-muted px-1">共有</span>
-            <span>ボタンをタップ</span>
-          </span>
-          <br />
-          <span>2. 「ホーム画面に追加」を選択</span>
-        </p>
-      </div>
-    )
-  }
-
-  return null
+  return (
+    <div
+      className="surface-from-bottom fixed right-4 bottom-4 left-4 z-50 rounded-lg border border-border bg-card p-4 shadow-lg sm:left-auto sm:w-80"
+      data-entered={entered ? 'true' : undefined}
+    >
+      <Button
+        aria-label="閉じる"
+        className="absolute top-2 right-2 text-muted-foreground hover:bg-transparent hover:text-foreground"
+        onClick={handleDismiss}
+        size="icon"
+        type="button"
+        variant="ghost"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+      {promptBody}
+    </div>
+  )
 }
