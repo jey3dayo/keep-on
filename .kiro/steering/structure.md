@@ -22,14 +22,17 @@ keep-on/
 │   ├── db/               # Drizzle スキーマ
 │   ├── env.ts            # 環境変数バリデーション
 │   ├── hooks/            # 共有カスタム Hooks
+│   ├── instrumentation.ts # サーバー起動時の環境変数検証
 │   ├── lib/              # ユーティリティ・共通ロジック
 │   ├── middleware.ts     # 認証ミドルウェア
 │   ├── schemas/          # Valibot スキーマ
 │   ├── transforms/       # 入力/表示の変換レイヤー
 │   ├── types/            # 共有 TypeScript 型
 │   ├── validators/       # バリデーション（Result 型）
+├── e2e/                  # Playwright E2E テスト・認証状態
 ├── public/               # 静的アセット・PWA ファイル
 ├── docs/                 # ドキュメント/DB関連メモ
+├── plans/                # コード監査由来の実装計画
 ├── drizzle/              # Drizzle マイグレーション出力
 ├── scripts/              # 運用/生成スクリプト
 ├── drizzle.config.ts     # Drizzle 設定
@@ -215,6 +218,8 @@ User (Clerk 認証ユーザー)
 - `sidebar/`: サイドバーナビゲーション
 - `dev/`: 開発専用の補助UI（本番バンドルから除外する前提のツール群）
 - `ui/`: shadcn/ui 由来のプリミティブ（Radix ラッパー）
+- `PageShell.tsx`: ページ余白・最大幅の共通化ラッパー（直下に配置）
+- `SyncIndicator.tsx`: 同期状態のグローバル表示（直下に配置）
 
 ### Storybook
 

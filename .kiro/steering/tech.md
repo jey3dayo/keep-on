@@ -14,8 +14,8 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 
 ### フロントエンド
 
-- **Next.js 16**: App Router + Turbopack による高速開発体験
-- **React 19**: Server Components をデフォルトとし、必要な箇所のみ Client Component 化
+- **Next.js 16.2**: App Router + Turbopack による高速開発体験
+- **React 19.2**: Server Components をデフォルトとし、必要な箇所のみ Client Component 化
 - **Tailwind CSS v4.x**: ユーティリティファーストの CSS フレームワーク
 
 ### フロントエンドの設計パターン
@@ -126,14 +126,22 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 ```toml
 # mise.toml で定義されたタスク
 format       # Ultracite + Taplo + Markdownlint(--fix)
-lint         # 型チェック + Biome + Markdown + YAML
+lint         # 型チェック（src + test + e2e）+ Biome + Markdown + YAML
 check        # ローカル確認（format + lint）
-check:quick  # クイックチェック（型 + Biome）
-ci           # CI 相当のチェック（型 + Biome + Test + Build）
+check:quick  # クイックチェック（型チェック一式 + Biome）
+ci           # CI 相当のチェック（型 + Biome + Test + Storybook + Build）
 ```
 
-- lint は `lint:types` / `lint:biome` / `lint:md` / `lint:yaml` に分割し、必要に応じて個別実行
+- `lint` は `lint:types` / `test:types` / `test:e2e:types` / `lint:biome` / `lint:md` / `lint:yaml` に分割し、必要に応じて個別実行
+- `test:types`（`tsconfig.test.json`）と `test:e2e:types`（`tsconfig.e2e.json`）で、テスト本体・E2E コードもそれぞれ独立に型チェックする
+- `ci` は `lint:types` → `test:types` → `test:e2e:types` → `lint:biome` → `test:ci` → `test:storybook:ci` → `build:ci` の順（`lefthook.yml` の pre-push もこの順序に合わせている）
 - deploy 系（`deploy`, `deploy:preview`）も mise で統一実行
+
+### Git hooks（lefthook）
+
+- pre-commit: staged ファイルの高速整形のみ（biome / markdownlint / taplo / yamllint、`stage_fixed: true` で修正結果を再ステージ）
+- pre-push: `mise run ci` と同じ段階をジョブ分割して実行（型チェック一式 → Biome → test → Storybook テスト → build）
+- 有効化は `mise run hooks:install`（`lefthook install` のラッパー）
 
 ## PWA 対応
 
@@ -189,14 +197,17 @@ if (Result.isSuccess(result)) {
 
 ## テスト
 
-- **Vitest**: 高速な単体テストランナー
-- **React Testing Library**: コンポーネントテスト
-- **カバレッジレポート**: `@vitest/coverage-v8`
+3系統のテストで構成する。
+
+- **Vitest**: ユニットテスト（`src/**/*.test.ts(x)`）+ カバレッジレポート（`@vitest/coverage-v8`）+ React Testing Library
+- **Storybook（in-source）**: コンポーネントの状態バリエーションを `vitest.storybook.config.ts` 経由でテスト実行（`pnpm test:storybook:run`）
+- **Playwright**: `e2e/` 配下の E2E テスト（`dashboard.spec.ts` / `navigation.spec.ts`）。Clerk 認証状態は `e2e/auth.setup.cjs` で `e2e/storage-state.json` に保存し再利用
 
 ### テストのパターン
 
-- テストファイル: `*.test.ts` / `*.test.tsx`（対象ファイルと同じディレクトリ）
+- ユニットテストファイル: `*.test.ts` / `*.test.tsx`（対象ファイルと同じディレクトリ、または `__tests__/` サブフォルダ）
 - ユニットテストファースト
+- テストコード自体も型チェック対象（`tsconfig.test.json` / `tsconfig.e2e.json`、`pnpm test:types` / `pnpm test:e2e:types`）
 
 ### テストの例
 

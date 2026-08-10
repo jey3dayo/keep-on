@@ -22,7 +22,24 @@
 該当行を削除する。手本は `src/lib/queries/__tests__/checkin-sql.test.ts` と
 `src/lib/queries/__tests__/helpers/sqlite-d1.ts`。1 ファイル移行するごとに 1 行ずつ削除すること。
 
-### 後続課題
+### 後続課題（解消済み）
 
-- `*.stories.tsx` は `tsconfig.test.json` の対象外のまま（Storybook 型チェックは今回のスコープ外）
-- `tsconfig.e2e.json` を使う `pnpm test:e2e:types` は CI・pre-push いずれにも未接続
+- ~~`*.stories.tsx` は `tsconfig.test.json` の対象外のまま~~ → `tsconfig.test.json` の `include` に `src/**/*.stories.ts(x)` を追加済み
+- ~~`tsconfig.e2e.json` を使う `pnpm test:e2e:types` は CI・pre-push いずれにも未接続~~ → `mise.toml` の `lint` / `ci` タスクと `lefthook.yml` の pre-push に接続済み
+
+## 未解決事項
+
+### 依存更新の再実行待ち
+
+4 パッケージが pnpm の 24 時間リリースゲート（`minimum_release_age`）に掛かっており、
+2026-08-11 01:02Z 以降に再実行が必要。
+
+### `withDbRetry` のリトライ遅延の不整合
+
+クライアント側は `RETRY_DELAY_MS`（250ms）待ってから再試行するのに対し、`src/lib/db-retry.ts`
+の `withDbRetry` はデフォルトの `onRetry` で即座に（`resetDb()` のみ実行して）再試行しており、
+遅延がない。挙動をそろえるか、意図的な非対称であることを明記するか判断が必要。
+
+### 実機（iOS PWA）での視覚確認が未実施の変更
+
+直近の複数の UI 変更が、実機の iOS PWA でまだ視覚確認できていない。
