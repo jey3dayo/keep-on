@@ -20,6 +20,9 @@ export default defineConfig({
       '**/.worktrees/**',
       '**/*.stories.tsx',
       '**/*.stories.ts',
+      // e2e は Playwright が実行する。Playwright の testMatch が *.spec.* を要求するため
+      // ファイル名では住み分けられず、ここで除外する必要がある
+      'e2e/**',
     ],
     globals: true,
     include: ['**/*.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', '**/*.spec.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
