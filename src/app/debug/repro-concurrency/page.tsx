@@ -1,8 +1,9 @@
 import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { type ConcurrencyResult, runConcurrencyChecks } from './actions'
-import { CONCURRENCY_LIMITS, ITERATION_LIMITS } from './constants'
+import { CONCURRENCY_LIMITS, IS_CONCURRENCY_DEBUG_ENABLED, ITERATION_LIMITS } from './constants'
 
 export const metadata: Metadata = {
   description: 'Clerk API と DB クエリを並列実行して疎通・タイムアウトを検査するデバッグページ',
@@ -105,6 +106,10 @@ function BatchRow({ batch }: { batch: ConcurrencyResult['batches'][number] }) {
 }
 
 export default async function ReproConcurrencyPage({ searchParams }: { searchParams?: SearchParams }) {
+  if (!IS_CONCURRENCY_DEBUG_ENABLED) {
+    notFound()
+  }
+
   const requestTimeoutMs = getRequestTimeoutMs()
   const params = searchParams ? await searchParams : {}
   const concurrency = clampNumber(

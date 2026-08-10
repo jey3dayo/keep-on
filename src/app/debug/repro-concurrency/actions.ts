@@ -5,7 +5,7 @@ import { sql } from 'drizzle-orm'
 import { users } from '@/db/schema'
 import { getDb } from '@/lib/db'
 import { formatError } from '@/lib/logging'
-import { CONCURRENCY_LIMITS, ITERATION_LIMITS } from './constants'
+import { CONCURRENCY_LIMITS, IS_CONCURRENCY_DEBUG_ENABLED, ITERATION_LIMITS } from './constants'
 
 export interface ConcurrencyParams {
   concurrency: number
@@ -129,6 +129,11 @@ async function runTask(
 }
 
 export async function runConcurrencyChecks(params: ConcurrencyParams): Promise<ConcurrencyResult> {
+  // Server Action は独立した POST エンドポイントとして直接呼べるため、ページ側とは別にゲートする
+  if (!IS_CONCURRENCY_DEBUG_ENABLED) {
+    throw new Error('runConcurrencyChecks is disabled outside development')
+  }
+
   const concurrency = clampNumber(
     params.concurrency,
     CONCURRENCY_LIMITS.min,
