@@ -185,7 +185,7 @@ export function HabitFormServer({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       {hideHeader ? null : (
         <HabitFormHeader
@@ -460,7 +460,7 @@ export function HabitFormServer({
 
         {/* Submit Button for Modal */}
         {hideHeader ? (
-          <div className="sticky bottom-0 mt-8 bg-background pt-2 pb-4">
+          <div className="sticky bottom-0 mt-8 bg-background pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <Button
               className="w-full"
               disabled={!watchedName?.trim() || isSaving}

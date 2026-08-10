@@ -112,7 +112,8 @@ export function HabitActionDrawer({
   return (
     <>
       <Drawer onOpenChange={onOpenChange} open={open}>
-        <DrawerContent>
+        {/* 下端固定の Drawer なので iOS のホームインジケータ分を確保する */}
+        <DrawerContent className="pb-[env(safe-area-inset-bottom)]">
           <DrawerHeader className="text-left">
             <DrawerTitle>習慣の操作</DrawerTitle>
             <DrawerDescription>{activeHabit?.name}</DrawerDescription>

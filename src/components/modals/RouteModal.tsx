@@ -28,8 +28,11 @@ export function RouteModal({ title, children, compact }: RouteModalProps) {
     <Sheet onOpenChange={handleOpenChange} open={true}>
       <SheetContent
         className={cn(
-          'mt-2 h-[90vh] sm:mx-auto sm:h-[85vh] sm:max-w-xl',
-          compact ? 'overflow-hidden p-0 [&>button:first-child]:hidden' : 'p-6'
+          'mt-2 h-[90dvh] sm:mx-auto sm:h-[85dvh] sm:max-w-xl',
+          // 下端 Sheet なので iOS のホームインジケータ分を既存の下パディングへ加算する
+          compact
+            ? 'overflow-hidden p-0 pb-[env(safe-area-inset-bottom)] [&>button:first-child]:hidden'
+            : 'p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]'
         )}
         side="bottom"
       >
