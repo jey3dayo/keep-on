@@ -383,7 +383,11 @@ export function HabitSimpleView({
         </div>
       ) : null}
 
-      <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between border-white/10 border-t bg-black/10 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-md md:hidden">
+      {/*
+       * backdrop-blur は使わない: overflow-hidden の祖先内で backdrop-filter を
+       * 使うと iOS Safari が背景を不透明に塗り、safe-area 分が黒帯になる。
+       */}
+      <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between border-white/10 border-t bg-black/10 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:hidden">
         <Button
           aria-label="設定を開く"
           className="h-10 w-10 rounded-full border border-white/20 bg-white/10 p-0 text-white/80 hover:bg-white/20 hover:text-white"

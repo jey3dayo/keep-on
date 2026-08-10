@@ -39,7 +39,10 @@ export default async function DashboardLayout({
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">{children}</div>
+        {/* 固定 nav を持たないページ（/habits 等）が iOS のホームバーに被らないよう下端を確保する */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden pb-[env(safe-area-inset-bottom)]">
+          {children}
+        </div>
       </SidebarInset>
       {modal}
     </SidebarProvider>
