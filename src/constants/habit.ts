@@ -9,15 +9,6 @@ export const PERIODS = ['daily', 'weekly', 'monthly'] as const
 export type Period = (typeof PERIODS)[number]
 
 /**
- * 期間のラベル（日本語）
- */
-export const PERIOD_LABEL: Record<Period, string> = {
-  daily: '日',
-  monthly: 'ヶ月',
-  weekly: '週',
-} as const
-
-/**
  * 期間の表示名
  */
 export const PERIOD_DISPLAY_NAME: Record<Period, string> = {
@@ -75,11 +66,3 @@ export function weekStartToDay(weekStart: WeekStart): WeekStartDay {
  * 完了判定の閾値（目標達成率）
  */
 export const COMPLETION_THRESHOLD = 100
-
-/**
- * 完了ステータスラベル
- */
-export const COMPLETION_STATUS_LABEL = {
-  completed: '完了',
-  incomplete: '未完了',
-} as const
