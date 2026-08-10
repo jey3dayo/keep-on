@@ -37,7 +37,7 @@ interface NormalizedHabitSchedule {
   period: Period
 }
 
-interface HabitSchedule extends NormalizedHabitSchedule {
+export interface HabitSchedule extends NormalizedHabitSchedule {
   id: string
 }
 
@@ -338,7 +338,7 @@ export async function getHabitsWithProgress(
   }
 }
 
-function calculateStreakFromCheckins(
+export function calculateStreakFromCheckins(
   habit: HabitSchedule,
   habitCheckins: Array<{ date: Date | string }>,
   weekStartDay: WeekStartDay = 1,
