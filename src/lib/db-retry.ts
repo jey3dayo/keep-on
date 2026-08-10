@@ -52,6 +52,11 @@ export async function withDbRetry<T>(name: string, fn: () => Promise<T>, options
         lastError = error
 
         // リトライ対象エラーの場合
+        // D1 の read query は platform 側で内部リトライ済み（最大2回、公式 changelog:
+        // https://developers.cloudflare.com/changelog/post/2025-09-11-d1-automatic-read-retries/）。
+        // ここでの再試行は outer timeout（logSpan の Promise.race）の予算内に収める必要があり、
+        // かつ D1 は1クエリ=1往復のためその往復自体が試行間隔になる。そのため遅延を入れず即座に次の試行へ進む。
+        // クライアント側の RETRY_DELAY_MS（Server Action 全体の再送）とは契約が異なるため揃える必要はない。
         if (retryOn(error)) {
           // 最終試行でない場合は通常のリトライ
           if (attempt < maxRetries) {
