@@ -5,3 +5,4 @@
 export type SerializableSettingsError =
   | { name: 'UnauthorizedError'; message: string }
   | { name: 'DatabaseError'; message: string }
+  | { name: 'ValidationError'; message: string }

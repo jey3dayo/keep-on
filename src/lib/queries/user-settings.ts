@@ -142,8 +142,11 @@ async function upsertUserSettings(
       weekStart: settings.weekStart ?? DEFAULT_WEEK_START,
     })
     .onConflictDoUpdate({
+      // id / userId / createdAt は絶対に更新しない（mass assignment 防止のためキー名はリテラルで列挙）
       set: {
-        ...settings,
+        ...(settings.colorTheme === undefined ? {} : { colorTheme: settings.colorTheme }),
+        ...(settings.themeMode === undefined ? {} : { themeMode: settings.themeMode }),
+        ...(settings.weekStart === undefined ? {} : { weekStart: settings.weekStart }),
         updatedAt: now,
       },
       target: userSettings.userId,

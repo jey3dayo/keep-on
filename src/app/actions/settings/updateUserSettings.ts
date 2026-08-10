@@ -1,15 +1,16 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import * as v from 'valibot'
 import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
 import type { SerializableSettingsError } from '@/lib/errors/settings'
 import { updateUserSettings } from '@/lib/queries/user-settings'
 import { getCurrentUserId } from '@/lib/user'
-import type { UpdateUserSettingsSchemaType } from '@/schemas/user-settings'
+import { UpdateUserSettingsSchema } from '@/schemas/user-settings'
 import type { UserSettings } from '@/types/user-settings'
 
 export async function updateUserSettingsAction(
-  settings: UpdateUserSettingsSchemaType
+  settings: unknown
 ): ServerActionResultAsync<UserSettings, SerializableSettingsError> {
   const userId = await getCurrentUserId()
 
@@ -17,9 +18,16 @@ export async function updateUserSettingsAction(
     return actionError({ message: 'Unauthorized', name: 'UnauthorizedError' })
   }
 
+  // Server Action の引数は実行時には任意の JSON。境界で検証し、余分なキーを落とす
+  const parseResult = v.safeParse(UpdateUserSettingsSchema, settings)
+
+  if (!parseResult.success) {
+    return actionError({ message: '設定の入力値が不正です', name: 'ValidationError' })
+  }
+
   try {
     // 設定を更新または作成（upsert）
-    const updated = await updateUserSettings(userId, settings)
+    const updated = await updateUserSettings(userId, parseResult.output)
 
     revalidatePath('/dashboard')
     revalidatePath('/settings')
