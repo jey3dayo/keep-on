@@ -281,6 +281,14 @@ export function HabitSimpleView({
 
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
 
+  const handleSettings = useCallback(() => {
+    if (onSettings) {
+      onSettings()
+      return
+    }
+    router.push('/settings')
+  }, [onSettings, router])
+
   return (
     <div
       className="relative flex min-h-full flex-col overflow-hidden transition-colors duration-500"
@@ -403,11 +411,11 @@ export function HabitSimpleView({
        * backdrop-blur は使わない: overflow-hidden の祖先内で backdrop-filter を
        * 使うと iOS Safari が背景を不透明に塗り、safe-area 分が黒帯になる。
        */}
-      <nav className="fixed right-0 bottom-0 left-0 flex items-center justify-between border-white/10 border-t bg-black/10 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:hidden">
+      <nav className="pointer-events-none fixed right-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-0 z-30 flex items-center px-4 pr-32 md:hidden">
         <Button
           aria-label="設定を開く"
-          className="h-10 w-10 rounded-full border border-white/20 bg-white/10 p-0 text-white/80 hover:bg-white/20 hover:text-white"
-          onClick={onSettings}
+          className="pointer-events-auto h-11 w-11 rounded-full border border-white/20 bg-white/10 p-0 text-white/80 hover:bg-white/20 hover:text-white"
+          onClick={handleSettings}
           size="icon"
           type="button"
           variant="ghost"
@@ -416,7 +424,7 @@ export function HabitSimpleView({
         </Button>
 
         {totalPages > 1 ? (
-          <div className="flex items-center gap-2">
+          <div className="pointer-events-auto absolute left-1/2 flex -translate-x-1/2 items-center gap-2">
             {pages.map((page) => (
               <Button
                 aria-label={`ページ ${page + 1}`}

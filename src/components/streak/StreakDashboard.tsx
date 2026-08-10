@@ -1,7 +1,6 @@
 'use client'
 
-import { useCallback, useEffect } from 'react'
-import { cn } from '@/lib/utils'
+import { useEffect } from 'react'
 import { DashboardViewToggle } from './DashboardViewToggle'
 import { HabitListView } from './HabitListView'
 import { HabitSimpleView } from './HabitSimpleView'
@@ -31,8 +30,6 @@ export function StreakDashboard({
     totalDaily,
     totalStreak,
   } = useDashboardContent(habits)
-  const handleSettings = useCallback(() => onViewChange('dashboard'), [onViewChange])
-
   useEffect(() => {
     const root = document.documentElement
     root.style.setProperty('--dashboard-bg', 'var(--primary)')
@@ -66,7 +63,6 @@ export function StreakDashboard({
           onDeleteOptimistic={onDeleteOptimistic}
           onRemoveCheckin={onRemoveCheckin}
           onResetOptimistic={onResetOptimistic}
-          onSettings={handleSettings}
           onSkip={onSkip}
           onUnSkip={onUnSkip}
         />
@@ -94,15 +90,7 @@ export function StreakDashboard({
         </div>
       )}
 
-      <div
-        className={cn(
-          'fixed right-4 z-50',
-          // simple ビューのみ下部固定 nav があるため、その分を回避する
-          currentView === 'simple'
-            ? 'bottom-[calc(5.5rem+env(safe-area-inset-bottom))]'
-            : 'bottom-[calc(1.5rem+env(safe-area-inset-bottom))]'
-        )}
-      >
+      <div className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40">
         <div className="flex items-center gap-3">
           <DashboardViewToggle
             activeButtonClassName="bg-foreground text-background"
