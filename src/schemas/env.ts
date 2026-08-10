@@ -12,8 +12,6 @@ const envSchema = v.object({
   NEXT_PUBLIC_CLERK_SIGN_UP_URL: v.pipe(v.optional(v.string(), '/sign-up'), v.startsWith('/')),
 })
 
-export type EnvSchema = v.InferOutput<typeof envSchema>
-
 interface EnvInput {
   CLERK_SECRET_KEY?: string
   CLOUDFLARE_ACCOUNT_ID?: string
@@ -23,6 +21,18 @@ interface EnvInput {
   NEXT_PUBLIC_CLERK_SIGN_UP_URL?: string
 }
 
-export function parseEnv(input: EnvInput): EnvSchema {
-  return v.parse(envSchema, input)
+/**
+ * 検証に失敗したキー名だけを返す。
+ *
+ * ValiError の issues は入力値を保持するため、例外や戻り値に載せると
+ * 秘密鍵がログへ流出する。キー名のみを返して呼び出し側が値に触れないようにする。
+ */
+export function findInvalidEnvKeys(input: EnvInput): string[] {
+  const result = v.safeParse(envSchema, input)
+
+  if (result.success) {
+    return []
+  }
+
+  return result.issues.map((issue) => v.getDotPath(issue) ?? 'unknown')
 }
