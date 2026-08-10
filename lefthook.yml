@@ -27,6 +27,8 @@ pre-push:
   jobs:
     - name: lint:types
       run: mise run lint:types
+    - name: test:types
+      run: mise run test:types
     - name: lint:biome
       run: mise run lint:biome
     - name: test:ci

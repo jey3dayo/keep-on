@@ -1,0 +1,31 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": [
+      "node",
+      "vitest/globals",
+      "@testing-library/jest-dom",
+      "@cloudflare/workers-types"
+    ]
+  },
+  "include": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.d.ts",
+    "vitest.setup.ts",
+    "vitest.mocks.tsx",
+    "next-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    // Drizzle の fluent モック (vi.mock('@/lib/db')) が実際の DrizzleD1Database 型と
+    // 構造的に一致しないため型チェックが通らない。型アサーションで偽装しても
+    // Drizzle が生成する SQL の正しさは強くならないため、実 SQLite ベースのテスト
+    // （src/lib/queries/__tests__/checkin-sql.test.ts を参照）へ移行するまで除外する。
+    // 移行が完了したファイルから、この配列の該当行を削除すること。
+    "src/lib/queries/__tests__/habit.test.ts",
+    "src/lib/queries/__tests__/checkin.test.ts",
+    "src/lib/queries/__tests__/user.test.ts"
+  ]
+}

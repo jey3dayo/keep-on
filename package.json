@@ -23,6 +23,7 @@
     "test:coverage": "dotenvx run --overload -f .env -f .env.development -- vitest run --coverage",
     "test:storybook": "dotenvx run --overload -f .env -f .env.development -- vitest --config vitest.storybook.config.ts",
     "test:storybook:browser": "node scripts/storybook-smoke.mjs",
+    "test:types": "tsc --project tsconfig.test.json --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:setup": "playwright test --project=setup",

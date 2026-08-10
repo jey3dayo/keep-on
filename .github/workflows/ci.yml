@@ -62,6 +62,12 @@ jobs:
       - name: Setup Node environment
         uses: ./.github/actions/setup-node-env
 
+      - name: Run type check
+        run: pnpm tsc --noEmit
+
+      - name: Run test type check
+        run: pnpm test:types
+
       - name: Run lint
         run: pnpm lint
 

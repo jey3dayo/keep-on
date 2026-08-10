@@ -39,6 +39,10 @@ run = [
 description = "TypeScriptの型チェックのみ"
 run = "pnpm tsc --noEmit"
 
+[tasks."test:types"]
+description = "テストファイルの型チェックのみ"
+run = "pnpm test:types"
+
 [tasks."lint:biome"]
 description = "Ultracite(Biome)のチェックのみ"
 run = "pnpm run lint"
@@ -65,7 +69,7 @@ run = "pnpm build:cf"
 
 [tasks.lint]
 description = "型チェック + Biome + Markdown + YAML"
-depends = ["lint:types", "lint:biome", "lint:md", "lint:yaml"]
+depends = ["lint:types", "test:types", "lint:biome", "lint:md", "lint:yaml"]
 
 [tasks.check]
 description = "ローカル確認（format + lint）"
@@ -73,11 +77,11 @@ depends = ["format", "lint"]
 
 [tasks."check:quick"]
 description = "クイックチェック（型 + Biome）"
-depends = ["lint:types", "lint:biome"]
+depends = ["lint:types", "test:types", "lint:biome"]
 
 [tasks.ci]
 description = "CI相当のチェック（型 + Biome + Test + Build）"
-depends = ["lint:types", "lint:biome", "test:ci", "build:ci"]
+depends = ["lint:types", "test:types", "lint:biome", "test:ci", "build:ci"]
 
 # ========================================
 # デプロイ関連
