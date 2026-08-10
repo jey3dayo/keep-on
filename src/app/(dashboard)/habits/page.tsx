@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { Button } from '@/components/basics/Button'
 import { Icon } from '@/components/basics/Icon'
 import { HabitTable } from '@/components/habits/HabitTable'
+import { PageShell } from '@/components/PageShell'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpanOptional } from '@/lib/logging'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
@@ -44,7 +45,7 @@ export default async function HabitsPage() {
   logInfo('request.habits:end', requestMeta)
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <PageShell gap="gap-4">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <h1 className="font-bold text-3xl text-foreground tracking-tight">習慣</h1>
@@ -58,6 +59,6 @@ export default async function HabitsPage() {
         </Button>
       </div>
       <HabitTable clerkId={clerkUser.id} requestMeta={requestMeta} userId={userId} />
-    </div>
+    </PageShell>
   )
 }

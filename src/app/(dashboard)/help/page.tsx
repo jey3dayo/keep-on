@@ -2,6 +2,7 @@ import { ArrowUpRight } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { FaqCard } from '@/components/help/FaqCard'
+import { PageShell } from '@/components/PageShell'
 
 export const metadata: Metadata = {
   description:
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function HelpPage() {
   return (
-    <div className="flex flex-1 flex-col gap-10 p-6">
+    <PageShell gap="gap-10">
       <header className="rounded-xl border border-border bg-card p-6">
         <div className="space-y-3">
           <p className="font-semibold text-muted-foreground text-xs uppercase tracking-[0.2em]">ヘルプセンター</p>
@@ -158,7 +159,7 @@ export default function HelpPage() {
           </p>
         </div>
       </section>
-    </div>
+    </PageShell>
   )
 }
 

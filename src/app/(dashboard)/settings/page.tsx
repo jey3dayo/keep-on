@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 
+import { PageShell } from '@/components/PageShell'
 import { ThemeSettings } from '@/components/settings/ThemeSettings'
 import { WeekStartSettings } from '@/components/settings/WeekStartSettings'
 import { COLOR_THEME_COOKIE_KEY, isColorTheme } from '@/constants/theme'
@@ -22,7 +23,7 @@ export default async function SettingsPage() {
   const initialColorTheme = rawColorTheme && isColorTheme(rawColorTheme) ? rawColorTheme : undefined
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <PageShell>
       <header className="space-y-2">
         <h1 className="text-balance font-bold text-3xl text-foreground tracking-tight">設定</h1>
         <p className="text-muted-foreground">アプリの表示をカスタマイズできます。</p>
@@ -31,6 +32,6 @@ export default async function SettingsPage() {
         <ThemeSettings initialColorTheme={initialColorTheme} />
         <WeekStartSettings />
       </section>
-    </div>
+    </PageShell>
   )
 }

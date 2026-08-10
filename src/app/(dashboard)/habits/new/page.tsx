@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { HabitFormServer } from '@/components/habits/HabitFormServer'
 import { HabitPresetSelectorWrapper } from '@/components/habits/HabitPresetSelectorWrapper'
+import { PageShell } from '@/components/PageShell'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { habitPresets } from '@/constants/habit-data'
 import i18n from '@/lib/i18n-server'
@@ -42,14 +43,14 @@ export default async function NewHabitPage({
 
   if (step === 'preset') {
     return (
-      <div className="flex flex-1 flex-col gap-6 p-4">
+      <PageShell>
         <HabitPresetSelectorWrapper />
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4">
+    <PageShell>
       <div className="space-y-2">
         <h1 className="font-bold text-3xl text-foreground tracking-tight">{i18n.t('habits.newPage.heading')}</h1>
         <p className="text-muted-foreground">{i18n.t('habits.newPage.subheading')}</p>
@@ -58,6 +59,6 @@ export default async function NewHabitPage({
       <div className="mx-auto w-full max-w-md">
         <HabitFormServer initialData={presetData} />
       </div>
-    </div>
+    </PageShell>
   )
 }

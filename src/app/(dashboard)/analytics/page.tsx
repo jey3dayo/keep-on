@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/basics/Button'
 import { Icon, type IconName } from '@/components/basics/Icon'
+import { PageShell } from '@/components/PageShell'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { PERIOD_DISPLAY_NAME, PERIODS, type Period } from '@/constants/habit'
@@ -138,7 +139,7 @@ export default async function AnalyticsPage() {
       : activityPeakFallback
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <PageShell>
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-balance font-bold text-3xl text-foreground tracking-tight">アナリティクス</h1>
@@ -295,7 +296,7 @@ export default async function AnalyticsPage() {
           </section>
         </>
       )}
-    </div>
+    </PageShell>
   )
 }
 

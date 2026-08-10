@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import { Button } from '@/components/basics/Button'
 import { normalizeIconName } from '@/components/basics/Icon'
 import { HabitCalendarHeatmap } from '@/components/habits/HabitCalendarHeatmap'
+import { PageShell } from '@/components/PageShell'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SIGN_IN_PATH } from '@/constants/auth'
 import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME } from '@/constants/habit'
@@ -58,7 +59,7 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
   const periodLabel = PERIOD_DISPLAY_NAME[habit.period]
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4">
+    <PageShell>
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button asChild size="sm" variant="ghost">
@@ -134,6 +135,6 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
           />
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   )
 }
