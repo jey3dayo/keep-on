@@ -49,12 +49,12 @@ export async function updateHabit(id: string, userId: string, input: Partial<Hab
     'query.updateHabit',
     async () => {
       const db = getDb()
-      const [habit] = await db
+      const rows = await db
         .update(habits)
         .set(input)
         .where(and(eq(habits.id, id), eq(habits.userId, userId)))
         .returning()
-      return habit ?? null
+      return rows.at(0) ?? null
     },
     { habitId: id, userId }
   )

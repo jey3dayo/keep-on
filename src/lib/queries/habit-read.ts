@@ -113,8 +113,8 @@ export async function getHabitById(id: string) {
     'query.getHabitById',
     async () => {
       const db = getDb()
-      const [habit] = await db.select().from(habits).where(eq(habits.id, id))
-      return habit ?? null
+      const rows = await db.select().from(habits).where(eq(habits.id, id))
+      return rows.at(0) ?? null
     },
     { habitId: id }
   )
