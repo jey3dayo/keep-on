@@ -10,11 +10,12 @@ import { NAV_ITEMS } from '@/constants/navigation'
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarContent>
+      {/* モバイルは Sheet 全画面表示のため、safe-area を自前で確保する（ui/sidebar.tsx は編集不可） */}
+      <SidebarContent className="pt-[env(safe-area-inset-top)]">
         <NavMain items={NAV_ITEMS.main} />
         <NavSecondary className="mt-auto" items={NAV_ITEMS.secondary} />
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center gap-2 p-2">
           <ClerkUserButton
             appearance={{
