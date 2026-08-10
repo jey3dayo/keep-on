@@ -29,25 +29,6 @@
     // 移行が完了したファイルから、この配列の該当行を削除すること。
     "src/lib/queries/__tests__/habit.test.ts",
     "src/lib/queries/__tests__/checkin.test.ts",
-    "src/lib/queries/__tests__/user.test.ts",
-    // 以下の *.stories.tsx は `if (import.meta.vitest)` ブロック内の共通ヘルパー
-    // (renderStory) が `meta satisfies Meta<typeof X>` で narrowing された `meta` の
-    // `.args` / `.decorators` / `.component` に直接アクセスしており、CSF3 の Meta 型と
-    // 構造的に一致しないため型チェックが通らない（グローバル JSX 名前空間の欠如も併発）。
-    // renderStory ヘルパーを Storybook 10 の型に正しく適合させる、または共通ユーティリティへ
-    // 抽出して型を通すまで除外する。個別ファイルの型エラーを解消したら、この配列の該当行を削除すること。
-    "src/components/basics/Button.stories.tsx",
-    "src/components/basics/Icon.stories.tsx",
-    "src/components/basics/Input.stories.tsx",
-    "src/components/basics/ThemeToggle.stories.tsx",
-    "src/components/dashboard/DashboardStatsCard.stories.tsx",
-    "src/components/dashboard/HabitActionDrawer.stories.tsx",
-    "src/components/streak/ColorPalette.stories.tsx",
-    "src/components/streak/DesktopDashboard.stories.tsx",
-    "src/components/streak/HabitCircleItem.stories.tsx",
-    "src/components/streak/HabitListView.stories.tsx",
-    "src/components/streak/HabitPresetSelector.stories.tsx",
-    "src/components/streak/HabitSimpleView.stories.tsx",
-    "src/components/streak/StreakDashboard.stories.tsx"
+    "src/lib/queries/__tests__/user.test.ts"
   ]
 }

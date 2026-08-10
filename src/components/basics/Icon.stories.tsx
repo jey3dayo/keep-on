@@ -17,6 +17,7 @@ type Story = StoryObj<typeof meta>
 const iconNames: IconName[] = ['check', 'moon', 'plus', 'sun', 'trash']
 
 export const Gallery: Story = {
+  args: { name: 'check' },
   render: () => (
     <div className="grid grid-cols-5 gap-4">
       {iconNames.map((name) => (
@@ -30,6 +31,7 @@ export const Gallery: Story = {
 }
 
 export const WithProps: Story = {
+  args: { name: 'check' },
   render: () => (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-4">
@@ -54,6 +56,7 @@ export const WithProps: Story = {
 }
 
 export const Accessibility: Story = {
+  args: { name: 'trash' },
   render: () => (
     <Button className="h-auto p-0" type="button" variant="ghost">
       <Icon aria-hidden="true" name="trash" />
@@ -64,36 +67,11 @@ export const Accessibility: Story = {
 
 if (import.meta.vitest) {
   const { describe, expect, it } = await import('vitest')
-  const { render } = await import('@testing-library/react')
-
-  const renderStory = (story: Story) => {
-    const args = { ...(meta.args ?? {}), ...(story.args ?? {}) }
-    const StoryComponent = () => {
-      if (story.render) {
-        return story.render(args) as JSX.Element | null
-      }
-
-      const Component = meta.component
-
-      if (!Component) {
-        throw new Error('meta.component is not defined')
-      }
-
-      return <Component {...args} />
-    }
-
-    const decorators = [...(meta.decorators ?? []), ...(story.decorators ?? [])] as Array<
-      (Story: () => JSX.Element | null) => JSX.Element | null
-    >
-
-    const DecoratedStory = decorators.reduce((Decorated, decorator) => () => decorator(Decorated), StoryComponent)
-
-    return render(<DecoratedStory />)
-  }
+  const { renderStory } = await import('@/lib/storybook')
 
   describe(`${meta.title} Stories`, () => {
     it('Galleryがレンダリングされる', () => {
-      const { container } = renderStory(Gallery)
+      const { container } = renderStory(Gallery, meta)
       expect(container).not.toBeEmptyDOMElement()
     })
   })

@@ -20,15 +20,17 @@ const createHabit = (overrides: Partial<HabitWithProgress> = {}): HabitWithProgr
   archivedAt: null,
   color: 'cyan',
   completionRate: 62,
-  createdAt: new Date('2025-01-01'),
+  createdAt: new Date('2025-01-01').toISOString(),
   currentProgress: 5,
   frequency: 8,
   icon: 'droplets',
   id: 'habit-1',
   name: '水を8杯飲む',
   period: 'daily',
+  reminderTime: null,
+  skippedToday: false,
   streak: 12,
-  updatedAt: new Date('2025-01-28'),
+  updatedAt: new Date('2025-01-28').toISOString(),
   userId: 'user-1',
   ...overrides,
 })
@@ -105,14 +107,19 @@ export const Default: Story = {
   args: {
     completedHabitIds,
     habits,
+    onAddCheckin: (habitId) => {
+      storybookToast.info('チェックイン追加', `habitId: ${habitId}`)
+      return Promise.resolve()
+    },
     onAddHabit: () => {
       storybookToast.success('タスクを追加', 'Storybookでのデモです')
     },
+    onRemoveCheckin: (habitId) => {
+      storybookToast.info('チェックイン取り消し', `habitId: ${habitId}`)
+      return Promise.resolve()
+    },
     onSettings: () => {
       storybookToast.info('設定', '設定ボタンがクリックされました')
-    },
-    onToggleHabit: (habitId) => {
-      storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
     },
   },
 }
@@ -122,48 +129,28 @@ export const CustomBackground: Story = {
     backgroundColor: 'var(--blue-9)',
     completedHabitIds: new Set([habits[1]?.id, habits[3]?.id].filter(Boolean)),
     habits: habits.slice(0, 4),
+    onAddCheckin: (habitId) => {
+      storybookToast.info('チェックイン追加', `habitId: ${habitId}`)
+      return Promise.resolve()
+    },
     onAddHabit: () => {
       storybookToast.success('タスクを追加', 'Storybookでのデモです')
     },
-    onSettings: () => undefined,
-    onToggleHabit: (habitId) => {
-      storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
+    onRemoveCheckin: (habitId) => {
+      storybookToast.info('チェックイン取り消し', `habitId: ${habitId}`)
+      return Promise.resolve()
     },
+    onSettings: () => undefined,
   },
 }
 
 if (import.meta.vitest) {
   const { describe, expect, it } = await import('vitest')
-  const { render } = await import('@testing-library/react')
-
-  const renderStory = (story: Story) => {
-    const args = { ...(meta.args ?? {}), ...(story.args ?? {}) }
-    const StoryComponent = () => {
-      if (story.render) {
-        return story.render(args) as JSX.Element | null
-      }
-
-      const Component = meta.component
-
-      if (!Component) {
-        throw new Error('meta.component is not defined')
-      }
-
-      return <Component {...args} />
-    }
-
-    const decorators = [...(meta.decorators ?? []), ...(story.decorators ?? [])] as Array<
-      (Story: () => JSX.Element | null) => JSX.Element | null
-    >
-
-    const DecoratedStory = decorators.reduce((Decorated, decorator) => () => decorator(Decorated), StoryComponent)
-
-    return render(<DecoratedStory />)
-  }
+  const { renderStory } = await import('@/lib/storybook')
 
   describe(`${meta.title} Stories`, () => {
     it('Defaultがレンダリングされる', () => {
-      const { container } = renderStory(Default)
+      const { container } = renderStory(Default, meta)
       expect(container).not.toBeEmptyDOMElement()
     })
   })

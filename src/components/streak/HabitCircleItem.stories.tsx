@@ -14,6 +14,8 @@ const mockHabit: HabitWithProgress = {
   id: '1',
   name: '水を飲む',
   period: 'daily',
+  reminderTime: null,
+  skippedToday: false,
   streak: 3,
   updatedAt: new Date().toISOString(),
   userId: 'user1',
@@ -33,6 +35,7 @@ const meta = {
     onCheckin: noop,
     onContextMenu: noop,
     onLongPressEnd: noop,
+    onLongPressMove: noop,
     onLongPressStart: noop,
     ringBgColor,
   },
@@ -80,6 +83,7 @@ if (import.meta.vitest) {
           onCheckin={noop}
           onContextMenu={noop}
           onLongPressEnd={noop}
+          onLongPressMove={noop}
           onLongPressStart={noop}
           ringBgColor={ringBgColor}
         />

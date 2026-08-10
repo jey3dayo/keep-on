@@ -27,15 +27,17 @@ const createHabit = (overrides: Partial<HabitWithProgress> = {}): HabitWithProgr
   archivedAt: null,
   color: 'cyan',
   completionRate: 62,
-  createdAt: new Date('2025-01-01'),
+  createdAt: new Date('2025-01-01').toISOString(),
   currentProgress: 5,
   frequency: 8,
   icon: 'droplets',
   id: 'habit-1',
   name: '水を8杯飲む',
   period: 'daily',
+  reminderTime: null,
+  skippedToday: false,
   streak: 12,
-  updatedAt: new Date('2025-01-28'),
+  updatedAt: new Date('2025-01-28').toISOString(),
   userId: 'user-1',
   ...overrides,
 })
@@ -93,14 +95,19 @@ export const Default: Story = {
     completedHabitIds,
     filteredHabits: habits,
     habits,
+    onAddCheckin: (habitId) => {
+      storybookToast.info('チェックイン追加', `habitId: ${habitId}`)
+      return Promise.resolve()
+    },
     onAddHabit: () => {
       storybookToast.success('習慣を追加', 'Storybookでのデモです')
     },
     onPeriodChange: (filter) => {
       storybookToast.info('フィルター変更', `filter: ${filter}`)
     },
-    onToggleHabit: (habitId) => {
-      storybookToast.info('チェックイン切り替え', `habitId: ${habitId}`)
+    onRemoveCheckin: (habitId) => {
+      storybookToast.info('チェックイン取り消し', `habitId: ${habitId}`)
+      return Promise.resolve()
     },
     periodFilter: 'all',
     todayActive: 1,
@@ -119,7 +126,6 @@ export const Empty: Story = {
       storybookToast.success('習慣を追加', 'Storybookでのデモです')
     },
     onPeriodChange: () => undefined,
-    onToggleHabit: () => undefined,
     periodFilter: 'all',
     todayActive: 0,
     todayLabel: '1月29日（木）',
@@ -130,36 +136,11 @@ export const Empty: Story = {
 
 if (import.meta.vitest) {
   const { describe, expect, it } = await import('vitest')
-  const { render } = await import('@testing-library/react')
-
-  const renderStory = (story: Story) => {
-    const args = { ...(meta.args ?? {}), ...(story.args ?? {}) }
-    const StoryComponent = () => {
-      if (story.render) {
-        return story.render(args) as JSX.Element | null
-      }
-
-      const Component = meta.component
-
-      if (!Component) {
-        throw new Error('meta.component is not defined')
-      }
-
-      return <Component {...args} />
-    }
-
-    const decorators = [...(meta.decorators ?? []), ...(story.decorators ?? [])] as Array<
-      (Story: () => JSX.Element | null) => JSX.Element | null
-    >
-
-    const DecoratedStory = decorators.reduce((Decorated, decorator) => () => decorator(Decorated), StoryComponent)
-
-    return render(<DecoratedStory />)
-  }
+  const { renderStory } = await import('@/lib/storybook')
 
   describe(`${meta.title} Stories`, () => {
     it('Defaultがレンダリングされる', () => {
-      const { container } = renderStory(Default)
+      const { container } = renderStory(Default, meta)
       expect(container).not.toBeEmptyDOMElement()
     })
   })

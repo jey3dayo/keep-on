@@ -161,36 +161,11 @@ export const ScaleNone: Story = {
 
 if (import.meta.vitest) {
   const { describe, expect, it } = await import('vitest')
-  const { render } = await import('@testing-library/react')
-
-  const renderStory = (story: Story) => {
-    const args = { ...(meta.args ?? {}), ...(story.args ?? {}) }
-    const StoryComponent = () => {
-      if (story.render) {
-        return story.render(args) as JSX.Element | null
-      }
-
-      const Component = meta.component
-
-      if (!Component) {
-        throw new Error('meta.component is not defined')
-      }
-
-      return <Component {...args} />
-    }
-
-    const decorators = [...(meta.decorators ?? []), ...(story.decorators ?? [])] as Array<
-      (Story: () => JSX.Element | null) => JSX.Element | null
-    >
-
-    const DecoratedStory = decorators.reduce((Decorated, decorator) => () => decorator(Decorated), StoryComponent)
-
-    return render(<DecoratedStory />)
-  }
+  const { renderStory } = await import('@/lib/storybook')
 
   describe(`${meta.title} Stories`, () => {
     it('Defaultがレンダリングされる', () => {
-      const { container } = renderStory(Default)
+      const { container } = renderStory(Default, meta)
       expect(container).not.toBeEmptyDOMElement()
     })
   })

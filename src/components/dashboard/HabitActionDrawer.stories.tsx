@@ -79,15 +79,17 @@ const mockHabit = {
   archivedAt: null,
   color: 'blue',
   completionRate: 37,
-  createdAt: new Date('2025-01-01'),
+  createdAt: new Date('2025-01-01').toISOString(),
   currentProgress: 3,
   frequency: 8,
   icon: 'droplets' as const,
   id: '1',
   name: '毎日水を8杯飲む',
   period: 'daily' as const,
+  reminderTime: null,
+  skippedToday: false,
   streak: 5,
-  updatedAt: new Date('2025-01-28'),
+  updatedAt: new Date('2025-01-28').toISOString(),
   userId: 'user1',
 }
 
@@ -180,36 +182,11 @@ export const Closed: Story = {
 
 if (import.meta.vitest) {
   const { describe, expect, it } = await import('vitest')
-  const { render } = await import('@testing-library/react')
-
-  const renderStory = (story: Story) => {
-    const args = { ...(meta.args ?? {}), ...(story.args ?? {}) }
-    const StoryComponent = () => {
-      if (story.render) {
-        return story.render(args) as JSX.Element | null
-      }
-
-      const Component = meta.component
-
-      if (!Component) {
-        throw new Error('meta.component is not defined')
-      }
-
-      return <Component {...args} />
-    }
-
-    const decorators = [...(meta.decorators ?? []), ...(story.decorators ?? [])] as Array<
-      (Story: () => JSX.Element | null) => JSX.Element | null
-    >
-
-    const DecoratedStory = decorators.reduce((Decorated, decorator) => () => decorator(Decorated), StoryComponent)
-
-    return render(<DecoratedStory />)
-  }
+  const { renderStory } = await import('@/lib/storybook')
 
   describe(`${meta.title} Stories`, () => {
     it('Defaultがレンダリングされる', () => {
-      const { container } = renderStory(Default)
+      const { container } = renderStory(Default, meta)
       expect(container).not.toBeEmptyDOMElement()
     })
   })
