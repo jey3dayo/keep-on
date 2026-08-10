@@ -14,7 +14,7 @@ export function FaqCard({ question, answer }: { question: string; answer: string
       <button
         aria-controls={panelId}
         aria-expanded={open}
-        className="flex w-full cursor-pointer list-none items-center justify-between gap-3 text-left font-semibold text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="flex w-full cursor-pointer list-none items-center justify-between gap-3 text-left font-semibold text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.99] motion-reduce:active:scale-100"
         onClick={handleToggle}
         type="button"
       >

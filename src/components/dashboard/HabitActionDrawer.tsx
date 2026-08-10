@@ -2,11 +2,11 @@
 
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Button } from '@/components/basics/Button'
 import { HabitArchiveDialog } from '@/components/habits/HabitArchiveDialog'
 import { HabitDeleteDialog } from '@/components/habits/HabitDeleteDialog'
 import { HabitResetDialog } from '@/components/habits/HabitResetDialog'
 import type { OptimisticHandler } from '@/components/habits/types'
-import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import type { HabitWithProgress } from '@/types/habit'
 

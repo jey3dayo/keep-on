@@ -3,7 +3,7 @@
 import { Monitor, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
-import { Button, type ButtonProps } from '@/components/ui/button'
+import { Button } from '@/components/basics/Button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils'
 
 interface ThemeToggleProps {
   buttonClassName?: string
-  buttonVariant?: ButtonProps['variant']
+  buttonVariant?: React.ComponentProps<typeof Button>['variant']
 }
 
 export function ThemeToggle({ buttonVariant = 'secondary', buttonClassName }: ThemeToggleProps) {

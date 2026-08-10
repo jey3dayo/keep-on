@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next'
 import { archiveHabitAction } from '@/app/actions/habits/archive'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/basics/Button'
 import { HabitActionDialog } from './HabitActionDialog'
 import type { HabitDialogProps } from './types'
 

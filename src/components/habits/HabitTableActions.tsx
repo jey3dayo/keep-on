@@ -2,9 +2,9 @@
 
 import { Archive, Pencil } from 'lucide-react'
 import { useCallback } from 'react'
+import { Button } from '@/components/basics/Button'
 import { IconLabelButton } from '@/components/basics/IconLabelButton'
 import type { OptimisticHandler } from '@/components/habits/types'
-import { Button } from '@/components/ui/button'
 import { HabitArchiveDialog } from './HabitArchiveDialog'
 import { HabitDeleteDialog } from './HabitDeleteDialog'
 

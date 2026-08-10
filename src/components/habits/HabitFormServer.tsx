@@ -340,13 +340,14 @@ function HabitReminderField({ control, selectedColorValue, t }: HabitFormFieldPr
           </div>
         </div>
         {field.value ? (
-          <button
-            className="mt-3 w-full text-center text-muted-foreground text-sm hover:text-foreground"
+          <Button
+            className="mt-3 h-auto min-h-11 w-full whitespace-normal p-0 text-center text-muted-foreground text-sm hover:bg-transparent hover:text-foreground"
             onClick={handleReminderClear}
             type="button"
+            variant="ghost"
           >
             {t('habits.form.reminderClear')}
-          </button>
+          </Button>
         ) : null}
       </div>
     </div>
