@@ -3,7 +3,7 @@
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import { Check, ChevronLeft, Clock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import type { Control, Resolver } from 'react-hook-form'
 import { useController, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -101,20 +101,30 @@ interface HabitFormFieldProps {
 
 function HabitNameField({ control, selectedColorValue, t }: HabitFormFieldProps) {
   const { field, fieldState } = useController({ control, name: 'name' })
+  const inputId = useId()
+  const errorId = useId()
 
   return (
     <div className="space-y-2">
-      <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+      <label className="font-medium text-muted-foreground text-sm uppercase tracking-wide" htmlFor={inputId}>
         {t('habits.form.nameLabel')}
-      </div>
+      </label>
       <input
         {...field}
+        aria-describedby={fieldState.error ? errorId : undefined}
+        aria-invalid={fieldState.error ? true : undefined}
         className="w-full rounded-xl border border-border bg-card px-4 py-3 text-foreground transition-all placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring/50"
+        id={inputId}
         placeholder={t('habits.form.namePlaceholder')}
+        required
         style={{ '--tw-ring-color': selectedColorValue } as React.CSSProperties}
         type="text"
       />
-      {fieldState.error ? <p className="text-destructive text-sm">{fieldState.error.message}</p> : null}
+      {fieldState.error ? (
+        <p className="text-destructive text-sm" id={errorId}>
+          {fieldState.error.message}
+        </p>
+      ) : null}
     </div>
   )
 }
@@ -306,6 +316,8 @@ function HabitFrequencyField({ control, selectedColorValue, t, frequencyLabel }:
 
 function HabitReminderField({ control, selectedColorValue, t }: HabitFormFieldProps) {
   const { field } = useController({ control, name: 'reminderTime' })
+  const titleId = useId()
+  const descriptionId = useId()
   const handleReminderChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => field.onChange(event.target.value || null),
     [field]
@@ -327,10 +339,15 @@ function HabitReminderField({ control, selectedColorValue, t }: HabitFormFieldPr
           </div>
           <div className="flex flex-1 items-center justify-between gap-3">
             <div className="text-left">
-              <p className="font-medium text-foreground">{t('habits.form.reminderTitle')}</p>
-              <p className="text-muted-foreground text-sm">{t('habits.form.reminderDescription')}</p>
+              <p className="font-medium text-foreground" id={titleId}>
+                {t('habits.form.reminderTitle')}
+              </p>
+              <p className="text-muted-foreground text-sm" id={descriptionId}>
+                {t('habits.form.reminderDescription')}
+              </p>
             </div>
             <input
+              aria-labelledby={titleId}
               className="rounded-lg border border-border bg-background px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring/50"
               onChange={handleReminderChange}
               style={{ '--tw-ring-color': selectedColorValue } as React.CSSProperties}
