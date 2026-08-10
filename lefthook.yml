@@ -29,6 +29,8 @@ pre-push:
       run: mise run lint:types
     - name: test:types
       run: mise run test:types
+    - name: test:e2e:types
+      run: mise run test:e2e:types
     - name: lint:biome
       run: mise run lint:biome
     - name: test:ci

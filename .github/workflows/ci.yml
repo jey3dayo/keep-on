@@ -68,6 +68,9 @@ jobs:
       - name: Run test type check
         run: pnpm test:types
 
+      - name: Run e2e type check
+        run: pnpm test:e2e:types
+
       - name: Run lint
         run: pnpm lint
 

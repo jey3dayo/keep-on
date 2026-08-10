@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "strict": false,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "types": ["@playwright/test", "node"]
   },
   "include": ["e2e/**/*.ts", "playwright.config.ts"],

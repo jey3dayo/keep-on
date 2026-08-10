@@ -43,6 +43,10 @@ run = "pnpm tsc --noEmit"
 description = "テストファイルの型チェックのみ"
 run = "pnpm test:types"
 
+[tasks."test:e2e:types"]
+description = "E2Eファイルの型チェックのみ"
+run = "pnpm test:e2e:types"
+
 [tasks."lint:biome"]
 description = "Ultracite(Biome)のチェックのみ"
 run = "pnpm run lint"
@@ -73,7 +77,14 @@ run = "pnpm build:cf"
 
 [tasks.lint]
 description = "型チェック + Biome + Markdown + YAML"
-depends = ["lint:types", "test:types", "lint:biome", "lint:md", "lint:yaml"]
+depends = [
+  "lint:types",
+  "test:types",
+  "test:e2e:types",
+  "lint:biome",
+  "lint:md",
+  "lint:yaml",
+]
 
 [tasks.check]
 description = "ローカル確認（format + lint）"
@@ -81,13 +92,14 @@ depends = ["format", "lint"]
 
 [tasks."check:quick"]
 description = "クイックチェック（型 + Biome）"
-depends = ["lint:types", "test:types", "lint:biome"]
+depends = ["lint:types", "test:types", "test:e2e:types", "lint:biome"]
 
 [tasks.ci]
 description = "CI相当のチェック（型 + Biome + Test + Storybook + Build）"
 depends = [
   "lint:types",
   "test:types",
+  "test:e2e:types",
   "lint:biome",
   "test:ci",
   "test:storybook:ci",
