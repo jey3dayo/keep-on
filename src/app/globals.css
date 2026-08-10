@@ -338,7 +338,7 @@
   overflow: hidden;
 }
 
-/* reduced-motion 対応 */
+/* reduced-motion 対応（カスタムユーティリティ向け個別指定） */
 @media (prefers-reduced-motion: reduce) {
   .streak-bg {
     transition: none;
@@ -371,5 +371,87 @@
 
   .dialog-scale-in {
     transform: none;
+  }
+}
+
+/*
+ * reduced-motion 全体安全網
+ * 上のブロックはカスタムユーティリティのみを対象にしており、TSX 側の
+ * Tailwind `transition-*` / `animate-*`（motion-reduce: 修飾子が付いていないもの）は
+ * 対象外だった。ここで duration を詰めて動きの量そのものを減らす。
+ * opacity / color の変化は状態理解の助けになるため完全には消さず、
+ * ごく短い時間（150ms）に縮めて残す（Apple HIG: モーションを消すのではなく
+ * 穏やかな等価物に置き換える方針）。
+ *
+ * transform を一律 none にしてはいけない。このプロジェクトでは transform が
+ * レイアウトにも使われており（ui/dialog.tsx の translate-x-[-50%] による中央寄せ、
+ * HabitSimpleView のページドットの -translate-x-1/2 など）、打ち消すと配置が壊れる。
+ * アニメーションとしての transform は上の duration 短縮で十分に穏やかになる。
+ *
+ * 上のカスタムユーティリティ向けブロックは `!important` を使わない個別指定のため、
+ * 詳細度で上書きされることはなく、このブロックと共存できる。
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 150ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * prefers-reduced-transparency 対応
+ * backdrop-filter（すりガラス効果）を使う面が透明度を保ったまま
+ * ぼかしだけ外れると背景の文字が透けて読めなくなるため、ぼかしを外すと同時に
+ * 背景を不透明寄りにする。対象は Tailwind の `backdrop-blur-*` ユーティリティが
+ * 付いた要素（部分一致で将来追加される backdrop-blur-* にも追従する）。
+ */
+@media (prefers-reduced-transparency: reduce) {
+  [class*="backdrop-blur"] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* background / card 系の半透明背景（bg-background/NN, bg-card/NN）を不透明化 */
+  [class*="bg-background/"] {
+    background-color: var(--background) !important;
+  }
+
+  [class*="bg-card/"] {
+    background-color: var(--card) !important;
+  }
+
+  /* オーバーレイ用の黒背景（bg-black/NN）は完全な黒に寄せる */
+  [class*="bg-black/"] {
+    background-color: black !important;
+  }
+}
+
+/*
+ * prefers-contrast: more 対応
+ * 半透明面（bg-background や bg-card の透過ユーティリティ）を実質不透明にし、
+ * 境界（border-border 系）を可視化することでコントラストを高める。
+ */
+@media (prefers-contrast: more) {
+  [class*="bg-background/"] {
+    background-color: var(--background) !important;
+  }
+
+  [class*="bg-card/"] {
+    background-color: var(--card) !important;
+  }
+
+  [class*="border-border/"] {
+    border-color: var(--border) !important;
+  }
+
+  /* 境界が視認できるよう最低限の枠線を保証する */
+  [class*="border-border/"],
+  [class*="border-input/"] {
+    border-style: solid;
+    border-width: 1px;
   }
 }
