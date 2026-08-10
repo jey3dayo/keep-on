@@ -32,7 +32,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
   )
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
+    <div className="min-h-dvh" style={{ backgroundColor: bgColor }}>
       <header className="sticky top-0 z-10 px-4 pt-3 pb-4">
         <div className="relative flex items-center justify-center">
           <Button

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function SignUpPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
       <SignUp />
     </div>
   )

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function OfflinePage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background">
+    <main className="flex min-h-dvh items-center justify-center bg-background">
       <div className="space-y-6 p-8 text-center">
         <div className="text-6xl">📴</div>
         <h1 className="font-bold text-2xl text-foreground">オフラインです</h1>

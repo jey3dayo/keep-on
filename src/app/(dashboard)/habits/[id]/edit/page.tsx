@@ -39,7 +39,7 @@ export default async function EditHabitPage({ params }: HabitIdPageProps) {
   logInfo('request.habits.edit.page:end', requestMeta)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <HabitFormServer initialData={habit} onSuccess="redirect" submitLabel="更新" />
     </div>
   )
