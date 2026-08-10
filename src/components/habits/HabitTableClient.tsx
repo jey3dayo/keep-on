@@ -46,7 +46,7 @@ function ActiveHabitRow({ habit, onArchive, onEdit, onRowClick }: ActiveHabitRow
         </div>
       </TableCell>
       <TableCell className="font-medium">
-        <Link className="hover:underline" href={`/habits/${habit.id}`}>
+        <Link className="whitespace-nowrap hover:underline" href={`/habits/${habit.id}`}>
           {habit.name}
         </Link>
       </TableCell>
@@ -87,22 +87,30 @@ function ArchivedHabitRow({ habit, onDelete, onUnarchive }: ArchivedHabitRowProp
       </TableCell>
       <TableCell>
         <div className="flex flex-wrap items-center gap-2">
-          <span>{habit.name}</span>
-          <span className="rounded-full border border-muted-foreground/30 px-2 py-0.5 font-medium text-[10px] text-muted-foreground">
+          <span className="whitespace-nowrap">{habit.name}</span>
+          <span className="whitespace-nowrap rounded-full border border-muted-foreground/30 px-2 py-0.5 font-medium text-[10px] text-muted-foreground">
             アーカイブ
           </span>
         </div>
       </TableCell>
-      <TableCell>{habit.archivedAt ? format(new Date(habit.archivedAt), 'yyyy/MM/dd', { locale: ja }) : '-'}</TableCell>
+      <TableCell className="whitespace-nowrap">
+        {habit.archivedAt ? format(new Date(habit.archivedAt), 'yyyy/MM/dd', { locale: ja }) : '-'}
+      </TableCell>
       <TableCell className="text-right">
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
           <HabitUnarchiveButton habitId={habit.id} onOptimistic={handleUnarchive} />
           <HabitDeleteDialog
             habitId={habit.id}
             habitName={habit.name}
             onOptimistic={handleDelete}
             trigger={
-              <IconLabelButton icon={<Trash2 className="h-4 w-4" />} label="完全に削除" size="sm" variant="outline" />
+              <IconLabelButton
+                className="shrink-0 whitespace-nowrap"
+                icon={<Trash2 className="h-4 w-4" />}
+                label="完全に削除"
+                size="sm"
+                variant="outline"
+              />
             }
           />
         </div>
@@ -217,29 +225,31 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
         {activeHabits.length === 0 ? (
           <p className="py-8 text-center text-muted-foreground">習慣がありません。新しい習慣を作成しましょう。</p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[60px]">アイコン</TableHead>
-                <TableHead>名前</TableHead>
-                <TableHead>期間</TableHead>
-                <TableHead>頻度</TableHead>
-                <TableHead className="hidden md:table-cell">作成日</TableHead>
-                <TableHead className="w-[100px] text-right">アクション</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {activeHabits.map((habit) => (
-                <ActiveHabitRow
-                  habit={habit}
-                  key={habit.id}
-                  onArchive={archiveOptimistically}
-                  onEdit={handleEdit}
-                  onRowClick={handleRowClick}
-                />
-              ))}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[60px]">アイコン</TableHead>
+                  <TableHead>名前</TableHead>
+                  <TableHead>期間</TableHead>
+                  <TableHead>頻度</TableHead>
+                  <TableHead className="hidden md:table-cell">作成日</TableHead>
+                  <TableHead className="text-right">アクション</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {activeHabits.map((habit) => (
+                  <ActiveHabitRow
+                    habit={habit}
+                    key={habit.id}
+                    onArchive={archiveOptimistically}
+                    onEdit={handleEdit}
+                    onRowClick={handleRowClick}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </div>
 
@@ -252,26 +262,28 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
               {archivedHabits.length}件
             </span>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[60px]">アイコン</TableHead>
-                <TableHead>名前</TableHead>
-                <TableHead>アーカイブ日</TableHead>
-                <TableHead className="w-[200px] text-right">アクション</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {archivedHabits.map((habit) => (
-                <ArchivedHabitRow
-                  habit={habit}
-                  key={habit.id}
-                  onDelete={deleteOptimistically}
-                  onUnarchive={unarchiveOptimistically}
-                />
-              ))}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[60px]">アイコン</TableHead>
+                  <TableHead>名前</TableHead>
+                  <TableHead>アーカイブ日</TableHead>
+                  <TableHead className="text-right">アクション</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {archivedHabits.map((habit) => (
+                  <ArchivedHabitRow
+                    habit={habit}
+                    key={habit.id}
+                    onDelete={deleteOptimistically}
+                    onUnarchive={unarchiveOptimistically}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
     </div>

@@ -33,9 +33,9 @@ export function HabitTableActions({
   const stopPropagation = useCallback((event: React.MouseEvent) => event.stopPropagation(), [])
 
   return (
-    <div className="flex justify-end gap-1">
+    <div className="flex flex-wrap items-center justify-end gap-1">
       {!archived && (
-        <Button aria-label="編集" onClick={handleEdit} size="icon" variant="ghost">
+        <Button aria-label="編集" className="shrink-0" onClick={handleEdit} size="icon" variant="ghost">
           <Pencil className="h-4 w-4" />
         </Button>
       )}
@@ -48,6 +48,7 @@ export function HabitTableActions({
           onOptimistic={onArchiveOptimistic}
           trigger={
             <IconLabelButton
+              className="shrink-0 whitespace-nowrap"
               icon={<Archive className="h-4 w-4" />}
               label="アーカイブ"
               onClick={stopPropagation}
