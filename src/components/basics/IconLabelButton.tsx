@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/basics/Button'
 
 type IconLabelButtonProps = Omit<ComponentProps<typeof Button>, 'children'> & {
   icon: ReactNode
