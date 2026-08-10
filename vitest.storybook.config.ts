@@ -21,6 +21,7 @@ export default defineConfig({
     ],
     globals: true,
     include: ['**/*.stories.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    passWithNoTests: true,
     setupFiles: ['./vitest.setup.ts'],
   },
 })

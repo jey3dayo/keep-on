@@ -59,6 +59,10 @@ run = "yamllint -c .yamllint .github/"
 description = "CI向けテスト実行"
 run = "pnpm test:run"
 
+[tasks."test:storybook:ci"]
+description = "CI向けStorybook(in-source)テスト実行"
+run = "pnpm test:storybook:run"
+
 [tasks."build:ci"]
 description = "CI向けCloudflareビルド実行"
 run = "pnpm build:cf"
@@ -80,8 +84,15 @@ description = "クイックチェック（型 + Biome）"
 depends = ["lint:types", "test:types", "lint:biome"]
 
 [tasks.ci]
-description = "CI相当のチェック（型 + Biome + Test + Build）"
-depends = ["lint:types", "test:types", "lint:biome", "test:ci", "build:ci"]
+description = "CI相当のチェック（型 + Biome + Test + Storybook + Build）"
+depends = [
+  "lint:types",
+  "test:types",
+  "lint:biome",
+  "test:ci",
+  "test:storybook:ci",
+  "build:ci",
+]
 
 # ========================================
 # デプロイ関連

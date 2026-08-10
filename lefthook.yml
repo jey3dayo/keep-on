@@ -33,5 +33,7 @@ pre-push:
       run: mise run lint:biome
     - name: test:ci
       run: mise run test:ci
+    - name: test:storybook:ci
+      run: mise run test:storybook:ci
     - name: build:ci
       run: mise run build:ci
