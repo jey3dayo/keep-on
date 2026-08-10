@@ -18,7 +18,9 @@ const buttonVariants = cva('focus-visible:ring-2 focus-visible:ring-offset-2 act
     },
     size: {
       default: 'h-10',
-      icon: 'h-10 w-10',
+      // 44px = Apple HIG の最小タップ領域。h-* は twMerge で呼び出し側の明示的な
+      // h-*/w-* 指定に上書きされるため、意図的に小さいアイコンボタン（例: h-7/h-8）は維持される
+      icon: 'h-11 w-11',
       lg: 'h-11',
       sm: '',
     },
