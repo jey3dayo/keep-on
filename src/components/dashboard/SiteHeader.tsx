@@ -19,7 +19,7 @@ export function SiteHeader() {
   return (
     <header className="flex h-[calc(var(--header-height)+env(safe-area-inset-top))] shrink-0 items-center gap-2 border-border/50 border-b bg-background/50 pt-[env(safe-area-inset-top)] backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-[calc(var(--header-height)+env(safe-area-inset-top))] supports-[backdrop-filter]:bg-background/30 md:rounded-t-xl md:border-r">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
+        <SidebarTrigger className="-ml-1 min-h-11 min-w-11" />
         <Link
           className="flex shrink-0 items-center gap-2 rounded-md px-1.5 py-1 text-foreground/90 transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           href="/dashboard"
@@ -33,8 +33,11 @@ export function SiteHeader() {
         <h1 className="min-w-0 truncate font-medium text-base">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
           <SyncIndicator />
-          <ThemeToggle buttonVariant="ghost" />
-          <ClerkUserButton />
+          <ThemeToggle buttonClassName="min-h-11 min-w-11" buttonVariant="ghost" />
+          {/* ClerkUserButton は className を反映しないため、タップ領域はラッパーで確保する */}
+          <div className="flex min-h-11 min-w-11 items-center justify-center">
+            <ClerkUserButton />
+          </div>
         </div>
       </div>
     </header>

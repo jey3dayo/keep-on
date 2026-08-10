@@ -220,7 +220,7 @@ export function HabitListCard({
               <div className="flex items-center gap-1.5">
                 <Button
                   aria-label="チェックインを1つ減らす"
-                  className="h-8 w-8 rounded-full border border-border/70 bg-background/95 p-0 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:opacity-45"
+                  className="h-11 w-11 rounded-full border border-border/70 bg-background/95 p-0 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 active:scale-90 disabled:opacity-45 motion-reduce:transition-none motion-reduce:active:scale-100"
                   disabled={habit.currentProgress <= 0}
                   onClick={handleRemove}
                   size="icon"
@@ -231,7 +231,7 @@ export function HabitListCard({
                 </Button>
                 <Button
                   aria-label="チェックインを1つ増やす"
-                  className="h-8 w-8 rounded-full border border-border/70 bg-background/95 p-0 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:opacity-45"
+                  className="h-11 w-11 rounded-full border border-border/70 bg-background/95 p-0 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 active:scale-90 disabled:opacity-45 motion-reduce:transition-none motion-reduce:active:scale-100"
                   disabled={habit.currentProgress >= habit.frequency}
                   onClick={handleAdd}
                   size="icon"
