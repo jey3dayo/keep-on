@@ -9,8 +9,10 @@
  *
  * 出力（すべて生成物。直接編集せずこのスクリプトを更新すること）:
  *   assets/logos/logo.svg          マーク単体（透過・UI 埋め込み用）
- *   assets/logos/original.png      アプリアイコン ダーク版 1024（PWA アイコンの元画像）
+ *   assets/logos/original.png      アプリアイコン ダーク版 1024（生成PNG）
  *   assets/logos/app-icon-light.png アプリアイコン ライト版 1024
+ *   assets/logos/pwa-icon.svg      PWA アイコン用フルブリードマスター
+ *   assets/logos/pwa-icon.png      PWA アイコン用フルブリードPNG
  *   public/logo.svg, public/favicon.svg
  */
 
@@ -52,26 +54,54 @@ const glyph = (tealFill, amberFill) => `
   <path d="M560 604 L646 694 L822 414" fill="none" stroke="${amberFill}"
         stroke-width="96" stroke-linecap="round" stroke-linejoin="round"/>`
 
-const darkIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <defs>
-    <linearGradient id="plate" x1="0" y1="0" x2="0.3" y2="1">
+const plateGradient = `    <linearGradient id="plate" x1="0" y1="0" x2="0.3" y2="1">
       <stop offset="0" stop-color="#262b33"/><stop offset="1" stop-color="#14171c"/>
-    </linearGradient>
-    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+    </linearGradient>`
+
+const rimGradient = `    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.20"/>
       <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.04"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0.10"/>
-    </linearGradient>
-    ${gradient('teal', TEAL)}${gradient('amber', AMBER)}
-    <filter id="drop" x="-30%" y="-30%" width="180%" height="180%">
+    </linearGradient>`
+
+const colorGradients = `    ${gradient('teal', TEAL)}${gradient('amber', AMBER)}`
+
+const dropFilter = `    <filter id="drop" x="-30%" y="-30%" width="180%" height="180%">
       <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000" flood-opacity="0.55"/>
-    </filter>
-    <filter id="soft" x="-40%" y="-40%" width="200%" height="200%">
+    </filter>`
+
+const softFilter = `    <filter id="soft" x="-40%" y="-40%" width="200%" height="200%">
       <feDropShadow dx="0" dy="26" stdDeviation="30" flood-color="#000" flood-opacity="0.45"/>
-    </filter>
+    </filter>`
+
+const baseIconDefs = `
+${plateGradient}`
+
+const darkIconDefs = `${baseIconDefs}
+${rimGradient}
+${colorGradients}
+${dropFilter}
+${softFilter}`
+
+const pwaIconDefs = `${baseIconDefs}
+${colorGradients}
+${dropFilter}`
+
+const darkIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>${darkIconDefs}
   </defs>
   <g filter="url(#soft)"><rect x="96" y="96" width="832" height="832" rx="196" fill="url(#plate)"/></g>
   <rect x="97.5" y="97.5" width="829" height="829" rx="195" fill="none" stroke="url(#rim)" stroke-width="3"/>
+  <g filter="url(#drop)">${glyph('url(#teal)', 'url(#amber)')}</g>
+</svg>
+`
+
+// PWA版はOSが外形をマスクする前提で、プレートを角丸にせずフルブリード
+// にする。グリフと色は通常版と共通の定義を使い、追加の外周を作らない。
+const pwaIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>${pwaIconDefs}
+  </defs>
+  <rect width="1024" height="1024" fill="url(#plate)"/>
   <g filter="url(#drop)">${glyph('url(#teal)', 'url(#amber)')}</g>
 </svg>
 `
@@ -107,4 +137,6 @@ await write('assets/logos/app-icon.svg', darkIconSvg)
 await write('assets/logos/app-icon-light.svg', lightIconSvg)
 await write('assets/logos/original.png', darkIconSvg, { raster: true })
 await write('assets/logos/app-icon-light.png', lightIconSvg, { raster: true })
+await write('assets/logos/pwa-icon.svg', pwaIconSvg)
+await write('assets/logos/pwa-icon.png', pwaIconSvg, { raster: true })
 console.log('\n次に `node scripts/generate-pwa-icons.mjs` で PWA アイコンを再生成すること。')

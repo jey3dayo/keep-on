@@ -8,7 +8,9 @@
 assets/
 └── logos/
     ├── original.png    # オリジナルロゴ（1024x1024推奨）
-    └── logo.svg        # ベクター版ロゴ
+    ├── logo.svg        # ベクター版ロゴ
+    ├── pwa-icon.svg    # PWAアイコン用フルブリードマスター
+    └── pwa-icon.png    # PWAアイコン用フルブリードPNG
 ```
 
 ## ファイル仕様
@@ -26,8 +28,18 @@ assets/
 
 #### 注意事項
 
-- このファイルから全てのPWAアイコンが自動生成されます
+- ダーク版アプリアイコンの生成PNGです。PWAアイコンは `pwa-icon.svg` を使用します
 - 高解像度を維持することで、各サイズのアイコンの品質が向上します
+
+### pwa-icon.svg
+
+用途: PWAアイコン（通常版・maskable版・apple-touch）の生成元
+
+#### 要件
+
+- `scripts/generate-logo.mjs` から生成する（直接編集しない）
+- フルブリードのダーク背景を持ち、四隅まで不透明であること
+- 既存のアプリアイコンと同じバー・チェック形状、色、グラデーションを使用すること
 
 ### logo.svg
 
@@ -73,9 +85,9 @@ Android 8.0以降では「マスカブルアイコン」がサポートされて
 
 #### 特徴
 
-- 80%のサイズで中央配置
-- 周囲に20%のセーフゾーン（padding）を確保
-- 背景色: 黒 (`{ r: 0, g: 0, b: 0, alpha: 1 }`)
+- PWAマスター自体がフルブリードの背景と安全域を持つ
+- 通常版とmaskable版で追加の縮小やpaddingを行わない
+- 黒 (`#000`) のpaddingを付けない
 
 #### デザイン推奨事項
 
@@ -92,6 +104,9 @@ cp /path/to/new-logo.png assets/logos/original.png
 
 # ベクター版がある場合
 cp /path/to/new-logo.svg assets/logos/logo.svg
+
+# 生成元を更新した場合
+node scripts/generate-logo.mjs
 ```
 
 ### 2. PWAアイコンの再生成
@@ -115,7 +130,7 @@ pnpm env:run -- pnpm dev
 
 ```bash
 # ロゴファイルをコミット
-git add assets/logos/original.png assets/logos/logo.svg
+git add assets/logos/original.png assets/logos/logo.svg assets/logos/pwa-icon.svg assets/logos/pwa-icon.png
 
 # PWAアイコンをコミット
 git add public/{icon-*,apple-touch-icon.png}

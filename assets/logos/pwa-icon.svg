@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#262b33"/><stop offset="1" stop-color="#14171c"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="0.4" y2="1">
+    <stop offset="0" stop-color="#6FA9B4"/><stop offset="0.45" stop-color="#4E8794"/><stop offset="1" stop-color="#2E5A65"/>
+  </linearGradient><linearGradient id="amber" x1="0" y1="0" x2="0.4" y2="1">
+    <stop offset="0" stop-color="#E8AE72"/><stop offset="0.45" stop-color="#D08A45"/><stop offset="1" stop-color="#9A5F27"/>
+  </linearGradient>
+    <filter id="drop" x="-30%" y="-30%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#plate)"/>
+  <g filter="url(#drop)">
+  <rect x="206" y="452" width="286" height="78" rx="39" fill="url(#teal)"/>
+  <rect x="206" y="583" width="350" height="78" rx="39" fill="url(#teal)"/>
+  <rect x="206" y="714" width="286" height="78" rx="39" fill="url(#teal)"/>
+  <path d="M560 604 L646 694 L822 414" fill="none" stroke="url(#amber)"
+        stroke-width="96" stroke-linecap="round" stroke-linejoin="round"/></g>
+</svg>
