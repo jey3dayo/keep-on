@@ -1,3 +1,4 @@
+import { classifyConnectionError } from '@/schemas/db'
 import type { FormattedError, LogLevel } from '@/schemas/logging'
 import { formatErrorObject, parseLogLevel } from '@/schemas/logging'
 
@@ -38,9 +39,6 @@ export function isTimeoutError(error: unknown): error is TimeoutError {
  * 型安全にエラーを分類します。
  */
 export function isDatabaseError(error: unknown): boolean {
-  // classifyConnectionError() を遅延インポートして使用
-  // これにより循環依存を回避しつつ、型安全なエラー分類を利用
-  const { classifyConnectionError } = require('@/schemas/db')
   const errorType = classifyConnectionError(error)
 
   // 'unknown' と 'auth' 以外はリトライ対象のDB関連エラー
