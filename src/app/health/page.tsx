@@ -1,6 +1,5 @@
 import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import type { Metadata } from 'next'
-import { getRequestTimeoutMs } from '@/lib/server/timeout'
 
 export const metadata: Metadata = {
   description: 'Clerk と DB の設定状態を確認するヘルスチェックページ',
@@ -73,10 +72,6 @@ function getKeyMode(value?: string): 'test' | 'live' | 'unknown' {
   return 'unknown'
 }
 
-function tailKey(value?: string): string {
-  return value ? value.slice(-4) : 'none'
-}
-
 function resolveDbBinding(envSnapshot: EnvSnapshot): DbBinding {
   return envSnapshot.d1Binding ? 'd1' : 'missing'
 }
@@ -140,19 +135,11 @@ async function getEnvSnapshot(): Promise<EnvSnapshot> {
 function buildHealthChecks(envSnapshot: EnvSnapshot): HealthCheck[] {
   const publishableMode = getKeyMode(envSnapshot.clerkPublishableKey)
   const secretMode = getKeyMode(envSnapshot.clerkSecretKey)
-  const publishableTail = tailKey(envSnapshot.clerkPublishableKey)
-  const secretTail = tailKey(envSnapshot.clerkSecretKey)
   const keyMismatch = publishableMode !== 'unknown' && secretMode !== 'unknown' && publishableMode !== secretMode
   const dbBinding = resolveDbBinding(envSnapshot)
 
   const runtimeDescription = envSnapshot.runtime === 'workers' ? 'Cloudflare Workers 実行中' : 'Node.js 実行中'
   const runtimeStatus: Status = envSnapshot.runtime === 'workers' ? 'ok' : 'warn'
-  const publishableMeta =
-    publishableMode === 'unknown'
-      ? `mode: unknown / tail: ${publishableTail}`
-      : `mode: ${publishableMode} / tail: ${publishableTail}`
-  const secretMeta =
-    secretMode === 'unknown' ? `mode: unknown / tail: ${secretTail}` : `mode: ${secretMode} / tail: ${secretTail}`
   const clerkUrlsConfigured = Boolean(envSnapshot.signInUrl && envSnapshot.signUpUrl)
 
   return [
@@ -160,35 +147,30 @@ function buildHealthChecks(envSnapshot: EnvSnapshot): HealthCheck[] {
       description: runtimeDescription,
       id: 'runtime',
       label: 'Runtime',
-      meta: envSnapshot.nextjsEnv ? `NEXTJS_ENV: ${envSnapshot.nextjsEnv}` : undefined,
       status: runtimeStatus,
     },
     {
       description: envSnapshot.clerkPublishableKey ? '設定済み' : '未設定',
       id: 'clerk-publishable',
       label: 'Clerk Publishable Key',
-      meta: publishableMeta,
       status: envSnapshot.clerkPublishableKey ? 'ok' : 'error',
     },
     {
       description: envSnapshot.clerkSecretKey ? '設定済み' : '未設定',
       id: 'clerk-secret',
       label: 'Clerk Secret Key',
-      meta: secretMeta,
       status: envSnapshot.clerkSecretKey ? 'ok' : 'error',
     },
     {
       description: clerkUrlsConfigured ? 'URL 設定済み' : 'URL 未設定',
       id: 'clerk-urls',
       label: 'Clerk URLs',
-      meta: `sign-in: ${envSnapshot.signInUrl ?? '-'} / sign-up: ${envSnapshot.signUpUrl ?? '-'}`,
       status: clerkUrlsConfigured ? 'ok' : 'warn',
     },
     {
       description: keyMismatch ? 'Publishable/Secret の mode が不一致' : 'Publishable/Secret の mode 一致',
       id: 'clerk-mode',
       label: 'Clerk Key Mode',
-      meta: `publishable: ${publishableMode} / secret: ${secretMode}`,
       status: keyMismatch ? 'warn' : 'ok',
     },
     {
@@ -267,7 +249,6 @@ function CheckRow({ check }: { check: HealthCheck }) {
 
 export default async function HealthPage() {
   const checkedAt = new Date()
-  const requestTimeoutMs = getRequestTimeoutMs()
   const envSnapshot = await getEnvSnapshot()
   const checks = buildHealthChecks(envSnapshot)
   const summary = summarizeChecks(checks)
@@ -305,7 +286,6 @@ export default async function HealthPage() {
         </section>
 
         <footer className="flex flex-wrap items-center justify-between gap-3 text-muted-foreground text-xs">
-          <span>Request timeout: {requestTimeoutMs}ms</span>
           <span>Runtime: {envSnapshot.runtime}</span>
         </footer>
       </main>
