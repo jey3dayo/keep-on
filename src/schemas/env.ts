@@ -1,24 +1,20 @@
 import * as v from 'valibot'
 
-const envSchema = v.object({
-  // Server
+/**
+ * ランタイムで検証できる環境変数のスキーマ。
+ *
+ * `NEXT_PUBLIC_*` は Next.js がビルド時にリテラルへ置換するため、ランタイムに
+ * `process.env` 参照が残らない。起動時に検証しても実行環境の設定ミスは捕まらず、
+ * 逆にビルド時の注入漏れを実行環境の不備として誤検知する。ビルド側で検査する。
+ *
+ * `CLOUDFLARE_*` はデプロイ時にのみ使う値で、Worker ランタイムには存在しないのが正常。
+ */
+const runtimeEnvSchema = v.object({
   CLERK_SECRET_KEY: v.pipe(v.string(), v.minLength(1)),
-  CLOUDFLARE_ACCOUNT_ID: v.optional(v.string()),
-  CLOUDFLARE_API_TOKEN: v.optional(v.string()),
-
-  // Client (NEXT_PUBLIC_*)
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: v.pipe(v.string(), v.minLength(1)),
-  NEXT_PUBLIC_CLERK_SIGN_IN_URL: v.pipe(v.optional(v.string(), '/sign-in'), v.startsWith('/')),
-  NEXT_PUBLIC_CLERK_SIGN_UP_URL: v.pipe(v.optional(v.string(), '/sign-up'), v.startsWith('/')),
 })
 
-interface EnvInput {
+interface RuntimeEnvInput {
   CLERK_SECRET_KEY?: string
-  CLOUDFLARE_ACCOUNT_ID?: string
-  CLOUDFLARE_API_TOKEN?: string
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?: string
-  NEXT_PUBLIC_CLERK_SIGN_IN_URL?: string
-  NEXT_PUBLIC_CLERK_SIGN_UP_URL?: string
 }
 
 /**
@@ -27,8 +23,8 @@ interface EnvInput {
  * ValiError の issues は入力値を保持するため、例外や戻り値に載せると
  * 秘密鍵がログへ流出する。キー名のみを返して呼び出し側が値に触れないようにする。
  */
-export function findInvalidEnvKeys(input: EnvInput): string[] {
-  const result = v.safeParse(envSchema, input)
+export function findInvalidEnvKeys(input: RuntimeEnvInput): string[] {
+  const result = v.safeParse(runtimeEnvSchema, input)
 
   if (result.success) {
     return []
