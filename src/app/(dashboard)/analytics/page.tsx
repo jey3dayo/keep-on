@@ -141,7 +141,7 @@ export default async function AnalyticsPage() {
     <div className="flex flex-1 flex-col gap-6 p-6">
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-balance font-bold text-3xl text-foreground">アナリティクス</h1>
+          <h1 className="text-balance font-bold text-3xl text-foreground tracking-tight">アナリティクス</h1>
           <span className="rounded-full border border-border/60 bg-card px-2.5 py-1 text-muted-foreground text-xs">
             直近7日: {rangeLabel}
           </span>

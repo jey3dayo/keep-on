@@ -47,7 +47,7 @@ export default async function HabitsPage() {
     <div className="flex flex-1 flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <h1 className="font-bold text-3xl text-foreground">習慣</h1>
+          <h1 className="font-bold text-3xl text-foreground tracking-tight">習慣</h1>
           <p className="text-muted-foreground">あなたの習慣を管理しましょう</p>
         </div>
         <Button asChild size="lg" variant="default">

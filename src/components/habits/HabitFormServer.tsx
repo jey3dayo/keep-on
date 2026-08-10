@@ -284,7 +284,7 @@ function HabitFrequencyField({ control, selectedColorValue, t, frequencyLabel }:
             <span className="font-medium text-xl">−</span>
           </Button>
           <div className="flex flex-col items-center">
-            <span className="font-bold text-4xl" style={{ color: selectedColorValue }}>
+            <span className="font-bold text-4xl tracking-tight" style={{ color: selectedColorValue }}>
               {field.value}
             </span>
             <span className="text-muted-foreground text-sm">{frequencyLabel}</span>

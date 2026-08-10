@@ -20,7 +20,7 @@ export default function HelpPage() {
       <header className="rounded-xl border border-border bg-card p-6">
         <div className="space-y-3">
           <p className="font-semibold text-muted-foreground text-xs uppercase tracking-[0.2em]">ヘルプセンター</p>
-          <h1 className="font-bold text-3xl text-foreground">ヘルプ</h1>
+          <h1 className="font-bold text-3xl text-foreground tracking-tight">ヘルプ</h1>
           <p className="max-w-2xl text-muted-foreground leading-relaxed">
             KeepOnの使い方とよくある質問をまとめています。困ったときはまずこちらをご確認ください。
           </p>

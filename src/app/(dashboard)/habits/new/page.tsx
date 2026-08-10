@@ -51,7 +51,7 @@ export default async function NewHabitPage({
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">
       <div className="space-y-2">
-        <h1 className="font-bold text-3xl text-foreground">{i18n.t('habits.newPage.heading')}</h1>
+        <h1 className="font-bold text-3xl text-foreground tracking-tight">{i18n.t('habits.newPage.heading')}</h1>
         <p className="text-muted-foreground">{i18n.t('habits.newPage.subheading')}</p>
       </div>
 
