@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronRight, X } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/basics/Button'
 import {
@@ -26,6 +26,21 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
 
   const bgColor = 'var(--orange-9)'
   const bgColorLight = 'var(--orange-8)'
+  const handleCategoryChange = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    const category = presetCategories.find((candidate) => candidate.id === event.currentTarget.dataset.category)
+    if (category) {
+      setSelectedCategory(category.id)
+    }
+  }, [])
+  const handlePresetSelect = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      const preset = habitPresets.find((candidate) => candidate.id === event.currentTarget.dataset.preset)
+      if (preset) {
+        onSelectPreset(preset)
+      }
+    },
+    [onSelectPreset]
+  )
 
   const filteredPresets = habitPresets.filter(
     (preset) => selectedCategory === 'all' || preset.category === selectedCategory
@@ -82,8 +97,9 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
                   'h-14 w-14 flex-shrink-0 rounded-full p-0 transition-all',
                   isSelected ? 'bg-white/90 shadow-lg' : 'hover:bg-white/20'
                 )}
+                data-category={category.id}
                 key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={handleCategoryChange}
                 size="icon"
                 style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.9)' : bgColorLight }}
                 type="button"
@@ -106,8 +122,9 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
             return (
               <Button
                 className="h-auto w-full justify-start gap-3 rounded-xl px-4 py-3 hover:bg-white/10"
+                data-preset={preset.id}
                 key={preset.id}
-                onClick={() => onSelectPreset(preset)}
+                onClick={handlePresetSelect}
                 style={{ backgroundColor: bgColorLight }}
                 type="button"
                 variant="ghost"

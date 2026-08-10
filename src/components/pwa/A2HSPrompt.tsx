@@ -2,7 +2,7 @@
 
 import { X } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 
 interface BeforeInstallPromptEvent extends Event {
@@ -81,7 +81,7 @@ export function A2HSPrompt() {
     []
   )
 
-  const handleInstall = async () => {
+  const handleInstall = useCallback(async () => {
     if (!deferredPrompt) {
       return
     }
@@ -90,12 +90,12 @@ export function A2HSPrompt() {
     if (outcome === 'accepted') {
       setDeferredPrompt(null)
     }
-  }
+  }, [deferredPrompt])
 
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     setDismissed(true)
     localStorage.setItem('a2hs-dismissed', 'true')
-  }
+  }, [])
 
   if (!shouldRender) {
     return null

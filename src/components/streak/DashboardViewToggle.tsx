@@ -1,6 +1,7 @@
 'use client'
 
 import { Circle, LayoutGrid, type LucideIcon } from 'lucide-react'
+import { useCallback } from 'react'
 import { Button } from '@/components/basics/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { DashboardView } from '@/constants/dashboard'
@@ -41,6 +42,15 @@ export function DashboardViewToggle({
   inactiveButtonClassName,
   onViewChange,
 }: DashboardViewToggleProps) {
+  const handleViewChange = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      const view = event.currentTarget.dataset.view
+      if (view === 'dashboard' || view === 'simple') {
+        onViewChange(view)
+      }
+    },
+    [onViewChange]
+  )
   return (
     <div className="group relative">
       <div className="absolute right-0 bottom-full mb-2 hidden w-64 group-focus-within:block group-hover:block">
@@ -76,8 +86,9 @@ export function DashboardViewToggle({
                 buttonClassName,
                 currentView === option.value ? activeButtonClassName : inactiveButtonClassName
               )}
+              data-view={option.value}
               key={option.value}
-              onClick={() => onViewChange(option.value)}
+              onClick={handleViewChange}
               size="icon"
               title={option.label}
               type="button"

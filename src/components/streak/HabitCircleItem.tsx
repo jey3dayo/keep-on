@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useRef, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { ProgressRing } from '@/components/streak/ProgressRing'
@@ -46,40 +46,67 @@ export function HabitCircleItem({
   const visualDelayTimerRef = useRef<NodeJS.Timeout | null>(null)
   const fillDurationMs = LONG_PRESS_DURATION_MS - LONG_PRESS_VISUAL_DELAY_MS
 
-  const clearHold = () => {
+  const clearHold = useCallback(() => {
     if (visualDelayTimerRef.current) {
       clearTimeout(visualDelayTimerRef.current)
       visualDelayTimerRef.current = null
     }
     setIsHolding(false)
     holdStartPointRef.current = null
-  }
+  }, [])
 
-  const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
-    holdStartPointRef.current = { x: event.clientX, y: event.clientY }
-    visualDelayTimerRef.current = setTimeout(() => {
-      setIsHolding(true)
-      visualDelayTimerRef.current = null
-    }, LONG_PRESS_VISUAL_DELAY_MS)
-    onLongPressStart(event)
-  }
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      holdStartPointRef.current = { x: event.clientX, y: event.clientY }
+      visualDelayTimerRef.current = setTimeout(() => {
+        setIsHolding(true)
+        visualDelayTimerRef.current = null
+      }, LONG_PRESS_VISUAL_DELAY_MS)
+      onLongPressStart(event)
+    },
+    [onLongPressStart]
+  )
 
-  const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
-    const startPoint = holdStartPointRef.current
-    if (startPoint) {
-      const deltaX = event.clientX - startPoint.x
-      const deltaY = event.clientY - startPoint.y
-      if (Math.hypot(deltaX, deltaY) > LONG_PRESS_MOVE_THRESHOLD_PX) {
-        clearHold()
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      const startPoint = holdStartPointRef.current
+      if (startPoint) {
+        const deltaX = event.clientX - startPoint.x
+        const deltaY = event.clientY - startPoint.y
+        if (Math.hypot(deltaX, deltaY) > LONG_PRESS_MOVE_THRESHOLD_PX) {
+          clearHold()
+        }
       }
-    }
-    onLongPressMove(event)
-  }
+      onLongPressMove(event)
+    },
+    [clearHold, onLongPressMove]
+  )
 
-  const handlePointerEnd = (resetTriggered: boolean) => {
-    clearHold()
-    onLongPressEnd(resetTriggered)
-  }
+  const handlePointerEnd = useCallback(
+    (resetTriggered: boolean) => {
+      clearHold()
+      onLongPressEnd(resetTriggered)
+    },
+    [clearHold, onLongPressEnd]
+  )
+
+  const handlePointerCancel = useCallback(() => handlePointerEnd(true), [handlePointerEnd])
+  const handlePointerLeave = useCallback(() => handlePointerEnd(true), [handlePointerEnd])
+  const handlePointerUp = useCallback(() => handlePointerEnd(false), [handlePointerEnd])
+  const handleRemoveCheckin = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation()
+      onRemoveCheckin?.()
+    },
+    [onRemoveCheckin]
+  )
+  const handleAddCheckin = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation()
+      onAddCheckin?.()
+    },
+    [onAddCheckin]
+  )
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -88,11 +115,11 @@ export function HabitCircleItem({
         className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
         onClick={onCheckin}
         onContextMenu={onContextMenu}
-        onPointerCancel={() => handlePointerEnd(true)}
+        onPointerCancel={handlePointerCancel}
         onPointerDown={handlePointerDown}
-        onPointerLeave={() => handlePointerEnd(true)}
+        onPointerLeave={handlePointerLeave}
         onPointerMove={handlePointerMove}
-        onPointerUp={() => handlePointerEnd(false)}
+        onPointerUp={handlePointerUp}
         scale="md"
         type="button"
         variant="ghost"
@@ -147,12 +174,7 @@ export function HabitCircleItem({
               aria-label="チェックインを減らす"
               className="h-7 w-7 rounded-full bg-white/10 p-0 text-white hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
               disabled={habit.currentProgress === 0}
-              onClick={(e) => {
-                e.stopPropagation()
-                if (onRemoveCheckin) {
-                  onRemoveCheckin()
-                }
-              }}
+              onClick={handleRemoveCheckin}
               size="icon"
               type="button"
               variant="ghost"
@@ -168,12 +190,7 @@ export function HabitCircleItem({
               aria-label="チェックインを増やす"
               className="h-7 w-7 rounded-full bg-white/10 p-0 text-white hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
               disabled={isCompleted}
-              onClick={(e) => {
-                e.stopPropagation()
-                if (onAddCheckin) {
-                  onAddCheckin()
-                }
-              }}
+              onClick={handleAddCheckin}
               size="icon"
               type="button"
               variant="ghost"

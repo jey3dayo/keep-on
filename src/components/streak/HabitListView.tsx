@@ -3,7 +3,7 @@
 import { Calendar } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import type { ReactNode } from 'react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { AddHabitButton, Button } from '@/components/basics/Button'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
 import type { OptimisticRollback } from '@/components/habits/types'
@@ -91,6 +91,39 @@ export function HabitListView({
     }))
     // 完了状態によるソートを無効化（位置を保持してガタつきを防止）
   }, [filteredHabits, completedHabitIds])
+  const handleAllFilter = useCallback(() => onPeriodChange('all'), [onPeriodChange])
+  const handleDailyFilter = useCallback(() => onPeriodChange('daily'), [onPeriodChange])
+  const handleWeeklyFilter = useCallback(() => onPeriodChange('weekly'), [onPeriodChange])
+  const handleMonthlyFilter = useCallback(() => onPeriodChange('monthly'), [onPeriodChange])
+  const closeDrawer = useCallback((open: boolean) => {
+    if (!open) {
+      setDrawerState({ habit: null, open: false })
+    }
+  }, [])
+  const openDrawer = useCallback((habit: HabitWithProgress) => {
+    setDrawerHabitId(habit.id)
+    setDrawerState({ habit, open: true })
+  }, [])
+  const archiveDrawerHabit = useCallback(
+    () => (drawerHabitId && onArchiveOptimistic ? onArchiveOptimistic(drawerHabitId) : undefined),
+    [drawerHabitId, onArchiveOptimistic]
+  )
+  const deleteDrawerHabit = useCallback(
+    () => (drawerHabitId && onDeleteOptimistic ? onDeleteOptimistic(drawerHabitId) : undefined),
+    [drawerHabitId, onDeleteOptimistic]
+  )
+  const resetDrawerHabit = useCallback(
+    () => (drawerHabitId && onResetOptimistic ? onResetOptimistic(drawerHabitId) : undefined),
+    [drawerHabitId, onResetOptimistic]
+  )
+  const skipDrawerHabit = useCallback(
+    () => (drawerHabitId && onSkip ? onSkip(drawerHabitId) : Promise.resolve()),
+    [drawerHabitId, onSkip]
+  )
+  const unskipDrawerHabit = useCallback(
+    () => (drawerHabitId && onUnSkip ? onUnSkip(drawerHabitId) : Promise.resolve()),
+    [drawerHabitId, onUnSkip]
+  )
 
   return (
     <>
@@ -118,16 +151,16 @@ export function HabitListView({
         </header>
 
         <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
-          <FilterButton active={periodFilter === 'all'} onClick={() => onPeriodChange('all')}>
+          <FilterButton active={periodFilter === 'all'} onClick={handleAllFilter}>
             すべて ({habits.length})
           </FilterButton>
-          <FilterButton active={periodFilter === 'daily'} onClick={() => onPeriodChange('daily')}>
+          <FilterButton active={periodFilter === 'daily'} onClick={handleDailyFilter}>
             {PERIOD_DISPLAY_NAME.daily} ({dailyCount})
           </FilterButton>
-          <FilterButton active={periodFilter === 'weekly'} onClick={() => onPeriodChange('weekly')}>
+          <FilterButton active={periodFilter === 'weekly'} onClick={handleWeeklyFilter}>
             {PERIOD_DISPLAY_NAME.weekly} ({weeklyCount})
           </FilterButton>
-          <FilterButton active={periodFilter === 'monthly'} onClick={() => onPeriodChange('monthly')}>
+          <FilterButton active={periodFilter === 'monthly'} onClick={handleMonthlyFilter}>
             {PERIOD_DISPLAY_NAME.monthly} ({monthlyCount})
           </FilterButton>
         </div>
@@ -143,17 +176,13 @@ export function HabitListView({
             </div>
           ) : (
             sortedHabits.map(({ habit, completed }) => (
-              <HabitListCard
+              <HabitListCardItem
                 completed={completed}
-                dimmed={completed}
                 habit={habit}
                 key={habit.id}
-                onAdd={onAddCheckin ? () => onAddCheckin(habit.id) : undefined}
-                onLongPressOrContextMenu={() => {
-                  setDrawerHabitId(habit.id)
-                  setDrawerState({ habit, open: true })
-                }}
-                onRemove={onRemoveCheckin ? () => onRemoveCheckin(habit.id) : undefined}
+                onAddCheckin={onAddCheckin}
+                onOpenDrawer={openDrawer}
+                onRemoveCheckin={onRemoveCheckin}
               />
             ))
           )}
@@ -170,21 +199,43 @@ export function HabitListView({
       {/* アクションDrawer */}
       <HabitActionDrawer
         habit={drawerState.habit}
-        onArchiveOptimistic={
-          drawerHabitId && onArchiveOptimistic ? () => onArchiveOptimistic(drawerHabitId) : undefined
-        }
-        onDeleteOptimistic={drawerHabitId && onDeleteOptimistic ? () => onDeleteOptimistic(drawerHabitId) : undefined}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDrawerState({ habit: null, open: false })
-          }
-        }}
-        onResetOptimistic={drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined}
-        onSkip={drawerHabitId && onSkip ? () => onSkip(drawerHabitId) : undefined}
-        onUnSkip={drawerHabitId && onUnSkip ? () => onUnSkip(drawerHabitId) : undefined}
+        onArchiveOptimistic={drawerHabitId && onArchiveOptimistic ? archiveDrawerHabit : undefined}
+        onDeleteOptimistic={drawerHabitId && onDeleteOptimistic ? deleteDrawerHabit : undefined}
+        onOpenChange={closeDrawer}
+        onResetOptimistic={drawerHabitId && onResetOptimistic ? resetDrawerHabit : undefined}
+        onSkip={drawerHabitId && onSkip ? skipDrawerHabit : undefined}
+        onUnSkip={drawerHabitId && onUnSkip ? unskipDrawerHabit : undefined}
         open={drawerState.open}
       />
     </>
+  )
+}
+
+function HabitListCardItem({
+  completed,
+  habit,
+  onAddCheckin,
+  onOpenDrawer,
+  onRemoveCheckin,
+}: {
+  completed: boolean
+  habit: HabitWithProgress
+  onAddCheckin?: (habitId: string) => Promise<void>
+  onOpenDrawer: (habit: HabitWithProgress) => void
+  onRemoveCheckin?: (habitId: string) => Promise<void>
+}) {
+  const handleAdd = useCallback(() => onAddCheckin?.(habit.id), [habit.id, onAddCheckin])
+  const handleOpenDrawer = useCallback(() => onOpenDrawer(habit), [habit, onOpenDrawer])
+  const handleRemove = useCallback(() => onRemoveCheckin?.(habit.id), [habit.id, onRemoveCheckin])
+  return (
+    <HabitListCard
+      completed={completed}
+      dimmed={completed}
+      habit={habit}
+      onAdd={onAddCheckin ? handleAdd : undefined}
+      onLongPressOrContextMenu={handleOpenDrawer}
+      onRemove={onRemoveCheckin ? handleRemove : undefined}
+    />
   )
 }
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import type { User } from '@/types/user'
 import { DashboardViewToggle } from './DashboardViewToggle'
 import { HabitListView } from './HabitListView'
@@ -34,6 +35,7 @@ export function DesktopDashboard({
     totalDaily,
     totalStreak,
   } = useDashboardContent(habits)
+  const handleSettings = useCallback(() => onViewChange('dashboard'), [onViewChange])
 
   return (
     <>
@@ -48,7 +50,7 @@ export function DesktopDashboard({
           onDeleteOptimistic={onDeleteOptimistic}
           onRemoveCheckin={onRemoveCheckin}
           onResetOptimistic={onResetOptimistic}
-          onSettings={() => onViewChange('dashboard')}
+          onSettings={handleSettings}
           onSkip={onSkip}
           onUnSkip={onUnSkip}
         />

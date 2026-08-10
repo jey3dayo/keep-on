@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { updateWeekStartAction } from '@/app/actions/settings/updateWeekStart'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -20,25 +20,28 @@ export function WeekStartSettings() {
   const { weekStart, setWeekStart, ready } = useWeekStart()
   const [isUpdating, setIsUpdating] = useState(false)
 
-  const handleWeekStartChange = async (value: string) => {
-    if (value === 'monday' || value === 'sunday') {
-      const weekStartValue = value as WeekStart
-      setIsUpdating(true)
-      try {
-        const result = await updateWeekStartAction(weekStartValue)
-        if (result.ok) {
-          setWeekStart(weekStartValue)
-          appToast.success('週の開始日を更新しました')
-        } else {
-          appToast.error('更新に失敗しました', result.error)
+  const handleWeekStartChange = useCallback(
+    async (value: string) => {
+      if (value === 'monday' || value === 'sunday') {
+        const weekStartValue = value as WeekStart
+        setIsUpdating(true)
+        try {
+          const result = await updateWeekStartAction(weekStartValue)
+          if (result.ok) {
+            setWeekStart(weekStartValue)
+            appToast.success('週の開始日を更新しました')
+          } else {
+            appToast.error('更新に失敗しました', result.error)
+          }
+        } catch (error) {
+          appToast.error('更新に失敗しました', error)
+        } finally {
+          setIsUpdating(false)
         }
-      } catch (error) {
-        appToast.error('更新に失敗しました', error)
-      } finally {
-        setIsUpdating(false)
       }
-    }
-  }
+    },
+    [setWeekStart]
+  )
 
   return (
     <Card>

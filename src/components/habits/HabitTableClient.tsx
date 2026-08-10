@@ -5,7 +5,7 @@ import { ja } from 'date-fns/locale'
 import { Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { type MouseEvent, useState } from 'react'
+import { type MouseEvent, useCallback, useState } from 'react'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { IconLabelButton } from '@/components/basics/IconLabelButton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -22,6 +22,95 @@ interface HabitTableClientProps {
   habits: HabitWithProgress[]
 }
 
+interface ActiveHabitRowProps {
+  habit: HabitWithProgress
+  onArchive: (habitId: string) => OptimisticRollback
+  onEdit: (habitId: string) => void
+  onRowClick: (event: MouseEvent<HTMLTableRowElement>, habitId: string) => void
+}
+
+function ActiveHabitRow({ habit, onArchive, onEdit, onRowClick }: ActiveHabitRowProps) {
+  const bgColor = getColorById(habit.color ?? DEFAULT_HABIT_COLOR).color
+  const handleRowClick = useCallback(
+    (event: MouseEvent<HTMLTableRowElement>) => onRowClick(event, habit.id),
+    [habit.id, onRowClick]
+  )
+  const handleArchive = useCallback(() => onArchive(habit.id), [habit.id, onArchive])
+  const handleEdit = useCallback(() => onEdit(habit.id), [habit.id, onEdit])
+
+  return (
+    <TableRow className="cursor-pointer" onClick={handleRowClick}>
+      <TableCell>
+        <div className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: bgColor }}>
+          <Icon className="h-5 w-5 text-white" name={normalizeIconName(habit.icon)} />
+        </div>
+      </TableCell>
+      <TableCell className="font-medium">
+        <Link className="hover:underline" href={`/habits/${habit.id}`}>
+          {habit.name}
+        </Link>
+      </TableCell>
+      <TableCell>{getPeriodLabel(habit.period)}</TableCell>
+      <TableCell>{habit.frequency}</TableCell>
+      <TableCell className="hidden md:table-cell">
+        {format(new Date(habit.createdAt), 'yyyy/MM/dd', { locale: ja })}
+      </TableCell>
+      <TableCell className="text-right">
+        <HabitTableActions
+          archived={habit.archived}
+          habitId={habit.id}
+          habitName={habit.name}
+          onArchiveOptimistic={handleArchive}
+          onEdit={handleEdit}
+        />
+      </TableCell>
+    </TableRow>
+  )
+}
+
+interface ArchivedHabitRowProps {
+  habit: HabitWithProgress
+  onDelete: (habitId: string) => OptimisticRollback
+  onUnarchive: (habitId: string) => OptimisticRollback
+}
+
+function ArchivedHabitRow({ habit, onDelete, onUnarchive }: ArchivedHabitRowProps) {
+  const handleUnarchive = useCallback(() => onUnarchive(habit.id), [habit.id, onUnarchive])
+  const handleDelete = useCallback(() => onDelete(habit.id), [habit.id, onDelete])
+
+  return (
+    <TableRow className="bg-muted/20 text-muted-foreground hover:bg-muted/30">
+      <TableCell>
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/70">
+          <Icon className="h-5 w-5 text-muted-foreground/80" name={normalizeIconName(habit.icon)} />
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex flex-wrap items-center gap-2">
+          <span>{habit.name}</span>
+          <span className="rounded-full border border-muted-foreground/30 px-2 py-0.5 font-medium text-[10px] text-muted-foreground">
+            アーカイブ
+          </span>
+        </div>
+      </TableCell>
+      <TableCell>{habit.archivedAt ? format(new Date(habit.archivedAt), 'yyyy/MM/dd', { locale: ja }) : '-'}</TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-2">
+          <HabitUnarchiveButton habitId={habit.id} onOptimistic={handleUnarchive} />
+          <HabitDeleteDialog
+            habitId={habit.id}
+            habitName={habit.name}
+            onOptimistic={handleDelete}
+            trigger={
+              <IconLabelButton icon={<Trash2 className="h-4 w-4" />} label="完全に削除" size="sm" variant="outline" />
+            }
+          />
+        </div>
+      </TableCell>
+    </TableRow>
+  )
+}
+
 export function HabitTableClient({ habits }: HabitTableClientProps) {
   const router = useRouter()
   const [prevHabits, setPrevHabits] = useState(habits)
@@ -32,69 +121,84 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
     setOptimisticHabits(habits)
   }
 
-  const runOptimisticUpdate = (updater: (current: HabitWithProgress[]) => HabitWithProgress[]): OptimisticRollback => {
-    let previousState: HabitWithProgress[] | null = null
-    setOptimisticHabits((current) => {
-      previousState = current
-      return updater(current)
-    })
-    return () => {
-      if (previousState) {
-        setOptimisticHabits(previousState)
+  const runOptimisticUpdate = useCallback(
+    (updater: (current: HabitWithProgress[]) => HabitWithProgress[]): OptimisticRollback => {
+      let previousState: HabitWithProgress[] | null = null
+      setOptimisticHabits((current) => {
+        previousState = current
+        return updater(current)
+      })
+      return () => {
+        if (previousState) {
+          setOptimisticHabits(previousState)
+        }
       }
-    }
-  }
+    },
+    []
+  )
 
-  const archiveOptimistically = (habitId: string) =>
-    runOptimisticUpdate((current) =>
-      current.map((habit) =>
-        habit.id === habitId
-          ? {
-              ...habit,
-              archived: true,
-              archivedAt: habit.archivedAt ?? new Date().toISOString(),
-            }
-          : habit
-      )
-    )
+  const archiveOptimistically = useCallback(
+    (habitId: string) =>
+      runOptimisticUpdate((current) =>
+        current.map((habit) =>
+          habit.id === habitId
+            ? {
+                ...habit,
+                archived: true,
+                archivedAt: habit.archivedAt ?? new Date().toISOString(),
+              }
+            : habit
+        )
+      ),
+    [runOptimisticUpdate]
+  )
 
-  const unarchiveOptimistically = (habitId: string) =>
-    runOptimisticUpdate((current) =>
-      current.map((habit) =>
-        habit.id === habitId
-          ? {
-              ...habit,
-              archived: false,
-              archivedAt: null,
-            }
-          : habit
-      )
-    )
+  const unarchiveOptimistically = useCallback(
+    (habitId: string) =>
+      runOptimisticUpdate((current) =>
+        current.map((habit) =>
+          habit.id === habitId
+            ? {
+                ...habit,
+                archived: false,
+                archivedAt: null,
+              }
+            : habit
+        )
+      ),
+    [runOptimisticUpdate]
+  )
 
-  const deleteOptimistically = (habitId: string) =>
-    runOptimisticUpdate((current) => current.filter((habit) => habit.id !== habitId))
+  const deleteOptimistically = useCallback(
+    (habitId: string) => runOptimisticUpdate((current) => current.filter((habit) => habit.id !== habitId)),
+    [runOptimisticUpdate]
+  )
 
-  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>, habitId: string) => {
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey
-    ) {
-      return
-    }
+  const handleRowClick = useCallback(
+    (event: MouseEvent<HTMLTableRowElement>, habitId: string) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return
+      }
 
-    if (
-      event.target instanceof Element &&
-      event.target.closest('a, button, input, select, textarea, [role="button"]')
-    ) {
-      return
-    }
+      if (
+        event.target instanceof Element &&
+        event.target.closest('a, button, input, select, textarea, [role="button"]')
+      ) {
+        return
+      }
 
-    router.push(`/habits/${habitId}`)
-  }
+      router.push(`/habits/${habitId}`)
+    },
+    [router]
+  )
+  const handleEdit = useCallback((habitId: string) => router.push(`/habits/${habitId}/edit`), [router])
 
   const activeHabits = optimisticHabits.filter((h) => !h.archived)
   const archivedHabits = optimisticHabits
@@ -125,45 +229,15 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {activeHabits.map((habit) => {
-                const bgColor = getColorById(habit.color ?? DEFAULT_HABIT_COLOR).color
-
-                return (
-                  <TableRow
-                    className="cursor-pointer"
-                    key={habit.id}
-                    onClick={(event) => handleRowClick(event, habit.id)}
-                  >
-                    <TableCell>
-                      <div
-                        className="flex h-10 w-10 items-center justify-center rounded-full"
-                        style={{ backgroundColor: bgColor }}
-                      >
-                        <Icon className="h-5 w-5 text-white" name={normalizeIconName(habit.icon)} />
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <Link className="hover:underline" href={`/habits/${habit.id}`}>
-                        {habit.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{getPeriodLabel(habit.period)}</TableCell>
-                    <TableCell>{habit.frequency}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {format(new Date(habit.createdAt), 'yyyy/MM/dd', { locale: ja })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <HabitTableActions
-                        archived={habit.archived}
-                        habitId={habit.id}
-                        habitName={habit.name}
-                        onArchiveOptimistic={() => archiveOptimistically(habit.id)}
-                        onEdit={() => router.push(`/habits/${habit.id}/edit`)}
-                      />
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
+              {activeHabits.map((habit) => (
+                <ActiveHabitRow
+                  habit={habit}
+                  key={habit.id}
+                  onArchive={archiveOptimistically}
+                  onEdit={handleEdit}
+                  onRowClick={handleRowClick}
+                />
+              ))}
             </TableBody>
           </Table>
         )}
@@ -189,42 +263,12 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
             </TableHeader>
             <TableBody>
               {archivedHabits.map((habit) => (
-                <TableRow className="bg-muted/20 text-muted-foreground hover:bg-muted/30" key={habit.id}>
-                  <TableCell>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/70">
-                      <Icon className="h-5 w-5 text-muted-foreground/80" name={normalizeIconName(habit.icon)} />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span>{habit.name}</span>
-                      <span className="rounded-full border border-muted-foreground/30 px-2 py-0.5 font-medium text-[10px] text-muted-foreground">
-                        アーカイブ
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {habit.archivedAt ? format(new Date(habit.archivedAt), 'yyyy/MM/dd', { locale: ja }) : '-'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <HabitUnarchiveButton habitId={habit.id} onOptimistic={() => unarchiveOptimistically(habit.id)} />
-                      <HabitDeleteDialog
-                        habitId={habit.id}
-                        habitName={habit.name}
-                        onOptimistic={() => deleteOptimistically(habit.id)}
-                        trigger={
-                          <IconLabelButton
-                            icon={<Trash2 className="h-4 w-4" />}
-                            label="完全に削除"
-                            size="sm"
-                            variant="outline"
-                          />
-                        }
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <ArchivedHabitRow
+                  habit={habit}
+                  key={habit.id}
+                  onDelete={deleteOptimistically}
+                  onUnarchive={unarchiveOptimistically}
+                />
               ))}
             </TableBody>
           </Table>

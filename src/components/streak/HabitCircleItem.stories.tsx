@@ -21,16 +21,19 @@ const mockHabit: HabitWithProgress = {
 
 const bgColor = '#3b82f6'
 const ringBgColor = 'rgba(255,255,255,0.2)'
+function noop() {
+  // Storybook のイベントハンドラ用 no-op。
+}
 
 const meta = {
   args: {
     bgColor,
     habit: mockHabit,
     isCompleted: false,
-    onCheckin: () => undefined,
-    onContextMenu: () => undefined,
-    onLongPressEnd: () => undefined,
-    onLongPressStart: () => undefined,
+    onCheckin: noop,
+    onContextMenu: noop,
+    onLongPressEnd: noop,
+    onLongPressStart: noop,
     ringBgColor,
   },
   component: HabitCircleItem,
@@ -74,10 +77,10 @@ if (import.meta.vitest) {
           bgColor={bgColor}
           habit={mockHabit}
           isCompleted={false}
-          onCheckin={() => undefined}
-          onContextMenu={() => undefined}
-          onLongPressEnd={() => undefined}
-          onLongPressStart={() => undefined}
+          onCheckin={noop}
+          onContextMenu={noop}
+          onLongPressEnd={noop}
+          onLongPressStart={noop}
           ringBgColor={ringBgColor}
         />
       )

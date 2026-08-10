@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import { SW_MSG_SKIP_WAITING } from '@/constants/pwa'
 
@@ -56,7 +56,7 @@ export function ServiceWorkerRegistration() {
       })
   }, [])
 
-  const handleUpdate = () => {
+  const handleUpdate = useCallback(() => {
     if (registration?.waiting) {
       registration.waiting.postMessage({ type: SW_MSG_SKIP_WAITING })
 
@@ -65,7 +65,7 @@ export function ServiceWorkerRegistration() {
         window.location.reload()
       })
     }
-  }
+  }, [registration])
 
   if (!updateAvailable) {
     return null

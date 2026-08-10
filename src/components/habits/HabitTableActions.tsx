@@ -1,6 +1,7 @@
 'use client'
 
 import { Archive, Pencil } from 'lucide-react'
+import { useCallback } from 'react'
 import { IconLabelButton } from '@/components/basics/IconLabelButton'
 import type { OptimisticHandler } from '@/components/habits/types'
 import { Button } from '@/components/ui/button'
@@ -22,18 +23,19 @@ export function HabitTableActions({
   onEdit,
   onArchiveOptimistic,
 }: HabitTableActionsProps) {
+  const handleEdit = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation()
+      onEdit(habitId)
+    },
+    [habitId, onEdit]
+  )
+  const stopPropagation = useCallback((event: React.MouseEvent) => event.stopPropagation(), [])
+
   return (
     <div className="flex justify-end gap-1">
       {!archived && (
-        <Button
-          aria-label="編集"
-          onClick={(e) => {
-            e.stopPropagation()
-            onEdit(habitId)
-          }}
-          size="icon"
-          variant="ghost"
-        >
+        <Button aria-label="編集" onClick={handleEdit} size="icon" variant="ghost">
           <Pencil className="h-4 w-4" />
         </Button>
       )}
@@ -48,7 +50,7 @@ export function HabitTableActions({
             <IconLabelButton
               icon={<Archive className="h-4 w-4" />}
               label="アーカイブ"
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              onClick={stopPropagation}
               size="sm"
               variant="outline"
             />

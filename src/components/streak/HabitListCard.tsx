@@ -1,7 +1,7 @@
 'use client'
 
 import type { CSSProperties, KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react'
-import { useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { Button, CheckInButton } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
@@ -39,16 +39,19 @@ export function HabitListCard({
 
   const progressPercent = Math.min((habit.currentProgress / habit.frequency) * 100, 100)
 
-  const handleLongPressStart = (event: ReactPointerEvent<HTMLDivElement>) => {
-    longPressTriggeredRef.current = false
-    longPressStartPointRef.current = { x: event.clientX, y: event.clientY }
-    longPressTimerRef.current = setTimeout(() => {
-      longPressTriggeredRef.current = true
-      onLongPressOrContextMenu()
-    }, LONG_PRESS_DURATION_MS)
-  }
+  const handleLongPressStart = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      longPressTriggeredRef.current = false
+      longPressStartPointRef.current = { x: event.clientX, y: event.clientY }
+      longPressTimerRef.current = setTimeout(() => {
+        longPressTriggeredRef.current = true
+        onLongPressOrContextMenu()
+      }, LONG_PRESS_DURATION_MS)
+    },
+    [onLongPressOrContextMenu]
+  )
 
-  const handleLongPressMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const handleLongPressMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     const startPoint = longPressStartPointRef.current
     if (!(startPoint && longPressTimerRef.current)) {
       return
@@ -59,39 +62,78 @@ export function HabitListCard({
       clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
     }
-  }
+  }, [])
 
-  const handleLongPressEnd = () => {
+  const handleLongPressEnd = useCallback(() => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
     }
     longPressStartPointRef.current = null
-  }
+  }, [])
 
-  const handleContextMenu = (event: React.MouseEvent) => {
-    event.preventDefault()
-    longPressTriggeredRef.current = true
-    onLongPressOrContextMenu()
-  }
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault()
+      longPressTriggeredRef.current = true
+      onLongPressOrContextMenu()
+    },
+    [onLongPressOrContextMenu]
+  )
 
-  const handleCardClick = () => {
+  const handleCardClick = useCallback(() => {
     if (longPressTriggeredRef.current) {
       longPressTriggeredRef.current = false
       return
     }
     onLongPressOrContextMenu()
-  }
+  }, [onLongPressOrContextMenu])
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.target !== event.currentTarget) {
-      return
-    }
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.target !== event.currentTarget) {
+        return
+      }
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        onLongPressOrContextMenu()
+      }
+    },
+    [onLongPressOrContextMenu]
+  )
+
+  const handleMenuClick = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation()
       onLongPressOrContextMenu()
-    }
-  }
+    },
+    [onLongPressOrContextMenu]
+  )
+  const handleButtonPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => event.stopPropagation(),
+    []
+  )
+  const handleCheckin = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation()
+      ;(completed ? onRemove : onAdd)?.()
+    },
+    [completed, onAdd, onRemove]
+  )
+  const handleRemove = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation()
+      onRemove?.()
+    },
+    [onRemove]
+  )
+  const handleAdd = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation()
+      onAdd?.()
+    },
+    [onAdd]
+  )
 
   return (
     <div
@@ -117,13 +159,8 @@ export function HabitListCard({
         aria-haspopup="dialog"
         aria-label={`${habit.name}の操作を開く`}
         className="absolute top-3 right-3 h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
-        onClick={(event) => {
-          event.stopPropagation()
-          onLongPressOrContextMenu()
-        }}
-        onPointerDown={(event) => {
-          event.stopPropagation()
-        }}
+        onClick={handleMenuClick}
+        onPointerDown={handleButtonPointerDown}
         size="icon"
         type="button"
         variant="ghost"
@@ -136,11 +173,7 @@ export function HabitListCard({
           aria-pressed={completed}
           completed={completed}
           disabled={false}
-          onClick={(event) => {
-            event.stopPropagation()
-            const handler = completed ? onRemove : onAdd
-            handler?.()
-          }}
+          onClick={handleCheckin}
           style={
             {
               '--tw-ring-color': colorData.color,
@@ -189,10 +222,7 @@ export function HabitListCard({
                   aria-label="チェックインを1つ減らす"
                   className="h-8 w-8 rounded-full border border-border/70 bg-background/95 p-0 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:opacity-45"
                   disabled={habit.currentProgress <= 0}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onRemove()
-                  }}
+                  onClick={handleRemove}
                   size="icon"
                   type="button"
                   variant="ghost"
@@ -203,10 +233,7 @@ export function HabitListCard({
                   aria-label="チェックインを1つ増やす"
                   className="h-8 w-8 rounded-full border border-border/70 bg-background/95 p-0 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:opacity-45"
                   disabled={habit.currentProgress >= habit.frequency}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onAdd()
-                  }}
+                  onClick={handleAdd}
                   size="icon"
                   type="button"
                   variant="ghost"

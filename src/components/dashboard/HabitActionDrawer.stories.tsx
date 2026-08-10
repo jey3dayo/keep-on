@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import type { HabitWithProgress } from '@/types/habit'
@@ -13,6 +14,8 @@ function StorybookHabitActionDrawer({
   habit: HabitWithProgress | null
   onOpenChange: (open: boolean) => void
 }) {
+  const handleClose = useCallback(() => onOpenChange(false), [onOpenChange])
+
   if (!habit) {
     return null
   }
@@ -27,16 +30,16 @@ function StorybookHabitActionDrawer({
           <DrawerDescription>{habit.name}</DrawerDescription>
         </DrawerHeader>
         <div className="flex gap-2 p-4 pt-0">
-          <Button className="flex-1" onClick={() => onOpenChange(false)} variant="outline">
+          <Button className="flex-1" onClick={handleClose} variant="outline">
             編集
           </Button>
 
           {isArchived ? (
-            <Button className="flex-1" onClick={() => onOpenChange(false)} variant="destructive">
+            <Button className="flex-1" onClick={handleClose} variant="destructive">
               削除
             </Button>
           ) : (
-            <Button className="flex-1" onClick={() => onOpenChange(false)} variant="secondary">
+            <Button className="flex-1" onClick={handleClose} variant="secondary">
               アーカイブ
             </Button>
           )}
@@ -88,10 +91,14 @@ const mockHabit = {
   userId: 'user1',
 }
 
+function logDrawerOpenChange(open: boolean) {
+  console.log('Drawer opened:', open)
+}
+
 export const Default: Story = {
   args: {
     habit: mockHabit,
-    onOpenChange: (open) => console.log('Drawer opened:', open),
+    onOpenChange: logDrawerOpenChange,
     open: true,
   },
 }
@@ -110,7 +117,7 @@ export const WeeklyHabit: Story = {
       period: 'weekly' as const,
       streak: 12,
     },
-    onOpenChange: (open) => console.log('Drawer opened:', open),
+    onOpenChange: logDrawerOpenChange,
     open: true,
   },
 }
@@ -129,7 +136,7 @@ export const MonthlyHabit: Story = {
       period: 'monthly' as const,
       streak: 3,
     },
-    onOpenChange: (open) => console.log('Drawer opened:', open),
+    onOpenChange: logDrawerOpenChange,
     open: true,
   },
 }
@@ -144,7 +151,7 @@ export const Completed: Story = {
       name: '完了した習慣',
       streak: 30,
     },
-    onOpenChange: (open) => console.log('Drawer opened:', open),
+    onOpenChange: logDrawerOpenChange,
     open: true,
   },
 }
@@ -158,7 +165,7 @@ export const Archived: Story = {
       id: '5',
       name: 'アーカイブされた習慣',
     },
-    onOpenChange: (open) => console.log('Drawer opened:', open),
+    onOpenChange: logDrawerOpenChange,
     open: true,
   },
 }
@@ -166,7 +173,7 @@ export const Archived: Story = {
 export const Closed: Story = {
   args: {
     habit: mockHabit,
-    onOpenChange: (open) => console.log('Drawer opened:', open),
+    onOpenChange: logDrawerOpenChange,
     open: false,
   },
 }

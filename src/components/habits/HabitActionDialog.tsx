@@ -2,7 +2,7 @@
 
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
@@ -87,14 +87,17 @@ export function HabitActionDialog({
   const isControlled = open !== undefined
   const currentOpen = isControlled ? open : isOpen
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!isControlled) {
-      setIsOpen(nextOpen)
-    }
-    onOpenChange?.(nextOpen)
-  }
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!isControlled) {
+        setIsOpen(nextOpen)
+      }
+      onOpenChange?.(nextOpen)
+    },
+    [isControlled, onOpenChange]
+  )
 
-  const handleConfirm = async () => {
+  const handleConfirm = useCallback(async () => {
     if (isProcessing) {
       return
     }
@@ -128,7 +131,17 @@ export function HabitActionDialog({
     } finally {
       setIsProcessing(false)
     }
-  }
+  }, [
+    action,
+    errorMessage,
+    habitId,
+    isProcessing,
+    onOptimistic,
+    retryOnError,
+    router,
+    successMessage,
+    handleOpenChange,
+  ])
 
   return (
     <AlertDialog onOpenChange={handleOpenChange} open={currentOpen}>

@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { resetHabitProgressAction } from '@/app/actions/habits/reset'
 import { Button } from '@/components/basics/Button'
 import { Icon } from '@/components/basics/Icon'
@@ -99,7 +99,7 @@ export function HabitSimpleView({
     []
   )
 
-  const closeResetDialog = () => {
+  const closeResetDialog = useCallback(() => {
     setResetDialogEntered(false)
     if (resetDialogExitTimerRef.current) {
       clearTimeout(resetDialogExitTimerRef.current)
@@ -108,7 +108,7 @@ export function HabitSimpleView({
       setResetConfirm(null)
       resetDialogExitTimerRef.current = null
     }, RESET_DIALOG_EXIT_MS)
-  }
+  }, [])
 
   const currentHabits = useMemo(
     () => habits.slice(currentPage * habitsPerPage, (currentPage + 1) * habitsPerPage),
@@ -127,29 +127,28 @@ export function HabitSimpleView({
 
   const ringBgColor = getRingColorFromBackground(bgColor)
 
-  const handleProgressClick = (
-    event: React.MouseEvent<HTMLButtonElement>,
-    habit: HabitWithProgress,
-    isCompleted: boolean
-  ) => {
-    if (longPressTriggeredRef.current) {
-      event.preventDefault()
-      event.stopPropagation()
-      longPressTriggeredRef.current = false
-      return
-    }
-
-    // 完了済みの場合は削除、未完了の場合は追加
-    if (isCompleted) {
-      if (onRemoveCheckin) {
-        onRemoveCheckin(habit.id)
+  const handleProgressClick = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>, habit: HabitWithProgress, isCompleted: boolean) => {
+      if (longPressTriggeredRef.current) {
+        event.preventDefault()
+        event.stopPropagation()
+        longPressTriggeredRef.current = false
+        return
       }
-    } else if (onAddCheckin) {
-      onAddCheckin(habit.id)
-    }
-  }
 
-  const runResetWithRetry = async (habitId: string) => {
+      // 完了済みの場合は削除、未完了の場合は追加
+      if (isCompleted) {
+        if (onRemoveCheckin) {
+          onRemoveCheckin(habit.id)
+        }
+      } else if (onAddCheckin) {
+        onAddCheckin(habit.id)
+      }
+    },
+    [onAddCheckin, onRemoveCheckin]
+  )
+
+  const runResetWithRetry = useCallback(async (habitId: string) => {
     const maxAttempts = Math.max(1, RETRY_MAX_ATTEMPTS)
     let lastError: unknown = null
 
@@ -171,9 +170,9 @@ export function HabitSimpleView({
     }
 
     return { error: lastError, ok: false as const }
-  }
+  }, [])
 
-  const handleResetConfirm = async () => {
+  const handleResetConfirm = useCallback(async () => {
     if (!resetConfirm || isResetting) {
       return
     }
@@ -205,27 +204,30 @@ export function HabitSimpleView({
     } finally {
       setIsResetting(false)
     }
-  }
+  }, [closeResetDialog, isResetting, onResetOptimistic, resetConfirm, router, runResetWithRetry])
 
-  const openDrawer = (habit: HabitWithProgress) => {
+  const openDrawer = useCallback((habit: HabitWithProgress) => {
     setDrawerHabitId(habit.id)
     setDrawerState({ habit, open: true })
-  }
+  }, [])
 
-  const closeDrawer = () => {
+  const closeDrawer = useCallback(() => {
     setDrawerState({ habit: null, open: false })
-  }
+  }, [])
 
-  const handleLongPressStart = (habit: HabitWithProgress, event: React.PointerEvent<HTMLButtonElement>) => {
-    longPressTriggeredRef.current = false
-    longPressStartPointRef.current = { x: event.clientX, y: event.clientY }
-    longPressTimerRef.current = setTimeout(() => {
-      longPressTriggeredRef.current = true
-      openDrawer(habit)
-    }, LONG_PRESS_DURATION_MS)
-  }
+  const handleLongPressStart = useCallback(
+    (habit: HabitWithProgress, event: React.PointerEvent<HTMLButtonElement>) => {
+      longPressTriggeredRef.current = false
+      longPressStartPointRef.current = { x: event.clientX, y: event.clientY }
+      longPressTimerRef.current = setTimeout(() => {
+        longPressTriggeredRef.current = true
+        openDrawer(habit)
+      }, LONG_PRESS_DURATION_MS)
+    },
+    [openDrawer]
+  )
 
-  const handleLongPressMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+  const handleLongPressMove = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
     const startPoint = longPressStartPointRef.current
     if (!(startPoint && longPressTimerRef.current)) {
       return
@@ -236,9 +238,9 @@ export function HabitSimpleView({
       clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
     }
-  }
+  }, [])
 
-  const handleLongPressEnd = (resetTriggered: boolean) => {
+  const handleLongPressEnd = useCallback((resetTriggered: boolean) => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
@@ -247,13 +249,35 @@ export function HabitSimpleView({
     if (resetTriggered) {
       longPressTriggeredRef.current = false
     }
-  }
+  }, [])
 
-  const handleContextMenu = (e: React.MouseEvent, habit: HabitWithProgress) => {
-    e.preventDefault()
-    longPressTriggeredRef.current = true
-    openDrawer(habit)
-  }
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, habit: HabitWithProgress) => {
+      e.preventDefault()
+      longPressTriggeredRef.current = true
+      openDrawer(habit)
+    },
+    [openDrawer]
+  )
+  const handleDrawerOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        closeDrawer()
+      }
+    },
+    [closeDrawer]
+  )
+  const handleResetBackdropClick = useCallback(() => {
+    if (!isResetting) {
+      closeResetDialog()
+    }
+  }, [closeResetDialog, isResetting])
+  const handlePageChange = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    const page = Number(event.currentTarget.dataset.page)
+    if (Number.isInteger(page)) {
+      setCurrentPage(page)
+    }
+  }, [])
 
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
 
@@ -269,18 +293,18 @@ export function HabitSimpleView({
           {currentHabits.map((habit) => {
             const isCompleted = completedHabitIds.has(habit.id)
             return (
-              <HabitCircleItem
+              <HabitCircleItemContainer
                 bgColor={bgColor}
                 habit={habit}
                 isCompleted={isCompleted}
                 key={habit.id}
-                onAddCheckin={onAddCheckin ? () => onAddCheckin(habit.id) : undefined}
-                onCheckin={(event) => handleProgressClick(event, habit, isCompleted)}
-                onContextMenu={(e) => handleContextMenu(e, habit)}
+                onAddCheckin={onAddCheckin}
+                onContextMenu={handleContextMenu}
                 onLongPressEnd={handleLongPressEnd}
                 onLongPressMove={handleLongPressMove}
-                onLongPressStart={(event) => handleLongPressStart(habit, event)}
-                onRemoveCheckin={onRemoveCheckin ? () => onRemoveCheckin(habit.id) : undefined}
+                onLongPressStart={handleLongPressStart}
+                onProgressClick={handleProgressClick}
+                onRemoveCheckin={onRemoveCheckin}
                 ringBgColor={ringBgColor}
               />
             )
@@ -323,11 +347,7 @@ export function HabitSimpleView({
           drawerHabitId && onArchiveOptimistic ? () => onArchiveOptimistic(drawerHabitId) : undefined
         }
         onDeleteOptimistic={drawerHabitId && onDeleteOptimistic ? () => onDeleteOptimistic(drawerHabitId) : undefined}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeDrawer()
-          }
-        }}
+        onOpenChange={handleDrawerOpenChange}
         onResetOptimistic={drawerHabitId && onResetOptimistic ? () => onResetOptimistic(drawerHabitId) : undefined}
         onSkip={drawerHabitId && onSkip ? () => onSkip(drawerHabitId) : undefined}
         onUnSkip={drawerHabitId && onUnSkip ? () => onUnSkip(drawerHabitId) : undefined}
@@ -340,11 +360,7 @@ export function HabitSimpleView({
             aria-label="閉じる"
             className="dialog-backdrop absolute inset-0 h-full w-full bg-black/50 p-0 backdrop-blur-sm hover:bg-black/50"
             data-entered={resetDialogEntered ? 'true' : undefined}
-            onClick={() => {
-              if (!isResetting) {
-                closeResetDialog()
-              }
-            }}
+            onClick={handleResetBackdropClick}
             type="button"
             variant="ghost"
           />
@@ -408,8 +424,9 @@ export function HabitSimpleView({
                   'h-2 w-2 rounded-full p-0 transition-all duration-300 hover:bg-transparent',
                   currentPage === page ? 'h-2.5 w-2.5 bg-white' : 'bg-white/40 hover:bg-white/60'
                 )}
+                data-page={page}
                 key={`page-${page}`}
-                onClick={() => setCurrentPage(page)}
+                onClick={handlePageChange}
                 size="icon"
                 type="button"
                 variant="ghost"
@@ -421,5 +438,59 @@ export function HabitSimpleView({
         )}
       </nav>
     </div>
+  )
+}
+
+function HabitCircleItemContainer({
+  habit,
+  isCompleted,
+  onAddCheckin,
+  onContextMenu,
+  onLongPressEnd,
+  onLongPressMove,
+  onLongPressStart,
+  onProgressClick,
+  onRemoveCheckin,
+  ...props
+}: {
+  bgColor: string
+  ringBgColor: string
+  habit: HabitWithProgress
+  isCompleted: boolean
+  onAddCheckin?: (habitId: string) => Promise<void>
+  onContextMenu: (event: React.MouseEvent, habit: HabitWithProgress) => void
+  onLongPressEnd: (resetTriggered: boolean) => void
+  onLongPressMove: (event: React.PointerEvent<HTMLButtonElement>) => void
+  onLongPressStart: (habit: HabitWithProgress, event: React.PointerEvent<HTMLButtonElement>) => void
+  onProgressClick: (event: React.MouseEvent<HTMLButtonElement>, habit: HabitWithProgress, isCompleted: boolean) => void
+  onRemoveCheckin?: (habitId: string) => Promise<void>
+}) {
+  const handleAdd = useCallback(() => onAddCheckin?.(habit.id), [habit.id, onAddCheckin])
+  const handleCheckin = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => onProgressClick(event, habit, isCompleted),
+    [habit, isCompleted, onProgressClick]
+  )
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent) => onContextMenu(event, habit),
+    [habit, onContextMenu]
+  )
+  const handleLongPressStart = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => onLongPressStart(habit, event),
+    [habit, onLongPressStart]
+  )
+  const handleRemove = useCallback(() => onRemoveCheckin?.(habit.id), [habit.id, onRemoveCheckin])
+  return (
+    <HabitCircleItem
+      {...props}
+      habit={habit}
+      isCompleted={isCompleted}
+      onAddCheckin={onAddCheckin ? handleAdd : undefined}
+      onCheckin={handleCheckin}
+      onContextMenu={handleContextMenu}
+      onLongPressEnd={onLongPressEnd}
+      onLongPressMove={onLongPressMove}
+      onLongPressStart={handleLongPressStart}
+      onRemoveCheckin={onRemoveCheckin ? handleRemove : undefined}
+    />
   )
 }

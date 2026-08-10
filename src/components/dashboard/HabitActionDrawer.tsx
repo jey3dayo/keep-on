@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { HabitArchiveDialog } from '@/components/habits/HabitArchiveDialog'
 import { HabitDeleteDialog } from '@/components/habits/HabitDeleteDialog'
 import { HabitResetDialog } from '@/components/habits/HabitResetDialog'
@@ -50,23 +50,26 @@ export function HabitActionDrawer({
     }
   }, [habit, open, dialogType])
 
-  const openDialog = (type: 'reset' | 'archive' | 'delete') => {
-    if (!activeHabit) {
-      return
-    }
-    setDialogType(type)
-    if (open) {
-      onOpenChange(false)
-    }
-  }
+  const openDialog = useCallback(
+    (type: 'reset' | 'archive' | 'delete') => {
+      if (!activeHabit) {
+        return
+      }
+      setDialogType(type)
+      if (open) {
+        onOpenChange(false)
+      }
+    },
+    [activeHabit, onOpenChange, open]
+  )
 
-  const handleDialogOpenChange = (nextOpen: boolean) => {
+  const handleDialogOpenChange = useCallback((nextOpen: boolean) => {
     if (!nextOpen) {
       setDialogType(null)
     }
-  }
+  }, [])
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     // Drawerを閉じて、アニメーション完了後に遷移
     onOpenChange(false)
     // Vaulのデフォルトアニメーション時間（300ms）より少し長く待つ
@@ -75,9 +78,9 @@ export function HabitActionDrawer({
         router.push(`/habits/${activeHabit.id}/edit`)
       }
     }, 350)
-  }
+  }, [activeHabit, onOpenChange, router])
 
-  const handleSkipToggle = async () => {
+  const handleSkipToggle = useCallback(async () => {
     if (!activeHabit || isSkipping) {
       return
     }
@@ -92,16 +95,20 @@ export function HabitActionDrawer({
     } finally {
       setIsSkipping(false)
     }
-  }
+  }, [activeHabit, isSkipping, onOpenChange, onSkip, onUnSkip])
 
-  const handleViewDetail = () => {
+  const handleViewDetail = useCallback(() => {
     onOpenChange(false)
     setTimeout(() => {
       if (activeHabit) {
         router.push(`/habits/${activeHabit.id}`)
       }
     }, 350)
-  }
+  }, [activeHabit, onOpenChange, router])
+
+  const handleReset = useCallback(() => openDialog('reset'), [openDialog])
+  const handleArchive = useCallback(() => openDialog('archive'), [openDialog])
+  const handleDelete = useCallback(() => openDialog('delete'), [openDialog])
 
   if (!(activeHabit || dialogType)) {
     return null
@@ -134,17 +141,17 @@ export function HabitActionDrawer({
                     {activeHabit?.skippedToday ? '今日のスキップを解除' : '今日をスキップ（ストリーク維持）'}
                   </Button>
                 ) : null}
-                <Button className="col-span-2" onClick={() => openDialog('reset')} variant="outline">
+                <Button className="col-span-2" onClick={handleReset} variant="outline">
                   進捗をリセット
                 </Button>
-                <Button className="col-span-2" onClick={() => openDialog('archive')} variant="outline">
+                <Button className="col-span-2" onClick={handleArchive} variant="outline">
                   アーカイブ
                 </Button>
               </>
             )}
 
             {isArchived ? (
-              <Button className="col-span-2" onClick={() => openDialog('delete')} variant="outline">
+              <Button className="col-span-2" onClick={handleDelete} variant="outline">
                 完全に削除
               </Button>
             ) : null}

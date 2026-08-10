@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import { Button } from '@/components/basics/Button'
 import type { ColorThemeName } from '@/constants/theme'
 import { cn } from '@/lib/utils'
@@ -22,6 +23,16 @@ const colors: { name: ColorThemeName; bg: string }[] = [
 ]
 
 export function ColorPalette({ currentTheme, onThemeChange }: ColorPaletteProps) {
+  const handleThemeChange = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      const theme = event.currentTarget.dataset.theme
+      const color = colors.find((candidate) => candidate.name === theme)
+      if (color) {
+        onThemeChange(color.name)
+      }
+    },
+    [onThemeChange]
+  )
   return (
     <div className="flex items-center justify-center gap-2">
       {colors.map(({ name, bg }) => (
@@ -29,8 +40,9 @@ export function ColorPalette({ currentTheme, onThemeChange }: ColorPaletteProps)
           aria-label={`${name} テーマ`}
           aria-pressed={currentTheme === name}
           className={cn('color-swatch hover:bg-transparent', currentTheme === name && 'color-swatch-selected')}
+          data-theme={name}
           key={name}
-          onClick={() => onThemeChange(name)}
+          onClick={handleThemeChange}
           size="icon"
           style={{ backgroundColor: bg }}
           type="button"

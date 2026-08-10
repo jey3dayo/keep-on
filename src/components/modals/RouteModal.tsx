@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useCallback } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 
@@ -13,16 +14,19 @@ interface RouteModalProps {
 export function RouteModal({ title, children, compact }: RouteModalProps) {
   const router = useRouter()
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      // 履歴がない場合（直接アクセス）はダッシュボードにリダイレクト
-      if (window.history.length <= 1) {
-        router.push('/dashboard')
-      } else {
-        router.back()
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        // 履歴がない場合（直接アクセス）はダッシュボードにリダイレクト
+        if (window.history.length <= 1) {
+          router.push('/dashboard')
+        } else {
+          router.back()
+        }
       }
-    }
-  }
+    },
+    [router]
+  )
 
   return (
     <Sheet onOpenChange={handleOpenChange} open={true}>

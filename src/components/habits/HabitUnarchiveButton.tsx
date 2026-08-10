@@ -2,7 +2,7 @@
 
 import { ArchiveRestore, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import { unarchiveHabitAction } from '@/app/actions/habits/unarchive'
 import { IconLabelButton } from '@/components/basics/IconLabelButton'
@@ -19,7 +19,7 @@ export function HabitUnarchiveButton({ habitId, iconOnly = false, onOptimistic }
   const router = useRouter()
   const [isRestoring, setIsRestoring] = useState(false)
 
-  const handleUnarchive = async () => {
+  const handleUnarchive = useCallback(async () => {
     const rollback = onOptimistic?.()
 
     setIsRestoring(true)
@@ -48,7 +48,7 @@ export function HabitUnarchiveButton({ habitId, iconOnly = false, onOptimistic }
     } finally {
       setIsRestoring(false)
     }
-  }
+  }, [habitId, onOptimistic, router])
 
   const icon = isRestoring ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4" />
 

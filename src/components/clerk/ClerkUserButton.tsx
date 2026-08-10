@@ -1,25 +1,29 @@
 'use client'
 
 import { UserButton } from '@clerk/nextjs'
-import type { ComponentProps, ReactNode } from 'react'
+import { type ComponentProps, type ReactNode, useCallback } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { isMissingClerkProviderError } from '@/lib/utils/clerk'
 
 function ClerkUserButtonBoundary({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  const handleFallbackRender = useCallback(
+    ({ error }: { error: unknown }) => {
+      if (isMissingClerkProviderError(error)) {
+        return fallback ?? null
+      }
+      throw error
+    },
+    [fallback]
+  )
+
+  const handleError = useCallback((error: unknown) => {
+    if (process.env.NODE_ENV !== 'production' && isMissingClerkProviderError(error)) {
+      console.warn('ClerkProvider が見つからないため UserButton を表示できません。')
+    }
+  }, [])
+
   return (
-    <ErrorBoundary
-      fallbackRender={({ error }) => {
-        if (isMissingClerkProviderError(error)) {
-          return fallback ?? null
-        }
-        throw error
-      }}
-      onError={(error) => {
-        if (process.env.NODE_ENV !== 'production' && isMissingClerkProviderError(error)) {
-          console.warn('ClerkProvider が見つからないため UserButton を表示できません。')
-        }
-      }}
-    >
+    <ErrorBoundary fallbackRender={handleFallbackRender} onError={handleError}>
       {children}
     </ErrorBoundary>
   )

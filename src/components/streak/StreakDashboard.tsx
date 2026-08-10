@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { DashboardViewToggle } from './DashboardViewToggle'
 import { HabitListView } from './HabitListView'
@@ -31,6 +31,7 @@ export function StreakDashboard({
     totalDaily,
     totalStreak,
   } = useDashboardContent(habits)
+  const handleSettings = useCallback(() => onViewChange('dashboard'), [onViewChange])
 
   useEffect(() => {
     const root = document.documentElement
@@ -65,7 +66,7 @@ export function StreakDashboard({
           onDeleteOptimistic={onDeleteOptimistic}
           onRemoveCheckin={onRemoveCheckin}
           onResetOptimistic={onResetOptimistic}
-          onSettings={() => onViewChange('dashboard')}
+          onSettings={handleSettings}
           onSkip={onSkip}
           onUnSkip={onUnSkip}
         />
