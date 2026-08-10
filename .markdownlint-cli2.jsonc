@@ -21,6 +21,7 @@
     ".worktrees",
     "apm_modules",
     ".claude/skills",
-    ".plans"
+    ".plans",
+    "tmp"
   ]
 }
