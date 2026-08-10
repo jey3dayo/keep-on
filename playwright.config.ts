@@ -28,9 +28,9 @@ function loadDotenvPrivateKey(): string | undefined {
  * WSL2環境対応: localhost:3000へのアクセスが可能
  */
 
-// デバッグ用: 鍵の読み込み状態を確認
+// デバッグ用: 鍵の読み込み状態のみを出力する（長さも鍵の情報なので出さない）
 const privateKey = loadDotenvPrivateKey()
-console.log('[playwright.config] DOTENV_PRIVATE_KEY loaded:', !!privateKey, 'length:', privateKey?.length)
+console.log('[playwright.config] DOTENV_PRIVATE_KEY loaded:', !!privateKey)
 
 export default defineConfig({
   // 並列実行を無効化（認証セットアップの順序を保証）
@@ -82,23 +82,16 @@ export default defineConfig({
   },
 
   // 開発サーバー自動起動設定
-  webServer: (() => {
-    const key = loadDotenvPrivateKey()
-    const command = `DOTENV_PRIVATE_KEY="${key || ''}" pnpm dev`
-    const commandForLog = key ? 'DOTENV_PRIVATE_KEY="[REDACTED]" pnpm dev' : 'DOTENV_PRIVATE_KEY="[MISSING]" pnpm dev'
-    console.log('[playwright.config] webServer command:', commandForLog)
-
-    return {
-      // Next.js開発サーバーを起動（dotenvxに環境変数を渡す）
-      // シェル経由で環境変数を設定してからpnpm devを実行
-      command,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000, // WSL2環境を考慮して2分に設定
-      // "/" は /dashboard へリダイレクトし 404 終端になるため、
-      // Playwright の webServer 判定が失敗する。200 を返す /sign-in を使用する。
-      url: 'http://localhost:3000/sign-in',
-    }
-  })(),
+  webServer: {
+    command: 'pnpm dev',
+    // 秘密鍵はコマンド文字列へ補間しない。ps 出力やシェル履歴に残るため env で子プロセスへ渡す
+    env: privateKey ? { DOTENV_PRIVATE_KEY: privateKey } : {},
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000, // WSL2環境を考慮して2分に設定
+    // "/" は /dashboard へリダイレクトし 404 終端になるため、
+    // Playwright の webServer 判定が失敗する。200 を返す /sign-in を使用する。
+    url: 'http://localhost:3000/sign-in',
+  },
 
   // 並列ワーカー数（CI環境では1、ローカルでは自動）
   workers: process.env.CI ? 1 : undefined,
