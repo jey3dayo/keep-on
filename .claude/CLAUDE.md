@@ -29,7 +29,7 @@ KeepOn は、Next.js 15 + Cloudflare Workers + Drizzle ORM + Clerk で構築さ�
 
 - `src/components/ui/` 配下のshadcn/uiコンポーネントは直接編集しない
 - カスタマイズが必要な場合は `src/components/` 直下にラッパーを作成
-- フォーム入力には `@/components/Input` を使用（パスワードマネージャー対応済み）
+- 通常の text 系フォーム入力には `@/components/basics/Input` を使用（パスワードマネージャー対応済み）。hidden / time など native の特殊 input は対象外
 
 ### 環境変数管理
 

@@ -11,8 +11,10 @@ import { toast } from 'sonner'
 import { createHabit } from '@/app/actions/habits/create'
 import { updateHabitAction } from '@/app/actions/habits/update'
 import { Button } from '@/components/basics/Button'
+import { Input } from '@/components/basics/Input'
 import { HabitIconPreview } from '@/components/habits/HabitIconPreview'
 import { HabitPreviewCard } from '@/components/habits/HabitPreviewCard'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { DEFAULT_HABIT_COLOR, DEFAULT_HABIT_ICON, DEFAULT_HABIT_PERIOD } from '@/constants/habit'
 import {
   getColorById,
@@ -109,11 +111,12 @@ function HabitNameField({ control, selectedColorValue, t }: HabitFormFieldProps)
       <label className="font-medium text-muted-foreground text-sm uppercase tracking-wide" htmlFor={inputId}>
         {t('habits.form.nameLabel')}
       </label>
-      <input
+      <Input
         {...field}
         aria-describedby={fieldState.error ? errorId : undefined}
         aria-invalid={fieldState.error ? true : undefined}
-        className="w-full rounded-xl border border-border bg-card px-4 py-3 text-foreground transition-all placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring/50"
+        className="h-auto rounded-xl border-border bg-card px-4 py-3 text-foreground shadow-none transition-all placeholder:text-muted-foreground/50 focus-visible:ring-2 focus-visible:ring-ring/50"
+        error={Boolean(fieldState.error)}
         id={inputId}
         placeholder={t('habits.form.namePlaceholder')}
         required
@@ -131,139 +134,157 @@ function HabitNameField({ control, selectedColorValue, t }: HabitFormFieldProps)
 
 function HabitIconField({ control, selectedColorValue, t }: HabitFormFieldProps) {
   const { field } = useController({ control, name: 'icon' })
-  const handleIconChange = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => field.onChange(event.currentTarget.value),
-    [field]
-  )
+  const headingId = useId()
 
   return (
     <div className="space-y-3">
-      <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+      <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide" id={headingId}>
         {t('habits.form.iconLabel')}
       </div>
-      <div className="grid grid-cols-6 gap-3">
+      <RadioGroup
+        aria-labelledby={headingId}
+        className="grid grid-cols-6 gap-3"
+        onValueChange={field.onChange}
+        value={field.value}
+      >
         {habitIcons.map((item) => {
           const IconComponent = item.icon
           const isSelected = field.value === item.id
           return (
-            <Button
-              className={cn(
-                'h-12 w-12 rounded-xl transition-all duration-200',
-                isSelected ? 'ring-2 ring-offset-2 ring-offset-background' : 'bg-card hover:bg-card/80'
-              )}
-              key={item.id}
-              onClick={handleIconChange}
-              size="icon"
-              style={
-                {
-                  '--tw-ring-color': selectedColorValue,
-                  backgroundColor: isSelected ? selectedColorValue : undefined,
-                } as React.CSSProperties
-              }
-              type="button"
-              value={item.id}
-              variant="ghost"
-            >
-              <IconComponent
-                className={cn('h-6 w-6 transition-colors', isSelected ? 'text-background' : 'text-muted-foreground')}
+            <div className="relative h-12 w-12" key={item.id}>
+              {/* RadioGroupItem のビルトイン Indicator は表示できないため、実体は透明な overlay として重ね、見た目は下の div で維持する */}
+              <RadioGroupItem
+                aria-label={item.label}
+                className="peer absolute inset-0 h-12 w-12 cursor-pointer rounded-xl border-0 text-transparent [&_svg]:hidden"
+                value={item.id}
               />
-            </Button>
+              <div
+                aria-hidden="true"
+                className={cn(
+                  'pointer-events-none flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-200',
+                  isSelected ? 'ring-2 ring-offset-2 ring-offset-background' : 'bg-card peer-hover:bg-card/80'
+                )}
+                style={
+                  {
+                    '--tw-ring-color': selectedColorValue,
+                    backgroundColor: isSelected ? selectedColorValue : undefined,
+                  } as React.CSSProperties
+                }
+              >
+                <IconComponent
+                  className={cn('h-6 w-6 transition-colors', isSelected ? 'text-background' : 'text-muted-foreground')}
+                />
+              </div>
+            </div>
           )
         })}
-      </div>
+      </RadioGroup>
     </div>
   )
 }
 
 function HabitPeriodField({ control, selectedColorValue, t }: HabitFormFieldProps) {
   const { field } = useController({ control, name: 'period' })
-  const handlePeriodChange = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => field.onChange(event.currentTarget.value),
-    [field]
-  )
+  const headingId = useId()
 
   return (
     <div className="space-y-3">
-      <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+      <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide" id={headingId}>
         {t('habits.form.periodLabel')}
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <RadioGroup
+        aria-labelledby={headingId}
+        className="grid grid-cols-3 gap-2"
+        onValueChange={field.onChange}
+        value={field.value}
+      >
         {taskPeriods.map((period) => {
           const isSelected = field.value === period.id
+          const labelId = `${headingId}-${period.id}`
           return (
-            <Button
-              className={cn(
-                'relative h-auto flex-col gap-1 rounded-xl border px-3 py-4 transition-all duration-200',
-                isSelected ? 'border-transparent' : 'border-border bg-card hover:bg-card/80'
-              )}
-              key={period.id}
-              onClick={handlePeriodChange}
-              style={{
-                backgroundColor: isSelected ? `${selectedColorValue}20` : undefined,
-                borderColor: isSelected ? selectedColorValue : undefined,
-              }}
-              type="button"
-              value={period.id}
-              variant="ghost"
-            >
-              <span
+            <div className="relative" key={period.id}>
+              {/* RadioGroupItem のビルトイン Indicator は表示できないため、実体は透明な overlay として重ね、見た目は下の div で維持する */}
+              <RadioGroupItem
+                aria-labelledby={labelId}
+                className="peer absolute inset-0 h-full w-full cursor-pointer rounded-xl border-0 text-transparent [&_svg]:hidden"
+                value={period.id}
+              />
+              <div
+                aria-hidden="true"
                 className={cn(
-                  'font-semibold text-base transition-colors',
-                  isSelected ? 'text-foreground' : 'text-muted-foreground'
+                  'pointer-events-none relative flex h-auto flex-col gap-1 rounded-xl border px-3 py-4 transition-all duration-200',
+                  isSelected ? 'border-transparent' : 'border-border bg-card peer-hover:bg-card/80'
                 )}
-                style={{ color: isSelected ? selectedColorValue : undefined }}
+                style={{
+                  backgroundColor: isSelected ? `${selectedColorValue}20` : undefined,
+                  borderColor: isSelected ? selectedColorValue : undefined,
+                }}
               >
-                {period.label}
-              </span>
-              <span className="text-muted-foreground text-xs">{period.sublabel}</span>
-              {isSelected && (
-                <div
-                  className="absolute top-2 right-2 h-2 w-2 rounded-full"
-                  style={{ backgroundColor: selectedColorValue }}
-                />
-              )}
-            </Button>
+                <span
+                  className={cn(
+                    'font-semibold text-base transition-colors',
+                    isSelected ? 'text-foreground' : 'text-muted-foreground'
+                  )}
+                  id={labelId}
+                  style={{ color: isSelected ? selectedColorValue : undefined }}
+                >
+                  {period.label}
+                </span>
+                <span className="text-muted-foreground text-xs">{period.sublabel}</span>
+                {isSelected && (
+                  <div
+                    className="absolute top-2 right-2 h-2 w-2 rounded-full"
+                    style={{ backgroundColor: selectedColorValue }}
+                  />
+                )}
+              </div>
+            </div>
           )
         })}
-      </div>
+      </RadioGroup>
     </div>
   )
 }
 
-function HabitColorField({ control, selectedColorValue: _selectedColorValue, t }: HabitFormFieldProps) {
+function HabitColorField({ control, t }: HabitFormFieldProps) {
   const { field } = useController({ control, name: 'color' })
-  const handleColorChange = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => field.onChange(event.currentTarget.value),
-    [field]
-  )
+  const headingId = useId()
 
   return (
     <div className="space-y-3">
-      <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+      <div className="font-medium text-muted-foreground text-sm uppercase tracking-wide" id={headingId}>
         {t('habits.form.colorLabel')}
       </div>
-      <div className="scrollbar-hide flex gap-3 overflow-x-auto px-1 pt-1 pb-2">
+      <RadioGroup
+        aria-labelledby={headingId}
+        className="scrollbar-hide flex gap-3 overflow-x-auto px-1 pt-1 pb-2"
+        onValueChange={field.onChange}
+        value={field.value}
+      >
         {habitColors.map((color) => {
           const isSelected = field.value === color.id
           return (
-            <Button
-              className={cn(
-                'h-10 w-10 flex-shrink-0 rounded-full transition-all duration-200',
-                isSelected && 'ring-2 ring-offset-background'
-              )}
-              key={color.id}
-              onClick={handleColorChange}
-              size="icon"
-              style={{ '--tw-ring-color': color.color, backgroundColor: color.color } as React.CSSProperties}
-              type="button"
-              value={color.id}
-              variant="ghost"
-            >
-              {isSelected && <Check className="mx-auto h-5 w-5 text-background" />}
-            </Button>
+            <div className="relative h-10 w-10 flex-shrink-0" key={color.id}>
+              {/* RadioGroupItem のビルトイン Indicator は表示できないため、実体は透明な overlay として重ね、見た目は下の div で維持する */}
+              <RadioGroupItem
+                aria-label={color.label}
+                className="peer absolute inset-0 h-10 w-10 cursor-pointer rounded-full border-0 text-transparent [&_svg]:hidden"
+                value={color.id}
+              />
+              <div
+                aria-hidden="true"
+                className={cn(
+                  'pointer-events-none flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200',
+                  isSelected && 'ring-2 ring-offset-background'
+                )}
+                style={{ '--tw-ring-color': color.color, backgroundColor: color.color } as React.CSSProperties}
+              >
+                {isSelected && <Check className="mx-auto h-5 w-5 text-background" />}
+              </div>
+            </div>
           )
         })}
-      </div>
+      </RadioGroup>
     </div>
   )
 }
@@ -285,7 +306,9 @@ function HabitFrequencyField({ control, selectedColorValue, t, frequencyLabel }:
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <Button
+            aria-label={t('habits.form.frequencyDecreaseLabel')}
             className="h-10 w-10 rounded-full p-0"
+            disabled={field.value <= 1}
             onClick={handleDecrease}
             size="icon"
             type="button"
@@ -300,6 +323,7 @@ function HabitFrequencyField({ control, selectedColorValue, t, frequencyLabel }:
             <span className="text-muted-foreground text-sm">{frequencyLabel}</span>
           </div>
           <Button
+            aria-label={t('habits.form.frequencyIncreaseLabel')}
             className="h-10 w-10 rounded-full p-0"
             onClick={handleIncrease}
             size="icon"

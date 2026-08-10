@@ -11,6 +11,8 @@
       "periodLabel": "頻度",
       "colorLabel": "カラー",
       "frequencyLabel": "目標回数",
+      "frequencyDecreaseLabel": "目標回数を減らす",
+      "frequencyIncreaseLabel": "目標回数を増やす",
       "reminderLabel": "リマインダー",
       "reminderTitle": "通知時刻",
       "reminderDescription": "未設定の場合はリマインドなし",
