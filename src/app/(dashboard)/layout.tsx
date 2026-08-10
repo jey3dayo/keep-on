@@ -39,7 +39,8 @@ export default async function DashboardLayout({
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
-        {/* 固定 nav を持たないページ（/habits 等）が iOS のホームバーに被らないよう下端を確保する */}
+        {/* このスクロールコンテナは (dashboard) 配下の全ページに効く。固定 nav を持つページでは nav 側にも
+            safe-area があり重複するが、fixed nav はビューポート基準で重なりは発生しないため許容している */}
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden pb-[env(safe-area-inset-bottom)]">
           {children}
         </div>

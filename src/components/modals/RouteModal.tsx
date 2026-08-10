@@ -33,7 +33,9 @@ export function RouteModal({ title, children, compact }: RouteModalProps) {
       <SheetContent
         className={cn(
           'mt-2 h-[90dvh] sm:mx-auto sm:h-[85dvh] sm:max-w-xl',
-          // 下端 Sheet なので iOS のホームインジケータ分を既存の下パディングへ加算する
+          // safe-area の所有者はこのオーバーレイ（下端 Sheet）に一元化する。
+          // children 側（HabitFormServer の hideHeader 分岐など）は env(safe-area-inset-bottom) を
+          // 追加しないこと。二重加算になり iOS でホームバー分の余白が2つ分空く。
           compact
             ? 'overflow-hidden p-0 pb-[env(safe-area-inset-bottom)] [&>button:first-child]:hidden'
             : 'p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]'

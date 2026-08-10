@@ -486,8 +486,10 @@ export function HabitFormServer({
         />
 
         {/* Submit Button for Modal */}
+        {/* hideHeader は RouteModal 経由でのみ true になる（フルページの /habits/new, /habits/[id]/edit では常に false）。
+            safe-area の加算は RouteModal 側が一元的に持つため、ここでは通常の pb-4 に留める。 */}
         {hideHeader ? (
-          <div className="sticky bottom-0 mt-8 bg-background pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <div className="sticky bottom-0 mt-8 bg-background pt-2 pb-4">
             <Button
               className="w-full"
               disabled={!watchedName?.trim() || isSaving}
