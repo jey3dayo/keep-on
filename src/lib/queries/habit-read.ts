@@ -220,12 +220,14 @@ export async function getHabitsWithProgress(
 
     // habits / checkins / skips / weekStart は独立したクエリのため1段のPromise.allで並列取得する
     // checkins・skips は habits へのJOINで userId + archived 起点にフィルタし、habitIds経由のinArrayを不要にする
+    // checkins も skips と同じ streakLimitDateKey で絞る: 進捗カウント・ストリーク計算はどちらも直近1年分で足り、
+    // skips側の下限と揃えないと際限なく全期間分を転送し続けることになるため
     const habitListPromise = getHabitsByUserId(userId)
     const allCheckinsPromise: Promise<(typeof checkins.$inferSelect)[]> = db
       .select(getTableColumns(checkins))
       .from(checkins)
       .innerJoin(habits, eq(checkins.habitId, habits.id))
-      .where(and(eq(habits.userId, userId), eq(habits.archived, false)))
+      .where(and(eq(habits.userId, userId), eq(habits.archived, false), gte(checkins.date, streakLimitDateKey)))
       .orderBy(checkins.habitId, desc(checkins.date), desc(checkins.createdAt))
     const allSkipsPromise: Promise<(typeof habitSkips.$inferSelect)[]> = db
       .select(getTableColumns(habitSkips))
