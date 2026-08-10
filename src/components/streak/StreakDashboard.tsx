@@ -33,9 +33,11 @@ export function StreakDashboard({
   useEffect(() => {
     const root = document.documentElement
     root.style.setProperty('--dashboard-bg', 'var(--primary)')
-    // position:fixed は initial containing block までしか覆えず、iOS standalone では
-    // その外側（ホームインジケータ周辺・オーバースクロール域）に body の色が残る。
-    // キャンバスを塗る html 自身に色を置くことでその領域まで届かせる。
+    // iOS standalone の下端（ホームインジケータ周辺・オーバースクロール域）を塗るのはこの 1 行だけ。
+    // position:fixed は initial containing block までしか覆えずその外側に届かないため、
+    // 以前ここに置いていた fixed inset-0 のレイヤーは SidebarInset の --dashboard-bg に
+    // 完全に覆われて 1px も寄与していなかった（ブラウザで実測して削除済み）。
+    // 「重複だから」と消すと iOS で黒帯が再発する。
     root.style.backgroundColor = 'var(--primary)'
 
     return () => {
@@ -46,12 +48,6 @@ export function StreakDashboard({
 
   return (
     <>
-      {/*
-       * ビュー背景は min-h-full の連鎖で塗っているため、iOS standalone では
-       * safe-area 分だけ下端に body の色が露出する。viewport 全面を同色で
-       * 埋める固定レイヤーを敷いて高さ計算に依存させない。
-       */}
-      <div aria-hidden className="fixed inset-0 -z-10" style={{ backgroundColor: 'var(--primary)' }} />
       {currentView === 'simple' ? (
         <HabitSimpleView
           backgroundColor="var(--primary)"
