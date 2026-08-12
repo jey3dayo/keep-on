@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isDatabaseError, isTimeoutError } from '../logging'
+import { isDatabaseError, isTimeoutError, logSpan } from '../logging'
 
 describe('isDatabaseError', () => {
   // 契約: classifyConnectionError が 'timeout' | 'network' | 'connection' を返す場合のみ
@@ -68,7 +68,6 @@ describe('isDatabaseError', () => {
 
 describe('isTimeoutError', () => {
   it('logSpan が生成する TimeoutError（name="TimeoutError"）を true と判定する', async () => {
-    const { logSpan } = await import('../logging')
     let caught: unknown
     try {
       await logSpan('test-span', () => new Promise(() => undefined), undefined, { timeoutMs: 1 })
@@ -96,5 +95,35 @@ describe('isTimeoutError', () => {
 
   it('プリミティブな文字列は false と判定する', () => {
     expect(isTimeoutError('TimeoutError')).toBe(false)
+  })
+})
+
+describe('logSpan', () => {
+  // 回帰テスト: fnPromise に .catch() を付与した後、race の else 分岐が
+  // fn() を再度呼んでいたことで timeoutMs 未指定時に fn が2回実行されるバグがあった。
+  it('timeoutMs 未指定時は fn が1回だけ呼ばれる', async () => {
+    let callCount = 0
+    const fn = () => {
+      callCount += 1
+      return Promise.resolve('result')
+    }
+
+    const result = await logSpan('test-span-no-timeout', fn)
+
+    expect(callCount).toBe(1)
+    expect(result).toBe('result')
+  })
+
+  it('timeoutMs 指定時に通常完了しても fn が1回だけ呼ばれる', async () => {
+    let callCount = 0
+    const fn = () => {
+      callCount += 1
+      return Promise.resolve('result')
+    }
+
+    const result = await logSpan('test-span-with-timeout', fn, undefined, { timeoutMs: 1000 })
+
+    expect(callCount).toBe(1)
+    expect(result).toBe('result')
   })
 })

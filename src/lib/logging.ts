@@ -149,7 +149,7 @@ export async function logSpan<T>(
       throw error
     })
 
-    const result = await (timeoutPromise ? Promise.race([fnPromise, timeoutPromise]) : fn())
+    const result = await (timeoutPromise ? Promise.race([fnPromise, timeoutPromise]) : fnPromise)
     const ms = Math.round(nowMs() - start)
     logInfo(`${name}:end`, data ? { ...data, ms } : { ms })
     return result
