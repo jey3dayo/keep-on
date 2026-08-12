@@ -33,16 +33,20 @@ export function StreakDashboard({
   useEffect(() => {
     const root = document.documentElement
     root.style.setProperty('--dashboard-bg', 'var(--primary)')
-    // iOS standalone の下端（ホームインジケータ周辺・オーバースクロール域）を塗るのはこの 1 行だけ。
+    // iOS standalone の下端（ホームインジケータ周辺・オーバースクロール域）はここで塗る。
     // position:fixed は initial containing block までしか覆えずその外側に届かないため、
     // 以前ここに置いていた fixed inset-0 のレイヤーは SidebarInset の --dashboard-bg に
     // 完全に覆われて 1px も寄与していなかった（ブラウザで実測して削除済み）。
-    // 「重複だから」と消すと iOS で黒帯が再発する。
+    // body も塗るのは、globals.css の `body { @apply bg-background }` が html の塗りを
+    // 覆い隠すため（iOS Simulator の Web Inspector で実測: html=teal でも body=白が透けて
+    // ページ下端の透明要素の背後に白帯が出た）。「重複だから」とどちらかを消すと再発する。
     root.style.backgroundColor = 'var(--primary)'
+    document.body.style.backgroundColor = 'var(--primary)'
 
     return () => {
       root.style.removeProperty('--dashboard-bg')
       root.style.removeProperty('background-color')
+      document.body.style.removeProperty('background-color')
     }
   }, [])
 
