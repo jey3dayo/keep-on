@@ -124,9 +124,9 @@
     "vitest": "^4.1.10",
     "wrangler": "^4.120.1"
   },
-  "packageManager": "pnpm@11.17.0",
+  "packageManager": "pnpm@11.21.0",
   "engines": {
     "node": "24.13.0",
-    "pnpm": "11.17.0"
+    "pnpm": "11.21.0"
   }
 }
