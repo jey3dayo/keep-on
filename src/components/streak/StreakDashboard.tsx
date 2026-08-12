@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { DashboardBackground } from './DashboardBackground'
 import { DashboardViewToggle } from './DashboardViewToggle'
 import { HabitListView } from './HabitListView'
 import { HabitSimpleView } from './HabitSimpleView'
@@ -67,7 +68,7 @@ export function StreakDashboard({
           onUnSkip={onUnSkip}
         />
       ) : (
-        <div className="streak-bg flex min-h-full flex-col" style={{ backgroundColor: 'var(--primary)' }}>
+        <DashboardBackground>
           <HabitListView
             completedHabitIds={completedHabitIds}
             filteredHabits={filteredHabits}
@@ -87,7 +88,7 @@ export function StreakDashboard({
             totalDaily={totalDaily}
             totalStreak={totalStreak}
           />
-        </div>
+        </DashboardBackground>
       )}
 
       <div className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40">

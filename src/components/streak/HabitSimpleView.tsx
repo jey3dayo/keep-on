@@ -7,6 +7,7 @@ import { resetHabitProgressAction } from '@/app/actions/habits/reset'
 import { Button } from '@/components/basics/Button'
 import { Icon } from '@/components/basics/Icon'
 import type { OptimisticRollback } from '@/components/habits/types'
+import { DashboardBackground } from '@/components/streak/DashboardBackground'
 import { HabitCircleItem } from '@/components/streak/HabitCircleItem'
 import { ProgressRing } from '@/components/streak/ProgressRing'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
@@ -290,12 +291,7 @@ export function HabitSimpleView({
   }, [onSettings, router])
 
   return (
-    <div
-      className="relative flex min-h-full flex-col overflow-hidden transition-colors duration-500"
-      style={{ backgroundColor: bgColor }}
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_50%_0%,rgba(255,255,255,0.24),transparent_60%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.06),rgba(0,0,0,0.22))]" />
+    <DashboardBackground backgroundColor={bgColor} className="overflow-hidden">
       <main className="relative flex flex-1 items-start justify-center px-4 pt-8 pb-24">
         <div className={cn('grid w-full max-w-md grid-cols-2 gap-6')}>
           {currentHabits.map((habit) => {
@@ -445,7 +441,7 @@ export function HabitSimpleView({
           <div className="h-2" />
         )}
       </nav>
-    </div>
+    </DashboardBackground>
   )
 }
 
