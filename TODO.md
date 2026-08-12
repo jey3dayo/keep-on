@@ -29,17 +29,18 @@
 
 ## 未解決事項
 
-### 依存更新の再実行待ち
-
-4 パッケージが pnpm の 24 時間リリースゲート（`minimum_release_age`）に掛かっており、
-2026-08-11 01:02Z 以降に再実行が必要。
-
-### `withDbRetry` のリトライ遅延の不整合
-
-クライアント側は `RETRY_DELAY_MS`（250ms）待ってから再試行するのに対し、`src/lib/db-retry.ts`
-の `withDbRetry` はデフォルトの `onRetry` で即座に（`resetDb()` のみ実行して）再試行しており、
-遅延がない。挙動をそろえるか、意図的な非対称であることを明記するか判断が必要。
-
 ### 実機（iOS PWA）での視覚確認が未実施の変更
 
-直近の複数の UI 変更が、実機の iOS PWA でまだ視覚確認できていない。
+- 対象: 直近の safe-area / ヘッダー / サイドバー / ボタン統一まわりの UI 変更一式
+- 検証: 実機の iOS PWA で目視確認（自動テストでは代替不可）
+- 起票日: 2026-08-10
+
+### TypeScript 7 / jsdom 30 への major 更新
+
+- 対象: `typescript`（`^6.0.3` → `^7.0.2`）、`jsdom`（`^29.1.1` → `^30.0.1`）
+- 理由: 2026-08-12 の依存一括更新で意図的に除外。このリポジトリには「TS7 は Next 16.2 非対応」で
+  ビルドを壊した既往がある。Next は今回 16.3.0 に上がっており前提が変わった可能性があるため、
+  Next 16.3 の TS7 対応状況を確認してから判断する。`package.json` に残る
+  `@typescript/native`（`npm:typescript@^7.0.2`）が installed-but-unreferenced な点も併せて整理する
+- 検証: `pnpm exec tsc --noEmit` と `pnpm test:run` が通ることに加え、Next のビルド（`pnpm build:cf`）が壊れないこと
+- 起票日: 2026-08-12
