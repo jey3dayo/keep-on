@@ -76,7 +76,7 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
             <IconComponent className="h-6 w-6 text-white" />
           </div>
           <div className="min-w-0">
-            <h1 className="truncate font-bold text-2xl text-foreground">{habit.name}</h1>
+            <h2 className="truncate font-bold text-2xl text-foreground">{habit.name}</h2>
             <p className="text-muted-foreground text-sm">
               {periodLabel} · {habit.frequency}回
             </p>

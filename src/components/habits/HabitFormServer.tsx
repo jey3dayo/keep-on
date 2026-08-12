@@ -75,9 +75,9 @@ function HabitFormHeader({
         <ChevronLeft className="h-5 w-5" />
         <span className="text-sm">{t('habits.form.back')}</span>
       </Button>
-      <h1 className="font-semibold text-foreground text-lg">
+      <h2 className="font-semibold text-foreground text-lg">
         {isEdit ? t('habits.form.titleEdit') : t('habits.form.titleNew')}
-      </h1>
+      </h2>
       <Button
         className={cn(
           'h-auto p-0 hover:bg-transparent',

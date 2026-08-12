@@ -130,7 +130,8 @@ export function HabitListView({
         <header className="sticky top-0 z-20 overflow-hidden rounded-3xl border border-border/60 bg-background/80 px-4 py-4 shadow-black/5 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
           <div className="mb-4">
             <p className="text-foreground/70 text-xs tracking-wide">{todayLabel}</p>
-            <h1 className="font-semibold text-2xl text-foreground">今日の習慣</h1>
+            {/* ページの h1 は SiteHeader が持つ。ここはセクション見出しなので h2 */}
+            <h2 className="font-semibold text-2xl text-foreground">今日の習慣</h2>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

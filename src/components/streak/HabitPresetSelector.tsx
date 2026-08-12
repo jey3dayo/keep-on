@@ -62,7 +62,8 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
             <X className="h-5 w-5 text-white" />
           </Button>
 
-          <h1 className="font-semibold text-lg text-white">{t('habits.presetSelector.title')}</h1>
+          {/* ページの h1 は SiteHeader が持つ。ここはセクション見出しなので h2 */}
+          <h2 className="font-semibold text-lg text-white">{t('habits.presetSelector.title')}</h2>
         </div>
       </header>
 

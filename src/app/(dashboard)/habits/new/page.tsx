@@ -52,7 +52,7 @@ export default async function NewHabitPage({
   return (
     <PageShell>
       <div className="space-y-2">
-        <h1 className="font-bold text-3xl text-foreground tracking-tight">{i18n.t('habits.newPage.heading')}</h1>
+        <h2 className="font-bold text-3xl text-foreground tracking-tight">{i18n.t('habits.newPage.heading')}</h2>
         <p className="text-muted-foreground">{i18n.t('habits.newPage.subheading')}</p>
       </div>
 

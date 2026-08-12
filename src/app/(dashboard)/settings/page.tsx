@@ -24,8 +24,7 @@ export default async function SettingsPage() {
 
   return (
     <PageShell>
-      <header className="space-y-2">
-        <h1 className="text-balance font-bold text-3xl text-foreground tracking-tight">設定</h1>
+      <header>
         <p className="text-muted-foreground">アプリの表示をカスタマイズできます。</p>
       </header>
       <section className="grid gap-6 lg:grid-cols-2">

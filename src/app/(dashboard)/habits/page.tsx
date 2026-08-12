@@ -47,10 +47,7 @@ export default async function HabitsPage() {
   return (
     <PageShell gap="gap-4">
       <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <h1 className="font-bold text-3xl text-foreground tracking-tight">習慣</h1>
-          <p className="text-muted-foreground">あなたの習慣を管理しましょう</p>
-        </div>
+        <p className="text-muted-foreground">あなたの習慣を管理しましょう</p>
         <Button asChild size="lg" variant="default">
           <Link href="/habits/new?step=preset">
             <Icon className="mr-2" name="plus" size={20} />

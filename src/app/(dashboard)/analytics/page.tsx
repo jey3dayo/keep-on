@@ -142,7 +142,6 @@ export default async function AnalyticsPage() {
     <PageShell>
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-balance font-bold text-3xl text-foreground tracking-tight">アナリティクス</h1>
           <span className="rounded-full border border-border/60 bg-card px-2.5 py-1 text-muted-foreground text-xs">
             直近7日: {rangeLabel}
           </span>
