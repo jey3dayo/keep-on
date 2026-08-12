@@ -214,6 +214,15 @@
 }
 
 @layer base {
+  /*
+   * クラシックスクロールバー環境（マウス接続時の macOS 等）で、スクロールの
+   * 有無がビューごとに異なると clientWidth が 17px 変わり、fixed right-* の
+   * 要素（ビュー切替トグル等）が横に動く。gutter を常時確保して固定する。
+   */
+  html {
+    scrollbar-gutter: stable;
+  }
+
   * {
     @apply border-border;
     -webkit-tap-highlight-color: transparent;
