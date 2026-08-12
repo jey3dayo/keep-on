@@ -1,11 +1,11 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { ThemeToggle } from '@/components/basics/ThemeToggle'
 import { ClerkUserButton } from '@/components/clerk/ClerkUserButton'
+import { LogoMark } from '@/components/LogoMark'
 import { SyncIndicator } from '@/components/SyncIndicator'
 import { SidebarTrigger } from '@/components/sidebar/Sidebar'
 import { Separator } from '@/components/ui/separator'
@@ -25,7 +25,7 @@ export function SiteHeader() {
           href="/dashboard"
           prefetch={false}
         >
-          <Image alt="KeepOn ロゴ" className="h-5 w-auto" height={20} priority src="/logo.svg" width={30} />
+          <LogoMark className="h-5 w-auto" />
           <span className="hidden font-semibold text-base sm:inline">KeepOn</span>
         </Link>
         <Separator className="mx-2 shrink-0 data-[orientation=vertical]:h-4" orientation="vertical" />
