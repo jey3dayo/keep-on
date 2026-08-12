@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { DashboardBackground } from './DashboardBackground'
+import { DashboardBottomBar } from './DashboardBottomBar'
 import { DashboardViewToggle } from './DashboardViewToggle'
 import { HabitListView } from './HabitListView'
 import { HabitSimpleView } from './HabitSimpleView'
@@ -91,8 +92,8 @@ export function StreakDashboard({
         </DashboardBackground>
       )}
 
-      <div className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40">
-        <div className="flex items-center gap-3">
+      <DashboardBottomBar
+        rightSlot={
           <DashboardViewToggle
             activeButtonClassName="bg-foreground text-background"
             buttonClassName="rounded-full p-2 transition-all"
@@ -100,8 +101,8 @@ export function StreakDashboard({
             inactiveButtonClassName="text-muted-foreground"
             onViewChange={onViewChange}
           />
-        </div>
-      </div>
+        }
+      />
     </>
   )
 }
