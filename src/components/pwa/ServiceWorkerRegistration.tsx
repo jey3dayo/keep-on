@@ -1,12 +1,39 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useAuth } from '@clerk/nextjs'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/basics/Button'
-import { SW_MSG_SKIP_WAITING } from '@/constants/pwa'
+import { SW_MSG_CLEAR_USER_CACHE, SW_MSG_SKIP_WAITING } from '@/constants/pwa'
 
 export function ServiceWorkerRegistration() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null)
+  const { isSignedIn, userId } = useAuth()
+  const previousUserId = useRef<string | null>(null)
+
+  // サインアウト（signed-in → signed-out）とユーザー交代（userId の変化）を検知して
+  // ユーザー固有データのクリアを SW に依頼する。オフラインキューはこの経路でのみ消えるため、
+  // セッション期限切れだけでは本人の未送信チェックインは失われない。
+  useEffect(() => {
+    const prev = previousUserId.current
+
+    if (isSignedIn && userId) {
+      previousUserId.current = userId
+      // 期限切れ後に別ユーザーがログインした場合、前ユーザーのデータを破棄する
+      if (prev && prev !== userId) {
+        navigator.serviceWorker?.controller?.postMessage({ type: SW_MSG_CLEAR_USER_CACHE })
+      }
+      return
+    }
+
+    // isSignedIn が undefined（Clerk 読み込み中）の間は判定を保留する
+    if (isSignedIn !== false || !prev) {
+      return
+    }
+
+    previousUserId.current = null
+    navigator.serviceWorker?.controller?.postMessage({ type: SW_MSG_CLEAR_USER_CACHE })
+  }, [isSignedIn, userId])
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) {

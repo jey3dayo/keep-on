@@ -102,7 +102,8 @@ export default async function RootLayout({
         <ColorThemeScript />
       </head>
       <body>
-        <ClerkProvider>
+        {/* サインアウト後に auth route へ遷移させ、sw.js のユーザー固有データクリアを確実に発火させる */}
+        <ClerkProvider afterMultiSessionSingleSignOutUrl="/sign-in" afterSignOutUrl="/sign-in">
           <a
             className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-foreground focus:shadow focus:ring-2 focus:ring-ring focus:ring-offset-2"
             href="#main-content"

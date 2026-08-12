@@ -10,6 +10,23 @@ const CACHEABLE_ROUTES = ['/dashboard', '/habits', '/analytics']
 
 const PRECACHE_FILES = ['/offline', '/manifest.json', '/icon-192.png', '/icon-512.png']
 
+// DB_NAME, STORE_NAME は src/lib/pwa/offline-queue.ts と同期すること
+const DB_NAME = 'keepon-offline'
+const STORE_NAME = 'checkin-queue'
+
+const openDb = () =>
+  new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1)
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' })
+      }
+    }
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+
 const isUserCacheableRoute = (pathname) => CACHEABLE_ROUTES.some((route) => pathname.startsWith(route))
 
 const isAuthRoute = (pathname) => pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')
@@ -19,6 +36,35 @@ const clearUserCache = async (cache) => {
   await Promise.all(
     requests.filter((req) => isUserCacheableRoute(new URL(req.url).pathname)).map((req) => cache.delete(req))
   )
+}
+
+// 端末共有時に前ユーザーのキューが次ユーザーの Cookie でリプレイされるのを防ぐ
+const clearOfflineQueue = async () => {
+  // deleteDatabase は他接続があると blocked のまま settle しないため、store の中身だけ消す
+  const db = await openDb()
+  try {
+    if (!db.objectStoreNames.contains(STORE_NAME)) {
+      return
+    }
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite')
+      const req = tx.objectStore(STORE_NAME).clear()
+      req.onsuccess = () => resolve()
+      req.onerror = () => reject(req.error)
+    })
+  } finally {
+    db.close()
+  }
+}
+
+// キャッシュのクリアが本命なので、IndexedDB 側の失敗で全体を reject させない
+const clearUserData = async (cache) => {
+  await clearUserCache(cache)
+  try {
+    await clearOfflineQueue()
+  } catch {
+    // オフラインキューのクリア失敗は致命的ではない
+  }
 }
 
 const isAuthNavigationFailure = (response) => {
@@ -99,7 +145,9 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // サインイン・サインアップ遷移時はユーザー固有キャッシュをクリア（セッション切り替え対策）
+  // サインイン・サインアップ遷移時はユーザー固有キャッシュをクリア（セッション切り替え対策）。
+  // セッション期限切れでもこの経路を通るため、オフラインキューはここでは消さない
+  // （キューのクリアは CLEAR_USER_CACHE メッセージ経路のみ）
   if (isAuthRoute(url.pathname)) {
     event.waitUntil(caches.open(CACHE_NAME).then((cache) => clearUserCache(cache)))
     return
@@ -167,23 +215,6 @@ self.addEventListener('sync', (event) => {
 
   event.waitUntil(
     (async () => {
-      // DB_NAME, STORE_NAME は src/lib/pwa/offline-queue.ts と同期すること
-      const DB_NAME = 'keepon-offline'
-      const STORE_NAME = 'checkin-queue'
-
-      const openDb = () =>
-        new Promise((resolve, reject) => {
-          const req = indexedDB.open(DB_NAME, 1)
-          req.onupgradeneeded = (e) => {
-            const db = e.target.result
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-              db.createObjectStore(STORE_NAME, { keyPath: 'id' })
-            }
-          }
-          req.onsuccess = () => resolve(req.result)
-          req.onerror = () => reject(req.error)
-        })
-
       const getAllItems = (db) =>
         new Promise((resolve, reject) => {
           const tx = db.transaction(STORE_NAME, 'readonly')
@@ -260,6 +291,6 @@ self.addEventListener('message', (event) => {
 
   // サインアウト時にユーザー固有のキャッシュ（ダッシュボード等）をクリア
   if (event.data?.type === 'CLEAR_USER_CACHE') {
-    event.waitUntil(caches.open(CACHE_NAME).then((cache) => clearUserCache(cache)))
+    event.waitUntil(caches.open(CACHE_NAME).then((cache) => clearUserData(cache)))
   }
 })
