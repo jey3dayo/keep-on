@@ -250,6 +250,31 @@
   @apply transition-colors duration-300;
 }
 
+/* 横スクロール行のスクロールバーを隠す（チップ行など） */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* 横スクロール可能なチップ行の右端を意図的にフェードさせ、
+   スクロールできることを視覚的に示す（スクロールバー非表示の代替）。 */
+.edge-fade-x {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    black calc(100% - 2rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    black calc(100% - 2rem),
+    transparent 100%
+  );
+}
+
 .task-circle-border {
   @apply border-4 border-black/20 dark:border-white/20;
 }

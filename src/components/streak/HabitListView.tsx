@@ -150,7 +150,7 @@ export function HabitListView({
           </div>
         </header>
 
-        <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+        <div className="edge-fade-x scrollbar-hide flex gap-2 overflow-x-auto pr-6 pb-1">
           <FilterButton active={periodFilter === 'all'} onClick={handleAllFilter}>
             すべて ({habits.length})
           </FilterButton>
@@ -244,7 +244,7 @@ function FilterButton({ active, children, onClick }: { active: boolean; children
     <Button
       aria-pressed={active}
       className={cn(
-        'h-auto rounded-full px-4 py-2 font-medium text-sm transition-all duration-200',
+        'h-auto shrink-0 rounded-full px-4 py-2 font-medium text-sm transition-all duration-200',
         active
           ? 'bg-foreground text-background shadow-sm'
           : 'border border-border/60 bg-background/70 text-muted-foreground hover:bg-background/90 hover:text-foreground'
