@@ -2,7 +2,7 @@
 
 ## プロジェクト概要
 
-KeepOn は、Next.js 15 + Cloudflare Workers + Drizzle ORM + Clerk で構築された PWA アプリケーションです。
+KeepOn は、Next.js 16 + Cloudflare Workers (D1) + Drizzle ORM + Clerk で構築された習慣トラッキング PWA です。
 
 ## コンテキスト参照
 
@@ -17,19 +17,26 @@ KeepOn は、Next.js 15 + Cloudflare Workers + Drizzle ORM + Clerk で構築さ�
 ### Rules (開発規約)
 
 - `.claude/rules/code-style.md` - コードスタイルと開発規約
+- `.claude/rules/directory-structure.md` - 層構造と責務（schemas / validators / queries / actions）
 - `.claude/rules/security.md` - セキュリティガイドライン
 - `.claude/rules/dotenvx.md` - dotenvx 暗号化管理ガイド
-- `.claude/rules/testing.md` - テストユーザー管理ガイド
+- `.claude/rules/testing.md` - テストユーザー管理・E2E ガイド
+- `.claude/rules/debugging.md` - フロントエンドデバッグ（iOS PWA の Simulator 検証を含む）
 - `.claude/rules/troubleshooting.md` - トラブルシューティング
 - `.claude/rules/cloudflare-deployment.md` - Cloudflare デプロイガイド
+
+### タスク管理
+
+- `TODO.md` - 未解決事項（検証条件・起票日つき）
+- `plans/README.md` - コード監査由来の実装計画と実行状況
 
 ## 重要な開発ルール
 
 ### コンポーネント使用規約
 
-- `src/components/ui/` 配下のshadcn/uiコンポーネントは直接編集しない
-- カスタマイズが必要な場合は `src/components/` 直下にラッパーを作成
-- フォーム入力には `@/components/Input` を使用（パスワードマネージャー対応済み）
+- `src/components/ui/` 配下の shadcn/ui コンポーネントは直接編集しない
+- カスタマイズが必要な場合は `src/components/` 直下（または `basics/`）にラッパーを作成
+- 通常の text 系フォーム入力には `@/components/basics/Input` を使用（パスワードマネージャー対応済み）。hidden / time など native の特殊 input は対象外
 
 ### 環境変数管理
 
@@ -37,11 +44,41 @@ KeepOn は、Next.js 15 + Cloudflare Workers + Drizzle ORM + Clerk で構築さ�
 - コマンド実行時は `pnpm env:run --` または `dotenvx run --` を使用
 - 詳細は `.claude/rules/dotenvx.md` を参照
 
+### 依存関係の更新
+
+- pnpm の 24 時間リリースゲート（`minimumReleaseAge`、strict）が有効。未成熟なバージョンは install が hard fail する
+- **`minimumReleaseAgeExclude` への追記でゲートを貫通させない**（過去に radix の壊れリリース混入でビルド全滅した経路）。成熟済みの最新版へ差し替えるか、24 時間待つ
+- pnpm 本体のバンプは依存更新と分離した独立コミットにする
+
+### 検証ゲート
+
+- 作業中: touched file の format と関連テスト
+- push 前（pre-push フックで自動実行）: `lint:types` → `test:types` → `test:e2e:types` → `lint:biome` → `test:ci` → `test:storybook:ci` → `build:ci`
+- ローカル一括: `mise run check`（format + lint 系）、`mise run ci`（CI 相当）
+
 ### 開発開始手順
 
 1. 環境変数を復号化: `pnpm dotenvx decrypt`
 2. 編集後に再暗号化: `pnpm env:encrypt`
 3. スキーマ同期: `pnpm db:push`
 4. 開発サーバー起動: `pnpm env:run -- pnpm dev`
+
+## デバッグ
+
+### iOS PWA（safe-area / standalone 表示）の検証
+
+`env(safe-area-inset-*)` はデスクトップブラウザでは常に 0 のため、iOS 固有の表示は Chrome では検証できない。iPhone 実機がなくても **Xcode Simulator（実 WebKit）** で検証できる。手順の詳細は `.claude/rules/debugging.md` の「iOS Simulator での PWA 検証」を参照。
+
+要点:
+
+- Simulator の Safari で本番 URL を開き、共有 →「ホーム画面に追加」で standalone 起動
+- macOS Safari の開発メニュー → シミュレータ →「ホーム画面のWebアプリ」で Web Inspector 接続（standalone と Safari タブを取り違えないこと）
+- スクリーンショットは `xcrun simctl io <udid> screenshot`（ウィンドウ座標に依存しないため安全）
+
+### 既知の落とし穴
+
+- `html` に背景色を塗っても `body { @apply bg-background }` が上に重なる。iOS standalone の下端を塗る場合は `html` と `body` の両方に設定する（`StreakDashboard.tsx` の useEffect が実例）
+- `overflow-hidden` の祖先内で `backdrop-filter` を使うと iOS Safari が背景を不透明に塗る
+- `position: fixed; inset: 0` は initial containing block までしか覆えず、safe-area の外側には届かない
 
 <!-- NEXT-AGENTS-MD-START -->[Next.js Docs Index]|root: ./node_modules/next/dist/docs|STOP. What you remember about Next.js is WRONG for this project. Always search docs and read before any task.|If docs missing, run this command first: npx @next/codemod agents-md --output AGENTS.md|01-app:{04-glossary.md}|01-app/01-getting-started:{01-installation.md,02-project-structure.md,03-layouts-and-pages.md,04-linking-and-navigating.md,05-server-and-client-components.md,06-fetching-data.md,07-mutating-data.md,08-caching.md,09-revalidating.md,10-error-handling.md,11-css.md,12-images.md,13-fonts.md,14-metadata-and-og-images.md,15-route-handlers.md,16-proxy.md,17-deploying.md,18-upgrading.md}|01-app/02-guides:{ai-agents.md,analytics.md,authentication.md,backend-for-frontend.md,caching-without-cache-components.md,cdn-caching.md,ci-build-caching.md,content-security-policy.md,css-in-js.md,custom-server.md,data-security.md,debugging.md,deploying-to-platforms.md,draft-mode.md,environment-variables.md,forms.md,how-revalidation-works.md,incremental-static-regeneration.md,instant-navigation.md,instrumentation.md,internationalization.md,json-ld.md,lazy-loading.md,local-development.md,mcp.md,mdx.md,memory-usage.md,migrating-to-cache-components.md,multi-tenant.md,multi-zones.md,open-telemetry.md,package-bundling.md,ppr-platform-guide.md,prefetching.md,preserving-ui-state.md,preventing-flash-before-hydration.md,production-checklist.md,progressive-web-apps.md,public-static-pages.md,redirecting.md,rendering-philosophy.md,sass.md,scripts.md,self-hosting.md,server-actions.md,single-page-applications.md,static-exports.md,streaming.md,tailwind-v3-css.md,third-party-libraries.md,videos.md,view-transitions.md}|01-app/02-guides/migrating:{app-router-migration.md,from-create-react-app.md,from-vite.md}|01-app/02-guides/testing:{cypress.md,jest.md,playwright.md,vitest.md}|01-app/02-guides/upgrading:{codemods.md,version-14.md,version-15.md,version-16.md}|01-app/03-api-reference:{07-edge.md,08-turbopack.md}|01-app/03-api-reference/01-directives:{use-cache-private.md,use-cache-remote.md,use-cache.md,use-client.md,use-server.md}|01-app/03-api-reference/02-components:{font.md,form.md,image.md,link.md,script.md}|01-app/03-api-reference/03-file-conventions/01-metadata:{app-icons.md,manifest.md,opengraph-image.md,robots.md,sitemap.md}|01-app/03-api-reference/03-file-conventions/02-route-segment-config:{dynamicParams.md,instant.md,maxDuration.md,preferredRegion.md,runtime.md}|01-app/03-api-reference/03-file-conventions:{default.md,dynamic-routes.md,error.md,forbidden.md,instrumentation-client.md,instrumentation.md,intercepting-routes.md,layout.md,loading.md,mdx-components.md,not-found.md,page.md,parallel-routes.md,proxy.md,public-folder.md,route-groups.md,route.md,src-folder.md,template.md,unauthorized.md}|01-app/03-api-reference/04-functions:{after.md,cacheLife.md,cacheTag.md,catchError.md,connection.md,cookies.md,draft-mode.md,fetch.md,forbidden.md,generate-image-metadata.md,generate-metadata.md,generate-sitemaps.md,generate-static-params.md,generate-viewport.md,headers.md,image-response.md,next-request.md,next-response.md,not-found.md,permanentRedirect.md,redirect.md,refresh.md,revalidatePath.md,revalidateTag.md,unauthorized.md,unstable_cache.md,unstable_noStore.md,unstable_rethrow.md,updateTag.md,use-link-status.md,use-params.md,use-pathname.md,use-report-web-vitals.md,use-router.md,use-search-params.md,use-selected-layout-segment.md,use-selected-layout-segments.md,userAgent.md}|01-app/03-api-reference/05-config/01-next-config-js:{adapterPath.md,allowedDevOrigins.md,appDir.md,assetPrefix.md,authInterrupts.md,basePath.md,cacheComponents.md,cacheHandlers.md,cacheLife.md,compress.md,crossOrigin.md,cssChunking.md,deploymentId.md,devIndicators.md,distDir.md,env.md,expireTime.md,exportPathMap.md,generateBuildId.md,generateEtags.md,headers.md,htmlLimitedBots.md,httpAgentOptions.md,images.md,incrementalCacheHandlerPath.md,inlineCss.md,logging.md,mdxRs.md,onDemandEntries.md,optimizePackageImports.md,output.md,pageExtensions.md,poweredByHeader.md,productionBrowserSourceMaps.md,proxyClientMaxBodySize.md,reactCompiler.md,reactMaxHeadersLength.md,reactStrictMode.md,redirects.md,rewrites.md,sassOptions.md,serverActions.md,serverComponentsHmrCache.md,serverExternalPackages.md,staleTimes.md,staticGeneration.md,taint.md,trailingSlash.md,transpilePackages.md,turbopack.md,turbopackFileSystemCache.md,turbopackIgnoreIssue.md,turbopackLocalPostcssConfig.md,typedRoutes.md,typescript.md,urlImports.md,useLightningcss.md,viewTransition.md,webVitalsAttribution.md,webpack.md}|01-app/03-api-reference/05-config:{02-typescript.md,03-eslint.md}|01-app/03-api-reference/06-cli:{create-next-app.md,next.md}|01-app/03-api-reference/07-adapters:{01-configuration.md,02-creating-an-adapter.md,03-api-reference.md,04-testing-adapters.md,05-routing-with-next-routing.md,06-implementing-ppr-in-an-adapter.md,07-runtime-integration.md,08-invoking-entrypoints.md,09-output-types.md,10-routing-information.md,11-use-cases.md}|02-pages/01-getting-started:{01-installation.md,02-project-structure.md,04-images.md,05-fonts.md,06-css.md,11-deploying.md}|02-pages/02-guides:{analytics.md,authentication.md,babel.md,ci-build-caching.md,content-security-policy.md,css-in-js.md,custom-server.md,debugging.md,draft-mode.md,environment-variables.md,forms.md,incremental-static-regeneration.md,instrumentation.md,internationalization.md,lazy-loading.md,mdx.md,multi-zones.md,open-telemetry.md,package-bundling.md,post-css.md,preview-mode.md,production-checklist.md,redirecting.md,sass.md,scripts.md,self-hosting.md,static-exports.md,tailwind-v3-css.md,third-party-libraries.md}|02-pages/02-guides/migrating:{app-router-migration.md,from-create-react-app.md,from-vite.md}|02-pages/02-guides/testing:{cypress.md,jest.md,playwright.md,vitest.md}|02-pages/02-guides/upgrading:{codemods.md,version-10.md,version-11.md,version-12.md,version-13.md,version-14.md,version-9.md}|02-pages/03-building-your-application/01-routing:{01-pages-and-layouts.md,02-dynamic-routes.md,03-linking-and-navigating.md,05-custom-app.md,06-custom-document.md,07-api-routes.md,08-custom-error.md}|02-pages/03-building-your-application/02-rendering:{01-server-side-rendering.md,02-static-site-generation.md,04-automatic-static-optimization.md,05-client-side-rendering.md}|02-pages/03-building-your-application/03-data-fetching:{01-get-static-props.md,02-get-static-paths.md,03-get-server-side-props.md,05-client-side.md}|02-pages/03-building-your-application/06-configuring:{12-error-handling.md}|02-pages/04-api-reference:{06-edge.md,08-turbopack.md}|02-pages/04-api-reference/01-components:{font.md,form.md,head.md,image-legacy.md,image.md,link.md,script.md}|02-pages/04-api-reference/02-file-conventions:{instrumentation.md,proxy.md,public-folder.md,src-folder.md}|02-pages/04-api-reference/03-functions:{get-initial-props.md,get-server-side-props.md,get-static-paths.md,get-static-props.md,next-request.md,next-response.md,use-params.md,use-report-web-vitals.md,use-router.md,use-search-params.md,userAgent.md}|02-pages/04-api-reference/04-config/01-next-config-js:{adapterPath.md,allowedDevOrigins.md,assetPrefix.md,basePath.md,bundlePagesRouterDependencies.md,compress.md,crossOrigin.md,deploymentId.md,devIndicators.md,distDir.md,env.md,exportPathMap.md,generateBuildId.md,generateEtags.md,headers.md,httpAgentOptions.md,images.md,logging.md,onDemandEntries.md,optimizePackageImports.md,output.md,pageExtensions.md,poweredByHeader.md,productionBrowserSourceMaps.md,proxyClientMaxBodySize.md,reactStrictMode.md,redirects.md,rewrites.md,serverExternalPackages.md,trailingSlash.md,transpilePackages.md,turbopack.md,typescript.md,urlImports.md,useLightningcss.md,webVitalsAttribution.md,webpack.md}|02-pages/04-api-reference/04-config:{01-typescript.md,02-eslint.md}|02-pages/04-api-reference/05-cli:{create-next-app.md,next.md}|02-pages/04-api-reference/06-adapters:{01-configuration.md,02-creating-an-adapter.md,03-api-reference.md,04-testing-adapters.md,05-routing-with-next-routing.md,06-implementing-ppr-in-an-adapter.md,07-runtime-integration.md,08-invoking-entrypoints.md,09-output-types.md,10-routing-information.md,11-use-cases.md}|03-architecture:{accessibility.md,fast-refresh.md,nextjs-compiler.md,supported-browsers.md}|04-community:{01-contribution-guide.md,02-rspack.md}<!-- NEXT-AGENTS-MD-END -->

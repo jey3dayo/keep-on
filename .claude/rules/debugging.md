@@ -122,3 +122,66 @@ pnpm cf:logs
 - `request.dashboard:start` / `request.dashboard:end` が出るか
 - `:timeout` / `TimeoutError` が出ていないか
 - `db.connection` が毎回出続けないか（過剰再接続）
+
+## iOS Simulator での PWA 検証
+
+`env(safe-area-inset-*)` はデスクトップブラウザでは常に 0 のため、safe-area や standalone 表示の不具合は
+Chrome では再現・検証できない。iPhone 実機がなくても Xcode Simulator で検証できる
+（Simulator は仮想マシンではなく実 WebKit エンジンを使うため、レイアウトは近似ではなく実挙動）。
+
+### セットアップと起動
+
+```bash
+# デバイス作成（初回のみ。notch 付き機種を選ぶ）
+xcrun simctl create "KeepOn-Test" "iPhone 15" "com.apple.CoreSimulator.SimRuntime.iOS-18-1"
+
+# 起動と URL オープン
+xcrun simctl boot <udid>
+open -a Simulator
+xcrun simctl openurl <udid> "https://keep-on.jey3dayo.net/dashboard"
+```
+
+### standalone（PWA）モードの起動
+
+Simulator 内の Safari で共有ボタン →「ホーム画面に追加」→ ホーム画面のアイコンから起動。
+この操作は自動化しづらいため手動で行う（Web Clip は `simctl listapps` に出ない）。
+
+### Web Inspector で実測する
+
+1. macOS Safari の設定 → 詳細 →「Web デベロッパ用の機能を表示」を有効化
+2. 開発メニュー → `<シミュレータ名>` → **「ホーム画面のWebアプリ」直下**のページを選択
+   - 下の「Service Worker」や、macOS Safari 自身のタブと**取り違えないこと**。
+     接続先確認には `matchMedia('(display-mode: standalone)').matches` と `screen.width` を見る
+     （Mac のディスプレイ幅が返ってきたら接続先を誤っている）
+3. コンソールで safe-area・背景・下端要素を実測する:
+
+```js
+(() => {
+  const g = (x) => getComputedStyle(x)
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:fixed;bottom:0;padding-bottom:env(safe-area-inset-bottom)'
+  document.body.appendChild(probe)
+  const sab = g(probe).paddingBottom
+  probe.remove()
+  return JSON.stringify({
+    standalone: matchMedia('(display-mode: standalone)').matches,
+    sab,
+    bottomEl: document.elementFromPoint(innerWidth / 2, innerHeight - 5)?.tagName,
+    htmlBg: g(document.documentElement).backgroundColor,
+    bodyBg: g(document.body).backgroundColor,
+  })
+})()
+```
+
+### スクリーンショット
+
+ウィンドウ座標に依存しない `simctl` を使う（`screencapture -R` はマルチディスプレイで別アプリを撮る事故が起きる）:
+
+```bash
+xcrun simctl io <udid> screenshot /tmp/device.png
+```
+
+### この経路で実際に見つかった不具合の例
+
+- `html` を塗っても `body { @apply bg-background }` が上に重なり、ページ下端の透明要素の背後に
+  ライトモードの白が透けた（`StreakDashboard.tsx` の useEffect で `html` と `body` の両方を塗って解消）
