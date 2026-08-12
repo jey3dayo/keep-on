@@ -36,6 +36,19 @@
 - 検証: 実機の iOS PWA で目視確認（自動テストでは代替不可）
 - 起票日: 2026-08-10
 
+### updateUserSettings の並行実行競合（バックログ）
+
+- 対象: `src/lib/queries/user-settings.ts` の Phase2 失敗時ロールバックが、並行する別呼び出しの正常な更新を古いスナップショットで上書きしうる（D1 トランザクション非対応が制約）
+- 対策案: 楽観ロック用バージョンカラム、または同一ユーザーの設定更新のサーバー側直列化
+- 発生条件が複合的（同一ユーザーの並行更新 + weekStart 更新失敗）で頻度は低い。優先度低
+- 起票日: 2026-08-13（Sonnet 改善監査 finding 4）
+
+### dashboard クライアント側の二重 mount / KV I/O の軽量再監査（バックログ）
+
+- 対象: `DashboardWrapper.tsx` の useEffect / Strict Mode 二重発火と KV アクセスのトレース
+- 2026-08-13 の改善監査では Server Component 側に問題なし、クライアント側は未追跡（confidence 低）のため単体で再監査する
+- 起票日: 2026-08-13（Sonnet 改善監査 finding 6）
+
 ### TypeScript 7 / jsdom 30 への major 更新
 
 - 対象: `typescript`（`^6.0.3` → `^7.0.2`）、`jsdom`（`^29.1.1` → `^30.0.1`）
