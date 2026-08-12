@@ -88,9 +88,9 @@ pnpm install
 
 ```bash
 pnpm db:generate   # マイグレーション生成
-pnpm db:push       # dev用に同期
-# 既存マイグレーションを適用する場合:
-pnpm db:migrate
+# 生成済みマイグレーションを適用する場合:
+pnpm db:migrate:local -- drizzle/<migration>.sql    # ローカル D1
+pnpm db:migrate:remote -- drizzle/<migration>.sql   # リモート D1
 ```
 
 ### 4. 開発サーバー起動
@@ -147,10 +147,10 @@ pnpm format           # Biome で整形
 pnpm lint             # Biome でチェック
 
 # データベース
-pnpm db:generate      # Drizzle マイグレーション生成
-pnpm db:push          # スキーマ同期（dev用）
-pnpm db:migrate       # マイグレーション適用
-pnpm db:studio        # Drizzle Studio 起動
+pnpm db:generate                                     # Drizzle マイグレーション生成
+pnpm db:migrate:local -- drizzle/<migration>.sql     # マイグレーション適用（ローカル D1）
+pnpm db:migrate:remote -- drizzle/<migration>.sql    # マイグレーション適用（リモート D1）
+pnpm db:studio                                       # Drizzle Studio 起動
 
 # Cloudflare
 pnpm build:cf         # OpenNext ビルド
