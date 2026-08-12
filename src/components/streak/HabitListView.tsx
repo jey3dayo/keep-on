@@ -2,7 +2,6 @@
 
 import { Calendar } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import type { ReactNode } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import { AddHabitButton, Button } from '@/components/basics/Button'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
@@ -150,19 +149,31 @@ export function HabitListView({
           </div>
         </header>
 
-        <div className="edge-fade-x scrollbar-hide flex gap-2 overflow-x-auto pr-6 pb-1">
-          <FilterButton active={periodFilter === 'all'} onClick={handleAllFilter}>
-            すべて ({habits.length})
-          </FilterButton>
-          <FilterButton active={periodFilter === 'daily'} onClick={handleDailyFilter}>
-            {PERIOD_DISPLAY_NAME.daily} ({dailyCount})
-          </FilterButton>
-          <FilterButton active={periodFilter === 'weekly'} onClick={handleWeeklyFilter}>
-            {PERIOD_DISPLAY_NAME.weekly} ({weeklyCount})
-          </FilterButton>
-          <FilterButton active={periodFilter === 'monthly'} onClick={handleMonthlyFilter}>
-            {PERIOD_DISPLAY_NAME.monthly} ({monthlyCount})
-          </FilterButton>
+        <div className="grid grid-cols-4 gap-1.5">
+          <FilterButton
+            active={periodFilter === 'all'}
+            count={habits.length}
+            label="すべて"
+            onClick={handleAllFilter}
+          />
+          <FilterButton
+            active={periodFilter === 'daily'}
+            count={dailyCount}
+            label={PERIOD_DISPLAY_NAME.daily}
+            onClick={handleDailyFilter}
+          />
+          <FilterButton
+            active={periodFilter === 'weekly'}
+            count={weeklyCount}
+            label={PERIOD_DISPLAY_NAME.weekly}
+            onClick={handleWeeklyFilter}
+          />
+          <FilterButton
+            active={periodFilter === 'monthly'}
+            count={monthlyCount}
+            label={PERIOD_DISPLAY_NAME.monthly}
+            onClick={handleMonthlyFilter}
+          />
         </div>
 
         <div className="space-y-3">
@@ -239,12 +250,22 @@ function HabitListCardItem({
   )
 }
 
-function FilterButton({ active, children, onClick }: { active: boolean; children: ReactNode; onClick: () => void }) {
+function FilterButton({
+  active,
+  count,
+  label,
+  onClick,
+}: {
+  active: boolean
+  count: number
+  label: string
+  onClick: () => void
+}) {
   return (
     <Button
       aria-pressed={active}
       className={cn(
-        'h-auto shrink-0 rounded-full px-4 py-2 font-medium text-sm transition-all duration-200',
+        'flex h-11 min-w-0 flex-col items-center justify-center gap-0 rounded-full px-1 py-1.5 font-medium leading-tight transition-all duration-200',
         active
           ? 'bg-foreground text-background shadow-sm'
           : 'border border-border/60 bg-background/70 text-muted-foreground hover:bg-background/90 hover:text-foreground'
@@ -253,7 +274,8 @@ function FilterButton({ active, children, onClick }: { active: boolean; children
       type="button"
       variant="ghost"
     >
-      {children}
+      <span className="w-full truncate text-center text-[11px] sm:text-xs">{label}</span>
+      <span className="text-[10px] opacity-80 sm:text-[11px]">{count}</span>
     </Button>
   )
 }
