@@ -19,18 +19,21 @@ export function SiteHeader() {
   return (
     <header className="flex h-[calc(var(--header-height)+env(safe-area-inset-top))] shrink-0 items-center gap-2 border-border/50 border-b bg-background/50 pt-[env(safe-area-inset-top)] backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-[calc(var(--header-height)+env(safe-area-inset-top))] supports-[backdrop-filter]:bg-background/30 md:rounded-t-xl md:border-r">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1 min-h-11 min-w-11" />
+        <SidebarTrigger className="-ml-1 min-h-11 min-w-11 text-foreground/80 hover:text-foreground" />
         <Link
           className="flex shrink-0 items-center gap-2 rounded-md px-1.5 py-1 text-foreground/90 transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           href="/dashboard"
           prefetch={false}
         >
-          <LogoMark className="h-5 w-auto" />
-          <span className="hidden font-semibold text-base sm:inline">KeepOn</span>
+          <LogoMark className="h-4 w-auto" />
+          <span className="hidden font-semibold text-base tracking-tight sm:inline">KeepOn</span>
         </Link>
-        <Separator className="mx-2 shrink-0 data-[orientation=vertical]:h-4" orientation="vertical" />
+        <Separator
+          className="mx-1.5 shrink-0 bg-foreground/20 data-[orientation=vertical]:h-4"
+          orientation="vertical"
+        />
         {/* ヘッダー高さは --header-height 固定。折り返すと溢れるため 1 行に固定して切り詰める */}
-        <h1 className="min-w-0 truncate font-medium text-base">{title}</h1>
+        <h1 className="min-w-0 truncate font-semibold text-[15px] text-foreground/90 tracking-[-0.01em]">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
           <SyncIndicator />
           <ThemeToggle buttonClassName="min-h-11 min-w-11" buttonVariant="ghost" />
