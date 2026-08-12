@@ -5,15 +5,6 @@ allowBuilds:
   sharp: true
   workerd: true
 
-minimumReleaseAgeExclude:
-  - '@clerk/backend@3.16.4'
-  - '@clerk/nextjs@7.7.4'
-  - '@cloudflare/workers-types@5.20260812.1'
-  - '@testing-library/user-event@14.6.4'
-  - miniflare@5.20260811.0-alpha
-  - ultracite@7.10.3
-  - wrangler@4.122.0
-
 # 2026-08-10 pnpm loose mode は未成熟なバージョンを minimumReleaseAgeExclude へ自動追記して
 # 処理を続行してしまうため、リリースゲートが形骸化する（ab04a4b の radix 誤 exclude 事故が実例）。
 # strict にして非TTY/CI環境では未成熟依存を hard fail させる。
