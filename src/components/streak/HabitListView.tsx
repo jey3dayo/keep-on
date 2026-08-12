@@ -2,8 +2,8 @@
 
 import { Calendar } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import { useCallback, useMemo, useState } from 'react'
-import { AddHabitButton, Button } from '@/components/basics/Button'
+import { type KeyboardEvent, useCallback, useMemo, useState } from 'react'
+import { AddHabitButton } from '@/components/basics/Button'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
 import type { OptimisticRollback } from '@/components/habits/types'
 import { HabitListCard } from '@/components/streak/HabitListCard'
@@ -18,6 +18,8 @@ const HabitActionDrawer = dynamic(
     ssr: false,
   }
 )
+
+type PeriodFilter = 'all' | Period
 
 interface HabitListViewProps {
   completedHabitIds: Set<string>
@@ -64,23 +66,13 @@ export function HabitListView({
   })
   const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
 
-  const { dailyCount, weeklyCount, monthlyCount } = useMemo(
-    () =>
-      habits.reduce(
-        (acc, habit) => {
-          if (habit.period === 'daily') {
-            acc.dailyCount += 1
-          } else if (habit.period === 'weekly') {
-            acc.weeklyCount += 1
-          } else if (habit.period === 'monthly') {
-            acc.monthlyCount += 1
-          }
-          return acc
-        },
-        { dailyCount: 0, monthlyCount: 0, weeklyCount: 0 }
-      ),
-    [habits]
-  )
+  // 件数はセグメント内に置かず、選択中フィルタの結果としてリスト見出し位置に 1 箇所だけ出す
+  const countCaption = useMemo(() => {
+    if (periodFilter === 'all') {
+      return `${filteredHabits.length}件`
+    }
+    return `${filteredHabits.length}件 / 全${habits.length}件`
+  }, [filteredHabits.length, habits.length, periodFilter])
 
   const sortedHabits = useMemo(() => {
     return filteredHabits.map((habit, index) => ({
@@ -90,10 +82,6 @@ export function HabitListView({
     }))
     // 完了状態によるソートを無効化（位置を保持してガタつきを防止）
   }, [filteredHabits, completedHabitIds])
-  const handleAllFilter = useCallback(() => onPeriodChange('all'), [onPeriodChange])
-  const handleDailyFilter = useCallback(() => onPeriodChange('daily'), [onPeriodChange])
-  const handleWeeklyFilter = useCallback(() => onPeriodChange('weekly'), [onPeriodChange])
-  const handleMonthlyFilter = useCallback(() => onPeriodChange('monthly'), [onPeriodChange])
   const closeDrawer = useCallback((open: boolean) => {
     if (!open) {
       setDrawerState({ habit: null, open: false })
@@ -150,34 +138,10 @@ export function HabitListView({
           </div>
         </header>
 
-        <div className="grid grid-cols-4 gap-1.5">
-          <FilterButton
-            active={periodFilter === 'all'}
-            count={habits.length}
-            label="すべて"
-            onClick={handleAllFilter}
-          />
-          <FilterButton
-            active={periodFilter === 'daily'}
-            count={dailyCount}
-            label={PERIOD_DISPLAY_NAME.daily}
-            onClick={handleDailyFilter}
-          />
-          <FilterButton
-            active={periodFilter === 'weekly'}
-            count={weeklyCount}
-            label={PERIOD_DISPLAY_NAME.weekly}
-            onClick={handleWeeklyFilter}
-          />
-          <FilterButton
-            active={periodFilter === 'monthly'}
-            count={monthlyCount}
-            label={PERIOD_DISPLAY_NAME.monthly}
-            onClick={handleMonthlyFilter}
-          />
-        </div>
+        <PeriodSegmentedControl onChange={onPeriodChange} value={periodFilter} />
 
         <div className="space-y-3">
+          {habits.length > 0 && <p className="px-1 text-white/80 text-xs tabular-nums">{countCaption}</p>}
           {filteredHabits.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border/70 bg-card/80 shadow-sm">
@@ -251,32 +215,91 @@ function HabitListCardItem({
   )
 }
 
-function FilterButton({
+const PERIOD_SEGMENTS: readonly { label: string; value: PeriodFilter }[] = [
+  { label: 'すべて', value: 'all' },
+  { label: PERIOD_DISPLAY_NAME.daily, value: 'daily' },
+  { label: PERIOD_DISPLAY_NAME.weekly, value: 'weekly' },
+  { label: PERIOD_DISPLAY_NAME.monthly, value: 'monthly' },
+]
+
+function arrowDelta(key: string) {
+  if (key === 'ArrowRight' || key === 'ArrowDown') {
+    return 1
+  }
+  if (key === 'ArrowLeft' || key === 'ArrowUp') {
+    return -1
+  }
+  return 0
+}
+
+/**
+ * iOS の UISegmentedControl に倣った期間フィルタ。
+ * 凹んだ 1 本のトラックの中で、選択中のセグメントだけが手前の pill として浮く。
+ */
+function PeriodSegmentedControl({ onChange, value }: { onChange: (value: PeriodFilter) => void; value: PeriodFilter }) {
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      const delta = arrowDelta(event.key)
+      if (delta === 0) {
+        return
+      }
+      event.preventDefault()
+      const currentIndex = PERIOD_SEGMENTS.findIndex((segment) => segment.value === value)
+      const nextIndex = (currentIndex + delta + PERIOD_SEGMENTS.length) % PERIOD_SEGMENTS.length
+      onChange(PERIOD_SEGMENTS[nextIndex].value)
+      // roving tabIndex ではフォーカスも一緒に動かさないとキーボード操作が行き止まりになる
+      event.currentTarget.querySelectorAll('button')[nextIndex]?.focus()
+    },
+    [onChange, value]
+  )
+
+  return (
+    <div
+      aria-label="期間で絞り込む"
+      className="flex items-stretch gap-1 rounded-full bg-black/20 p-1"
+      onKeyDown={handleKeyDown}
+      role="radiogroup"
+    >
+      {PERIOD_SEGMENTS.map((segment) => (
+        <PeriodSegment
+          active={value === segment.value}
+          key={segment.value}
+          label={segment.label}
+          onSelect={onChange}
+          value={segment.value}
+        />
+      ))}
+    </div>
+  )
+}
+
+function PeriodSegment({
   active,
-  count,
   label,
-  onClick,
+  onSelect,
+  value,
 }: {
   active: boolean
-  count: number
   label: string
-  onClick: () => void
+  onSelect: (value: PeriodFilter) => void
+  value: PeriodFilter
 }) {
+  const handleClick = useCallback(() => onSelect(value), [onSelect, value])
+
   return (
-    <Button
-      aria-pressed={active}
+    <button
+      aria-checked={active}
       className={cn(
-        'flex h-11 min-w-0 flex-col items-center justify-center gap-0 rounded-full px-1 py-1.5 font-medium leading-tight transition-all duration-200',
-        active
-          ? 'bg-foreground text-background shadow-sm'
-          : 'border border-border/60 bg-background/70 text-muted-foreground hover:bg-background/90 hover:text-foreground'
+        // press で即時に反応させるため active: の opacity を使う（トラック内で pill が跳ねないよう scale は使わない）
+        'flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full px-1 font-medium text-xs transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 active:opacity-70',
+        active ? 'bg-background text-foreground shadow-black/10 shadow-sm' : 'text-white'
       )}
-      onClick={onClick}
+      onClick={handleClick}
+      role="radio"
+      tabIndex={active ? 0 : -1}
       type="button"
-      variant="ghost"
     >
-      <span className="w-full truncate text-center text-[11px] sm:text-xs">{label}</span>
-      <span className="text-[10px] opacity-80 sm:text-[11px]">{count}</span>
-    </Button>
+      <span className="truncate">{label}</span>
+    </button>
   )
 }
