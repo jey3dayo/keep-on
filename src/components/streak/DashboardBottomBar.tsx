@@ -27,16 +27,17 @@ export function DashboardBottomBar({ className, leftSlot, rightSlot }: Dashboard
   return createPortal(
     <div
       className={cn(
-        'pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex items-center justify-between px-4',
+        'pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex items-center px-4',
         className
       )}
     >
-      {leftSlot ? (
-        <div className="pointer-events-auto flex flex-1 items-center">{leftSlot}</div>
-      ) : (
-        <div className="flex-1" />
-      )}
-      {rightSlot ? <div className="pointer-events-auto flex items-center gap-3">{rightSlot}</div> : null}
+      {/*
+       * スロットは中身の幅だけを占めること。flex-1 で余白まで広げると、
+       * 透明なのに pointer-events-auto な帯が重なり、別インスタンスのバーの
+       * ボタン（ビュー切替トグル等）がクリックできなくなる。
+       */}
+      {leftSlot ? <div className="pointer-events-auto flex items-center">{leftSlot}</div> : null}
+      {rightSlot ? <div className="pointer-events-auto ml-auto flex items-center gap-3">{rightSlot}</div> : null}
     </div>,
     document.body
   )
