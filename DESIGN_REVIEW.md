@@ -40,6 +40,7 @@ KeepOn の UI 変更をレビューし、ルールの置き場所を決めるた
 - a11y（フォーカス、ラベル、キーボード）が共通化できるもの
 - `src/components/ui/` は直接編集しない。見た目のカスタムは `src/components/` 配下のラッパーで行う
 - フォーム入力の共有は `@/components/Input`（または basics ラッパー）を優先する
+- ダッシュボードの没入背景は `src/components/streak/DashboardBackground.tsx` に統合済み。アイコンビュー（`HabitSimpleView`）とリストビュー（`StreakDashboard`）の両方がこれを使う。新しい没入ビューを追加する場合も同様に共有する
 
 ### feature-local に残す
 
@@ -98,6 +99,8 @@ KeepOn の UI 変更をレビューし、ルールの置き場所を決めるた
 - 高頻度チェックイン操作に重い motion を載せていないか
 - safe-area を固定 UI が無視していないか
 - `ui/` 直編集や、ラッパーを経由しない入力コンポーネント追加がないか
+- ダッシュボードの没入ビュー（アイコン / リスト）を新規追加・変更するとき、背景・グラデーションを `src/components/streak/DashboardBackground.tsx` 経由にしているか。ビュー個別に背景やグラデーションを実装していないか
+- 没入背景のグラデーションが下端で不透明な色を残していないか（`DESIGN.md` の没入背景ルール参照。body 側の塗りとの段差が再発しやすい）
 
 ## Escalation
 
