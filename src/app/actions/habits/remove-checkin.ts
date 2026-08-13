@@ -49,10 +49,6 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
   // チェックイン削除直後: 同期的にキャッシュ無効化
   await revalidateHabitPaths(userId, { sync: true })
 
-  // アナリティクスキャッシュも無効化（総チェックイン数が変わるため）
-  const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
-  await invalidateAnalyticsCache(userId)
-
   return { currentCount, deleted: true }
 }
 

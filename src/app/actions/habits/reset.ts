@@ -45,10 +45,6 @@ export async function resetHabitProgressAction(habitId: string, dateKey?: string
           // 期間内の全チェックインを削除
           await deleteAllCheckinsByHabitAndPeriod(input.habitId, input.dateKey, habit.period, weekStartDay)
 
-          // チェックイン削除により総チェックイン数が変わるため、アナリティクスキャッシュを無効化
-          const { invalidateAnalyticsCache } = await import('@/lib/cache/analytics-cache')
-          await invalidateAnalyticsCache(userId)
-
           await revalidateHabitPaths(userId)
         },
       })
