@@ -1,57 +1,17 @@
 import * as v from 'valibot'
-import { isError } from '@/lib/utils/guards'
-
-const ClerkApiErrorEntrySchema = v.object({
-  code: v.optional(v.string()),
-  message: v.optional(v.string()),
-})
-
-export const ClerkApiResponseErrorSchema = v.object({
-  clerkTraceId: v.optional(v.nullable(v.string())),
-  errors: v.optional(v.array(v.optional(ClerkApiErrorEntrySchema))),
-  name: v.optional(v.string()),
-  status: v.optional(v.number()),
-})
 
 const UserDateSchema = v.pipe(v.union([v.date(), v.string()]), v.toDate())
 
 export const UserSchema = v.object({
-  clerkId: v.string(),
   createdAt: UserDateSchema,
   email: v.string(),
+  externalId: v.string(),
   id: v.string(),
   updatedAt: UserDateSchema,
   weekStart: v.picklist(['monday', 'sunday']),
 })
 
-interface ClerkApiResponseErrorPayload extends Record<string, unknown> {
-  clerkTraceId?: string
-  errors?: Array<{ code?: string; message?: string }>
-  status?: number
-}
-
 export type UserSchemaType = v.InferOutput<typeof UserSchema>
-
-export function parseClerkApiResponseErrorPayload(error: unknown): ClerkApiResponseErrorPayload | null {
-  if (isError(error)) {
-    return null
-  }
-
-  const parsed = v.safeParse(ClerkApiResponseErrorSchema, error)
-  if (!parsed.success || parsed.output.name !== 'ClerkAPIResponseError') {
-    return null
-  }
-
-  const { status, clerkTraceId, errors } = parsed.output
-
-  return {
-    clerkTraceId: clerkTraceId ?? undefined,
-    errors: errors
-      ?.filter((entry): entry is { code?: string; message?: string } => entry !== undefined)
-      .map((entry) => ({ code: entry.code, message: entry.message })),
-    status,
-  }
-}
 
 export function safeParseUser(input: unknown) {
   return v.safeParse(UserSchema, input)

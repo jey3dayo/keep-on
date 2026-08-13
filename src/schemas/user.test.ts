@@ -4,7 +4,7 @@ import { safeParseUser } from './user'
 describe('safeParseUser', () => {
   it('文字列の日時をDateに変換できる', () => {
     const result = safeParseUser({
-      clerkId: 'clerk-123',
+      externalId: 'access-sub-123',
       createdAt: '2024-01-01T00:00:00.000Z',
       email: 'test@example.com',
       id: 'user-123',
@@ -21,7 +21,7 @@ describe('safeParseUser', () => {
 
   it('不正な日時文字列はエラーになる', () => {
     const result = safeParseUser({
-      clerkId: 'clerk-789',
+      externalId: 'access-sub-789',
       createdAt: 'invalid-date',
       email: 'invalid@example.com',
       id: 'user-789',
@@ -35,7 +35,7 @@ describe('safeParseUser', () => {
   it('Date型の日時も許可する', () => {
     const now = new Date()
     const result = safeParseUser({
-      clerkId: 'clerk-456',
+      externalId: 'access-sub-456',
       createdAt: now,
       email: 'test2@example.com',
       id: 'user-456',

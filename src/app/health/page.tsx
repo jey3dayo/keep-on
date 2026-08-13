@@ -2,7 +2,7 @@ import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  description: 'Clerk と DB の設定状態を確認するヘルスチェックページ',
+  description: 'Cloudflare Access と DB の設定状態を確認するヘルスチェックページ',
   title: 'Health - KeepOn',
 }
 
@@ -21,13 +21,11 @@ interface HealthCheck {
 }
 
 interface EnvSnapshot {
-  clerkPublishableKey?: string
-  clerkSecretKey?: string
+  accessAud?: string
+  accessTeamDomain?: string
   d1Binding: boolean
   nextjsEnv?: string
   runtime: 'workers' | 'node'
-  signInUrl?: string
-  signUpUrl?: string
 }
 
 const STATUS_BADGE_STYLES: Record<Status, string> = {
@@ -59,19 +57,6 @@ function getString(source: Record<string, unknown>, key: string): string | undef
   return typeof value === 'string' ? value : undefined
 }
 
-function getKeyMode(value?: string): 'test' | 'live' | 'unknown' {
-  if (!value) {
-    return 'unknown'
-  }
-  if (value.startsWith('pk_test') || value.startsWith('sk_test')) {
-    return 'test'
-  }
-  if (value.startsWith('pk_live') || value.startsWith('sk_live')) {
-    return 'live'
-  }
-  return 'unknown'
-}
-
 function resolveDbBinding(envSnapshot: EnvSnapshot): DbBinding {
   return envSnapshot.d1Binding ? 'd1' : 'missing'
 }
@@ -95,13 +80,11 @@ async function getEnvSnapshot(): Promise<EnvSnapshot> {
 
   if (!isWorkersRuntime) {
     return {
-      clerkPublishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-      clerkSecretKey: process.env.CLERK_SECRET_KEY,
+      accessAud: process.env.ACCESS_AUD,
+      accessTeamDomain: process.env.ACCESS_TEAM_DOMAIN,
       d1Binding: false,
       nextjsEnv: process.env.NEXTJS_ENV,
       runtime,
-      signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
-      signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
     }
   }
 
@@ -111,36 +94,28 @@ async function getEnvSnapshot(): Promise<EnvSnapshot> {
     const envRecord = env as Record<string, unknown>
     const d1Binding = 'DB' in envRecord && envRecord.DB !== null && envRecord.DB !== undefined
     return {
-      clerkPublishableKey: getString(envRecord, 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'),
-      clerkSecretKey: getString(envRecord, 'CLERK_SECRET_KEY'),
+      accessAud: getString(envRecord, 'ACCESS_AUD'),
+      accessTeamDomain: getString(envRecord, 'ACCESS_TEAM_DOMAIN'),
       d1Binding,
       nextjsEnv: getString(envRecord, 'NEXTJS_ENV'),
       runtime,
-      signInUrl: getString(envRecord, 'NEXT_PUBLIC_CLERK_SIGN_IN_URL'),
-      signUpUrl: getString(envRecord, 'NEXT_PUBLIC_CLERK_SIGN_UP_URL'),
     }
   } catch {
     return {
-      clerkPublishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-      clerkSecretKey: process.env.CLERK_SECRET_KEY,
+      accessAud: process.env.ACCESS_AUD,
+      accessTeamDomain: process.env.ACCESS_TEAM_DOMAIN,
       d1Binding: false,
       nextjsEnv: process.env.NEXTJS_ENV,
       runtime,
-      signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
-      signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
     }
   }
 }
 
 function buildHealthChecks(envSnapshot: EnvSnapshot): HealthCheck[] {
-  const publishableMode = getKeyMode(envSnapshot.clerkPublishableKey)
-  const secretMode = getKeyMode(envSnapshot.clerkSecretKey)
-  const keyMismatch = publishableMode !== 'unknown' && secretMode !== 'unknown' && publishableMode !== secretMode
   const dbBinding = resolveDbBinding(envSnapshot)
 
   const runtimeDescription = envSnapshot.runtime === 'workers' ? 'Cloudflare Workers 実行中' : 'Node.js 実行中'
   const runtimeStatus: Status = envSnapshot.runtime === 'workers' ? 'ok' : 'warn'
-  const clerkUrlsConfigured = Boolean(envSnapshot.signInUrl && envSnapshot.signUpUrl)
 
   return [
     {
@@ -150,28 +125,16 @@ function buildHealthChecks(envSnapshot: EnvSnapshot): HealthCheck[] {
       status: runtimeStatus,
     },
     {
-      description: envSnapshot.clerkPublishableKey ? '設定済み' : '未設定',
-      id: 'clerk-publishable',
-      label: 'Clerk Publishable Key',
-      status: envSnapshot.clerkPublishableKey ? 'ok' : 'error',
+      description: envSnapshot.accessTeamDomain ? '設定済み' : '未設定',
+      id: 'access-team-domain',
+      label: 'Access Team Domain',
+      status: envSnapshot.accessTeamDomain ? 'ok' : 'error',
     },
     {
-      description: envSnapshot.clerkSecretKey ? '設定済み' : '未設定',
-      id: 'clerk-secret',
-      label: 'Clerk Secret Key',
-      status: envSnapshot.clerkSecretKey ? 'ok' : 'error',
-    },
-    {
-      description: clerkUrlsConfigured ? 'URL 設定済み' : 'URL 未設定',
-      id: 'clerk-urls',
-      label: 'Clerk URLs',
-      status: clerkUrlsConfigured ? 'ok' : 'warn',
-    },
-    {
-      description: keyMismatch ? 'Publishable/Secret の mode が不一致' : 'Publishable/Secret の mode 一致',
-      id: 'clerk-mode',
-      label: 'Clerk Key Mode',
-      status: keyMismatch ? 'warn' : 'ok',
+      description: envSnapshot.accessAud ? '設定済み' : '未設定',
+      id: 'access-aud',
+      label: 'Access AUD',
+      status: envSnapshot.accessAud ? 'ok' : 'error',
     },
     {
       description: describeDbBinding(dbBinding),
@@ -262,7 +225,9 @@ export default async function HealthPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="space-y-2">
               <h1 className="font-semibold text-3xl text-foreground">ヘルスチェック</h1>
-              <p className="text-muted-foreground text-sm">Clerk と DB の設定状態を確認します。値は公開しません。</p>
+              <p className="text-muted-foreground text-sm">
+                Cloudflare Access と DB の設定状態を確認します。値は公開しません。
+              </p>
             </div>
             <a
               className="inline-flex items-center justify-center rounded-full border border-border/60 bg-background px-4 py-2 font-semibold text-foreground text-sm transition hover:border-primary/60 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

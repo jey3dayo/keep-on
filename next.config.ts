@@ -24,11 +24,11 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value:
               "default-src 'self'; " +
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.accounts.dev https://clerk.jey3dayo.net https://challenges.cloudflare.com https://static.cloudflareinsights.com; " +
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com; " +
               "style-src 'self' 'unsafe-inline'; " +
-              "img-src 'self' data: blob: https://img.clerk.com; " +
+              "img-src 'self' data: blob:; " +
               "font-src 'self' data:; " +
-              `connect-src 'self' https://clerk.com https://api.clerk.com https://*.clerk.accounts.dev https://clerk.jey3dayo.net https://keep-on.jey3dayo.net https://challenges.cloudflare.com https://cloudflareinsights.com${isDev ? ' ws: wss:' : ''}; ` +
+              `connect-src 'self' https://keep-on.jey3dayo.net https://challenges.cloudflare.com https://cloudflareinsights.com${isDev ? ' ws: wss:' : ''}; ` +
               "worker-src 'self' blob:; " +
               "frame-src 'self' https://challenges.cloudflare.com; " +
               "frame-ancestors 'none'; " +

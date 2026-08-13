@@ -20,7 +20,6 @@ const config: StorybookConfig = {
   },
   viteFinal: (viteConfig) => {
     viteConfig.resolve = viteConfig.resolve ?? {}
-    const clerkMock = path.resolve(__dirname, './mocks/clerk.tsx')
     const serverActionsMock = path.resolve(__dirname, './mocks/server-actions.ts')
     const dbMock = path.resolve(__dirname, './mocks/db.ts')
     const postgresMock = path.resolve(__dirname, './mocks/postgres.ts')
@@ -45,9 +44,6 @@ const config: StorybookConfig = {
       ...serverActionAliases,
       { find: /^@\/lib\/db$/, replacement: dbMock },
       { find: /^postgres$/, replacement: postgresMock },
-      { find: '@clerk/nextjs/server', replacement: clerkMock },
-      { find: '@clerk/nextjs/errors', replacement: clerkMock },
-      { find: '@clerk/nextjs', replacement: clerkMock },
       ...existingAliases,
     ]
     viteConfig.define = {
@@ -59,7 +55,6 @@ const config: StorybookConfig = {
       target: 'esnext',
     }
     viteConfig.optimizeDeps = viteConfig.optimizeDeps ?? {}
-    viteConfig.optimizeDeps.exclude = [...(viteConfig.optimizeDeps.exclude ?? []), '@clerk/nextjs']
     viteConfig.optimizeDeps.esbuildOptions = {
       ...(viteConfig.optimizeDeps.esbuildOptions ?? {}),
       target: 'esnext',

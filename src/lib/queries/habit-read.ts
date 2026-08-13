@@ -175,7 +175,7 @@ function getPreviousPeriod(date: Date, period: Period): Date {
  * 進捗情報付きの習慣一覧を取得
  *
  * @param userId - ユーザーID
- * @param clerkId - ClerkのユーザーID（週開始日設定の取得に使用）
+ * @param externalId - 外部 IdP のサブジェクト識別子（週開始日設定の取得に使用）
  * @param date - 基準日（デフォルト: 今日）
  * @param weekStart - 週開始日設定（省略時は clerkId から取得）
  * @param preloadedSnapshot - 呼び出し側が既に読んだ KV スナップショット。
@@ -184,7 +184,7 @@ function getPreviousPeriod(date: Date, period: Period): Date {
  */
 export async function getHabitsWithProgress(
   userId: string,
-  clerkId: string,
+  externalId: string,
   date: Date | string = new Date().toISOString(),
   weekStart?: WeekStart,
   preloadedSnapshot?: HabitsCacheSnapshot
@@ -240,7 +240,7 @@ export async function getHabitsWithProgress(
       .from(habitSkips)
       .innerJoin(habits, eq(habitSkips.habitId, habits.id))
       .where(and(eq(habits.userId, userId), eq(habits.archived, false), gte(habitSkips.date, streakLimitDateKey)))
-    const weekStartPromise = weekStart ? Promise.resolve(weekStart) : getUserWeekStart(clerkId)
+    const weekStartPromise = weekStart ? Promise.resolve(weekStart) : getUserWeekStart(externalId)
 
     const [habitList, allCheckins, allSkips, weekStartStr] = await Promise.all([
       habitListPromise,

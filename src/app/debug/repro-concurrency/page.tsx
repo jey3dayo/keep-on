@@ -6,7 +6,7 @@ import { type ConcurrencyResult, runConcurrencyChecks } from './actions'
 import { CONCURRENCY_LIMITS, IS_CONCURRENCY_DEBUG_ENABLED, ITERATION_LIMITS } from './constants'
 
 export const metadata: Metadata = {
-  description: 'Clerk API と DB クエリを並列実行して疎通・タイムアウトを検査するデバッグページ',
+  description: 'Access 認証と DB クエリを並列実行して疎通・タイムアウトを検査するデバッグページ',
   title: '並列実行再現 - KeepOn',
 }
 
@@ -150,7 +150,7 @@ export default async function ReproConcurrencyPage({ searchParams }: { searchPar
             <div className="space-y-2">
               <h1 className="font-semibold text-3xl text-foreground">並列実行再現</h1>
               <p className="text-muted-foreground text-sm">
-                Clerk API と DB クエリを並列実行し、タイムアウトや失敗率を確認します。
+                Access 認証と DB クエリを並列実行し、タイムアウトや失敗率を確認します。
               </p>
             </div>
             <a

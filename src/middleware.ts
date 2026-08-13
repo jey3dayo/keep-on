@@ -1,19 +1,15 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/api/webhooks(.*)',
-  '/offline',
-  '/health(.*)',
-])
-
-export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    await auth.protect()
-  }
-})
+/**
+ * Cloudflare Access が前段でアクセスを強制するため、ここでは認証判定を行わない。
+ *
+ * Access JWT の検証は JWKS の fetch を伴う。middleware は全リクエストで走るため、
+ * ここで検証するとエッジでの往復が毎回増える。検証は identity を実際に必要とする
+ * server component / route handler 層（getAccessIdentity）でのみ行う。
+ */
+export function middleware() {
+  return NextResponse.next()
+}
 
 export const config = {
   matcher: [

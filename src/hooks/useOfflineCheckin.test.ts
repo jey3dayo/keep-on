@@ -15,8 +15,8 @@ const mockSyncRegister = vi.fn()
 const mockServiceWorkerAddEventListener = vi.fn()
 const mockServiceWorkerRemoveEventListener = vi.fn()
 
-vi.mock('@clerk/nextjs', () => ({
-  useAuth: () => ({ isLoaded: true, userId: mockUserId }),
+vi.mock('@/contexts/IdentityContext', () => ({
+  useIdentity: () => ({ isLoaded: true, userId: mockUserId }),
 }))
 
 vi.mock('@/hooks/useOnlineStatus', () => ({

@@ -11,17 +11,17 @@ import { DEFAULT_COLOR_THEME, DEFAULT_THEME_MODE } from '@/constants/theme'
 
 /**
  * ユーザー情報テーブル
- * Clerkで認証されたユーザーのデータを管理
+ * Cloudflare Access で認証されたユーザーのデータを管理
  */
 export const users = sqliteTable('User', {
-  /** Clerk認証ID */
-  clerkId: text('clerkId').notNull().unique(),
   /** レコード作成日時 (ISO8601形式) */
   createdAt: text('createdAt')
     .$defaultFn(() => new Date().toISOString())
     .notNull(),
-  /** メールアドレス */
+  /** メールアドレス (identity の正キー) */
   email: text('email').notNull().unique(),
+  /** 外部 IdP のサブジェクト識別子 (Cloudflare Access JWT の sub) */
+  externalId: text('externalId').notNull().unique(),
   /** ユーザーID (CUID2形式) */
   id: text('id')
     .primaryKey()

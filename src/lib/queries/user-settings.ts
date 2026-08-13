@@ -15,7 +15,7 @@ import type { UserSettings } from '@/types/user-settings'
  * @param userId - ユーザーID
  * @param weekStart - 新しいweekStart値（"monday" | "sunday"）
  * @param maxRetries - 最大リトライ回数（デフォルト: 3）
- * @returns clerkId または null
+ * @returns externalId または null
  * @throws Error 更新に失敗した場合
  */
 async function updateUsersWeekStartWithRetry(
@@ -35,7 +35,7 @@ async function updateUsersWeekStartWithRetry(
         throw new Error(`User not found: ${userId}`)
       }
 
-      return user.clerkId ?? null
+      return user.externalId ?? null
     } catch (error) {
       // Don't retry non-transient errors (user existence, validation errors, etc.)
       const errorMessage = error instanceof Error ? error.message : String(error)
@@ -167,7 +167,7 @@ async function upsertUserSettings(
  * @param settingsId - userSettings のID（ロールバック用）
  * @param weekStart - 新しいweekStart値（"monday" | "sunday"）
  * @param previousSettings - ロールバック用の以前の設定（null = 新規作成）
- * @returns clerkId または null
+ * @returns externalId または null
  */
 async function updateWeekStartAndCache(
   userId: string,
@@ -176,22 +176,22 @@ async function updateWeekStartAndCache(
   previousSettings: typeof userSettings.$inferSelect | null
 ): Promise<string | null> {
   try {
-    const clerkId = await updateUsersWeekStartWithRetry(userId, weekStart)
+    const externalId = await updateUsersWeekStartWithRetry(userId, weekStart)
 
-    if (clerkId) {
+    if (externalId) {
       try {
-        await invalidateUserCache(clerkId)
+        await invalidateUserCache(externalId)
       } catch (cacheError) {
         // Cache invalidation failure is non-critical; log but don't fail the operation
         console.warn('updateWeekStartAndCache: cache invalidation failed (non-critical)', {
-          clerkId,
           error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+          externalId,
           userId,
         })
       }
     }
 
-    return clerkId
+    return externalId
   } catch (error) {
     console.error('updateWeekStartAndCache: users.weekStart update failed, rolling back', {
       settingsId,

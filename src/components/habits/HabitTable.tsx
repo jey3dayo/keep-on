@@ -15,12 +15,12 @@ import type { HabitWithProgress } from '@/types/habit'
 import { HabitTableClient } from './HabitTableClient'
 
 interface HabitTableProps {
-  clerkId: string
+  externalId: string
   requestMeta?: { route: string; requestId: string }
   userId: string
 }
 
-export async function HabitTable({ userId, clerkId, requestMeta }: HabitTableProps) {
+export async function HabitTable({ userId, externalId, requestMeta }: HabitTableProps) {
   const timeoutMs = getRequestTimeoutMs()
   const meta = requestMeta ?? createRequestMeta('/habits')
   const dateKey = await getServerDateKey()
@@ -36,7 +36,7 @@ export async function HabitTable({ userId, clerkId, requestMeta }: HabitTablePro
   const [activeHabitsResult, archivedHabitsResult] = await Promise.allSettled([
     logSpan(
       'habits.table.query',
-      () => getHabitsWithProgress(userId, clerkId, dateKey, undefined, cacheSnapshot),
+      () => getHabitsWithProgress(userId, externalId, dateKey, undefined, cacheSnapshot),
       meta,
       { timeoutMs }
     ),

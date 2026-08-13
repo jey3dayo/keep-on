@@ -1,8 +1,8 @@
 'use client'
 
-import { useAuth } from '@clerk/nextjs'
 import { useCallback, useEffect, useRef } from 'react'
 import { SW_MSG_SYNC_COMPLETE, SW_SYNC_TAG } from '@/constants/pwa'
+import { useIdentity } from '@/contexts/IdentityContext'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import {
   enqueueOfflineCheckin,
@@ -124,7 +124,7 @@ interface UseOfflineCheckinOptions {
 
 export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
   const isOnline = useOnlineStatus()
-  const { isLoaded, userId } = useAuth()
+  const { isLoaded, userId } = useIdentity()
 
   // enqueue callback の identity を保ったまま最新の userId を読むため ref 経由にする
   const userIdRef = useRef(userId)

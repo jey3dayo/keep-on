@@ -1,14 +1,15 @@
 'use client'
 
+import { LogOut } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { ThemeToggle } from '@/components/basics/ThemeToggle'
-import { ClerkUserButton } from '@/components/clerk/ClerkUserButton'
 import { LogoMark } from '@/components/LogoMark'
 import { SyncIndicator } from '@/components/SyncIndicator'
 import { SidebarTrigger } from '@/components/sidebar/Sidebar'
 import { Separator } from '@/components/ui/separator'
+import { ACCESS_LOGOUT_URL } from '@/constants/auth'
 import { getPageTitleKey } from '@/constants/navigation'
 
 export function SiteHeader() {
@@ -37,10 +38,13 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-2">
           <SyncIndicator />
           <ThemeToggle buttonClassName="min-h-11 min-w-11" buttonVariant="ghost" />
-          {/* ClerkUserButton は className を反映しないため、タップ領域はラッパーで確保する */}
-          <div className="flex min-h-11 min-w-11 items-center justify-center">
-            <ClerkUserButton />
-          </div>
+          <a
+            aria-label="サインアウト"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-foreground/80 transition-colors hover:text-foreground"
+            href={ACCESS_LOGOUT_URL}
+          >
+            <LogOut className="size-4" />
+          </a>
         </div>
       </div>
     </header>

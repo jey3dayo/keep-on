@@ -1,11 +1,10 @@
-import { auth } from '@clerk/nextjs/server'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { AppSidebar } from '@/components/dashboard/AppSidebar'
 import { SiteHeader } from '@/components/dashboard/SiteHeader'
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator'
 import { SidebarInset, SidebarProvider } from '@/components/sidebar/Sidebar'
-import { SIGN_IN_PATH } from '@/constants/auth'
+import { getAccessIdentity } from '@/lib/auth/access'
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'
 
@@ -16,9 +15,10 @@ export default async function DashboardLayout({
   children: React.ReactNode
   modal: React.ReactNode
 }) {
-  const { userId } = await auth()
-  if (!userId) {
-    redirect(SIGN_IN_PATH)
+  // Access が前段でアクセスを強制するため実質到達しない。検証が通らない場合の保険
+  const identity = await getAccessIdentity()
+  if (!identity) {
+    redirect('/')
   }
 
   const cookieStore = await cookies()

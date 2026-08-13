@@ -26,7 +26,7 @@ interface RetryOptions {
  * ```typescript
  * const habits = await withDbRetry(
  *   'dashboard.habits',
- *   () => getHabitsWithProgress(userId, clerkId, dateKey, weekStart),
+ *   () => getHabitsWithProgress(userId, externalId, dateKey, weekStart),
  *   { timeoutMs: 8000 }
  * )
  * ```

@@ -1,6 +1,5 @@
 'use server'
 
-import { clerkClient } from '@clerk/nextjs/server'
 import { sql } from 'drizzle-orm'
 import { users } from '@/db/schema'
 import { getDb } from '@/lib/db'
@@ -73,36 +72,11 @@ async function runTimed(action: () => Promise<void>): Promise<TimedCheck> {
   }
 }
 
-async function resolveClerkClient() {
-  try {
-    const client = await clerkClient()
-    return { client }
-  } catch (error) {
-    return { client: null, error: formatError(error).message }
-  }
-}
-
-async function runTask(
-  db: Awaited<ReturnType<typeof getDb>>,
-  clerk: Awaited<ReturnType<typeof clerkClient>> | null,
-  clerkError?: string
-): Promise<TaskResult> {
+async function runTask(db: Awaited<ReturnType<typeof getDb>>): Promise<TaskResult> {
   const start = Date.now()
   const errors: string[] = []
 
-  if (clerkError) {
-    errors.push(clerkError)
-  }
-
   const checks: Promise<TimedCheck>[] = []
-  if (clerk) {
-    checks.push(
-      runTimed(async () => {
-        await clerk.users.getUserList({ limit: 1 })
-      })
-    )
-  }
-
   checks.push(
     runTimed(async () => {
       await db.run(sql`select 1`)
@@ -149,11 +123,10 @@ export async function runConcurrencyChecks(params: ConcurrencyParams): Promise<C
 
   const startedAt = new Date().toISOString()
   const db = getDb()
-  const { client: clerk, error: clerkError } = await resolveClerkClient()
   const batches: ConcurrencyResult['batches'] = []
 
   for (let index = 0; index < iterations; index += 1) {
-    const tasks = Array.from({ length: concurrency }, () => runTask(db, clerk, clerkError))
+    const tasks = Array.from({ length: concurrency }, () => runTask(db))
     const results = await Promise.all(tasks)
     const durations = results.map((result) => result.durationMs)
     const okCount = results.filter((result) => result.ok).length

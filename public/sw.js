@@ -151,8 +151,8 @@ self.addEventListener('fetch', (event) => {
     }
   }
 
-  // API・認証: network-only (SWスルー)
-  if (url.pathname.startsWith('/api/') || url.hostname.includes('clerk')) {
+  // API: network-only (SWスルー)
+  if (url.pathname.startsWith('/api/')) {
     return
   }
 

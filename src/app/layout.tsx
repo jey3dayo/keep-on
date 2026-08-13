@@ -1,4 +1,3 @@
-import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata, Viewport } from 'next'
 import { cookies } from 'next/headers'
 import type React from 'react'
@@ -19,6 +18,7 @@ import {
   THEME_COLOR_LIGHT,
   THEME_MODE_COOKIE_KEY,
 } from '@/constants/theme'
+import { IdentityProvider } from '@/contexts/IdentityContext'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -102,8 +102,7 @@ export default async function RootLayout({
         <ColorThemeScript />
       </head>
       <body>
-        {/* サインアウト後に auth route へ遷移させ、sw.js のユーザー固有データクリアを確実に発火させる */}
-        <ClerkProvider afterMultiSessionSingleSignOutUrl="/sign-in" afterSignOutUrl="/sign-in">
+        <IdentityProvider>
           <a
             className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-foreground focus:shadow focus:ring-2 focus:ring-ring focus:ring-offset-2"
             href="#main-content"
@@ -123,7 +122,7 @@ export default async function RootLayout({
           <ServiceWorkerRegistration />
           <A2HSPrompt />
           <DevAgentationToolbar />
-        </ClerkProvider>
+        </IdentityProvider>
       </body>
     </html>
   )

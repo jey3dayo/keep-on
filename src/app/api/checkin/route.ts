@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import * as v from 'valibot'
 import { addCheckinAction } from '@/app/actions/habits/checkin'
 import { removeCheckinAction } from '@/app/actions/habits/remove-checkin'
+import { getAccessIdentity } from '@/lib/auth/access'
 import type { SerializableHabitError } from '@/lib/errors/serializable'
 import { DateKeySchema } from '@/schemas/date-key'
 
@@ -30,8 +30,8 @@ function errorToStatus(error: SerializableHabitError): number {
 }
 
 export async function POST(request: Request) {
-  const { userId } = await auth()
-  if (!userId) {
+  const identity = await getAccessIdentity()
+  if (!identity) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
   // 端末共有時に前ユーザーのオフラインキューが別ユーザーの Cookie でリプレイされるのを防ぐ最終防衛線。
   // SW / hook はこの 409 を「永続的な 4xx」として扱い、該当アイテムを破棄する
-  if (queuedUserId && queuedUserId !== userId) {
+  if (queuedUserId && queuedUserId !== identity.sub) {
     return NextResponse.json({ error: 'UserMismatch' }, { status: 409 })
   }
 

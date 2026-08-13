@@ -121,9 +121,9 @@ const baseHabit: HabitWithProgress = {
 }
 
 const mockUser: User = {
-  clerkId: 'clerk-1',
   createdAt: new Date('2025-01-01T00:00:00.000Z'),
   email: 'test@example.com',
+  externalId: 'access-sub-1',
   id: 'user-1',
   updatedAt: new Date('2025-01-01T00:00:00.000Z'),
   weekStart: 'sunday',

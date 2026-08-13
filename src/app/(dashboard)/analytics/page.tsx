@@ -6,7 +6,6 @@ import { Button } from '@/components/basics/Button'
 import { Icon, type IconName } from '@/components/basics/Icon'
 import { PageShell } from '@/components/PageShell'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
-import { SIGN_IN_PATH } from '@/constants/auth'
 import { PERIOD_DISPLAY_NAME, PERIODS, type Period } from '@/constants/habit'
 import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
 import { getCheckinCountsByDateRange, getCheckinsByUserAndDate, getTotalCheckinsByUserId } from '@/lib/queries/checkin'
@@ -55,7 +54,7 @@ export default async function AnalyticsPage() {
 
   if (!user) {
     logInfo('analytics.syncUser:missing', requestMeta)
-    redirect(SIGN_IN_PATH)
+    redirect('/')
   }
 
   const dateKey = await getServerDateKey()
@@ -70,7 +69,7 @@ export default async function AnalyticsPage() {
   const [habits, todayCheckins, totalCheckins, checkinsByDate] = await Promise.all([
     logSpan(
       'analytics.habits',
-      () => getHabitsWithProgress(user.id, user.clerkId, dateKey, user.weekStart),
+      () => getHabitsWithProgress(user.id, user.externalId, dateKey, user.weekStart),
       requestMeta,
       {
         timeoutMs,

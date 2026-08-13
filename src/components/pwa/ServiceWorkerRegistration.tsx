@@ -1,14 +1,15 @@
 'use client'
 
-import { useAuth } from '@clerk/nextjs'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import { SW_MSG_CLEAR_USER_CACHE, SW_MSG_SKIP_WAITING } from '@/constants/pwa'
+import { useIdentity } from '@/contexts/IdentityContext'
 
 export function ServiceWorkerRegistration() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null)
-  const { isSignedIn, userId } = useAuth()
+  const { isLoaded, userId } = useIdentity()
+  const isSignedIn = isLoaded ? userId !== null : undefined
   const previousUserId = useRef<string | null>(null)
 
   // サインアウト（signed-in → signed-out）とユーザー交代（userId の変化）を検知して
@@ -26,7 +27,7 @@ export function ServiceWorkerRegistration() {
       return
     }
 
-    // isSignedIn が undefined（Clerk 読み込み中）の間は判定を保留する
+    // isSignedIn が undefined（認証状態読み込み中）の間は判定を保留する
     if (isSignedIn !== false || !prev) {
       return
     }

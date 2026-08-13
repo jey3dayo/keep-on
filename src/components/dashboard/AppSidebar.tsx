@@ -1,11 +1,12 @@
 'use client'
 
+import { LogOut } from 'lucide-react'
 import type * as React from 'react'
-import { ClerkUserButton } from '@/components/clerk/ClerkUserButton'
 import { MobileNavDrawer } from '@/components/dashboard/MobileNavDrawer'
 import { NavMain } from '@/components/dashboard/NavMain'
 import { NavSecondary } from '@/components/dashboard/NavSecondary'
 import { Sidebar, SidebarContent, SidebarFooter, useSidebar } from '@/components/sidebar/Sidebar'
+import { ACCESS_LOGOUT_URL } from '@/constants/auth'
 import { NAV_ITEMS } from '@/constants/navigation'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -25,13 +26,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter className="pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center gap-2 p-2">
-          <ClerkUserButton
-            appearance={{
-              elements: {
-                avatarBox: 'size-8',
-              },
-            }}
-          />
+          <a
+            aria-label="サインアウト"
+            className="flex size-8 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-secondary hover:text-foreground"
+            href={ACCESS_LOGOUT_URL}
+          >
+            <LogOut className="size-4" />
+          </a>
         </div>
       </SidebarFooter>
     </Sidebar>

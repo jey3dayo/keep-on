@@ -1,5 +1,6 @@
+import { isDevFallbackAllowed } from '@/lib/auth/environment'
 import { logError } from '@/lib/logging'
-import { findInvalidEnvKeys } from '@/schemas/env'
+import { findInvalidAccessEnvKeys } from '@/schemas/env'
 
 /**
  * サーバー起動時に環境変数を検証する。
@@ -12,9 +13,16 @@ import { findInvalidEnvKeys } from '@/schemas/env'
  * 500 になり、設定を直しても isolate が入れ替わるまで回復しない。
  */
 export function register() {
-  const invalidKeys = findInvalidEnvKeys({
-    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-  })
+  // access.ts の開発フォールバック判定と同じ述語を使う。ここがずれると
+  // 「認証は dev フォールバックで動いているのに設定不備を検出しない」状態になる
+  const isProduction = !isDevFallbackAllowed()
+  const invalidKeys = findInvalidAccessEnvKeys(
+    {
+      ACCESS_AUD: process.env.ACCESS_AUD,
+      ACCESS_TEAM_DOMAIN: process.env.ACCESS_TEAM_DOMAIN,
+    },
+    isProduction
+  )
 
   if (invalidKeys.length > 0) {
     logError('instrumentation.env:invalid', { keys: invalidKeys })

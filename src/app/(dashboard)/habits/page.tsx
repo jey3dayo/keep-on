@@ -1,4 +1,3 @@
-import { currentUser } from '@clerk/nextjs/server'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -6,10 +5,9 @@ import { Button } from '@/components/basics/Button'
 import { Icon } from '@/components/basics/Icon'
 import { HabitTable } from '@/components/habits/HabitTable'
 import { PageShell } from '@/components/PageShell'
-import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpanOptional } from '@/lib/logging'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
-import { getCurrentUserId } from '@/lib/user'
+import { syncUser } from '@/lib/user'
 
 export const metadata: Metadata = {
   description:
@@ -28,18 +26,11 @@ export default async function HabitsPage() {
 
   logInfo('request.habits:start', requestMeta)
 
-  const clerkUser = await logSpanOptional('habits.clerkUser', () => currentUser(), requestMeta, { timeoutMs })
+  const user = await logSpanOptional('habits.syncUser', () => syncUser(), requestMeta, { timeoutMs })
 
-  if (!clerkUser) {
-    logInfo('habits.clerkUser:missing', requestMeta)
-    redirect(SIGN_IN_PATH)
-  }
-
-  const userId = await logSpanOptional('habits.syncUser', () => getCurrentUserId(), requestMeta, { timeoutMs })
-
-  if (!userId) {
+  if (!user) {
     logInfo('habits.syncUser:missing', requestMeta)
-    redirect(SIGN_IN_PATH)
+    redirect('/')
   }
 
   logInfo('request.habits:end', requestMeta)
@@ -55,7 +46,7 @@ export default async function HabitsPage() {
           </Link>
         </Button>
       </div>
-      <HabitTable clerkId={clerkUser.id} requestMeta={requestMeta} userId={userId} />
+      <HabitTable externalId={user.externalId} requestMeta={requestMeta} userId={user.id} />
     </PageShell>
   )
 }

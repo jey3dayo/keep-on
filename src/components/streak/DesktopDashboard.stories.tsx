@@ -67,9 +67,9 @@ const habits = [
 ]
 
 const user = {
-  clerkId: 'clerk-1',
   createdAt: new Date('2025-01-01'),
   email: 'demo@example.com',
+  externalId: 'access-1',
   id: 'user-1',
   updatedAt: new Date('2025-01-28'),
   weekStart: 'monday' as const,

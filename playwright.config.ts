@@ -21,9 +21,8 @@ function loadDotenvPrivateKey(): string | undefined {
 /**
  * Playwright E2E テスト設定
  *
- * このファイルは以下の2つのプロジェクトを定義します:
- * 1. setup: Clerk認証状態を生成し、e2e/storage-state.jsonに保存
- * 2. chromium: 保存された認証状態を読み込んでE2Eテストを実行
+ * Cloudflare Access 経由の認証が前提のため、自動 E2E は認証不要な範囲のみを対象とする。
+ * 認証が必要なフローは Access service token 方式を今後整備する。
  *
  * WSL2環境対応: localhost:3000へのアクセスが可能
  */
@@ -38,22 +37,10 @@ export default defineConfig({
 
   // プロジェクト定義
   projects: [
-    // 認証状態生成プロジェクト
     {
-      name: 'setup',
-      testMatch: /.*\.setup\.(ts|cjs)/,
-      // setupプロジェクトはstorageStateを読み込まない
-    },
-
-    // E2Eテストプロジェクト（認証状態を再利用）
-    {
-      // setupプロジェクトに依存
-      dependencies: ['setup'],
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        // setupプロジェクトで生成された認証状態を読み込む
-        storageState: 'e2e/storage-state.json',
       },
     },
   ],
@@ -88,9 +75,9 @@ export default defineConfig({
     env: privateKey ? { DOTENV_PRIVATE_KEY: privateKey } : {},
     reuseExistingServer: !process.env.CI,
     timeout: 120_000, // WSL2環境を考慮して2分に設定
-    // "/" は /dashboard へリダイレクトし 404 終端になるため、
-    // Playwright の webServer 判定が失敗する。200 を返す /sign-in を使用する。
-    url: 'http://localhost:3000/sign-in',
+    // "/" は /dashboard へリダイレクトし、Access 未認証だと 302 終端になるため、
+    // Playwright の webServer 判定が失敗する。認証不要で 200 を返す /health を使用する。
+    url: 'http://localhost:3000/health',
   },
 
   // 並列ワーカー数（CI環境では1、ローカルでは自動）

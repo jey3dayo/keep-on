@@ -26,9 +26,9 @@ describe('upsertUser', () => {
 
   it('新規ユーザーを作成する', async () => {
     const mockUser = {
-      clerkId: 'clerk-123',
       createdAt: new Date(),
       email: 'test@example.com',
+      externalId: 'access-sub-123',
       id: 'user-123',
       updatedAt: new Date(),
     }
@@ -37,8 +37,8 @@ describe('upsertUser', () => {
     vi.mocked(db.returning).mockResolvedValueOnce([mockUser])
 
     const result = await upsertUser({
-      clerkId: 'clerk-123',
       email: 'test@example.com',
+      externalId: 'access-sub-123',
     })
 
     expect(result).toEqual(mockUser)
@@ -50,9 +50,9 @@ describe('upsertUser', () => {
 
   it('既存ユーザーを更新する', async () => {
     const mockUser = {
-      clerkId: 'clerk-123',
       createdAt: new Date('2024-01-01'),
       email: 'updated@example.com',
+      externalId: 'access-sub-123',
       id: 'user-123',
       updatedAt: new Date(),
     }
@@ -61,8 +61,8 @@ describe('upsertUser', () => {
     vi.mocked(db.returning).mockResolvedValueOnce([mockUser])
 
     const result = await upsertUser({
-      clerkId: 'clerk-123',
       email: 'updated@example.com',
+      externalId: 'access-sub-123',
     })
 
     expect(result).toEqual(mockUser)
@@ -71,9 +71,9 @@ describe('upsertUser', () => {
 
   it('正しいメソッドチェーンでDB操作が呼ばれる', async () => {
     const mockUser = {
-      clerkId: 'clerk-456',
       createdAt: new Date(),
       email: 'another@example.com',
+      externalId: 'access-sub-456',
       id: 'user-456',
       updatedAt: new Date(),
     }
@@ -82,8 +82,8 @@ describe('upsertUser', () => {
     vi.mocked(db.returning).mockResolvedValueOnce([mockUser])
 
     await upsertUser({
-      clerkId: 'clerk-456',
       email: 'another@example.com',
+      externalId: 'access-sub-456',
     })
 
     expect(db.insert).toHaveBeenCalledTimes(1)
