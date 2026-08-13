@@ -93,6 +93,7 @@ export function StreakDashboard({
       )}
 
       <DashboardBottomBar
+        className="md:hidden"
         rightSlot={
           <DashboardViewToggle
             activeButtonClassName="bg-foreground text-background"

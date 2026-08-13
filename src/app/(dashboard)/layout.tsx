@@ -27,6 +27,9 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider
+      // シェルの高さを viewport に固定する。min-h だけだとコンテンツが document を伸ばし、
+      // 内側の overflow-y-auto が clamp されず fixed 要素とスクロール位置がずれる
+      className="h-dvh overflow-hidden"
       defaultOpen={defaultOpen}
       style={
         {

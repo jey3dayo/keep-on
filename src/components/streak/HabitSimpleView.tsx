@@ -43,6 +43,9 @@ interface HabitSimpleViewProps {
   onSettings?: () => void
   onSkip?: (habitId: string) => Promise<void>
   onUnSkip?: (habitId: string) => Promise<void>
+  // バーは body へ portal されるため、md:hidden 等の祖先の表示切替が効かない。
+  // 同時にマウントされる別ブレークポイントのツリーでは false にして二重描画を防ぐ
+  showBottomBar?: boolean
 }
 
 export function HabitSimpleView({
@@ -58,6 +61,7 @@ export function HabitSimpleView({
   onSkip,
   onUnSkip,
   backgroundColor,
+  showBottomBar = true,
 }: HabitSimpleViewProps) {
   const router = useRouter()
   const [currentPage, setCurrentPage] = useState(0)
@@ -404,44 +408,47 @@ export function HabitSimpleView({
         </div>
       ) : null}
 
-      <DashboardBottomBar
-        leftSlot={
-          <div className="pointer-events-auto flex items-center md:hidden">
-            <Button
-              aria-label="設定を開く"
-              className="h-11 w-11 rounded-full border border-white/20 bg-white/10 p-0 text-white/80 hover:bg-white/20 hover:text-white"
-              onClick={handleSettings}
-              size="icon"
-              type="button"
-              variant="ghost"
-            >
-              <Icon className="h-6 w-6" name="settings" />
-            </Button>
+      {showBottomBar ? (
+        <DashboardBottomBar
+          className="md:hidden"
+          leftSlot={
+            <div className="pointer-events-auto flex items-center">
+              <Button
+                aria-label="設定を開く"
+                className="h-11 w-11 rounded-full border border-white/20 bg-white/10 p-0 text-white/80 hover:bg-white/20 hover:text-white"
+                onClick={handleSettings}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <Icon className="h-6 w-6" name="settings" />
+              </Button>
 
-            {totalPages > 1 ? (
-              <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-2">
-                {pages.map((page) => (
-                  <Button
-                    aria-label={`ページ ${page + 1}`}
-                    className={cn(
-                      'h-2 w-2 rounded-full p-0 transition-all duration-300 hover:bg-transparent',
-                      currentPage === page ? 'h-2.5 w-2.5 bg-white' : 'bg-white/40 hover:bg-white/60'
-                    )}
-                    data-page={page}
-                    key={`page-${page}`}
-                    onClick={handlePageChange}
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="h-2" />
-            )}
-          </div>
-        }
-      />
+              {totalPages > 1 ? (
+                <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-2">
+                  {pages.map((page) => (
+                    <Button
+                      aria-label={`ページ ${page + 1}`}
+                      className={cn(
+                        'h-2 w-2 rounded-full p-0 transition-all duration-300 hover:bg-transparent',
+                        currentPage === page ? 'h-2.5 w-2.5 bg-white' : 'bg-white/40 hover:bg-white/60'
+                      )}
+                      data-page={page}
+                      key={`page-${page}`}
+                      onClick={handlePageChange}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="h-2" />
+              )}
+            </div>
+          }
+        />
+      ) : null}
     </DashboardBackground>
   )
 }

@@ -49,6 +49,7 @@ export function DesktopDashboard({
           onResetOptimistic={onResetOptimistic}
           onSkip={onSkip}
           onUnSkip={onUnSkip}
+          showBottomBar={false}
         />
       ) : (
         <div className="space-y-6 p-6">
