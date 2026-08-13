@@ -21,10 +21,10 @@ improve スキルによる監査計画の索引。
 | 004  | ダッシュボードのチェックイン取得を直近 1 年に制限する                             | P1       | M      | 003        | DONE   |
 | 005  | チェックインの raw SQL を実 SQLite で検証するテストを追加する                     | P2       | M      | —          | DONE   |
 | 006  | テストファイルを型チェック対象にし型契約バグを修正                                | P1       | M      | —          | DONE   |
-| 007  | habit mutation の dateKey/TZ/archived ゲート強化                                  | P1       | M      | —          | IN REVIEW（対応済み） |
-| 008  | オフライン enqueue の userId 欠落時 reject                                        | P1       | S      | —          | DONE（reviewer LGTM） |
-| 009  | docs ドリフト修正と @typescript/native 削除                                       | P1       | S      | —          | IN REVIEW（対応済み） |
-| 010  | calendar query の userId スコープ化                                               | P1       | S      | —          | IN REVIEW（対応済み） |
+| 007  | habit mutation の dateKey/TZ/archived ゲート強化                                  | P1       | M      | —          | DONE   |
+| 008  | オフライン enqueue の userId 欠落時 reject                                        | P1       | S      | —          | DONE   |
+| 009  | docs ドリフト修正と @typescript/native 削除                                       | P1       | S      | —          | DONE   |
+| 010  | calendar query の userId スコープ化                                               | P1       | S      | —          | DONE   |
 | 011  | checkin/skip/reset/create の Action 層テスト                                      | P1       | M      | 007 推奨   | TODO   |
 | 012  | IndexedDB offline-queue 直接テスト                                                | P2       | M      | —          | TODO   |
 | 013  | analytics の checkin 重複読取統合                                                 | P2       | M      | —          | TODO   |
