@@ -27,9 +27,9 @@ export default async function SettingsPage() {
       <header>
         <p className="text-muted-foreground">アプリの表示をカスタマイズできます。</p>
       </header>
-      <section className="grid gap-6 lg:grid-cols-2">
-        <ThemeSettings initialColorTheme={initialColorTheme} />
-        <WeekStartSettings />
+      <section className="grid min-w-0 gap-6 lg:grid-cols-2">
+        <ThemeSettings className="min-w-0" initialColorTheme={initialColorTheme} />
+        <WeekStartSettings className="min-w-0" />
       </section>
     </PageShell>
   )

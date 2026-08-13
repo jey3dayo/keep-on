@@ -27,7 +27,13 @@ const COLOR_THEME_META: Record<ColorThemeName, { label: string; swatch: string }
   yellow: { label: 'イエロー', swatch: 'var(--yellow-9)' },
 }
 
-export function ThemeSettings({ initialColorTheme }: { initialColorTheme?: ColorThemeName }) {
+export function ThemeSettings({
+  className,
+  initialColorTheme,
+}: {
+  className?: string
+  initialColorTheme?: ColorThemeName
+}) {
   const { theme: mode, setTheme: setMode } = useTheme()
   const { theme: colorTheme, setTheme: setColorTheme, ready } = useColorTheme(initialColorTheme)
   const [mounted, setMounted] = useState(false)
@@ -42,7 +48,7 @@ export function ThemeSettings({ initialColorTheme }: { initialColorTheme?: Color
   const handleModeChange = useCallback((value: string) => setMode(value), [setMode])
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>テーマ設定</CardTitle>
         <CardDescription>ダークモードとアクセントカラーを変更します。変更内容は自動で保存されます。</CardDescription>
@@ -81,7 +87,9 @@ export function ThemeSettings({ initialColorTheme }: { initialColorTheme?: Color
             </span>
           </div>
           {ready ? (
-            <ColorPalette currentTheme={colorTheme} onThemeChange={setColorTheme} />
+            <div className="scrollbar-hide -mx-1 overflow-x-auto px-1">
+              <ColorPalette currentTheme={colorTheme} onThemeChange={setColorTheme} />
+            </div>
           ) : (
             <Skeleton className="h-8 w-44 rounded-full motion-reduce:animate-none" />
           )}

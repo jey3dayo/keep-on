@@ -16,7 +16,7 @@ const WEEK_START_OPTIONS: Array<{ value: WeekStart; label: string; description: 
   { description: 'カレンダー表示に合わせた週の区切りです。', label: '日曜日', value: 'sunday' },
 ]
 
-export function WeekStartSettings() {
+export function WeekStartSettings({ className }: { className?: string }) {
   const { weekStart, setWeekStart, ready } = useWeekStart()
   const [isUpdating, setIsUpdating] = useState(false)
 
@@ -44,7 +44,7 @@ export function WeekStartSettings() {
   )
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>週の開始日</CardTitle>
         <CardDescription>カレンダー表示と週次集計の基準を変更します。</CardDescription>
