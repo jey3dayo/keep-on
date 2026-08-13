@@ -3,7 +3,10 @@ import { expect, test } from '@playwright/test'
 /**
  * 主要ページのスモークテスト（/analytics, /settings, /help, サイドバー遷移）
  *
- * 認証済み状態（e2e/storage-state.json）で主要ページに到達できることのみを検証する。
+ * 認証が必要なページへ到達できることのみを検証する。storage-state による認証セットアップは未整備。
+ * ローカル E2E では DEV_ACCESS_EMAIL 等の開発用フォールバックに依存する場合がある。
+ * Access service token 方式は今後整備予定（.claude/rules/testing.md 参照）。
+ *
  * 本番と同じ D1 を共有する環境があるため、チェックインや習慣の作成・編集・削除などの
  * データを書き込む操作、および特定の習慣件数・内容に依存するアサーションは含めない。
  *

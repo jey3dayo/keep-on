@@ -32,7 +32,7 @@ const privateKey = loadDotenvPrivateKey()
 console.log('[playwright.config] DOTENV_PRIVATE_KEY loaded:', !!privateKey)
 
 export default defineConfig({
-  // 並列実行を無効化（認証セットアップの順序を保証）
+  // 並列実行を無効化（ローカル D1 / 単一 dev サーバーへの同時アクセスでフレークしやすいため）
   fullyParallel: false,
 
   // プロジェクト定義
