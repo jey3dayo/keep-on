@@ -41,8 +41,8 @@ pnpm db:migrate:remote -- drizzle/<migration>.sql  # リモート D1 へのマ�
 実行方法:
 
 ```bash
-# スクリプトを作成して実行
-node scripts/migrate-user-settings.mjs
+# スクリプトを作成して実行（tsx 経由。dotenvx で復号した環境変数が必要）
+pnpm env:run -- tsx scripts/migrate-user-settings.ts
 ```
 
 ## デプロイフロー
@@ -103,24 +103,31 @@ gh pr merge <PR番号> --squash
 
 #### 4. データマイグレーション（必要な場合）
 
+`getDb()`（`src/lib/db.ts`）が D1 バインディングを解決するので、スクリプトからは直接呼び出せる。実例は `scripts/migrate-user-settings.ts` を参照:
+
+```typescript
+// scripts/migrate-example.ts
+import { eq } from 'drizzle-orm'
+import { users } from '@/db/schema'
+import { getDb } from '@/lib/db'
+
+async function main() {
+  const db = getDb()
+  await db.update(users).set({ newField: 'default' }).where(eq(users.newField, null))
+  console.log('Migration completed')
+}
+
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error('Migration failed:', error)
+    process.exit(1)
+  })
+```
+
 ```bash
-# スクリプトを作成
-cat > scripts/migrate-example.mjs << 'EOF'
-import { drizzle } from 'drizzle-orm/cloudflare-d1'
-import { getCloudflareContext } from '@opennextjs/cloudflare'
-
-const { env } = getCloudflareContext()
-const db = drizzle(env.DB)
-
-// データマイグレーション処理
-await db.update(users).set({ newField: 'default' })
-
-await client.end()
-console.log('Migration completed')
-EOF
-
-# 実行
-pnpm env:run -- node scripts/migrate-example.mjs
+# 実行（tsx 経由。dotenvx で復号した環境変数が必要）
+pnpm env:run -- tsx scripts/migrate-example.ts
 ```
 
 ## ベストプラクティス
@@ -133,7 +140,7 @@ pnpm env:run -- node scripts/migrate-example.mjs
 
 ```typescript
 // 古いコードがまだ使用している可能性がある
-export const users = pgTable("users", {
+export const users = sqliteTable("User", {
   id: text("id").primaryKey(),
   // oldColumn: text('old_column'),  // 削除 - 危険！
   newColumn: text("new_column"),
@@ -144,7 +151,7 @@ export const users = pgTable("users", {
 
 ```typescript
 // Step 1: 新しいカラムを追加（NULL許可）
-export const users = pgTable("users", {
+export const users = sqliteTable("User", {
   id: text("id").primaryKey(),
   oldColumn: text("old_column"), // まだ残す
   newColumn: text("new_column"), // 追加
@@ -153,7 +160,7 @@ export const users = pgTable("users", {
 // Step 2: コードをデプロイして newColumn を使用開始
 
 // Step 3: oldColumn を削除（次回のマイグレーション）
-export const users = pgTable("users", {
+export const users = sqliteTable("User", {
   id: text("id").primaryKey(),
   newColumn: text("new_column"),
 });
@@ -161,7 +168,7 @@ export const users = pgTable("users", {
 
 ### 冪等性の確保
 
-マイグレーションは複数回実行しても安全であること:
+マイグレーションは複数回実行しても安全であること。SQLite（D1）には Postgres の `DO $$ ... END $$` のような条件分岐 DDL がないため、以下の方法で冪等性を確保する:
 
 #### ✅ 推奨: 存在チェック付き
 
@@ -171,18 +178,16 @@ CREATE TABLE IF NOT EXISTS user_settings (
   user_id TEXT PRIMARY KEY,
   timezone TEXT NOT NULL DEFAULT 'UTC'
 );
-
--- カラム追加（存在しない場合のみ）
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'users' AND column_name = 'new_column'
-  ) THEN
-    ALTER TABLE users ADD COLUMN new_column TEXT;
-  END IF;
-END $$;
 ```
+
+カラム追加は `ALTER TABLE ... ADD COLUMN` に `IF NOT EXISTS` 相当の構文がない。事前に存在確認してから実行する:
+
+```bash
+# 既存カラムを確認してから ALTER TABLE を実行するか判断する
+pnpm wrangler d1 execute keep-on-db --local --command "PRAGMA table_info(User);"
+```
+
+`db:migrate:local` / `db:migrate:remote`（`wrangler d1 execute --file`）は適用済みマイグレーションを追跡しないため、同じファイルを再実行すると `duplicate column name` 等で失敗する。再実行が必要な場合は生成された SQL を直接編集して未適用分だけに絞る。
 
 ### デフォルト値の設定
 
@@ -190,14 +195,14 @@ END $$;
 
 ```typescript
 // ✅ 推奨: デフォルト値を設定
-export const userSettings = pgTable("user_settings", {
+export const userSettings = sqliteTable("UserSettings", {
   userId: text("user_id").primaryKey(),
   timezone: text("timezone").notNull().default("UTC"),
   theme: text("theme").notNull().default("light"),
 });
 
 // ❌ 非推奨: デフォルト値なし（既存レコードでエラー）
-export const userSettings = pgTable("user_settings", {
+export const userSettings = sqliteTable("UserSettings", {
   userId: text("user_id").primaryKey(),
   timezone: text("timezone").notNull(), // エラー発生の可能性
 });
@@ -228,13 +233,13 @@ pnpm db:migrate:remote -- drizzle/<migration>.sql
 #### 原因特定
 
 ```bash
-# Supabase Logs で DB エラーを確認
-# 詳細は .claude/rules/testing.md を参照
+# リアルタイムログで DB エラーを確認（本番）
+pnpm cf:logs
 
-# ログ収集スクリプト実行
-DOTENV_PRIVATE_KEY=$(rg -N '^DOTENV_PRIVATE_KEY=' .env.keys | cut -d= -f2-) \
-dotenvx run -- python3 scripts/query-supabase-logs.py
+# または Cloudflare Dashboard → Workers & Pages → keep-on → Logs
 ```
+
+D1 自体のクエリ統計は Cloudflare Dashboard → Workers & Pages → D1 → `keep-on-db` → **Metrics** で確認できる。
 
 #### ロールバック手順
 
@@ -242,74 +247,61 @@ dotenvx run -- python3 scripts/query-supabase-logs.py
 # 1. Drizzle Studio で現在の状態を確認
 pnpm env:run -- pnpm db:studio
 
-# 2. 手動でロールバック SQL を実行
-# Supabase Dashboard → SQL Editor で以下を実行:
-
--- テーブル削除
+# 2. ロールバック SQL をファイル化して適用（ローカルで先に確認）
+cat > drizzle/rollback-example.sql << 'EOF'
 DROP TABLE IF EXISTS user_settings;
-
--- カラム削除
-ALTER TABLE users DROP COLUMN IF EXISTS new_column;
-
--- インデックス削除
+ALTER TABLE User DROP COLUMN new_column;
 DROP INDEX IF EXISTS idx_users_email;
+EOF
+
+pnpm db:migrate:local -- drizzle/rollback-example.sql
+# 確認できたらリモートにも適用
+pnpm db:migrate:remote -- drizzle/rollback-example.sql
 ```
 
-#### マイグレーション履歴のリセット
+Cloudflare Dashboard → Workers & Pages → D1 → `keep-on-db` → **Console** タブから直接 SQL を実行することもできる（`wrangler d1 execute` と同じ権限）。
+
+#### 部分的に失敗したマイグレーションの扱い
+
+`db:migrate:local` / `db:migrate:remote`（`wrangler d1 execute --file`）は適用履歴を管理しないため、ファイル中の一部の SQL 文だけ実行された状態で失敗する可能性がある。
 
 ```bash
-# drizzle/__drizzle_migrations テーブルから失敗したマイグレーションを削除
-# Supabase Dashboard → SQL Editor:
-
-DELETE FROM drizzle.__drizzle_migrations
-WHERE name = '0XXX_failed_migration.sql';
+# 現在のスキーマ状態を確認してから、未実行分だけを含む SQL を再作成する
+pnpm wrangler d1 execute keep-on-db --remote --command "PRAGMA table_info(User);"
 ```
 
 ### よくあるエラー
 
-#### エラー: `there is no unique or exclusion constraint matching the ON CONFLICT specification`
+#### エラー: `UNIQUE constraint failed`
 
-原因: `ON CONFLICT` で指定したカラムにユニーク制約が存在しない
+原因: `onConflictDoUpdate` 等で指定したカラムにユニーク制約が存在しない、または既存データに重複がある
 
 解決方法:
 
 ```typescript
 // ✅ ユニーク制約を追加
-export const userSettings = pgTable("user_settings", {
+export const userSettings = sqliteTable("UserSettings", {
   userId: text("user_id").primaryKey().unique(), // UNIQUE追加
   timezone: text("timezone").notNull().default("UTC"),
 });
 ```
 
-#### エラー: `column "xxx" of relation "yyy" already exists`
+#### エラー: `duplicate column name: xxx`
 
-原因: カラムが既に存在している
+原因: カラムが既に存在している（同じマイグレーションファイルを再実行した等）
 
-解決方法:
+解決方法: SQLite には条件付き `ALTER TABLE` がないため、事前に `PRAGMA table_info(<table>)` で存在確認するか、生成済み SQL から該当行を削除して再適用する。
 
-```sql
--- 存在チェックを追加
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'users' AND column_name = 'new_column'
-  ) THEN
-    ALTER TABLE users ADD COLUMN new_column TEXT;
-  END IF;
-END $$;
-```
+#### エラー: マイグレーション実行がタイムアウトする
 
-#### エラー: `canceling statement due to statement timeout`
-
-原因: クエリのタイムアウト
+原因: 大きなテーブルへの `ALTER TABLE` / バックフィルクエリが D1 のクエリ実行時間上限に達している
 
 解決方法:
 
 ```bash
 # 1. インデックスを追加してクエリを高速化
-# 2. バッチ処理に分割
-# 3. statement_timeout を一時的に延長（推奨しない）
+# 2. バッチ処理に分割（一度に更新する行数を減らす）
+# 3. wrangler d1 execute --batch-size で1回あたりの実行行数を調整
 ```
 
 ## セキュリティ考慮事項
@@ -328,20 +320,15 @@ pnpm db:migrate:remote -- drizzle/<migration>.sql
 
 ### 権限管理
 
-マイグレーション実行には適切な権限が必要:
+D1 への操作は Cloudflare API トークンで認可される（Postgres のようなスキーマ/ロール単位の権限モデルはない）:
 
-- Supabase の `service_role` キーを使用
-- `public` スキーマへの `USAGE` 権限
-- テーブルへの `ALL` 権限
+- `pnpm wrangler d1 execute` / `pnpm db:migrate:*` は `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` の権限をそのまま使う
+- API トークンは D1 の編集権限を持つ最小スコープで発行する（詳細は `.claude/rules/security.md`）
 
-権限エラーが発生した場合:
+権限エラー（`Authentication error`）が発生した場合は、環境変数と API トークンのスコープを確認する:
 
 ```bash
-# 権限確認スクリプト
-pnpm test:db-permissions
-
-# 権限修正スクリプト
-pnpm fix:db-permissions
+pnpm wrangler d1 list
 ```
 
 詳細は `.claude/rules/troubleshooting.md` を参照してください。
