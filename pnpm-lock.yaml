@@ -175,9 +175,6 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.4(@types/react@19.2.18)
-      '@typescript/native':
-        specifier: npm:typescript@^7.0.2
-        version: typescript@7.0.2
       '@typescript/typescript6':
         specifier: ^6.0.2
         version: 6.0.2
