@@ -1,7 +1,7 @@
 'use client'
 
-import type { CSSProperties, KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react'
-import { useCallback, useRef } from 'react'
+import type { CSSProperties, KeyboardEvent, ReactNode, PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, CheckInButton } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
@@ -35,9 +35,14 @@ export function HabitListCard({
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const longPressTriggeredRef = useRef(false)
   const longPressStartPointRef = useRef<{ x: number; y: number } | null>(null)
+  const allowIconMotionRef = useRef(false)
   const badgeBackgroundColor = `var(--${colorData.id}-a4)`
 
   const progressPercent = Math.min((habit.currentProgress / habit.frequency) * 100, 100)
+
+  useEffect(() => {
+    allowIconMotionRef.current = true
+  }, [])
 
   const handleLongPressStart = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -139,7 +144,7 @@ export function HabitListCard({
     <div
       aria-label={`${habit.name}のメニューを開く`}
       className={cn(
-        'group relative cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-4 pr-12 shadow-sm transition-all duration-200 hover:border-border/80 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none'
+        'group relative cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-4 pr-12 shadow-sm transition-[border-color,box-shadow,opacity] duration-200 hover:border-border/80 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none'
       )}
       onClick={handleCardClick}
       onContextMenu={handleContextMenu}
@@ -182,11 +187,13 @@ export function HabitListCard({
             } as CSSProperties
           }
         >
-          {completed ? (
-            <Icon className="h-7 w-7 text-background" name="check" />
-          ) : (
-            <IconComponent className="h-7 w-7 text-background" />
-          )}
+          <CheckInIconSwap animate={allowIconMotionRef.current} key={completed ? 'completed' : 'pending'}>
+            {completed ? (
+              <Icon className="h-7 w-7 text-background" name="check" />
+            ) : (
+              <IconComponent className="h-7 w-7 text-background" />
+            )}
+          </CheckInIconSwap>
         </CheckInButton>
 
         <div className="min-w-0 flex-1">
@@ -259,5 +266,29 @@ export function HabitListCard({
         </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * チェックイン状態の切替時だけアイコンを微細に入場させる。
+ * 初回マウント（一覧表示）では動かさない。親が key でリマウントする前提。
+ */
+function CheckInIconSwap({ animate, children }: { animate: boolean; children: ReactNode }) {
+  const [entered, setEntered] = useState(!animate)
+
+  useEffect(() => {
+    if (!animate) {
+      return
+    }
+    const frame = requestAnimationFrame(() => {
+      setEntered(true)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [animate])
+
+  return (
+    <span className="checkin-icon-enter" data-entered={entered ? 'true' : undefined}>
+      {children}
+    </span>
   )
 }

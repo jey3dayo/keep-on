@@ -357,6 +357,21 @@
   opacity: 1;
 }
 
+/* リストチェックインのアイコン入替（高頻度なので dialog-scale-in より短く） */
+.checkin-icon-enter {
+  display: inline-flex;
+  opacity: 0;
+  transform: scale(0.97);
+  transition:
+    opacity 160ms ease-out,
+    transform 160ms ease-out;
+}
+
+.checkin-icon-enter[data-entered="true"] {
+  opacity: 1;
+  transform: scale(1);
+}
+
 /* FAQ accordion */
 .faq-answer {
   display: grid;
@@ -394,6 +409,7 @@
   .dialog-scale-in,
   .dialog-backdrop,
   .surface-fade,
+  .checkin-icon-enter,
   .faq-answer {
     transition-duration: 150ms;
   }
@@ -403,7 +419,8 @@
     transform: none;
   }
 
-  .dialog-scale-in {
+  .dialog-scale-in,
+  .checkin-icon-enter {
     transform: none;
   }
 }
