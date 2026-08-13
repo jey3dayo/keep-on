@@ -41,6 +41,8 @@ export interface HabitSchedule extends NormalizedHabitSchedule {
   id: string
 }
 
+type HabitsCacheSnapshot = Awaited<ReturnType<typeof getHabitsCacheSnapshot>>
+
 function normalizePeriod(period: unknown, options: HabitNormalizationOptions): Period {
   if (period === 'daily' || period === 'weekly' || period === 'monthly') {
     return period
@@ -175,19 +177,23 @@ function getPreviousPeriod(date: Date, period: Period): Date {
  * @param userId - ユーザーID
  * @param clerkId - ClerkのユーザーID（週開始日設定の取得に使用）
  * @param date - 基準日（デフォルト: 今日）
+ * @param weekStart - 週開始日設定（省略時は clerkId から取得）
+ * @param preloadedSnapshot - 呼び出し側が既に読んだ KV スナップショット。
+ *   渡された場合（`null` を含む）は内部での再読み込みをスキップする。
  * @returns 進捗情報付きの習慣配列
  */
 export async function getHabitsWithProgress(
   userId: string,
   clerkId: string,
   date: Date | string = new Date().toISOString(),
-  weekStart?: WeekStart
+  weekStart?: WeekStart,
+  preloadedSnapshot?: HabitsCacheSnapshot
 ): Promise<HabitWithProgress[]> {
   const totalStart = nowMs()
   const baseDate = typeof date === 'string' ? parseDateKey(date) : date
   const dateKey = formatDateKey(baseDate)
 
-  const cacheSnapshot = await getHabitsCacheSnapshot(userId)
+  const cacheSnapshot = preloadedSnapshot === undefined ? await getHabitsCacheSnapshot(userId) : preloadedSnapshot
   let staleSnapshot: typeof cacheSnapshot | null = null
 
   if (cacheSnapshot) {

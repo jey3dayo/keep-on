@@ -59,7 +59,7 @@ export default async function DashboardPage() {
   try {
     habits = await withDbRetry(
       'dashboard.habits',
-      () => getHabitsWithProgress(user.id, user.clerkId, dateKey, user.weekStart),
+      () => getHabitsWithProgress(user.id, user.clerkId, dateKey, user.weekStart, cacheSnapshot),
       { timeoutMs }
     )
   } catch (error) {

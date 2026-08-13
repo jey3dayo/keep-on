@@ -32,7 +32,12 @@ export async function HabitTable({ userId, clerkId, requestMeta }: HabitTablePro
 
   // アクティブな習慣（進捗付き）とアーカイブ済み習慣は互いに独立したクエリのため並列実行する
   const [activeHabitsResult, archivedHabitsResult] = await Promise.allSettled([
-    logSpan('habits.table.query', () => getHabitsWithProgress(userId, clerkId, dateKey), meta, { timeoutMs }),
+    logSpan(
+      'habits.table.query',
+      () => getHabitsWithProgress(userId, clerkId, dateKey, undefined, cacheSnapshot),
+      meta,
+      { timeoutMs }
+    ),
     logSpan('habits.table.archived', () => getArchivedHabits(userId), meta, { timeoutMs }),
   ])
 
