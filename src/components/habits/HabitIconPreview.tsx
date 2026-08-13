@@ -9,7 +9,7 @@ export function HabitIconPreview({ IconComponent, backgroundColor }: HabitIconPr
   return (
     <div className="flex flex-col items-center gap-4">
       <div
-        className="flex h-24 w-24 items-center justify-center rounded-full transition-all duration-300"
+        className="flex h-24 w-24 items-center justify-center rounded-full transition-colors duration-300"
         style={{ backgroundColor }}
       >
         <IconComponent className="h-12 w-12 text-background" />

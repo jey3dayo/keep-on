@@ -95,7 +95,7 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
                 aria-label={t('habits.presetSelector.categoryLabel', { label: category.label })}
                 aria-pressed={isSelected}
                 className={cn(
-                  'h-14 w-14 flex-shrink-0 rounded-full p-0 transition-all',
+                  'h-14 w-14 flex-shrink-0 rounded-full p-0 transition-[background-color,box-shadow,transform]',
                   isSelected ? 'bg-white/90 shadow-lg' : 'hover:bg-white/20'
                 )}
                 data-category={category.id}

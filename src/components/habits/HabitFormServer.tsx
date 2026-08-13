@@ -65,7 +65,7 @@ function HabitFormHeader({
   const canSubmit = Boolean(watchedName?.trim()) && !isSaving
 
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between border-border/50 border-b bg-background/50 px-4 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
+    <header className="sticky top-0 z-10 flex items-center justify-between border-border/50 border-b bg-background/50 px-4 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/30">
       <Button
         className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
         onClick={onBack}
@@ -115,7 +115,7 @@ function HabitNameField({ control, selectedColorValue, t }: HabitFormFieldProps)
         {...field}
         aria-describedby={fieldState.error ? errorId : undefined}
         aria-invalid={fieldState.error ? true : undefined}
-        className="h-auto rounded-xl border-border bg-card px-4 py-3 text-foreground shadow-none transition-all placeholder:text-muted-foreground/50 focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="h-auto rounded-xl border-border bg-card px-4 py-3 text-foreground shadow-none transition-[background-color,border-color,box-shadow] placeholder:text-muted-foreground/50 focus-visible:ring-2 focus-visible:ring-ring/50"
         error={Boolean(fieldState.error)}
         id={inputId}
         placeholder={t('habits.form.namePlaceholder')}
@@ -161,7 +161,7 @@ function HabitIconField({ control, selectedColorValue, t }: HabitFormFieldProps)
               <div
                 aria-hidden="true"
                 className={cn(
-                  'pointer-events-none flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-200',
+                  'pointer-events-none flex h-12 w-12 items-center justify-center rounded-xl transition-[background-color,box-shadow] duration-200',
                   isSelected ? 'ring-2 ring-offset-2 ring-offset-background' : 'bg-card peer-hover:bg-card/80'
                 )}
                 style={
@@ -212,7 +212,7 @@ function HabitPeriodField({ control, selectedColorValue, t }: HabitFormFieldProp
               <div
                 aria-hidden="true"
                 className={cn(
-                  'pointer-events-none relative flex h-auto flex-col gap-1 rounded-xl border px-3 py-4 transition-all duration-200',
+                  'pointer-events-none relative flex h-auto flex-col gap-1 rounded-xl border px-3 py-4 transition-colors duration-200',
                   isSelected ? 'border-transparent' : 'border-border bg-card peer-hover:bg-card/80'
                 )}
                 style={{
@@ -274,7 +274,7 @@ function HabitColorField({ control, t }: HabitFormFieldProps) {
               <div
                 aria-hidden="true"
                 className={cn(
-                  'pointer-events-none flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200',
+                  'pointer-events-none flex h-10 w-10 items-center justify-center rounded-full transition-[box-shadow] duration-200',
                   isSelected && 'ring-2 ring-offset-background'
                 )}
                 style={{ '--tw-ring-color': color.color, backgroundColor: color.color } as React.CSSProperties}

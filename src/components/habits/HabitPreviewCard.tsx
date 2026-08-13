@@ -47,7 +47,7 @@ export function HabitPreviewCard({
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-secondary">
             <div
-              className="h-full rounded-full transition-all duration-300"
+              className="h-full rounded-full transition-colors duration-300"
               style={{
                 backgroundColor: selectedColorValue,
                 width: '0%',

@@ -97,7 +97,7 @@ export function StreakDashboard({
         rightSlot={
           <DashboardViewToggle
             activeButtonClassName="bg-foreground text-background"
-            buttonClassName="rounded-full p-2 transition-all"
+            buttonClassName="rounded-full p-2"
             currentView={currentView}
             inactiveButtonClassName="text-muted-foreground"
             onViewChange={onViewChange}

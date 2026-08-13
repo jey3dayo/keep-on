@@ -19,7 +19,7 @@ export function ProgressRing({
     <svg aria-hidden="true" className="absolute inset-0 -rotate-90" height={size} width={size}>
       <circle cx={size / 2} cy={size / 2} fill="none" r={radius} stroke={backgroundColor} strokeWidth={strokeWidth} />
       <circle
-        className="transition-all duration-500 ease-out motion-reduce:transition-none"
+        className="transition-[stroke-dashoffset] duration-500 ease-out motion-reduce:transition-none"
         cx={size / 2}
         cy={size / 2}
         fill="none"

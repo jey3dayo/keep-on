@@ -88,7 +88,7 @@ export function CheckInButton({ children, completed = false, className, ...props
   return (
     <Button
       className={cn(
-        'h-14 w-14 flex-shrink-0 rounded-full transition-all duration-300 hover:bg-transparent',
+        'h-14 w-14 flex-shrink-0 rounded-full transition-[background-color,box-shadow,opacity,transform] duration-300 hover:bg-transparent',
         completed && 'ring-2 ring-offset-2 ring-offset-background',
         className
       )}
