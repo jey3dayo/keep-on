@@ -68,11 +68,11 @@ source ~/.bashrc
 # 開発サーバー起動
 pnpm env:run -- pnpm dev
 
-# Prisma Client 生成
+# マイグレーション生成
 pnpm env:run -- pnpm db:generate
 
-# データベースマイグレーション
-pnpm env:run -- pnpm db:push
+# ローカル D1 へマイグレーション適用
+pnpm env:run -- pnpm db:migrate:local -- drizzle/<migration>.sql
 ```
 
 `pnpm env:run` は `dotenvx run` のエイリアスです。

@@ -60,7 +60,7 @@ KeepOn は、Next.js 16 + Cloudflare Workers (D1) + Drizzle ORM + Clerk で構�
 
 1. 環境変数を復号化: `pnpm dotenvx decrypt`
 2. 編集後に再暗号化: `pnpm env:encrypt`
-3. スキーマ同期: `pnpm db:push`
+3. スキーマ同期: `pnpm db:generate` のあと `pnpm db:migrate:local -- drizzle/<migration>.sql`
 4. 開発サーバー起動: `pnpm env:run -- pnpm dev`
 
 ## デバッグ

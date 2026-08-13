@@ -27,7 +27,7 @@ paths:
 
 ```bash
 pnpm db:generate  # スキーマからマイグレーションファイル生成
-pnpm db:migrate   # 本番環境へのマイグレーション適用
+pnpm db:migrate:remote -- drizzle/<migration>.sql  # リモート D1 へのマイグレーション適用
 ```
 
 ### データマイグレーション
@@ -78,8 +78,8 @@ cat drizzle/0XXX_*.sql
 #### 2. 本番環境へのマイグレーション適用（PRマージ前）
 
 ```bash
-# 環境変数を読み込んで本番DBに接続
-pnpm env:run -- pnpm db:migrate
+# 環境変数を読み込んでリモート D1 に適用
+pnpm db:migrate:remote -- drizzle/<migration>.sql
 ```
 
 確認:
@@ -208,17 +208,17 @@ export const userSettings = pgTable("user_settings", {
 本番適用前に必ず検証する:
 
 ```bash
-# 1. 開発環境でテスト
-pnpm db:push  # 開発DBに直接反映
-
-# 2. マイグレーションファイル生成
+# 1. マイグレーションファイル生成
 pnpm db:generate
+
+# 2. ローカル D1 で検証
+pnpm db:migrate:local -- drizzle/<migration>.sql
 
 # 3. 生成されたSQLを確認
 cat drizzle/0XXX_*.sql
 
-# 4. 本番適用
-pnpm env:run -- pnpm db:migrate
+# 4. リモート D1 へ本番適用
+pnpm db:migrate:remote -- drizzle/<migration>.sql
 ```
 
 ## トラブルシューティング
@@ -319,8 +319,8 @@ END $$;
 本番DBへの接続は必ず暗号化された環境変数を使用する:
 
 ```bash
-# ✅ 推奨: dotenvx で暗号化
-pnpm env:run -- pnpm db:migrate
+# ✅ 推奨: dotenvx 経由の migrate スクリプト（内部で dotenvx run を使用）
+pnpm db:migrate:remote -- drizzle/<migration>.sql
 
 # ❌ 非推奨: 平文の .env から読み込み
 # 秘密鍵が漏洩するリスク

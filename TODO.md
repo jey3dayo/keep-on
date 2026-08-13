@@ -49,12 +49,9 @@
 - 2026-08-13 の改善監査では Server Component 側に問題なし、クライアント側は未追跡（confidence 低）のため単体で再監査する
 - 起票日: 2026-08-13（Sonnet 改善監査 finding 6）
 
-### TypeScript 7 / jsdom 30 への major 更新
+### TypeScript 7 / jsdom 30（更新済み）
 
-- 対象: `typescript`（`^6.0.3` → `^7.0.2`）、`jsdom`（`^29.1.1` → `^30.0.1`）
-- 理由: 2026-08-12 の依存一括更新で意図的に除外。このリポジトリには「TS7 は Next 16.2 非対応」で
-  ビルドを壊した既往がある。Next は今回 16.3.0 に上がっており前提が変わった可能性があるため、
-  Next 16.3 の TS7 対応状況を確認してから判断する。`package.json` に残る
-  `@typescript/native`（`npm:typescript@^7.0.2`）が installed-but-unreferenced な点も併せて整理する
-- 検証: `pnpm exec tsc --noEmit` と `pnpm test:run` が通ることに加え、Next のビルド（`pnpm build:cf`）が壊れないこと
-- 起票日: 2026-08-12
+- `typescript`（`^7.0.2`）と `jsdom`（`^30.0.1`）へ major 更新済み
+- 未使用だった `@typescript/native`（`npm:typescript@^7.0.2`）は `typescript` と重複のため削除
+- `@typescript/typescript6` は `scripts/lib/extract-jsdoc.ts` が TS6 API を参照するため devDependency として残す
+- 起票日: 2026-08-12（2026-08-13 に majors 適用・native 整理）
