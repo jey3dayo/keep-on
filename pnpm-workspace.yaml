@@ -5,6 +5,21 @@ allowBuilds:
   sharp: true
   workerd: true
 
+minimumReleaseAgeExclude:
+  - '@cloudflare/workers-types@5.20260813.1'
+  - '@storybook/addon-a11y@10.5.8'
+  - '@storybook/addon-docs@10.5.8'
+  - '@storybook/addon-themes@10.5.8'
+  - '@storybook/builder-vite@10.5.8'
+  - '@storybook/csf-plugin@10.5.8'
+  - '@storybook/nextjs-vite@10.5.8'
+  - '@storybook/react-dom-shim@10.5.8'
+  - '@storybook/react-vite@10.5.8'
+  - '@storybook/react@10.5.8'
+  - miniflare@5.20260811.1-alpha
+  - storybook@10.5.8
+  - wrangler@4.123.0
+
 # 2026-08-10 pnpm loose mode は未成熟なバージョンを minimumReleaseAgeExclude へ自動追記して
 # 処理を続行してしまうため、リリースゲートが形骸化する（ab04a4b の radix 誤 exclude 事故が実例）。
 # strict にして非TTY/CI環境では未成熟依存を hard fail させる。
