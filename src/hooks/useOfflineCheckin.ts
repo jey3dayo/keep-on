@@ -39,6 +39,19 @@ const registerBackgroundSync = async (): Promise<boolean> => {
   }
 }
 
+/**
+ * Cloudflare Access のセッション切れ時、fetch にはログインページの HTML が 200(既定で redirect を follow した最終形)で返る。
+ * res.ok=true のケースに限定して判定する: redirect または非 JSON レスポンスなら Access の割り込みとみなす。
+ * (4xx/5xx の HTML はステータス分類側で既にリトライ判定されるため、ここでは扱わない)
+ */
+const isAuthInterceptedResponse = (res: Response): boolean => {
+  if (res.redirected) {
+    return true
+  }
+  const contentType = res.headers.get('content-type')
+  return !contentType?.includes('application/json')
+}
+
 /** userId を持たない旧アイテム・別ユーザーのアイテムは照合不能なので replay せず破棄する */
 const discardUnverifiableItems = async (items: QueuedCheckin[], currentUserId: string): Promise<QueuedCheckin[]> => {
   const verified: QueuedCheckin[] = []
@@ -78,6 +91,11 @@ const replayQueue = async (currentUserId: string, prefetchedItems?: QueuedChecki
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
       })
+      if (res.ok && isAuthInterceptedResponse(res)) {
+        // ok(2xx) だが Access のログイン画面等に差し替えられている可能性がある。401/403 と同様にリトライ対象として残す
+        failed++
+        break
+      }
       if (res.ok) {
         await removeQueuedCheckin(item.id)
         replayed++

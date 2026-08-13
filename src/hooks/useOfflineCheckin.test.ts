@@ -29,6 +29,14 @@ vi.mock('@/lib/pwa/offline-queue', () => ({
   removeQueuedCheckin: (...args: unknown[]) => mockRemoveQueuedCheckin(...args),
 }))
 
+const jsonOkResponse = (status = 200) =>
+  ({
+    headers: new Headers({ 'content-type': 'application/json' }),
+    ok: true,
+    redirected: false,
+    status,
+  }) as Response
+
 const queuedCheckin = (id: string, userId: string | undefined = CURRENT_USER_ID) => ({
   action: 'add' as const,
   dateKey: '2026-03-19',
@@ -88,10 +96,7 @@ describe('useOfflineCheckin', () => {
       .mockResolvedValueOnce([queuedCheckin('queued-1')])
       .mockResolvedValueOnce([queuedCheckin('queued-1')])
     mockRemoveQueuedCheckin.mockResolvedValue(undefined)
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      status: 200,
-    } as Response)
+    vi.mocked(fetch).mockResolvedValue(jsonOkResponse())
 
     const onReplayComplete = vi.fn()
 
@@ -117,13 +122,12 @@ describe('useOfflineCheckin', () => {
     mockRemoveQueuedCheckin.mockResolvedValue(undefined)
     vi.mocked(fetch)
       .mockResolvedValueOnce({
+        headers: new Headers({ 'content-type': 'application/json' }),
         ok: false,
+        redirected: false,
         status: 422,
       } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-      } as Response)
+      .mockResolvedValueOnce(jsonOkResponse())
 
     const onReplayComplete = vi.fn()
 
@@ -145,7 +149,9 @@ describe('useOfflineCheckin', () => {
       .mockResolvedValueOnce([queuedCheckin('queued-1'), queuedCheckin('queued-2')])
       .mockResolvedValueOnce([queuedCheckin('queued-1'), queuedCheckin('queued-2')])
     vi.mocked(fetch).mockResolvedValueOnce({
+      headers: new Headers({ 'content-type': 'application/json' }),
       ok: false,
+      redirected: false,
       status: 503,
     } as Response)
 
@@ -190,6 +196,56 @@ describe('useOfflineCheckin', () => {
       expect(mockRemoveQueuedCheckin).toHaveBeenCalledWith('queued-1')
     })
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('200 + text/html（認証割り込み）は破棄せずキューに残す', async () => {
+    mockIsOnline = true
+    installServiceWorkerMock(false)
+    mockGetAllQueuedCheckins
+      .mockResolvedValueOnce([queuedCheckin('queued-1')])
+      .mockResolvedValueOnce([queuedCheckin('queued-1')])
+    vi.mocked(fetch).mockResolvedValueOnce({
+      headers: new Headers({ 'content-type': 'text/html' }),
+      ok: true,
+      redirected: false,
+      status: 200,
+    } as Response)
+
+    const onReplayComplete = vi.fn()
+
+    renderHook(() => useOfflineCheckin({ onReplayComplete }))
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(1)
+    })
+
+    expect(mockRemoveQueuedCheckin).not.toHaveBeenCalled()
+    expect(onReplayComplete).toHaveBeenCalledWith({ failed: 1, replayed: 0 })
+  })
+
+  it('400 + text/html は永続エラーとして破棄される', async () => {
+    mockIsOnline = true
+    installServiceWorkerMock(false)
+    mockGetAllQueuedCheckins
+      .mockResolvedValueOnce([queuedCheckin('queued-1')])
+      .mockResolvedValueOnce([queuedCheckin('queued-1')])
+    mockRemoveQueuedCheckin.mockResolvedValue(undefined)
+    vi.mocked(fetch).mockResolvedValueOnce({
+      headers: new Headers({ 'content-type': 'text/html' }),
+      ok: false,
+      redirected: false,
+      status: 400,
+    } as Response)
+
+    const onReplayComplete = vi.fn()
+
+    renderHook(() => useOfflineCheckin({ onReplayComplete }))
+
+    await waitFor(() => {
+      expect(mockRemoveQueuedCheckin).toHaveBeenCalledWith('queued-1')
+    })
+
+    expect(onReplayComplete).toHaveBeenCalledWith({ failed: 1, replayed: 0 })
   })
 
   it('サインイン中のユーザーが未確定なら replay しない', async () => {

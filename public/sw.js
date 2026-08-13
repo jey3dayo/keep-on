@@ -67,6 +67,17 @@ const clearUserData = async (cache) => {
   }
 }
 
+// Cloudflare Access のセッション切れ時、fetch にはログインページの HTML が 200(既定で redirect を follow した最終形)で返る。
+// res.ok=true のケースに限定して判定する: redirect または非 JSON レスポンスなら Access の割り込みとみなす。
+// (4xx/5xx の HTML はステータス分類側で既にリトライ判定されるため、ここでは扱わない)
+const isAuthInterceptedResponse = (response) => {
+  if (response.redirected) {
+    return true
+  }
+  const contentType = response.headers.get('content-type')
+  return !(contentType && contentType.includes('application/json'))
+}
+
 const isAuthNavigationFailure = (response) => {
   if (response.status === 401 || response.status === 403) {
     return true
@@ -259,7 +270,11 @@ self.addEventListener('sync', (event) => {
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
           })
-          if (res.ok) {
+          if (res.ok && isAuthInterceptedResponse(res)) {
+            // ok(2xx) だが Access のログイン画面等に差し替えられている可能性がある。401/403 と同様にリトライ対象として残す
+            hasRetryableError = true
+            break
+          } else if (res.ok) {
             await deleteItem(db, item.id)
             replayedCount++
           } else if (res.status === 401 || res.status === 403) {
