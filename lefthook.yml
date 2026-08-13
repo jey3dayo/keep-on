@@ -23,19 +23,28 @@ pre-commit:
 
 # mise run ci（lint:types → lint:biome → test:ci → build:ci）と同じ段階を
 # ジョブ分割して実行する。順序は fail-fast のため ci の定義順に合わせる
+# glob は各ジョブが実際に fail しうる入力ファイルに絞る（対象変更なしの push ではスキップ）。
+# 依存・設定の変更（package.json / pnpm-lock.yaml / tsconfig 等の json）も型・テスト結果に影響するため含める
 pre-push:
   jobs:
     - name: lint:types
+      glob: "*.{ts,tsx,js,jsx,json,jsonc,yaml}"
       run: mise run lint:types
     - name: test:types
+      glob: "*.{ts,tsx,js,jsx,json,jsonc,yaml}"
       run: mise run test:types
     - name: test:e2e:types
+      glob: "*.{ts,tsx,js,jsx,json,jsonc,yaml}"
       run: mise run test:e2e:types
     - name: lint:biome
+      glob: "*.{ts,tsx,js,jsx,json,jsonc,css}"
       run: mise run lint:biome
     - name: test:ci
+      glob: "*.{ts,tsx,js,jsx,json,jsonc,yaml}"
       run: mise run test:ci
     - name: test:storybook:ci
+      glob: "*.{ts,tsx,js,jsx,json,jsonc,yaml}"
       run: mise run test:storybook:ci
+    # build はソース・アセット・設定・生成スクリプトほぼ全てが入力のため glob を付けない
     - name: build:ci
       run: mise run build:ci
