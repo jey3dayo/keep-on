@@ -9,7 +9,7 @@ paths:
 
 | カテゴリ       | 技術                           | バージョン/備考            |
 | -------------- | ------------------------------ | -------------------------- |
-| フロントエンド | Next.js 15                     | App Router, Turbopack      |
+| フロントエンド | Next.js 16                     | App Router, Turbopack      |
 | エッジデプロイ | OpenNext + Cloudflare Workers  | @opennextjs/cloudflare     |
 | 認証           | Cloudflare Access (Zero Trust) | JWT を Edge で JWKS 検証   |
 | ORM            | Drizzle ORM                    | d1 adapter                 |
@@ -18,6 +18,8 @@ paths:
 | 環境変数       | dotenvx                        | 暗号化管理                 |
 | スタイリング   | Tailwind CSS                   | v4.x                       |
 | PWA            | manifest.json + Service Worker | iOS対応                    |
+
+実行時の環境変数スキーマは `src/schemas/env.ts` で管理します。
 
 ## Drizzle ORM 構成
 

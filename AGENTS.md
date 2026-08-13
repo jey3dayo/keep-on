@@ -2,22 +2,21 @@
 
 ## プロジェクト概要
 
-KeepOn は、Next.js 16 + Cloudflare Workers (D1) + Drizzle ORM + Clerk で構築された習慣トラッキング PWA です。
+KeepOn は、Next.js 16 + Cloudflare Workers (D1) + Drizzle ORM + Cloudflare Access で構築された習慣トラッキング PWA です。
 
 ## コンテキスト参照
 
 詳細な情報は以下を参照してください:
 
-### Steering (プロジェクト全体の知識)
+### プロダクト・構成
 
-- `.kiro/steering/tech.md` - 技術スタック・開発ツール・コマンド一覧
-- `.kiro/steering/product.md` - プロダクト仕様
-- `.kiro/steering/structure.md` - ディレクトリ構造
+- `README.md` - プロダクト機能、セットアップ、アーキテクチャ、コマンド一覧
 
-### Rules (開発規約)
+### Rules (詳細な開発規約)
 
 - `.claude/rules/code-style.md` - コードスタイルと開発規約
 - `.claude/rules/directory-structure.md` - 層構造と責務（schemas / validators / queries / actions）
+- `.claude/rules/tech-stack.md` - 技術スタックと Workers の制約
 - `.claude/rules/security.md` - セキュリティガイドライン
 - `.claude/rules/dotenvx.md` - dotenvx 暗号化管理ガイド
 - `.claude/rules/testing.md` - テストユーザー管理・E2E ガイド
@@ -60,7 +59,7 @@ KeepOn は、Next.js 16 + Cloudflare Workers (D1) + Drizzle ORM + Clerk で構�
 
 1. 環境変数を復号化: `pnpm dotenvx decrypt`
 2. 編集後に再暗号化: `pnpm env:encrypt`
-3. スキーマ同期: `pnpm db:generate` のあと `pnpm db:migrate:local -- drizzle/<migration>.sql`
+3. スキーマ同期: `pnpm db:generate` のあと `pnpm db:migrate:local`
 4. 開発サーバー起動: `pnpm env:run -- pnpm dev`
 
 ## デバッグ

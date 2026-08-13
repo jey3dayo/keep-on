@@ -107,4 +107,4 @@ dotenvx run -- wrangler tail --format pretty
 - `request.dashboard:start` / `:end` が出るか（リクエスト処理の開始・終了）
 - `:timeout` / `TimeoutError` が出ていないか
 - `db.connection` が毎リクエストで出続けないか（過剰再接続）
-- `Clerk: Refreshing the session token resulted in an infinite redirect loop` → Clerk キー不整合
+- **REMOVED（Clerk 認証時代の履歴）** `Clerk: Refreshing the session token resulted in an infinite redirect loop` → 旧 Clerk キー不整合。現行認証は Cloudflare Access

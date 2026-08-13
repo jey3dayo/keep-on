@@ -206,9 +206,11 @@ server component / route handler 層（`getAccessIdentity()`）でのみ検証�
 
 ### 開発環境でのフォールバック
 
-`NODE_ENV !== 'production'` かつ `Cf-Access-Jwt-Assertion` ヘッダーが無い場合に限り、
-`DEV_ACCESS_EMAIL` 環境変数から擬似 identity（`sub: 'dev-user'`）を返します。
-本番では絶対に発動しません（`resolveDevIdentity()` が `NODE_ENV === 'production'` を明示的にガードしている）。
+`isDevFallbackAllowed()`（`src/lib/auth/environment.ts`）が true のときだけ、
+`Cf-Access-Jwt-Assertion` ヘッダーが無い場合に `DEV_ACCESS_EMAIL` から擬似 identity（`sub: 'dev-user'`）を返します。
+`isDevFallbackAllowed()` は fail-closed で、`NODE_ENV === 'development'` または `NEXTJS_ENV === 'development'` のときのみ true です。
+`NODE_ENV` 未設定の Cloudflare Workers などでは誤って有効化されません。
+`resolveDevIdentity()` はこの判定を通過した場合に限り `DEV_ACCESS_EMAIL` を参照します。
 
 ### パスワードハッシュ / MFA
 

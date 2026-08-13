@@ -88,7 +88,7 @@ import { getDb } from "@/lib/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-const db = await getDb();
+const db = getDb();
 const userList = await db.select().from(users).where(eq(users.id, userId));
 ```
 
@@ -96,38 +96,48 @@ const userList = await db.select().from(users).where(eq(users.id, userId));
 
 ```tsx
 // ❌ 直接インスタンス化しない
+import { drizzle } from "drizzle-orm/d1";
+const db = drizzle(...);
+
+// ❌ REMOVED（PostgreSQL 時代）— postgres-js プールは D1 移行で削除済み
 import { drizzle } from "drizzle-orm/postgres-js";
 const db = drizzle(...);
 ```
 
 #### データベース接続のベストプラクティス
 
-### 接続プールの管理
+### D1 シングルトンの管理
 
-- `getDb()` は内部で接続プールを管理し、自動的にリトライを実行
-- グローバルシングルトンパターンで接続を共有
-- Cloudflare Workers環境では最大2接続（並行RSCリクエスト対応）
+- `getDb()` は Cloudflare D1 バインディング経由で Drizzle インスタンスを返す
+- モジュールレベルのシングルトン (`cachedDb`) で同一 Worker 内の接続を共有
+- TCP 接続プールは不要（D1 はバインディング API 経由）
+- 接続リセットが必要なときは `resetDb()` → 次回 `getDb()` で再初期化
 
-### エラーハンドリング
+### エラーハンドリングとリトライ
 
 ```tsx
-// ✅ getDb() が自動的にリトライとエラー分類を処理
-try {
-  const db = await getDb();
-  const result = await db.select().from(users);
-} catch (error) {
-  // 接続エラーは既にリトライ済み
-  // ここでは最終的な失敗のみ処理
-}
+// ✅ クエリ単位のリトライは withDbRetry / logSpan の timeoutMs を使う
+import { withDbRetry } from "@/lib/db-retry";
+import { getRequestTimeoutMs } from "@/lib/server/timeout";
+
+const requestTimeoutMs = getRequestTimeoutMs();
+const dbTimeoutMs = Math.max(3000, Math.min(8000, requestTimeoutMs - 2000));
+
+const result = await withDbRetry(
+  "dashboard.habits",
+  () => getHabitsWithProgress(...),
+  { timeoutMs: dbTimeoutMs },
+);
 ```
+
+`getDb()` 自体はリトライしない。タイムアウトや一時的 DB エラーは呼び出し側の `withDbRetry` や Server Action 内の `runWithRetry` で処理する。
 
 ### タイムアウト制御
 
-- クエリタイムアウト: 5秒（`DB_STATEMENT_TIMEOUT`）
-- 接続タイムアウト: 3秒（`DB_CONNECT_TIMEOUT`）
-- アイドルタイムアウト: 5秒（`DB_IDLE_TIMEOUT`）
+- リクエスト全体: 8秒（`DEFAULT_REQUEST_TIMEOUT_MS`）/ Cloudflare 本番: 15秒（`CLOUDFLARE_REQUEST_TIMEOUT_MS`）
+- DB クエリ span: `max(3000, min(8000, requestTimeoutMs - 2000))` で算出（リクエスト終了2秒前を上限）
 
-設定変更は `src/constants/db.ts` で一元管理されています。
+設定変更は `src/constants/request-timeout.ts` で一元管理。算出ロジックは `src/lib/server/timeout.ts` の `getRequestTimeoutMs()` を参照。
 
 ### raw SQL（`sql` テンプレート）を使う場合の検証必須ルール
 
@@ -170,7 +180,8 @@ pnpm env:run -- pnpm dev
 
 #### 定数ファイルの配置
 
-- `src/constants/db.ts` - データベース接続設定
+- `src/constants/request-timeout.ts` - リクエスト / DB span タイムアウト
+- `src/constants/retry.ts` - リトライ回数・遅延
 - `src/constants/cache.ts` - キャッシュ設定
 - `src/constants/habit.ts` - 習慣関連の定数
 - `src/constants/habit-data.ts` - 習慣関連の静的データ
@@ -178,28 +189,29 @@ pnpm env:run -- pnpm dev
 #### 良い例
 
 ```tsx
-// src/constants/db.ts
-export const DB_CONNECTION_POOL_MAX = 2;
-export const DB_IDLE_TIMEOUT = 5;
-export const DB_STATEMENT_TIMEOUT = 5000;
+// src/constants/request-timeout.ts
+export const DEFAULT_REQUEST_TIMEOUT_MS = 8000;
+export const CLOUDFLARE_REQUEST_TIMEOUT_MS = 15_000;
 
-// src/lib/db.ts
-import { DB_CONNECTION_POOL_MAX, DB_IDLE_TIMEOUT } from "@/constants/db";
+// src/lib/server/timeout.ts
+import {
+  CLOUDFLARE_REQUEST_TIMEOUT_MS,
+  DEFAULT_REQUEST_TIMEOUT_MS,
+} from "@/constants/request-timeout";
 
-const client = postgres(connectionString, {
-  max: DB_CONNECTION_POOL_MAX,
-  idle_timeout: DB_IDLE_TIMEOUT,
-});
+export function getRequestTimeoutMs(): number {
+  // 環境変数 → Cloudflare 本番 → デフォルト の順で解決
+}
 ```
 
 #### 悪い例
 
 ```tsx
-// ❌ ハードコードされた値
-const client = postgres(connectionString, {
-  max: 2, // この2は何を意味する？
-  idle_timeout: 5, // なぜ5秒？
-});
+// ❌ ハードコードされたタイムアウト
+const dbTimeoutMs = 5000; // リクエスト上限と整合しない
+
+// ❌ REMOVED（PostgreSQL 時代）— src/constants/db.ts と postgres プール定数は削除済み
+const client = postgres(connectionString, { max: 2, idle_timeout: 5 });
 ```
 
 ### 6. Edge Runtime の制約を考慮

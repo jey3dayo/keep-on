@@ -30,7 +30,7 @@ dotenvx は環境変数を暗号化してリポジトリに安全にコミット
 | 1. `.env`（本番キー）             | 低（後から上書きされる）        |
 | 2. `.env.development`（開発キー） | 高（`--overload` で上書き優先） |
 
-`.env.development` が後に読み込まれるため、開発時は `pk_test_...` / `sk_test_...` が有効になる。
+`.env.development` が後に読み込まれるため、開発時は Access 用の dev overlay（例: `DEV_ACCESS_EMAIL`）や開発専用の `ACCESS_AUD` 上書きが有効になる。
 
 ### 適用スクリプト（開発系）
 
@@ -72,7 +72,7 @@ pnpm env:run -- pnpm dev
 pnpm env:run -- pnpm db:generate
 
 # ローカル D1 へマイグレーション適用
-pnpm env:run -- pnpm db:migrate:local -- drizzle/<migration>.sql
+pnpm env:run -- pnpm db:migrate:local
 ```
 
 `pnpm env:run` は `dotenvx run` のエイリアスです。
