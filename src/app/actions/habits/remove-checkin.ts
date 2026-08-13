@@ -31,7 +31,6 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
     resolveCheckinWeekStartDay('action.habits.removeCheckin', userId, metaWithUser, spans.runWithRetry),
   ])
 
-  const targetDate = dateKey ?? new Date()
   const deleteMeta = {
     ...metaWithUser,
     period: habit.period,
@@ -39,7 +38,7 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
 
   const { deleted, currentCount } = await spans.runWithDbTimeout(
     'action.habits.removeCheckin.deleteLatestCheckin',
-    () => deleteLatestCheckinByHabitAndPeriod(habitId, targetDate, habit.period, weekStartDay),
+    () => deleteLatestCheckinByHabitAndPeriod(habitId, dateKey, habit.period, weekStartDay),
     deleteMeta
   )
 

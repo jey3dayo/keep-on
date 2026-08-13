@@ -29,7 +29,6 @@ async function performCheckin(params: HabitCheckinParams): Promise<CheckinResult
     resolveCheckinWeekStartDay('action.habits.checkin', userId, metaWithUser, spans.runWithRetry),
   ])
 
-  const targetDate = dateKey ?? new Date()
   const countMeta = {
     ...metaWithUser,
     frequency: habit.frequency,
@@ -40,7 +39,7 @@ async function performCheckin(params: HabitCheckinParams): Promise<CheckinResult
     'action.habits.checkin.createCheckin',
     () =>
       createCheckinWithLimit({
-        date: targetDate,
+        date: dateKey,
         frequency: habit.frequency,
         habitId,
         period: habit.period,

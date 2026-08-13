@@ -18,7 +18,7 @@ export interface HabitCheckinSpans {
 
 export interface HabitCheckinParams {
   baseMeta: Record<string, unknown>
-  dateKey?: string
+  dateKey: string
   habitId: string
   spans: HabitCheckinSpans
 }
@@ -67,6 +67,9 @@ export async function requireHabitForUserWithRetry(params: RequireHabitForUserPa
   }
   if (habit.userId !== userId) {
     throw new AuthorizationError({ detail: 'この習慣にアクセスする権限がありません' })
+  }
+  if (habit.archived) {
+    throw new AuthorizationError({ detail: 'アーカイブされた習慣は操作できません' })
   }
   return habit
 }

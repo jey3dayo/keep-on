@@ -461,7 +461,7 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
   )
 
   const handleSkip = useCallback(async (habitId: string) => {
-    const result = await addSkipAction(habitId)
+    const result = await addSkipAction(habitId, formatDateKey(new Date()))
     if (result.ok) {
       appToast.success('今日をスキップしました（ストリーク維持）')
     } else {

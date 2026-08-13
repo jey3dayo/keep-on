@@ -2,7 +2,12 @@
 
 import { createSkip, deleteSkip } from '@/lib/queries/skip'
 import { type HabitCheckinSpans, requireCheckinUserId, requireHabitForUserWithRetry } from './checkin-shared'
-import { type HabitActionResult, revalidateHabitPaths, runTimedHabitAction, type TimedHabitActionInput } from './utils'
+import {
+  type HabitActionResult,
+  type ResolvedHabitActionInput,
+  revalidateHabitPaths,
+  runTimedHabitAction,
+} from './utils'
 
 interface SkipMutationOptions<TDbResult, TResult> {
   actionName: string
@@ -12,7 +17,7 @@ interface SkipMutationOptions<TDbResult, TResult> {
 }
 
 async function performSkipMutation<TDbResult, TResult>(
-  input: TimedHabitActionInput,
+  input: ResolvedHabitActionInput,
   baseMeta: Record<string, unknown>,
   spans: HabitCheckinSpans,
   options: SkipMutationOptions<TDbResult, TResult>
@@ -28,7 +33,7 @@ async function performSkipMutation<TDbResult, TResult>(
     userId,
   })
 
-  const targetDate = input.dateKey ?? new Date()
+  const targetDate = input.dateKey
   const mutationResult = await spans.runWithDbTimeout(
     options.dbActionName,
     () => options.mutate(input.habitId, targetDate),

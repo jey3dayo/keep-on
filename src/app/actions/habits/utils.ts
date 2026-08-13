@@ -12,6 +12,7 @@ import {
 import { type SerializableHabitError, serializeHabitError } from '@/lib/errors/serializable'
 import { createRequestMeta, formatError, logWarn } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
+import { getServerDateKey } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
 import { validateHabitActionInput, validateHabitId } from '@/validators/habit-action'
@@ -24,12 +25,18 @@ export interface TimedHabitActionInput {
   habitId: string
 }
 
+/** バリデーション済み入力。dateKey は省略時も当日として解決済みのため常に string */
+export interface ResolvedHabitActionInput {
+  dateKey: string
+  habitId: string
+}
+
 interface RunTimedHabitActionOptions<T> {
   actionName: string
-  buildBaseMeta?: (input: TimedHabitActionInput, requestMeta: Record<string, unknown>) => Record<string, unknown>
+  buildBaseMeta?: (input: ResolvedHabitActionInput, requestMeta: Record<string, unknown>) => Record<string, unknown>
   errorDetail: string
   run: (params: {
-    input: TimedHabitActionInput
+    input: ResolvedHabitActionInput
     baseMeta: Record<string, unknown>
     spans: HabitCheckinSpans
   }) => Promise<T>
@@ -124,14 +131,15 @@ export async function runTimedHabitAction<T>(
   const requestMeta = createRequestMeta(options.actionName)
   const timeoutMs = getRequestTimeoutMs()
   const spans = createHabitCheckinSpans(timeoutMs)
+  const todayKey = await getServerDateKey()
 
   const result = await Result.pipe(
-    validateHabitActionInput(actionInput),
+    validateHabitActionInput(actionInput, todayKey),
     Result.andThen(async (input) => {
       const baseMeta = options.buildBaseMeta?.(input, requestMeta) ?? {
         ...requestMeta,
+        dateKey: input.dateKey,
         habitId: input.habitId,
-        ...(input.dateKey ? { dateKey: input.dateKey } : {}),
       }
 
       return await Result.try({
