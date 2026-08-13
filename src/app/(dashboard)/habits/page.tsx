@@ -36,9 +36,9 @@ export default async function HabitsPage() {
   logInfo('request.habits:end', requestMeta)
 
   return (
-    <PageShell gap="gap-4">
+    <PageShell>
       <div className="flex items-center justify-between">
-        <p className="text-muted-foreground">あなたの習慣を管理しましょう</p>
+        <p className="text-muted-foreground text-sm">あなたの習慣を管理しましょう</p>
         <Button asChild size="lg" variant="default">
           <Link href="/habits/new?step=preset">
             <Icon className="mr-2" name="plus" size={20} />

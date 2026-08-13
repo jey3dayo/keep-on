@@ -1,3 +1,6 @@
+import Link from 'next/link'
+import { Button } from '@/components/basics/Button'
+import { Icon } from '@/components/basics/Icon'
 import { getHabitsCacheSnapshot } from '@/lib/cache/habit-cache'
 import {
   createRequestMeta,
@@ -95,11 +98,18 @@ export async function HabitTable({ userId, externalId, requestMeta }: HabitTable
 
   if (activeHabits.length === 0 && archivedHabits.length === 0) {
     return (
-      <div className="flex items-center justify-center rounded-lg border border-dashed p-8">
-        <div className="space-y-2 text-center">
-          <p className="text-muted-foreground">習慣がまだ登録されていません</p>
-          <p className="text-muted-foreground text-sm">新しい習慣を作成してみましょう</p>
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border/70 bg-card/80 shadow-sm">
+          <Icon className="h-8 w-8 text-muted-foreground" name="target" />
         </div>
+        <p className="mb-1 font-semibold text-base">習慣がまだ登録されていません</p>
+        <p className="mb-4 text-muted-foreground text-sm">新しい習慣を作成してみましょう</p>
+        <Button asChild size="lg" variant="default">
+          <Link href="/habits/new?step=preset">
+            <Icon className="mr-2" name="plus" size={20} />
+            新しい習慣
+          </Link>
+        </Button>
       </div>
     )
   }

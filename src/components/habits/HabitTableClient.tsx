@@ -6,6 +6,7 @@ import { Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { type MouseEvent, useCallback, useState } from 'react'
+import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { IconLabelButton } from '@/components/basics/IconLabelButton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -30,7 +31,7 @@ interface ActiveHabitRowProps {
 }
 
 function ActiveHabitRow({ habit, onArchive, onEdit, onRowClick }: ActiveHabitRowProps) {
-  const bgColor = getColorById(habit.color ?? DEFAULT_HABIT_COLOR).color
+  const { color: bgColor, foreground: iconColor } = getColorById(habit.color ?? DEFAULT_HABIT_COLOR)
   const handleRowClick = useCallback(
     (event: MouseEvent<HTMLTableRowElement>) => onRowClick(event, habit.id),
     [habit.id, onRowClick]
@@ -39,20 +40,26 @@ function ActiveHabitRow({ habit, onArchive, onEdit, onRowClick }: ActiveHabitRow
   const handleEdit = useCallback(() => onEdit(habit.id), [habit.id, onEdit])
 
   return (
-    <TableRow className="cursor-pointer" onClick={handleRowClick}>
+    <TableRow
+      className="cursor-pointer transition-colors duration-150 hover:bg-muted/40 active:bg-muted/60 active:duration-75 motion-reduce:transition-none"
+      onClick={handleRowClick}
+    >
       <TableCell>
         <div className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: bgColor }}>
-          <Icon className="h-5 w-5 text-white" name={normalizeIconName(habit.icon)} />
+          <Icon className="h-5 w-5" name={normalizeIconName(habit.icon)} style={{ color: iconColor }} />
         </div>
       </TableCell>
       <TableCell className="font-medium">
-        <Link className="whitespace-nowrap hover:underline" href={`/habits/${habit.id}`}>
+        <Link
+          className="whitespace-nowrap rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          href={`/habits/${habit.id}`}
+        >
           {habit.name}
         </Link>
       </TableCell>
       <TableCell>{getPeriodLabel(habit.period)}</TableCell>
-      <TableCell>{habit.frequency}</TableCell>
-      <TableCell className="hidden md:table-cell">
+      <TableCell className="tabular-nums">{habit.frequency}</TableCell>
+      <TableCell className="hidden tabular-nums md:table-cell">
         {format(new Date(habit.createdAt), 'yyyy/MM/dd', { locale: ja })}
       </TableCell>
       <TableCell className="text-right">
@@ -88,12 +95,12 @@ function ArchivedHabitRow({ habit, onDelete, onUnarchive }: ArchivedHabitRowProp
       <TableCell>
         <div className="flex flex-wrap items-center gap-2">
           <span className="whitespace-nowrap">{habit.name}</span>
-          <span className="whitespace-nowrap rounded-full border border-muted-foreground/30 px-2 py-0.5 font-medium text-[10px] text-muted-foreground">
+          <span className="whitespace-nowrap rounded-full border border-muted-foreground/30 px-2 py-0.5 font-medium text-muted-foreground text-xs">
             アーカイブ
           </span>
         </div>
       </TableCell>
-      <TableCell className="whitespace-nowrap">
+      <TableCell className="whitespace-nowrap tabular-nums">
         {habit.archivedAt ? format(new Date(habit.archivedAt), 'yyyy/MM/dd', { locale: ja }) : '-'}
       </TableCell>
       <TableCell className="text-right">
@@ -218,12 +225,24 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
     })
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* アクティブな習慣 */}
       <div className="space-y-4">
-        <h2 className="font-bold text-xl">アクティブな習慣</h2>
+        <h2 className="font-semibold text-lg tracking-tight">アクティブな習慣</h2>
         {activeHabits.length === 0 ? (
-          <p className="py-8 text-center text-muted-foreground">習慣がありません。新しい習慣を作成しましょう。</p>
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border/70 bg-card/80 shadow-sm">
+              <Icon className="h-8 w-8 text-muted-foreground" name="target" />
+            </div>
+            <p className="mb-1 font-semibold text-base">習慣がまだ登録されていません</p>
+            <p className="mb-4 text-muted-foreground text-sm">新しい習慣を作成しましょう</p>
+            <Button asChild size="lg" variant="default">
+              <Link href="/habits/new?step=preset">
+                <Icon className="mr-2" name="plus" size={20} />
+                新しい習慣
+              </Link>
+            </Button>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
@@ -255,9 +274,9 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
 
       {/* アーカイブ済み習慣 */}
       {archivedHabits.length > 0 && (
-        <div className="space-y-4 rounded-lg border border-muted/60 bg-muted/20 p-4">
+        <div className="space-y-4 rounded-xl border border-muted/60 bg-muted/20 p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-bold text-muted-foreground text-xl">アーカイブ済み</h2>
+            <h2 className="font-medium text-muted-foreground text-sm">アーカイブ済み</h2>
             <span className="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-muted-foreground text-xs">
               {archivedHabits.length}件
             </span>

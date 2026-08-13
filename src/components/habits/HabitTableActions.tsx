@@ -35,7 +35,7 @@ export function HabitTableActions({
   return (
     <div className="flex flex-wrap items-center justify-end gap-1">
       {!archived && (
-        <Button aria-label="編集" className="shrink-0" onClick={handleEdit} size="icon" variant="ghost">
+        <Button aria-label="編集" className="shrink-0" onClick={handleEdit} size="icon" title="編集" variant="ghost">
           <Pencil className="h-4 w-4" />
         </Button>
       )}
@@ -48,12 +48,14 @@ export function HabitTableActions({
           onOptimistic={onArchiveOptimistic}
           trigger={
             <IconLabelButton
-              className="shrink-0 whitespace-nowrap"
+              className="shrink-0"
               icon={<Archive className="h-4 w-4" />}
+              iconOnly
               label="アーカイブ"
               onClick={stopPropagation}
-              size="sm"
-              variant="outline"
+              size="icon"
+              title="アーカイブ"
+              variant="ghost"
             />
           }
         />
