@@ -177,7 +177,7 @@ function getPreviousPeriod(date: Date, period: Period): Date {
  * @param userId - ユーザーID
  * @param externalId - 外部 IdP のサブジェクト識別子（週開始日設定の取得に使用）
  * @param date - 基準日（デフォルト: 今日）
- * @param weekStart - 週開始日設定（省略時は clerkId から取得）
+ * @param weekStart - 週開始日設定（省略時は externalId から取得）
  * @param preloadedSnapshot - 呼び出し側が既に読んだ KV スナップショット。
  *   渡された場合（`null` を含む）は内部での再読み込みをスキップする。
  * @returns 進捗情報付きの習慣配列

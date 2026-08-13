@@ -28,6 +28,7 @@ const MIGRATION_FILES = [
   '0001_happy_prowler.sql',
   '0002_small_magus.sql',
   '0003_skip_and_reminder.sql',
+  '0004_external_id.sql',
 ]
 
 function rebuildDb() {
@@ -48,8 +49,8 @@ function rebuildDb() {
 const { checkins, habits, habitSkips, users } = schema
 
 async function insertUser(id: string) {
-  await liveDb.run(sql`INSERT INTO ${users} ("id", "clerkId", "email", "createdAt", "updatedAt")
-    VALUES (${id}, ${`clerk_${id}`}, ${`${id}@example.com`}, ${'2024-01-01T00:00:00.000Z'}, ${'2024-01-01T00:00:00.000Z'})`)
+  await liveDb.run(sql`INSERT INTO ${users} ("id", "externalId", "email", "createdAt", "updatedAt")
+    VALUES (${id}, ${`access_${id}`}, ${`${id}@example.com`}, ${'2024-01-01T00:00:00.000Z'}, ${'2024-01-01T00:00:00.000Z'})`)
 }
 
 async function insertHabit(id: string, userId: string, frequency: number) {
