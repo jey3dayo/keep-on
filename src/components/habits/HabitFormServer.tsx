@@ -257,14 +257,14 @@ function HabitColorField({ control, t }: HabitFormFieldProps) {
       </div>
       <RadioGroup
         aria-labelledby={headingId}
-        className="scrollbar-hide flex gap-3 overflow-x-auto px-1 pt-1 pb-2"
+        className="flex flex-wrap gap-3 px-1 pt-1 pb-2"
         onValueChange={field.onChange}
         value={field.value}
       >
         {habitColors.map((color) => {
           const isSelected = field.value === color.id
           return (
-            <div className="relative h-10 w-10 flex-shrink-0" key={color.id}>
+            <div className="relative h-10 w-10" key={color.id}>
               {/* RadioGroupItem のビルトイン Indicator は表示できないため、実体は透明な overlay として重ね、見た目は下の div で維持する */}
               <RadioGroupItem
                 aria-label={color.label}
