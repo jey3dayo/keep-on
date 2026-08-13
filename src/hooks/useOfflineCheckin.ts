@@ -185,9 +185,9 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
   const enqueueCheckin = useCallback(
     async (habitId: string, action: 'add' | 'remove', dateKey: string): Promise<void> => {
       const currentUserId = userIdRef.current
-      // 未サインインのチェックインはそもそも成功しないため、照合不能なアイテムを積まずに捨てる
+      // 未サインインのチェックインはそもそも成功しないため、照合不能なアイテムを積まず reject する
       if (!currentUserId) {
-        return
+        throw new Error('Cannot enqueue offline checkin without a signed-in user')
       }
 
       const item: QueuedCheckin = {

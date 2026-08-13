@@ -260,4 +260,16 @@ describe('useOfflineCheckin', () => {
     expect(mockGetAllQueuedCheckins).not.toHaveBeenCalled()
     expect(fetch).not.toHaveBeenCalled()
   })
+
+  it('userId が未確定なら enqueueCheckin は reject しキューに積まない', async () => {
+    mockUserId = null
+    installServiceWorkerMock(false)
+
+    const { result } = renderHook(() => useOfflineCheckin())
+
+    await expect(result.current.enqueueCheckin('habit-1', 'add', '2026-03-19')).rejects.toThrow(
+      'Cannot enqueue offline checkin without a signed-in user'
+    )
+    expect(mockEnqueueOfflineCheckin).not.toHaveBeenCalled()
+  })
 })
