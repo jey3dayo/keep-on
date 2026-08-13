@@ -69,6 +69,7 @@ tmp/
 e2e/storage-state.json
 playwright-report/
 test-results/
+.playwright-mcp/
 
 # bundle size history
 .bundle-history/
