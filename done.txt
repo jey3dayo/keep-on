@@ -1,0 +1,14 @@
+x 2026-08-13 2026-08-13 オフライン enqueue が userId 欠落時に silent return せず reject する +improve due:2026-08-14
+x 2026-08-13 2026-08-13 checkin/skip/reset の dateKey にサーバー側の許容窓を入れる +improve due:2026-08-14
+x 2026-08-13 2026-08-13 skip/reset の今日判定を checkin と同じ TZ（getServerDateKey / クライアント dateKey）に揃える +improve due:2026-08-14
+x 2026-08-13 2026-08-13 アーカイブ済み習慣への checkin/skip/reset を拒否する +improve due:2026-08-14
+x 2026-08-13 2026-08-13 dashboard/habits の KV スナップショット二重読取をやめる +improve
+x 2026-08-13 2026-08-13 product.md / README 次のステップ / plans/README のドリフトを直す +improve
+x 2026-08-13 2026-08-13 AGENTS/rules の pnpm db:push を実スクリプト（db:migrate:local 等）へ直す +improve due:2026-08-14
+x 2026-08-13 2026-08-13 getHabitCalendarData を userId スコープ必須にする +improve
+x 2026-08-13 2026-08-13 TypeScript 7 / jsdom 30 を適用し、未使用 @typescript/native を削除して TS6 API 用依存を維持する +improve
+x 2026-08-13 2026-08-13 settings ページのカードが 390px 幅で右に 28px はみ出す; 対象: src/app/(dashboard)/settings のカードグリッド(モバイルで折り返し無し); 検証: 390px viewport で docWidth==390 かつ card right<=390 +ui-audit 起票日:2026-08-13
+x 2026-08-13 2026-08-13 habits/new のアイコン・カラー選択行が 390px 幅で右に見切れる(スクロール導線なし); 対象: プリセット/アイコンピッカーの flex 行; 検証: 390px で全スウォッチに到達できる(折り返し or overflow-x-auto+アフォーダンス) +ui-audit 起票日:2026-08-13
+x 2026-08-13 2026-08-13 /habits のデザイン改善: 行の押下フィードバック無し・キーボード非対応、見出し階層が平坦、余白リズム不整合(gap-4/space-y-8混在)、習慣色が hex 直指定(habit-emphasis トークン未使用)、text-[10px] 任意値、tabular-nums 欠落、空状態2種が DESIGN.md 仕様と乖離、アーカイブ操作の視覚重量不揃い; 対象: src/app/(dashboard)/habits/**, src/components/habits/**; 基準: apple-design(response/hierarchy/simplicity)+DESIGN.md; 検証: 390px/1280px スクリーンショット比較 + vitest/tsc +ui-audit 起票日:2026-08-13
+x 2026-08-13 2026-08-13 ダッシュボードで document が縦に伸びて fixed 下部バーが浮く(PWA); 対象: sidebar シェル min-h-svh と内側スクローラ; 状況: opus worker が対応中 +ui-audit 起票日:2026-08-13
+x 2026-08-13 2026-08-13 DashboardBottomBar が3重マウント(HabitSimpleView がページ数ぶん描画); 対象: src/components/streak/HabitSimpleView.tsx; 状況: opus worker が対応中 +ui-audit 起票日:2026-08-13

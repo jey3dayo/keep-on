@@ -29,7 +29,7 @@ improve スキルによる監査計画の索引。
 | 012  | IndexedDB offline-queue 直接テスト                                                | P2       | M      | —          | TODO   |
 | 013  | analytics の checkin 重複読取統合                                                 | P2       | M      | —          | TODO   |
 
-006 の quarantine 残は `TODO.md` を参照。
+006 の quarantine 残は `todo.txt` の先頭項目を参照。
 
 検証ゲート（実行時）: `pnpm exec biome check --write <touched>` → `pnpm exec tsc --noEmit` → 計画指定の `pnpm test:run -- …`。
 テストファイルの型は `pnpm test:types`（`tsconfig.test.json`）。`mise run lint:types` は本番ソースのみ。
@@ -44,7 +44,7 @@ improve スキルによる監査計画の索引。
 
 - **007**: `validators/habit-action.ts`, `actions/habits/{checkin-shared,skip,reset,checkin,remove-checkin}.ts`, `DashboardWrapper.tsx`, action tests
 - **008**: `hooks/useOfflineCheckin.ts`, `hooks/useOfflineCheckin.test.ts`
-- **009**: `AGENTS.md`, `.claude/rules/*`, `product.md`, `README.md`, `plans/README.md`, `DESIGN_REVIEW.md`, `TODO.md`, `package.json`（native 削除）
+- **009**: `AGENTS.md`, `.claude/rules/*`, `product.md`, `README.md`, `plans/README.md`, `DESIGN_REVIEW.md`, `todo.txt`, `done.txt`, `package.json`（native 削除・タスク記録の正本を移行）
 - **010**: `habit-calendar.ts`, `habits/[id]/page.tsx`, `habit-read.ts`, `dashboard/page.tsx`, `HabitTable.tsx`
 - **011**: `actions/habits/__tests__/*`（新規）
 - **012**: `lib/pwa/__tests__/offline-queue.test.ts`（+ 条件付き fake-indexeddb）
@@ -61,4 +61,4 @@ improve スキルによる監査計画の索引。
 - `logging.ts` CJS `require` — 解消済み
 - E2E spec 0 件 — ナビ smoke は追加済み。書込パス未ゲートは TEST として残すが 011/012 が優先
 - `noJsxPropsBind` / optimistic `pendingCount` / cache versioning / preview 共有 D1 / dotenvx `.env` — 前回どおり by-design
-- updateUserSettings 競合・dashboard client remount — `TODO.md` / todo.txt バックログのまま（本ラウンド外）
+- updateUserSettings 競合・dashboard client remount — `todo.txt` バックログのまま（本ラウンド外）

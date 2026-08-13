@@ -27,7 +27,7 @@ KeepOn は、Next.js 16 + Cloudflare Workers (D1) + Drizzle ORM + Clerk で構�
 
 ### タスク管理
 
-- `TODO.md` - 未解決事項（検証条件・起票日つき）
+- `todo.txt` - 未解決事項（対象・検証条件・起票日つき。完了後は `done.txt` へ archive）
 - `plans/README.md` - コード監査由来の実装計画と実行状況
 
 ## 重要な開発ルール
