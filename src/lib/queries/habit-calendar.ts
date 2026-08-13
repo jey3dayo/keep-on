@@ -1,5 +1,5 @@
 import { and, count, eq, gte } from 'drizzle-orm'
-import { checkins, habitSkips } from '@/db/schema'
+import { checkins, habitSkips, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
 import { formatDateKey } from '@/lib/utils/date'
 import { profileQuery } from './profiler'
@@ -13,10 +13,13 @@ interface HabitCalendarData {
 /**
  * 習慣の過去6ヶ月分のチェックイン + スキップ日を取得
  *
+ * habits への JOIN で userId を絞るため、他ユーザーの habitId を渡しても空データを返す。
+ *
  * @param habitId - 習慣ID
+ * @param userId - 習慣の所有者ID
  * @returns チェックイン日カウントマップ・スキップ日セット
  */
-export async function getHabitCalendarData(habitId: string): Promise<HabitCalendarData> {
+export async function getHabitCalendarData(habitId: string, userId: string): Promise<HabitCalendarData> {
   return await profileQuery(
     'query.getHabitCalendarData',
     async () => {
@@ -31,12 +34,14 @@ export async function getHabitCalendarData(habitId: string): Promise<HabitCalend
         db
           .select({ count: count(), date: checkins.date })
           .from(checkins)
-          .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startDateKey)))
+          .innerJoin(habits, eq(checkins.habitId, habits.id))
+          .where(and(eq(checkins.habitId, habitId), eq(habits.userId, userId), gte(checkins.date, startDateKey)))
           .groupBy(checkins.date),
         db
           .select({ date: habitSkips.date })
           .from(habitSkips)
-          .where(and(eq(habitSkips.habitId, habitId), gte(habitSkips.date, startDateKey))),
+          .innerJoin(habits, eq(habitSkips.habitId, habits.id))
+          .where(and(eq(habitSkips.habitId, habitId), eq(habits.userId, userId), gte(habitSkips.date, startDateKey))),
       ])
 
       return {
@@ -44,6 +49,6 @@ export async function getHabitCalendarData(habitId: string): Promise<HabitCalend
         skipDates: new Set(skipRows.map((r) => r.date)),
       }
     },
-    { habitId }
+    { habitId, userId }
   )
 }

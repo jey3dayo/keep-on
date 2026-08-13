@@ -38,7 +38,7 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
   const { id } = await params
   const [habit, calendarData] = await Promise.all([
     logSpan('habits.detail.fetchHabit', () => getHabitById(id), requestMeta, { timeoutMs }),
-    logSpan('habits.detail.fetchCalendar', () => getHabitCalendarData(id), requestMeta, { timeoutMs }),
+    logSpan('habits.detail.fetchCalendar', () => getHabitCalendarData(id, userId), requestMeta, { timeoutMs }),
   ])
 
   if (!habit) {
