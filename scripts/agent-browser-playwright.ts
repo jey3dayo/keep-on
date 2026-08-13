@@ -3,8 +3,9 @@
 /**
  * agent-browser用Playwright Chrome起動スクリプト
  *
- * 認証状態（e2e/storage-state.json）を読み込んで、
- * リモートデバッグポートを有効にしたChromeを起動します。
+ * リモートデバッグポートを有効にしたChromeを起動し、指定URLを開きます。
+ * 認証（Cloudflare Access）は実ブラウザの既存セッション前提とし、
+ * このスクリプト自体では認証状態の読み込み・生成は行わない。
  *
  * 使い方:
  *   pnpm exec tsx scripts/agent-browser-playwright.ts [URL]
@@ -12,11 +13,11 @@
  * 例:
  *   pnpm exec tsx scripts/agent-browser-playwright.ts
  *   pnpm exec tsx scripts/agent-browser-playwright.ts http://localhost:3000/dashboard
- *   pnpm exec tsx scripts/agent-browser-playwright.ts https://keep-on.j138cm.workers.dev
+ *   pnpm exec tsx scripts/agent-browser-playwright.ts https://keep-on.jey3dayo.net
  */
 
 import { spawn } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
@@ -25,7 +26,6 @@ import { chromium } from 'playwright'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const PROJECT_ROOT = join(__dirname, '..')
-const STORAGE_STATE = join(PROJECT_ROOT, 'e2e/storage-state.json')
 
 // デフォルトURL
 const DEFAULT_URL = 'http://localhost:3000/dashboard'
@@ -33,9 +33,8 @@ const DEFAULT_URL = 'http://localhost:3000/dashboard'
 // コマンドライン引数からURLを取得
 const targetUrl = process.argv[2] || DEFAULT_URL
 
-// 認証状態のオリジン（e2e/auth.setup.cjsで生成された認証状態のオリジン）
-const AUTH_STATE_ORIGIN = 'http://localhost:3000'
-const LOCAL_HEALTHCHECK_URL = 'http://localhost:3000/sign-in'
+const LOCAL_ORIGIN = 'http://localhost:3000'
+const LOCAL_HEALTHCHECK_URL = 'http://localhost:3000/health'
 const SERVER_START_TIMEOUT_MS = 120_000
 const SERVER_POLL_INTERVAL_MS = 1000
 
@@ -82,7 +81,7 @@ async function ensureLocalDevServer(targetOrigin: string): Promise<{
   startedByScript: boolean
   stop: () => void
 }> {
-  if (targetOrigin !== AUTH_STATE_ORIGIN) {
+  if (targetOrigin !== LOCAL_ORIGIN) {
     return { startedByScript: false, stop: noop }
   }
 
@@ -151,46 +150,24 @@ async function main() {
   console.log('================================================')
   console.log('')
 
-  // Step 1: 認証状態ファイル存在確認
-  console.log('🔍 Step 1: 認証状態ファイルを確認中...')
-  if (!existsSync(STORAGE_STATE)) {
-    console.error('❌ エラー: e2e/storage-state.json が見つかりません')
-    console.error('')
-    console.error('以下のコマンドで認証状態を生成してください:')
-    console.error('  ./scripts/setup-auth-state.sh')
-    console.error('')
-    process.exit(1)
-  }
-  console.log('✅ storage-state.json found')
-  console.log('')
-
   // オリジン検証
   let targetOrigin: string
   try {
     targetOrigin = new URL(targetUrl).origin
-    if (targetOrigin !== AUTH_STATE_ORIGIN) {
-      console.log('⚠️  警告: 認証状態と異なるオリジンを指定しています')
-      console.log(`   認証状態オリジン: ${AUTH_STATE_ORIGIN}`)
-      console.log(`   指定されたオリジン: ${targetOrigin}`)
-      console.log('')
-      console.log('   異なるオリジンではクッキーが共有されないため、ログアウト状態になります。')
-      console.log('   本番環境など異なるオリジンをテストする場合は、そのオリジン用の認証状態を別途生成してください。')
-      console.log('')
-    }
   } catch {
     console.error('❌ URLの解析に失敗しました:', targetUrl)
     console.error('')
     process.exit(1)
   }
 
-  // Step 2: ローカル開発サーバー起動確認（必要なら自動起動）
-  console.log('🔍 Step 2: 開発サーバーを確認中...')
+  // Step 1: ローカル開発サーバー起動確認（必要なら自動起動）
+  console.log('🔍 Step 1: 開発サーバーを確認中...')
   const localServer = await ensureLocalDevServer(targetOrigin)
   stopLocalServer = localServer.stop
   startedLocalServerByScript = localServer.startedByScript
 
-  // Step 3: Chrome起動（リモートデバッグ有効）
-  console.log('🔍 Step 3: Chromeを起動中...')
+  // Step 2: Chrome起動（リモートデバッグ有効）
+  console.log('🔍 Step 2: Chromeを起動中...')
   const browser = await chromium.launch({
     // セキュリティのため127.0.0.1にバインド（WSL2の場合は0.0.0.0が必要な場合がある）
     args: [`--remote-debugging-port=${REMOTE_DEBUGGING_PORT}`, '--remote-debugging-address=127.0.0.1'],
@@ -200,16 +177,11 @@ async function main() {
   console.log(`   📡 Remote debugging port: ${REMOTE_DEBUGGING_PORT}`)
   console.log('')
 
-  // Step 4: 認証状態を読み込んでコンテキスト作成
-  console.log('🔍 Step 4: 認証状態を読み込み中...')
-  const context = await browser.newContext({
-    storageState: STORAGE_STATE,
-  })
-  console.log('✅ Authentication state loaded')
-  console.log('')
-
-  // Step 5: 指定URLへ遷移
-  console.log('🔍 Step 5: ページを開いています...')
+  // Step 3: 指定URLへ遷移
+  // Cloudflare Access 認証は、Chrome の既存プロファイン／実ブラウザセッション前提。
+  // このスクリプトでは認証状態の注入は行わない。
+  console.log('🔍 Step 3: ページを開いています...')
+  const context = await browser.newContext()
   const page = await context.newPage()
   await page.goto(targetUrl)
   console.log('✅ Page opened:', targetUrl)
@@ -230,7 +202,7 @@ async function main() {
   console.log('')
   console.log('💡 agent-browserでの使用方法:')
   console.log('   • MCP Chrome DevToolsは自動的にこのChromeインスタンスに接続します')
-  console.log('   • すでにログイン済みの状態でページが開いています')
+  console.log('   • Cloudflare Access の認証が必要な場合は、開いたブラウザ上で手動ログインしてください')
   console.log('   • スクリーンショットやDOM操作が可能です')
   console.log('')
   console.log('⚠️  終了方法:')

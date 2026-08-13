@@ -1,5 +1,7 @@
 # ダッシュボード「rendering...」手動診断手順
 
+（歴史的記述: Clerk は 2026-08 に Cloudflare Access へ移行済み。Clerk 関連の記述は当時の症状パターンの参考として残す）
+
 ## 前提条件
 
 Chrome が http://localhost:3000/dashboard で起動している状態

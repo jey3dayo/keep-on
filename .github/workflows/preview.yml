@@ -42,6 +42,14 @@ jobs:
           DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
         run: pnpm build:cf
 
+      - name: Apply D1 migrations (preview)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        # preview 専用 DB(keep-on-db-preview)へ全マイグレーションを適用する。
+        # 本番 DB とは分離済みのため、preview での検証が本番データに影響しない。
+        run: pnpm wrangler d1 migrations apply keep-on-db-preview --remote --env preview
+
       - name: Deploy Preview
         id: deploy
         env:
@@ -110,7 +118,7 @@ jobs:
 
             This preview will be updated automatically when you push new commits to this PR.
 
-            > ⚠️ **Note**: Preview deployments use the same database as production. Be careful when testing data operations.`;
+            > ℹ️ **Note**: Preview deployments use a dedicated preview database (\`keep-on-db-preview\`), separate from production.`;
 
             // 既存のプレビューコメントを検索
             const { data: comments } = await github.rest.issues.listComments({

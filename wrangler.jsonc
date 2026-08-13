@@ -21,10 +21,8 @@
   "routes": [{ "pattern": "keep-on.jey3dayo.net", "custom_domain": true }],
   "vars": {
     "NEXTJS_ENV": "production",
-    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuamV5M2RheW8ubmV0JA",
-    "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
-    "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up",
-    "NEXT_PUBLIC_CLERK_FRONTEND_API": "clerk.jey3dayo.net"
+    "ACCESS_TEAM_DOMAIN": "jey3dayo.cloudflareaccess.com",
+    "ACCESS_AUD": "54d9edf4cf8bb45623178233925ec2309166a6f2d785e3abac28bc7587473c16"
   },
   "kv_namespaces": [
     {
@@ -36,7 +34,8 @@
     {
       "binding": "DB",
       "database_name": "keep-on-db",
-      "database_id": "763c22af-de35-49ef-8171-2ae5293491d5"
+      "database_id": "763c22af-de35-49ef-8171-2ae5293491d5",
+      "migrations_dir": "drizzle"
     }
   ],
   "env": {
@@ -45,12 +44,13 @@
       "workers_dev": true,
       // top-level の routes(本番 custom domain)を継承すると preview デプロイ時に custom domain が付け替わるため空配列で遮断
       "routes": [],
+      // preview は workers.dev 直アクセスで Cloudflare Access を経由しないため、
+      // ACCESS_AUD を本番と同値にしても JWT 検証は失敗し identity は null になるだけ。
+      // preview 環境の認証運用は別途検討する。
       "vars": {
         "NEXTJS_ENV": "preview",
-        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuamV5M2RheW8ubmV0JA",
-        "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
-        "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up",
-        "NEXT_PUBLIC_CLERK_FRONTEND_API": "clerk.jey3dayo.net"
+        "ACCESS_TEAM_DOMAIN": "jey3dayo.cloudflareaccess.com",
+        "ACCESS_AUD": "54d9edf4cf8bb45623178233925ec2309166a6f2d785e3abac28bc7587473c16"
       },
       "kv_namespaces": [
         {
@@ -58,11 +58,15 @@
           "id": "feaaf2df1aab41b68e7a19cb48779738"
         }
       ],
+      // 本番 D1 を preview と共有しない(スキーマ乖離事故防止)。
+      // preview 専用 DB(keep-on-db-preview)へ分離し、本番データへの誤アクセス・
+      // 未検証マイグレーションによる本番スキーマ破壊のリスクを排除する。
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "keep-on-db",
-          "database_id": "763c22af-de35-49ef-8171-2ae5293491d5"
+          "database_name": "keep-on-db-preview",
+          "database_id": "d255dc42-ec49-4e6e-b79e-b4462cbd68f0",
+          "migrations_dir": "drizzle"
         }
       ]
     }

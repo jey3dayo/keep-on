@@ -22,23 +22,22 @@ async function testHealthCheck() {
   return false
 }
 
-async function testSignInPage() {
-  console.log('🔍 Testing sign-in page...')
-  const response = await fetch(`${BASE_URL}/sign-in`)
-  const html = await response.text()
+async function testAccessLoginRedirect() {
+  console.log('🔍 Testing Cloudflare Access login redirect...')
+  const response = await fetch(`${BASE_URL}/dashboard`, { redirect: 'follow' })
 
-  if (response.ok && html.includes('Clerk')) {
-    console.log('✅ Sign-in page loaded')
+  if (response.url.includes('cloudflareaccess.com')) {
+    console.log('✅ Redirected to Cloudflare Access login')
     return true
   }
-  console.error('❌ Sign-in page failed')
+  console.error('❌ Access login redirect failed')
   return false
 }
 
 async function main() {
   console.log('🚀 Starting D1 production tests...\n')
 
-  const results = await Promise.all([testHealthCheck(), testSignInPage()])
+  const results = await Promise.all([testHealthCheck(), testAccessLoginRedirect()])
 
   const allPassed = results.every((r) => r)
 
