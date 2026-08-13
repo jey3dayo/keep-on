@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react'
+import { isAuthInterceptedResponse } from '@/lib/auth/access-intercept'
 
 const IDENTITY_STORAGE_KEY = 'ko_identity'
 
@@ -31,39 +32,75 @@ function writeCachedUserId(userId: string | null): void {
   }
 }
 
+function clearIdentityState(setState: (state: IdentityState) => void): void {
+  writeCachedUserId(null)
+  setState({ isLoaded: true, userId: null })
+}
+
+function parseUserIdFromMePayload(data: unknown): string | null {
+  if (typeof data !== 'object' || data === null || !('userId' in data)) {
+    return null
+  }
+  return typeof data.userId === 'string' && data.userId.length > 0 ? data.userId : null
+}
+
+async function resolveIdentityFromMeResponse(
+  res: Response,
+  setState: (state: IdentityState) => void,
+  isCancelled: () => boolean
+): Promise<void> {
+  // 401 等、または Access が HTML/リダイレクトで差し替えた場合は未認証としてキャッシュ破棄
+  if (!res.ok || isAuthInterceptedResponse(res)) {
+    clearIdentityState(setState)
+    return
+  }
+
+  try {
+    const data: unknown = await res.json()
+    if (isCancelled()) {
+      return
+    }
+    const userId = parseUserIdFromMePayload(data)
+    if (!userId) {
+      clearIdentityState(setState)
+      return
+    }
+    writeCachedUserId(userId)
+    setState({ isLoaded: true, userId })
+  } catch {
+    if (isCancelled()) {
+      return
+    }
+    // ok なのに JSON でない / 壊れている — オフライン扱いにせずキャッシュを捨てる
+    clearIdentityState(setState)
+  }
+}
+
 export function IdentityProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<IdentityState>({ isLoaded: false, userId: null })
 
   useEffect(() => {
     let isCancelled = false
+    const cancelled = () => isCancelled
 
     const load = async () => {
+      let res: Response
       try {
-        const res = await fetch('/api/me', { cache: 'no-store' })
-        if (!res.ok) {
-          if (isCancelled) {
-            return
-          }
-          // 未認証と判明した場合はキャッシュも破棄する
-          writeCachedUserId(null)
-          setState({ isLoaded: true, userId: null })
-          return
-        }
-
-        const data = (await res.json()) as { userId: string }
-        if (isCancelled) {
-          return
-        }
-        writeCachedUserId(data.userId)
-        setState({ isLoaded: true, userId: data.userId })
+        res = await fetch('/api/me', { cache: 'no-store' })
       } catch {
         if (isCancelled) {
           return
         }
-        // オフライン等で fetch 自体に失敗した場合はキャッシュされた値で復元する
-        const cached = readCachedUserId()
-        setState({ isLoaded: true, userId: cached })
+        // 真のネットワーク失敗だけキャッシュ復元。Access 割り込みはここに来ない
+        setState({ isLoaded: true, userId: readCachedUserId() })
+        return
       }
+
+      if (isCancelled) {
+        return
+      }
+
+      await resolveIdentityFromMeResponse(res, setState, cancelled)
     }
 
     load()

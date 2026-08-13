@@ -3,6 +3,7 @@
 import { LogOut } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ThemeToggle } from '@/components/basics/ThemeToggle'
 import { LogoMark } from '@/components/LogoMark'
@@ -11,14 +12,34 @@ import { SidebarTrigger } from '@/components/sidebar/Sidebar'
 import { Separator } from '@/components/ui/separator'
 import { ACCESS_LOGOUT_URL } from '@/constants/auth'
 import { getPageTitleKey } from '@/constants/navigation'
+import { SW_MSG_CLEAR_USER_CACHE } from '@/constants/pwa'
+
+function clearLocalIdentityCache(): void {
+  try {
+    localStorage.removeItem('ko_identity')
+  } catch {
+    // localStorage 不可でもログアウト遷移は続行する
+  }
+}
+
+function requestUserCacheClear(): void {
+  navigator.serviceWorker?.controller?.postMessage({ type: SW_MSG_CLEAR_USER_CACHE })
+}
 
 export function SiteHeader() {
   const { t } = useTranslation()
   const pathname = usePathname()
   const title = t(getPageTitleKey(pathname))
 
+  const handleSignOut = useCallback(() => {
+    // Access ログアウトへ遷移する前にユーザー固有 HTML / オフラインキューを捨てる
+    clearLocalIdentityCache()
+    requestUserCacheClear()
+    window.location.assign(ACCESS_LOGOUT_URL)
+  }, [])
+
   return (
-    <header className="flex h-[calc(var(--header-height)+env(safe-area-inset-top))] shrink-0 items-center gap-2 border-border/50 border-b bg-background/50 pt-[env(safe-area-inset-top)] backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-[calc(var(--header-height)+env(safe-area-inset-top))] supports-[backdrop-filter]:bg-background/30 md:rounded-t-xl md:border-r">
+    <header className="flex h-[calc(var(--header-height)+env(safe-area-inset-top))] shrink-0 items-center gap-2 border-border/50 border-b bg-background/50 pt-[env(safe-area-inset-top)] backdrop-blur-md supports-[backdrop-filter]:bg-background/30 md:rounded-t-xl md:border-r">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <SidebarTrigger className="-ml-1 min-h-11 min-w-11 text-foreground/80 hover:text-foreground" />
         <Link
@@ -38,13 +59,14 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-2">
           <SyncIndicator />
           <ThemeToggle buttonClassName="min-h-11 min-w-11" buttonVariant="ghost" />
-          <a
+          <button
             aria-label="サインアウト"
             className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-foreground/80 transition-colors hover:text-foreground"
-            href={ACCESS_LOGOUT_URL}
+            onClick={handleSignOut}
+            type="button"
           >
             <LogOut className="size-4" />
-          </a>
+          </button>
         </div>
       </div>
     </header>

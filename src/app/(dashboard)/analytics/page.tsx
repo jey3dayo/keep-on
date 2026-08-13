@@ -6,6 +6,7 @@ import { Button } from '@/components/basics/Button'
 import { Icon, type IconName } from '@/components/basics/Icon'
 import { PageShell } from '@/components/PageShell'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
+import { SIGN_IN_PATH } from '@/constants/auth'
 import { PERIOD_DISPLAY_NAME, PERIODS, type Period } from '@/constants/habit'
 import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
 import { getCheckinCountsByDateRange, getCheckinsByUserAndDate, getTotalCheckinsByUserId } from '@/lib/queries/checkin'
@@ -54,7 +55,7 @@ export default async function AnalyticsPage() {
 
   if (!user) {
     logInfo('analytics.syncUser:missing', requestMeta)
-    redirect('/')
+    redirect(SIGN_IN_PATH)
   }
 
   const dateKey = await getServerDateKey()

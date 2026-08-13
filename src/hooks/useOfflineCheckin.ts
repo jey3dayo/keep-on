@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { SW_MSG_SYNC_COMPLETE, SW_SYNC_TAG } from '@/constants/pwa'
 import { useIdentity } from '@/contexts/IdentityContext'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
+import { isAuthInterceptedResponse } from '@/lib/auth/access-intercept'
 import {
   enqueueOfflineCheckin,
   getAllQueuedCheckins,
@@ -37,19 +38,6 @@ const registerBackgroundSync = async (): Promise<boolean> => {
   } catch {
     return false
   }
-}
-
-/**
- * Cloudflare Access のセッション切れ時、fetch にはログインページの HTML が 200(既定で redirect を follow した最終形)で返る。
- * res.ok=true のケースに限定して判定する: redirect または非 JSON レスポンスなら Access の割り込みとみなす。
- * (4xx/5xx の HTML はステータス分類側で既にリトライ判定されるため、ここでは扱わない)
- */
-const isAuthInterceptedResponse = (res: Response): boolean => {
-  if (res.redirected) {
-    return true
-  }
-  const contentType = res.headers.get('content-type')
-  return !contentType?.includes('application/json')
 }
 
 /** userId を持たない旧アイテム・別ユーザーのアイテムは照合不能なので replay せず破棄する */

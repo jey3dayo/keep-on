@@ -1,5 +1,5 @@
 // メッセージタイプ・sync タグは src/constants/pwa.ts と同期すること
-const CACHE_NAME = 'keepon-v4'
+const CACHE_NAME = 'keepon-v5'
 const OFFLINE_URL = '/offline'
 const NEXT_ASSET_PREFIX = '/_next/'
 const NEXT_STATIC_CSS_PREFIX = '/_next/static/css/'
@@ -28,8 +28,6 @@ const openDb = () =>
   })
 
 const isUserCacheableRoute = (pathname) => CACHEABLE_ROUTES.some((route) => pathname.startsWith(route))
-
-const isAuthRoute = (pathname) => pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')
 
 const clearUserCache = async (cache) => {
   const requests = await cache.keys()
@@ -78,16 +76,25 @@ const isAuthInterceptedResponse = (response) => {
   return !(contentType && contentType.includes('application/json'))
 }
 
+const isCrossOriginFinalUrl = (response) => {
+  if (!response.url) {
+    return false
+  }
+  try {
+    return new URL(response.url).origin !== self.location.origin
+  } catch {
+    return false
+  }
+}
+
+// ナビ用: Access 割り込み（redirect / 別オリジン最終 URL）と 401/403 を認証失敗とみなす。
+// Clerk 時代の /sign-in・/sign-up 判定は削除済み。
+// 同一オリジンの HTML 200 は通常のページ応答なので認証失敗にしない（isAuthInterceptedResponse は API 向け）。
 const isAuthNavigationFailure = (response) => {
   if (response.status === 401 || response.status === 403) {
     return true
   }
-
-  if (!(response.redirected && response.url)) {
-    return false
-  }
-
-  return isAuthRoute(new URL(response.url).pathname)
+  return response.redirected || isCrossOriginFinalUrl(response)
 }
 
 const extractOfflineAssets = (html) => {
@@ -153,14 +160,6 @@ self.addEventListener('fetch', (event) => {
 
   // API: network-only (SWスルー)
   if (url.pathname.startsWith('/api/')) {
-    return
-  }
-
-  // サインイン・サインアップ遷移時はユーザー固有キャッシュをクリア（セッション切り替え対策）。
-  // セッション期限切れでもこの経路を通るため、オフラインキューはここでは消さない
-  // （キューのクリアは CLEAR_USER_CACHE メッセージ経路のみ）
-  if (isAuthRoute(url.pathname)) {
-    event.waitUntil(caches.open(CACHE_NAME).then((cache) => clearUserCache(cache)))
     return
   }
 

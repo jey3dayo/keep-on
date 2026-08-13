@@ -4,6 +4,7 @@ import { AppSidebar } from '@/components/dashboard/AppSidebar'
 import { SiteHeader } from '@/components/dashboard/SiteHeader'
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator'
 import { SidebarInset, SidebarProvider } from '@/components/sidebar/Sidebar'
+import { SIGN_IN_PATH } from '@/constants/auth'
 import { getAccessIdentity } from '@/lib/auth/access'
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'
@@ -15,10 +16,10 @@ export default async function DashboardLayout({
   children: React.ReactNode
   modal: React.ReactNode
 }) {
-  // Access が前段でアクセスを強制するため実質到達しない。検証が通らない場合の保険
+  // Access が前段でアクセスを強制するため実質到達しない。JWT 検証失敗時は SIGN_IN_PATH（ループしない静的案内）へ
   const identity = await getAccessIdentity()
   if (!identity) {
-    redirect('/')
+    redirect(SIGN_IN_PATH)
   }
 
   const cookieStore = await cookies()

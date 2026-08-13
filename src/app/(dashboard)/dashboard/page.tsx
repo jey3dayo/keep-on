@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { SIGN_IN_PATH } from '@/constants/auth'
 import { DASHBOARD_VIEW_COOKIE_KEY, DEFAULT_DASHBOARD_VIEW } from '@/constants/dashboard'
 import { getHabitsCacheSnapshot } from '@/lib/cache/habit-cache'
 import { withDbRetry } from '@/lib/db-retry'
@@ -47,7 +48,7 @@ export default async function DashboardPage() {
   const user = await logSpanOptional('dashboard.syncUser', () => syncUser(), requestMeta, { timeoutMs })
 
   if (!user) {
-    redirect('/')
+    redirect(SIGN_IN_PATH)
   }
 
   const cacheSnapshot = await getHabitsCacheSnapshot(user.id)

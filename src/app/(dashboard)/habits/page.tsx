@@ -5,6 +5,7 @@ import { Button } from '@/components/basics/Button'
 import { Icon } from '@/components/basics/Icon'
 import { HabitTable } from '@/components/habits/HabitTable'
 import { PageShell } from '@/components/PageShell'
+import { SIGN_IN_PATH } from '@/constants/auth'
 import { createRequestMeta, logInfo, logSpanOptional } from '@/lib/logging'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { syncUser } from '@/lib/user'
@@ -30,7 +31,7 @@ export default async function HabitsPage() {
 
   if (!user) {
     logInfo('habits.syncUser:missing', requestMeta)
-    redirect('/')
+    redirect(SIGN_IN_PATH)
   }
 
   logInfo('request.habits:end', requestMeta)
