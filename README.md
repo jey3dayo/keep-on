@@ -51,8 +51,8 @@ Cloudflare Access がアプリケーション手前で認証を強制し、Next.
 
 ## 本番環境
 
-- URL: https://keep-on.jey3dayo.net
-- Workers URL: https://keep-on.j138cm.workers.dev
+- URL: https://keep-on.jey3dayo.net（custom domain のみ。`workers_dev: false` のため workers.dev は本番入口ではない）
+- PR プレビュー: `*.workers.dev`（preview 環境のみ）
 - デプロイ: GitHub Actions (main ブランチへのプッシュで自動デプロイ)
 
 ---
@@ -123,8 +123,9 @@ pnpm test:coverage     # カバレッジ付きテスト実行
 ```bash
 pnpm test:e2e          # E2E テスト実行
 pnpm test:e2e:ui       # UI モードで E2E テスト実行
-pnpm test:e2e:setup    # 認証状態を生成
 ```
+
+認証が必要なフローの自動 E2E は未整備。ローカルでは `DEV_ACCESS_EMAIL` 等の開発用フォールバックで認証状態を模擬する場合がある。Access service token 方式は今後整備予定（`.claude/rules/testing.md` 参照）。
 
 ### Storybook テスト
 
