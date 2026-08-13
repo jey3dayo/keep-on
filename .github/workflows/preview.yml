@@ -34,9 +34,6 @@ jobs:
             ${{ runner.os }}-nextjs-
 
 
-      - name: Generate Drizzle migrations
-        run: pnpm db:generate
-
       - name: Build for Cloudflare
         env:
           DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
