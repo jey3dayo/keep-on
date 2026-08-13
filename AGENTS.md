@@ -1,84 +1,27 @@
-# KeepOn Project Configuration
+# KeepOn
 
-## プロジェクト概要
+習慣トラッキング PWA。Next.js 16 + Cloudflare Workers (D1) + Drizzle ORM + Cloudflare Access。
 
-KeepOn は、Next.js 16 + Cloudflare Workers (D1) + Drizzle ORM + Cloudflare Access で構築された習慣トラッキング PWA です。
+プロダクト機能・セットアップ・コマンド一覧は `README.md`、層構造やドメインごとの詳細規約は `.claude/rules/*.md`（`code-style` / `directory-structure` / `tech-stack` / `security` / `dotenvx` / `testing` / `debugging` / `troubleshooting` / `cloudflare-deployment` など）にある。必要になった時点で該当ファイルを読む。
 
-## コンテキスト参照
+未解決事項は `todo.txt`（完了後 `done.txt` へ archive）、監査由来の実装計画は `plans/README.md`。
 
-詳細な情報は以下を参照してください:
+## 踏むと痛い落とし穴
 
-### プロダクト・構成
+コードを読めば分かることは書かない。以下は読んでも分からず、外すと壊れるもの。
 
-- `README.md` - プロダクト機能、セットアップ、アーキテクチャ、コマンド一覧
+- **`.env.keys` は絶対にコミットしない**（`.env` は dotenvx で暗号化済みなのでコミット可）。コマンドは `pnpm env:run --` 経由で実行する
+- **pnpm の 24 時間リリースゲート（`minimumReleaseAge`, strict）を `minimumReleaseAgeExclude` で貫通させない**。過去に radix の壊れリリースが混入してビルドが全滅した。成熟済みの最新版へ差し替えるか 24 時間待つ。pnpm 本体のバンプは独立コミットにする
+- **`src/components/ui/`（shadcn/ui）は直接編集しない**。カスタマイズは `src/components/` 直下か `basics/` にラッパーを作る。text 系フォーム入力は `@/components/basics/Input`（パスワードマネージャー対応済み。hidden / time など native 特殊 input は対象外）
+- **iOS standalone の表示は Chrome では検証できない**（`env(safe-area-inset-*)` が常に 0）。Xcode Simulator の実 WebKit で検証する。手順と既知の CSS 罠（`html`/`body` 両方に背景、`overflow-hidden` 内の `backdrop-filter`、`position: fixed` と safe-area）は `.claude/rules/debugging.md`
 
-### Rules (詳細な開発規約)
+## 検証ゲート
 
-- `.claude/rules/code-style.md` - コードスタイルと開発規約
-- `.claude/rules/directory-structure.md` - 層構造と責務（schemas / validators / queries / actions）
-- `.claude/rules/tech-stack.md` - 技術スタックと Workers の制約
-- `.claude/rules/security.md` - セキュリティガイドライン
-- `.claude/rules/dotenvx.md` - dotenvx 暗号化管理ガイド
-- `.claude/rules/testing.md` - テストユーザー管理・E2E ガイド
-- `.claude/rules/debugging.md` - フロントエンドデバッグ（iOS PWA の Simulator 検証を含む）
-- `.claude/rules/troubleshooting.md` - トラブルシューティング
-- `.claude/rules/cloudflare-deployment.md` - Cloudflare デプロイガイド
+作業中は touched file の format と関連テストのみ。push 前は pre-push フックが `lint:types` → `test:types` → `test:e2e:types` → `lint:biome` → `test:ci` → `test:storybook:ci` → `build:ci` を自動実行する。手動で回すなら `mise run check`（format + lint）/ `mise run ci`（CI 相当）。
 
-### タスク管理
+## 開発開始
 
-- `todo.txt` - 未解決事項（対象・検証条件・起票日つき。完了後は `done.txt` へ archive）
-- `plans/README.md` - コード監査由来の実装計画と実行状況
-
-## 重要な開発ルール
-
-### コンポーネント使用規約
-
-- `src/components/ui/` 配下の shadcn/ui コンポーネントは直接編集しない
-- カスタマイズが必要な場合は `src/components/` 直下（または `basics/`）にラッパーを作成
-- 通常の text 系フォーム入力には `@/components/basics/Input` を使用（パスワードマネージャー対応済み）。hidden / time など native の特殊 input は対象外
-
-### 環境変数管理
-
-- dotenvx で暗号化管理（`.env` はコミット可、`.env.keys` は**絶対にコミット禁止**）
-- コマンド実行時は `pnpm env:run --` または `dotenvx run --` を使用
-- 詳細は `.claude/rules/dotenvx.md` を参照
-
-### 依存関係の更新
-
-- pnpm の 24 時間リリースゲート（`minimumReleaseAge`、strict）が有効。未成熟なバージョンは install が hard fail する
-- **`minimumReleaseAgeExclude` への追記でゲートを貫通させない**（過去に radix の壊れリリース混入でビルド全滅した経路）。成熟済みの最新版へ差し替えるか、24 時間待つ
-- pnpm 本体のバンプは依存更新と分離した独立コミットにする
-
-### 検証ゲート
-
-- 作業中: touched file の format と関連テスト
-- push 前（pre-push フックで自動実行）: `lint:types` → `test:types` → `test:e2e:types` → `lint:biome` → `test:ci` → `test:storybook:ci` → `build:ci`
-- ローカル一括: `mise run check`（format + lint 系）、`mise run ci`（CI 相当）
-
-### 開発開始手順
-
-1. 環境変数を復号化: `pnpm dotenvx decrypt`
-2. 編集後に再暗号化: `pnpm env:encrypt`
-3. スキーマ同期: `pnpm db:generate` のあと `pnpm db:migrate:local`
-4. 開発サーバー起動: `pnpm env:run -- pnpm dev`
-
-## デバッグ
-
-### iOS PWA（safe-area / standalone 表示）の検証
-
-`env(safe-area-inset-*)` はデスクトップブラウザでは常に 0 のため、iOS 固有の表示は Chrome では検証できない。iPhone 実機がなくても **Xcode Simulator（実 WebKit）** で検証できる。手順の詳細は `.claude/rules/debugging.md` の「iOS Simulator での PWA 検証」を参照。
-
-要点:
-
-- Simulator の Safari で本番 URL を開き、共有 →「ホーム画面に追加」で standalone 起動
-- macOS Safari の開発メニュー → シミュレータ →「ホーム画面のWebアプリ」で Web Inspector 接続（standalone と Safari タブを取り違えないこと）
-- スクリーンショットは `xcrun simctl io <udid> screenshot`（ウィンドウ座標に依存しないため安全）
-
-### 既知の落とし穴
-
-- `html` に背景色を塗っても `body { @apply bg-background }` が上に重なる。iOS standalone の下端を塗る場合は `html` と `body` の両方に設定する（`StreakDashboard.tsx` の useEffect が実例）
-- `overflow-hidden` の祖先内で `backdrop-filter` を使うと iOS Safari が背景を不透明に塗る
-- `position: fixed; inset: 0` は initial containing block までしか覆えず、safe-area の外側には届かない
+`README.md` の「セットアップ」に従う（依存 → 環境変数 → スキーマ同期 → `pnpm env:run -- pnpm dev`）。コマンド一覧も README が正本。
 
 <!-- BEGIN:nextjs-agent-rules -->
 
