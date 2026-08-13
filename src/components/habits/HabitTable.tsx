@@ -26,7 +26,9 @@ export async function HabitTable({ userId, clerkId, requestMeta }: HabitTablePro
   const dateKey = await getServerDateKey()
   const cacheSnapshot = await getHabitsCacheSnapshot(userId)
   const staleHabits =
-    cacheSnapshot && (cacheSnapshot.staleAt || cacheSnapshot.dateKey !== dateKey) ? cacheSnapshot.habits : null
+    cacheSnapshot && (cacheSnapshot.staleAt !== undefined || cacheSnapshot.dateKey !== dateKey)
+      ? cacheSnapshot.habits
+      : null
 
   logInfo('habits.table:start', meta)
 
