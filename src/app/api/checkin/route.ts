@@ -10,6 +10,8 @@ const CheckinRequestSchema = v.object({
   action: v.picklist(['add', 'remove']),
   dateKey: DateKeySchema,
   habitId: v.pipe(v.string(), v.minLength(1)),
+  // オフラインキューの replay のみが送る。通常のオンラインチェックインでは省略される
+  userId: v.optional(v.pipe(v.string(), v.minLength(1))),
 })
 
 /** ビジネスロジックエラーを適切な HTTP ステータスコードにマッピング */
@@ -45,7 +47,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { habitId, action, dateKey } = parseResult.output
+  const { habitId, action, dateKey, userId: queuedUserId } = parseResult.output
+
+  // 端末共有時に前ユーザーのオフラインキューが別ユーザーの Cookie でリプレイされるのを防ぐ最終防衛線。
+  // SW / hook はこの 409 を「永続的な 4xx」として扱い、該当アイテムを破棄する
+  if (queuedUserId && queuedUserId !== userId) {
+    return NextResponse.json({ error: 'UserMismatch' }, { status: 409 })
+  }
 
   const result =
     action === 'remove' ? await removeCheckinAction(habitId, dateKey) : await addCheckinAction(habitId, dateKey)

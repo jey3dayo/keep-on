@@ -10,7 +10,7 @@ const CACHEABLE_ROUTES = ['/dashboard', '/habits', '/analytics']
 
 const PRECACHE_FILES = ['/offline', '/manifest.json', '/icon-192.png', '/icon-512.png']
 
-// DB_NAME, STORE_NAME は src/lib/pwa/offline-queue.ts と同期すること
+// DB_NAME, STORE_NAME, キューアイテムの形（userId を含む）は src/lib/pwa/offline-queue.ts と同期すること
 const DB_NAME = 'keepon-offline'
 const STORE_NAME = 'checkin-queue'
 
@@ -241,8 +241,21 @@ self.addEventListener('sync', (event) => {
         const sorted = [...items].sort((a, b) => a.timestamp - b.timestamp)
 
         for (const item of sorted) {
+          // SW は現セッションのユーザーを知らないため、userId を持つアイテムだけ送って
+          // サーバー側（/api/checkin）で本人照合させる。userId が無い旧アイテムは照合不能なので破棄する
+          if (!item.userId) {
+            console.warn('[sw] discarding offline checkin without userId', item.id)
+            await deleteItem(db, item.id)
+            continue
+          }
+
           const res = await fetch('/api/checkin', {
-            body: JSON.stringify({ action: item.action, dateKey: item.dateKey, habitId: item.habitId }),
+            body: JSON.stringify({
+              action: item.action,
+              dateKey: item.dateKey,
+              habitId: item.habitId,
+              userId: item.userId,
+            }),
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
           })

@@ -43,13 +43,6 @@
 - 発生条件が複合的（同一ユーザーの並行更新 + weekStart 更新失敗）で頻度は低い。優先度低
 - 起票日: 2026-08-13（Sonnet 改善監査 finding 4）
 
-### オフラインキューの userId スコープ化（バックログ）
-
-- 対象: `public/sw.js` / `src/lib/pwa/offline-queue.ts` のチェックインキュー。キューアイテムに userId が無く、replay 時の本人照合ができない
-- 現状の防御はサインアウト・ユーザー交代検知時の `CLEAR_USER_CACHE` によるクリアのみ。前ユーザーがサインアウト検知されないままタブを閉じ、別ユーザーが新規タブでログインした場合はキューが残る
-- 対策: キューアイテムに userId を持たせ、replay 時に現セッションの userId と照合して不一致は破棄（IndexedDB スキーマ変更を伴う）
-- 起票日: 2026-08-13（Sonnet 改善監査 finding 2 の残リスク）
-
 ### dashboard クライアント側の二重 mount / KV I/O の軽量再監査（バックログ）
 
 - 対象: `DashboardWrapper.tsx` の useEffect / Strict Mode 二重発火と KV アクセスのトレース

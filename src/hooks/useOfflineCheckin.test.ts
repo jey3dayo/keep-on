@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SW_SYNC_TAG } from '@/constants/pwa'
 import { useOfflineCheckin } from './useOfflineCheckin'
 
+const CURRENT_USER_ID = 'user-1'
+
 let mockIsOnline = false
+let mockUserId: string | null = CURRENT_USER_ID
 
 const mockEnqueueOfflineCheckin = vi.fn()
 const mockGetAllQueuedCheckins = vi.fn()
@@ -11,6 +14,10 @@ const mockRemoveQueuedCheckin = vi.fn()
 const mockSyncRegister = vi.fn()
 const mockServiceWorkerAddEventListener = vi.fn()
 const mockServiceWorkerRemoveEventListener = vi.fn()
+
+vi.mock('@clerk/nextjs', () => ({
+  useAuth: () => ({ isLoaded: true, userId: mockUserId }),
+}))
 
 vi.mock('@/hooks/useOnlineStatus', () => ({
   useOnlineStatus: () => mockIsOnline,
@@ -22,12 +29,13 @@ vi.mock('@/lib/pwa/offline-queue', () => ({
   removeQueuedCheckin: (...args: unknown[]) => mockRemoveQueuedCheckin(...args),
 }))
 
-const queuedCheckin = (id: string) => ({
+const queuedCheckin = (id: string, userId: string | undefined = CURRENT_USER_ID) => ({
   action: 'add' as const,
   dateKey: '2026-03-19',
   habitId: `habit-${id}`,
   id,
   timestamp: Number(id.replaceAll(/\D/g, '')) || 1,
+  userId,
 })
 
 const installServiceWorkerMock = (enableBgSync: boolean) => {
@@ -57,6 +65,7 @@ const installServiceWorkerMock = (enableBgSync: boolean) => {
 describe('useOfflineCheckin', () => {
   beforeEach(() => {
     mockIsOnline = false
+    mockUserId = CURRENT_USER_ID
     mockEnqueueOfflineCheckin.mockReset()
     mockGetAllQueuedCheckins.mockReset()
     mockRemoveQueuedCheckin.mockReset()
@@ -150,5 +159,49 @@ describe('useOfflineCheckin', () => {
 
     expect(mockRemoveQueuedCheckin).not.toHaveBeenCalled()
     expect(onReplayComplete).toHaveBeenCalledWith({ failed: 1, replayed: 0 })
+  })
+
+  it('別ユーザーの userId を持つアイテムは送信せず破棄する', async () => {
+    mockIsOnline = true
+    installServiceWorkerMock(false)
+    const foreign = queuedCheckin('queued-1', 'user-other')
+    mockGetAllQueuedCheckins.mockResolvedValue([foreign])
+    mockRemoveQueuedCheckin.mockResolvedValue(undefined)
+
+    renderHook(() => useOfflineCheckin())
+
+    await waitFor(() => {
+      expect(mockRemoveQueuedCheckin).toHaveBeenCalledWith('queued-1')
+    })
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('userId を持たない旧アイテムは照合不能なので送信せず破棄する', async () => {
+    mockIsOnline = true
+    installServiceWorkerMock(false)
+    // userId フィールドを持たない旧スキーマのアイテム
+    const { userId: _userId, ...legacy } = queuedCheckin('queued-1')
+    mockGetAllQueuedCheckins.mockResolvedValue([legacy])
+    mockRemoveQueuedCheckin.mockResolvedValue(undefined)
+
+    renderHook(() => useOfflineCheckin())
+
+    await waitFor(() => {
+      expect(mockRemoveQueuedCheckin).toHaveBeenCalledWith('queued-1')
+    })
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('サインイン中のユーザーが未確定なら replay しない', async () => {
+    mockIsOnline = true
+    mockUserId = null
+    installServiceWorkerMock(false)
+    mockGetAllQueuedCheckins.mockResolvedValue([queuedCheckin('queued-1')])
+
+    renderHook(() => useOfflineCheckin())
+
+    await Promise.resolve()
+    expect(mockGetAllQueuedCheckins).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
   })
 })

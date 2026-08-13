@@ -1,5 +1,6 @@
 'use client'
 
+import { useAuth } from '@clerk/nextjs'
 import { useCallback, useEffect, useRef } from 'react'
 import { SW_MSG_SYNC_COMPLETE, SW_SYNC_TAG } from '@/constants/pwa'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
@@ -38,11 +39,26 @@ const registerBackgroundSync = async (): Promise<boolean> => {
   }
 }
 
-const replayQueue = async (prefetchedItems?: QueuedCheckin[]): Promise<ReplayResult> => {
+/** userId を持たない旧アイテム・別ユーザーのアイテムは照合不能なので replay せず破棄する */
+const discardUnverifiableItems = async (items: QueuedCheckin[], currentUserId: string): Promise<QueuedCheckin[]> => {
+  const verified: QueuedCheckin[] = []
+  for (const item of items) {
+    if (item.userId === currentUserId) {
+      verified.push(item)
+    } else {
+      console.warn('[offline-queue] discarding checkin that does not belong to the current user', item.id)
+      await removeQueuedCheckin(item.id).catch(() => undefined)
+    }
+  }
+  return verified
+}
+
+const replayQueue = async (currentUserId: string, prefetchedItems?: QueuedCheckin[]): Promise<ReplayResult> => {
   let replayed = 0
   let failed = 0
 
-  const items = prefetchedItems ?? (await getAllQueuedCheckins())
+  const allItems = prefetchedItems ?? (await getAllQueuedCheckins())
+  const items = await discardUnverifiableItems(allItems, currentUserId)
   if (items.length === 0) {
     return { failed: 0, replayed: 0 }
   }
@@ -53,7 +69,12 @@ const replayQueue = async (prefetchedItems?: QueuedCheckin[]): Promise<ReplayRes
   for (const item of sorted) {
     try {
       const res = await fetch('/api/checkin', {
-        body: JSON.stringify({ action: item.action, dateKey: item.dateKey, habitId: item.habitId }),
+        body: JSON.stringify({
+          action: item.action,
+          dateKey: item.dateKey,
+          habitId: item.habitId,
+          userId: item.userId,
+        }),
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
       })
@@ -85,6 +106,11 @@ interface UseOfflineCheckinOptions {
 
 export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
   const isOnline = useOnlineStatus()
+  const { isLoaded, userId } = useAuth()
+
+  // enqueue callback の identity を保ったまま最新の userId を読むため ref 経由にする
+  const userIdRef = useRef(userId)
+  userIdRef.current = userId
 
   // onReplayComplete を useRef で安定化（インラインオブジェクトによる useEffect 再実行を防止）
   const onReplayCompleteRef = useRef(options.onReplayComplete)
@@ -108,7 +134,8 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
 
   // オンライン復帰時は BgSync を再登録し、失敗した場合だけ hook 側で replay する
   useEffect(() => {
-    if (!isOnline) {
+    // userId が確定するまでは照合できないため replay しない
+    if (!(isOnline && isLoaded && userId)) {
       return
     }
 
@@ -124,7 +151,7 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
         return
       }
 
-      const result = await replayQueue(queuedItems)
+      const result = await replayQueue(userId, queuedItems)
       if (!isCancelled && (result.replayed > 0 || result.failed > 0)) {
         onReplayCompleteRef.current?.(result)
       }
@@ -135,16 +162,23 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
     return () => {
       isCancelled = true
     }
-  }, [isOnline])
+  }, [isLoaded, isOnline, userId])
 
   const enqueueCheckin = useCallback(
     async (habitId: string, action: 'add' | 'remove', dateKey: string): Promise<void> => {
+      const currentUserId = userIdRef.current
+      // 未サインインのチェックインはそもそも成功しないため、照合不能なアイテムを積まずに捨てる
+      if (!currentUserId) {
+        return
+      }
+
       const item: QueuedCheckin = {
         action,
         dateKey,
         habitId,
         id: generateId(),
         timestamp: Date.now(),
+        userId: currentUserId,
       }
       await enqueueOfflineCheckin(item)
 

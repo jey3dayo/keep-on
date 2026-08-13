@@ -8,6 +8,8 @@ export interface QueuedCheckin {
   habitId: string
   id: string
   timestamp: number
+  /** enqueue 時のサインイン中ユーザー。replay 前の本人照合に使う（旧アイテムでは undefined） */
+  userId?: string
 }
 
 const openDb = (): Promise<IDBDatabase> =>
