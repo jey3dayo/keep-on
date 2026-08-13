@@ -147,7 +147,7 @@ export function HabitListView({
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border/70 bg-card/80 shadow-sm">
                 <Calendar className="h-8 w-8 text-muted-foreground" />
               </div>
-              <p className="mb-4 font-semibold text-base text-foreground">まだ習慣がありません</p>
+              <p className="mb-4 font-semibold text-base text-white">まだ習慣がありません</p>
               <AddHabitButton onClick={onAddHabit}>習慣を追加</AddHabitButton>
             </div>
           ) : (
