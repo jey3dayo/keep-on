@@ -22,25 +22,28 @@ const createLocalStorageMock = () => {
   }
 }
 
-Object.defineProperty(window, 'localStorage', {
-  value: createLocalStorageMock(),
-  writable: true,
-})
+// node 環境（`@vitest-environment node` を指定したテスト）でも読み込まれるため window の有無で分岐する
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'localStorage', {
+    value: createLocalStorageMock(),
+    writable: true,
+  })
 
-// window.matchMedia モック (next-themes用)
-Object.defineProperty(window, 'matchMedia', {
-  value: vi.fn().mockImplementation((query) => ({
-    addEventListener: vi.fn(),
-    addListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-    matches: false,
-    media: query,
-    onchange: null,
-    removeEventListener: vi.fn(),
-    removeListener: vi.fn(),
-  })),
-  writable: true,
-})
+  // window.matchMedia モック (next-themes用)
+  Object.defineProperty(window, 'matchMedia', {
+    value: vi.fn().mockImplementation((query) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches: false,
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn(),
+    })),
+    writable: true,
+  })
+}
 
 // Vaul (Drawer) コンポーネントの jsdom 環境での未ハンドルエラーを抑制
 vi.mock('vaul', async () => {
