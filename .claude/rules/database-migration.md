@@ -9,8 +9,33 @@ paths:
 
 ## 概要
 
-このプロジェクトでは、Drizzle ORM を使用したデータベースマイグレーションを手動で実行します。
+このプロジェクトは Cloudflare D1 を Drizzle ORM でスキーマ管理しています。
+スキーママイグレーションは `wrangler d1 migrations apply`（native migrations）で適用し、
+適用済みかどうかは D1 側の `d1_migrations` テーブルで履歴管理されるため、未適用分のみが自動的に適用されます。
+データマイグレーション（既存データの変換等）は native migrations の対象外のため、`getDb()` を使った
+tsx スクリプトや `wrangler d1 execute` で手動実行します。
 スキーママイグレーションとデータマイグレーションの両方を適切なタイミングで適用するための手順とルールを定義します。
+
+### 既存 DB への baseline 適用（実施済み・一回限り）
+
+背景: 2026-08 まで `wrangler d1 execute --file` による direct execute 運用だったため、
+本番 D1 の `d1_migrations` テーブルは空のままだった（`0000`〜`0003` はスキーマ上は適用済みだが、
+native migrations の適用履歴としては未記録の状態）。
+
+baseline 手順（Orchestrator が実施済み）:
+
+1. `d1_migrations` テーブルを作成
+2. `0000`〜`0003` の4件を「適用済み」として `d1_migrations` に INSERT
+3. これにより native migrations は `0004` のみを pending として認識する
+
+確認:
+
+```bash
+pnpm wrangler d1 migrations list keep-on-db --remote
+```
+
+`0004_external_id.sql` のみが pending と表示されれば baseline は正しく完了している。
+新規にマイグレーションを追加する場合は、通常どおり `pnpm db:migrate:remote` で追従できる。
 
 ## マイグレーションの種類
 
@@ -26,8 +51,10 @@ paths:
 実行方法:
 
 ```bash
-pnpm db:generate  # スキーマからマイグレーションファイル生成
-pnpm db:migrate:remote -- drizzle/<migration>.sql  # リモート D1 へのマイグレーション適用
+pnpm db:generate         # スキーマからマイグレーションファイル生成
+pnpm db:migrate:local    # 未適用のマイグレーションをローカル D1 に適用
+pnpm db:migrate:remote   # 未適用のマイグレーションを本番 D1 に適用
+pnpm db:migrate:preview  # 未適用のマイグレーションを preview D1（keep-on-db-preview）に適用
 ```
 
 ### データマイグレーション
@@ -78,9 +105,13 @@ cat drizzle/0XXX_*.sql
 #### 2. 本番環境へのマイグレーション適用（PRマージ前）
 
 ```bash
-# 環境変数を読み込んでリモート D1 に適用
-pnpm db:migrate:remote -- drizzle/<migration>.sql
+# 未適用のマイグレーションをリモート D1 に適用
+pnpm db:migrate:remote
 ```
+
+注意: `main` へのマージ後は `.github/workflows/deploy.yml` が `wrangler deploy` 直前に
+`wrangler d1 migrations apply keep-on-db --remote` を自動実行するため、通常は手動適用は不要。
+手動適用はホットフィックスなど CI を待たずに本番へ先行適用したい場合のみ行う。
 
 確認:
 
@@ -187,7 +218,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
 pnpm wrangler d1 execute keep-on-db --local --command "PRAGMA table_info(User);"
 ```
 
-`db:migrate:local` / `db:migrate:remote`（`wrangler d1 execute --file`）は適用済みマイグレーションを追跡しないため、同じファイルを再実行すると `duplicate column name` 等で失敗する。再実行が必要な場合は生成された SQL を直接編集して未適用分だけに絞る。
+`db:migrate:local` / `db:migrate:remote`（`wrangler d1 migrations apply`）は `d1_migrations` テーブルで適用済みファイルを追跡するため、同じマイグレーションファイルを再実行しても自動的にスキップされる。ただし 1 ファイル内の SQL が途中まで実行された状態で失敗した場合は、そのファイルは「未適用」のまま残る（後述の「部分的に失敗したマイグレーションの扱い」を参照）。
 
 ### デフォルト値の設定
 
@@ -217,13 +248,13 @@ export const userSettings = sqliteTable("UserSettings", {
 pnpm db:generate
 
 # 2. ローカル D1 で検証
-pnpm db:migrate:local -- drizzle/<migration>.sql
+pnpm db:migrate:local
 
 # 3. 生成されたSQLを確認
 cat drizzle/0XXX_*.sql
 
 # 4. リモート D1 へ本番適用
-pnpm db:migrate:remote -- drizzle/<migration>.sql
+pnpm db:migrate:remote
 ```
 
 ## トラブルシューティング
@@ -248,26 +279,29 @@ D1 自体のクエリ統計は Cloudflare Dashboard → Workers & Pages → D1 �
 pnpm env:run -- pnpm db:studio
 
 # 2. ロールバック SQL をファイル化して適用（ローカルで先に確認）
-cat > drizzle/rollback-example.sql << 'EOF'
+# rollback SQL は drizzle/ の連番マイグレーションとは別物（native migrations の
+# 適用履歴に混ぜない）ため、db:migrate:* ではなく wrangler d1 execute --file を直接使う
+cat > scripts/rollback-example.sql << 'EOF'
 DROP TABLE IF EXISTS user_settings;
 ALTER TABLE User DROP COLUMN new_column;
 DROP INDEX IF EXISTS idx_users_email;
 EOF
 
-pnpm db:migrate:local -- drizzle/rollback-example.sql
+dotenvx run -- wrangler d1 execute keep-on-db --local --file=scripts/rollback-example.sql
 # 確認できたらリモートにも適用
-pnpm db:migrate:remote -- drizzle/rollback-example.sql
+dotenvx run -- wrangler d1 execute keep-on-db --remote --file=scripts/rollback-example.sql
 ```
 
 Cloudflare Dashboard → Workers & Pages → D1 → `keep-on-db` → **Console** タブから直接 SQL を実行することもできる（`wrangler d1 execute` と同じ権限）。
 
 #### 部分的に失敗したマイグレーションの扱い
 
-`db:migrate:local` / `db:migrate:remote`（`wrangler d1 execute --file`）は適用履歴を管理しないため、ファイル中の一部の SQL 文だけ実行された状態で失敗する可能性がある。
+`db:migrate:local` / `db:migrate:remote`（`wrangler d1 migrations apply`）はファイル単位で成功したものだけを `d1_migrations` に記録するため、1 ファイル内の SQL が途中まで実行された状態で失敗した場合はそのファイルは「未適用」のまま残る。この状態で再実行すると、既に適用済みの DDL に対して `ALTER TABLE` 等が再実行されエラーになることがある。
 
 ```bash
-# 現在のスキーマ状態を確認してから、未実行分だけを含む SQL を再作成する
+# 現在のスキーマ状態を確認し、既に反映済みの変更を除いてマイグレーションファイルを手直ししてから再実行する
 pnpm wrangler d1 execute keep-on-db --remote --command "PRAGMA table_info(User);"
+pnpm wrangler d1 migrations list keep-on-db --remote
 ```
 
 ### よくあるエラー
@@ -312,7 +346,7 @@ export const userSettings = sqliteTable("UserSettings", {
 
 ```bash
 # ✅ 推奨: dotenvx 経由の migrate スクリプト（内部で dotenvx run を使用）
-pnpm db:migrate:remote -- drizzle/<migration>.sql
+pnpm db:migrate:remote
 
 # ❌ 非推奨: 平文の .env から読み込み
 # 秘密鍵が漏洩するリスク

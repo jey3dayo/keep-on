@@ -11,7 +11,7 @@ paths:
 
 ## 必須ルール
 
-環境変数（`CLOUDFLARE_API_TOKEN`, `CLERK_SECRET_KEY` 等）が必要なコマンドは、**必ず** `pnpm env:run --` または `dotenvx run --` 経由で実行すること。
+環境変数（`CLOUDFLARE_API_TOKEN`, `ACCESS_AUD`, `ACCESS_TEAM_DOMAIN` 等）が必要なコマンドは、**必ず** `pnpm env:run --` または `dotenvx run --` 経由で実行すること。
 
 ## 禁止事項
 

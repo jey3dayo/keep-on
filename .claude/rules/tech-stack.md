@@ -11,7 +11,7 @@ paths:
 | -------------- | ------------------------------ | -------------------------- |
 | フロントエンド | Next.js 15                     | App Router, Turbopack      |
 | エッジデプロイ | OpenNext + Cloudflare Workers  | @opennextjs/cloudflare     |
-| 認証           | Clerk                          | @clerk/nextjs (Edge対応)   |
+| 認証           | Cloudflare Access (Zero Trust) | JWT を Edge で JWKS 検証   |
 | ORM            | Drizzle ORM                    | d1 adapter                 |
 | DB             | Cloudflare D1                  | SQLite                     |
 | バリデーション | Valibot                        | 軽量 (~5KB)、Tree-shakable |

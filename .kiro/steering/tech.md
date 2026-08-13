@@ -36,10 +36,10 @@ KeepOn は **Edge-First** アーキテクチャを採用し、グローバルな
 
 ### 認証
 
-- **Clerk**: Edge Runtime 対応の認証プロバイダー
-- JWT 検証を Edge で実施し、低レイテンシーを実現
-- `auth()` はサーバー側、`useAuth()` はクライアント側で使い分け
-- Next.js Middleware で公開ルートを判定し、保護ルートは `auth().protect()` でガード
+- **Cloudflare Access (Zero Trust)**: エッジで認証を強制する Zero Trust プロキシ（historical: 2026-08 に Clerk から移行）
+- Access が付与する `Cf-Access-Jwt-Assertion` JWT を `getAccessIdentity()`（`src/lib/auth/access.ts`）が JWKS で検証
+- サーバー側は `getAccessIdentity()`、クライアント側は `useIdentity()`（`src/contexts/IdentityContext.tsx`）で使い分け
+- `src/middleware.ts` は認証判定を行わない（Access が前段でアクセスを強制し、JWT 検証はリクエストごとの JWKS フェッチを避けるため server component / route handler 層でのみ実施）
 
 ### データベース・ORM
 
@@ -201,7 +201,7 @@ if (Result.isSuccess(result)) {
 
 - **Vitest**: ユニットテスト（`src/**/*.test.ts(x)`）+ カバレッジレポート（`@vitest/coverage-v8`）+ React Testing Library
 - **Storybook（in-source）**: コンポーネントの状態バリエーションを `vitest.storybook.config.ts` 経由でテスト実行（`pnpm test:storybook:run`）
-- **Playwright**: `e2e/` 配下の E2E テスト（`dashboard.spec.ts` / `navigation.spec.ts`）。Clerk 認証状態は `e2e/auth.setup.cjs` で `e2e/storage-state.json` に保存し再利用
+- **Playwright**: `e2e/` 配下の E2E テスト（`dashboard.spec.ts` / `navigation.spec.ts`）。Cloudflare Access 経由の認証が前提のため、自動 E2E は認証不要な範囲のみを対象とする（認証が必要なフローは Access service token 方式を今後整備。historical: 2026-08 以前は Clerk のストレージ状態を `e2e/auth.setup.cjs` で再利用していた）
 
 ### テストのパターン
 

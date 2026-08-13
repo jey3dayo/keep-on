@@ -14,9 +14,8 @@
 {
   "vars": {
     "NEXTJS_ENV": "production",
-    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "...",
-    "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
-    "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up",
+    "ACCESS_TEAM_DOMAIN": "jey3dayo.cloudflareaccess.com",
+    "ACCESS_AUD": "...",
   },
 }
 ```
@@ -32,7 +31,7 @@
 `wrangler secret` コマンドで Cloudflare に保存：
 
 ```bash
-echo '<value>' | pnpm wrangler secret put CLERK_SECRET_KEY
+echo '<value>' | pnpm wrangler secret put SENTRY_DSN
 ```
 
 ##### 特徴
@@ -92,8 +91,8 @@ pnpm wrangler kv namespace create NEXT_INC_CACHE_KV
 export CLOUDFLARE_API_TOKEN="your-token"
 export CLOUDFLARE_ACCOUNT_ID="your-account-id"
 
-# CLERK_SECRET_KEY を設定
-echo 'sk_test_...' | pnpm wrangler secret put CLERK_SECRET_KEY
+# SENTRY_DSN を設定
+echo 'https://...@o....ingest.sentry.io/...' | pnpm wrangler secret put SENTRY_DSN
 ```
 
 #### 4. デプロイ実行
@@ -202,16 +201,7 @@ git push origin main
 
 ### 登録されるSecrets
 
-- `CLERK_SECRET_KEY`
 - `SENTRY_DSN`（設定されている場合）
-
-### 個別登録
-
-個別に設定する場合（既存スクリプト）：
-
-```bash
-./scripts/setup-cloudflare-secrets.sh
-```
 
 ### GitHub Actions での自動同期
 
@@ -250,11 +240,11 @@ GitHub PR作成時に、自動的にプレビュー環境をデプロイしま�
 
 ### 注意事項
 
-⚠️ **プレビュー環境は本番と同じデータベースを共有します**
+ℹ️ **プレビュー環境は本番と分離された専用データベース（`keep-on-db-preview`）を使用します**
 
-- データ操作のテストは慎重に行ってください
-- 本番データを破壊しないように注意してください
-- テスト用ユーザーを使用してください（詳細は `.claude/rules/testing.md`）
+- `wrangler.jsonc` の `env.preview.d1_databases` で本番（`keep-on-db`）とは別の database_id を指定しており、スキーマ乖離やデータ破壊が本番へ波及しない
+- `.github/workflows/preview.yml` がデプロイ直前に `wrangler d1 migrations apply keep-on-db-preview --remote --env preview` を実行し、preview DB へ全マイグレーションを適用する
+- それでもテストデータは preview 専用 DB 内に蓄積されるため、テスト用ユーザーを使用してください（詳細は `.claude/rules/testing.md`）
 
 ### 手動プレビューデプロイ
 

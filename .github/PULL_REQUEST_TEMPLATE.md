@@ -16,7 +16,7 @@
 - [ ] フロントエンド
 - [ ] API / Server Actions
 - [ ] データベース (Drizzle ORM)
-- [ ] 認証 (Clerk)
+- [ ] 認証 (Cloudflare Access)
 - [ ] PWA
 - [ ] CI/CD
 - [ ] ドキュメント

@@ -28,13 +28,14 @@ export DOTENV_PRIVATE_KEY="秘密鍵"
 DOTENV_PRIVATE_KEY=$(grep '^DOTENV_PRIVATE_KEY=' .env.keys | cut -d= -f2-) dotenvx run -- pnpm dev
 ```
 
-## Clerk ハンドシェイクのリダイレクトループ（headless でのみ再現）
+## 認証のリダイレクトループ（headless でのみ再現）
 
-症状: `Clerk: Refreshing the session token resulted in an infinite redirect loop` が
-`wrangler tail` に出るが、通常のブラウザでは問題なく遷移できる。
+（歴史的記述: Clerk は 2026-08 に Cloudflare Access へ移行済み。以下は移行前に Clerk のハンドシェイクで観測されていた事象）
+
+症状: 認証のハンドシェイクに関するリダイレクトループが `wrangler tail` に出るが、通常のブラウザでは問題なく遷移できる。
 
 原因: headless ブラウザ（未ログイン/セッションなし）で `/dashboard` に直接アクセスすると、
-Clerk のハンドシェイクが失敗してループすることがある。実ブラウザで有効なセッションがある場合は発生しない。
+認証のハンドシェイクが失敗してループすることがある。実ブラウザで有効なセッションがある場合は発生しない。
 
 ### 確認手順
 

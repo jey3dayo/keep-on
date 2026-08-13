@@ -5,24 +5,26 @@ paths:
 
 # セキュリティガイドライン
 
-## Clerk JWT 検証
+## Cloudflare Access JWT 検証
 
 ### Edge での JWT 検証
 
-Clerk の JWT 検証は Edge Runtime で実施してください。
-認証が必要なエンドポイントやページでは、必ず `auth()` または `currentUser()` で認証状態を確認してください。
+認証は Cloudflare Access（Zero Trust）に委譲しています。Access はリクエストへ `Cf-Access-Jwt-Assertion`
+ヘッダーで署名済み JWT を付与し、アプリ側は `src/lib/auth/access.ts` の `getAccessIdentity()` が
+Access の JWKS エンドポイント（`https://<team-domain>/cdn-cgi/access/certs`）で署名検証します。
+認証が必要なエンドポイントやページでは、必ず `getAccessIdentity()` で認証状態を確認してください。
 
 ### Server Component での認証チェック
 
 ```tsx
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { getAccessIdentity } from "@/lib/auth/access";
 
 export default async function ProtectedPage() {
-  const { userId } = await auth();
+  const identity = await getAccessIdentity();
 
-  if (!userId) {
-    redirect("/sign-in");
+  if (!identity) {
+    redirect("/");
   }
 
   // 認証済みユーザーのみアクセス可能
@@ -33,13 +35,13 @@ export default async function ProtectedPage() {
 ### API Route での認証チェック
 
 ```tsx
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getAccessIdentity } from "@/lib/auth/access";
 
 export async function GET() {
-  const { userId } = await auth();
+  const identity = await getAccessIdentity();
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -100,58 +102,36 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 ### 設定内容
 
 - `default-src 'self'`: デフォルトは自己ホストのみ
-- `script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.accounts.dev`: Clerk認証に必要
+- `script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com`: Next.js の動作と Cloudflare Turnstile / Analytics に必要
 - `style-src 'self' 'unsafe-inline'`: Tailwind CSSのインラインスタイル対応
-- `img-src 'self' data: blob: https://img.clerk.com`: 画像ソース
-- `connect-src 'self' https://clerk.com https://api.clerk.com https://*.clerk.accounts.dev https://clerk.jey3dayo.net https://keep-on.jey3dayo.net https://cloudflareinsights.com`: API接続
+- `img-src 'self' data: blob:`: 画像ソース
+- `connect-src 'self' https://keep-on.jey3dayo.net https://challenges.cloudflare.com https://cloudflareinsights.com`: API接続。Cloudflare Access 自体はエッジで JWT を検証してからオリジンへ到達するため、Access 用のドメインを CSP に追加する必要はない
 - `frame-ancestors 'none'`: iframe内での表示を禁止（クリックジャッキング対策）
 
 ### 注意
 
-`'unsafe-eval'`と`'unsafe-inline'`はNext.jsとClerkの動作に必要ですが、セキュリティリスクがあります。
+`'unsafe-eval'`と`'unsafe-inline'`はNext.jsの動作に必要ですが、セキュリティリスクがあります。
 将来的には`nonce`や`hash`ベースのCSPへ移行を検討してください。
 
 ## ブルートフォース攻撃対策
 
-### Clerk のレート制限設定
+### Cloudflare Access のレート制限・MFA 設定
 
-Clerk Dashboardで以下を設定してください：
+サインイン試行回数制限・CAPTCHA・多要素認証は Cloudflare Zero Trust ダッシュボード側に集約されています。
+アプリ側でのレート制限実装は不要です。
 
-1. Sign-in試行回数制限
-   - Clerk Dashboard → Settings → Security → Sign-in
-   - 推奨設定: 5回失敗で15分間ロック
+1. Access ポリシーの認証方法
+   - Zero Trust → Access → Applications → 対象アプリ → Policies
+   - 許可する Identity Provider（Google など）とセッション有効期間を設定
 
-2. Sign-up試行回数制限
-   - 同一IPアドレスからの連続登録を制限
-   - 推奨設定: 1時間あたり3回まで
+2. IdP 側の多要素認証
+   - Google Workspace など、選択した IdP 側で MFA を有効化する（Access 自体は MFA を実装せず IdP に委譲）
 
-3. CAPTCHA の有効化
-   - Clerk Dashboard → Settings → Security → CAPTCHA
-   - 推奨: 3回失敗後にCAPTCHA表示
+3. Access 側のログ監視
+   - Zero Trust → Logs → Access で認証試行・ブロックを確認
 
-### 多要素認証（MFA）実装計画
-
-現状: 未実装
-
-### 実装ステップ
-
-1. Phase 1: Clerk MFA有効化（工数: 1日）
-   - Clerk Dashboard → Settings → Security → Multi-factor
-   - TOTPアプリ（Google Authenticator、Authy等）対応を有効化
-   - SMS OTPは追加コストのため保留
-
-2. Phase 2: UIカスタマイズ（工数: 0.5日）
-   - ユーザー設定ページにMFA有効化トグルを追加
-   - `/settings` ページに「セキュリティ」タブを追加
-
-3. Phase 3: ドキュメント整備（工数: 0.5日）
-   - ユーザー向けMFAセットアップガイド作成
-   - 開発者向け実装ガイドを`security.md`に追記
-
-### 推奨タイムライン
-
-- Phase 1: v0.3.0リリース時
-- Phase 2-3: v0.4.0リリース時
+（historical: 2026-08 に Clerk から Cloudflare Access へ移行。Clerk Dashboard での Sign-in/Sign-up レート制限や
+組み込み MFA 有効化計画は Clerk 利用時の記録として過去に存在したが、現行の認証基盤には適用されない）
 
 ## その他のセキュリティ対策
 
@@ -203,40 +183,34 @@ export function SafeHtml({ html }: { html: string }) {
 }
 ```
 
-## Clerk 認証戦略
+## Cloudflare Access 認証戦略
 
 ### JWT / セッション方式
 
-Clerk はデフォルトで JWT ベースの認証を使用します。
+認証は Cloudflare Access（Zero Trust）に委譲しています。
 
-- **Short-lived JWT**: アクセストークンのデフォルト有効期限は **60秒**
-- **セッション**: Clerk セッション（`__session` Cookie）は **30日** 有効
-- JWT の検証は Edge Runtime 上で `auth()` を呼ぶことで実施されます（`@clerk/nextjs/server`）
+- Access はユーザーがログインすると `Cf-Access-Jwt-Assertion` ヘッダーで署名済み JWT をリクエストへ付与する
+- JWT の `aud`（`ACCESS_AUD`）と `issuer`（`https://<ACCESS_TEAM_DOMAIN>`）はアプリ側の環境変数と一致させる必要がある
+- Access セッションの有効期間は Zero Trust ダッシュボードの Application Policy（Session Duration）で設定する
 
-### リフレッシュトークン戦略
+### JWT 検証の仕組み
 
-Clerk はトークンリフレッシュをクライアントライブラリ（`@clerk/nextjs`）が自動で処理します。
+`src/lib/auth/access.ts` の `getAccessIdentity()` が `Cf-Access-Jwt-Assertion` ヘッダーを読み取り、
+`jose` の `createRemoteJWKSet` で Access の JWKS エンドポイント（`https://<team-domain>/cdn-cgi/access/certs`）
+から鍵を取得して署名検証します。JWKS の `JWTVerifyGetKey` インスタンスはモジュールスコープでキャッシュされ、
+以降のリクエストでは鍵の再フェッチを行いません（初回のみ外部通信が発生する）。
 
-- クライアント側の `@clerk/nextjs` が JWT 期限切れを検知し、バックグラウンドで自動リフレッシュ
-- アプリケーションコードでリフレッシュ処理を実装する必要はありません
-- Cloudflare Workers 環境では `auth()` がリクエストごとに短命 JWT を検証するため、サーバー側でのリフレッシュ処理も不要
+`src/middleware.ts` はこの検証を行わず、`NextResponse.next()` で素通りします。Access JWT の検証は
+JWKS フェッチを伴うため、全リクエストで走る middleware ではなく、identity を実際に必要とする
+server component / route handler 層（`getAccessIdentity()`）でのみ検証します。
 
-### パスワードハッシュ
+### 開発環境でのフォールバック
 
-パスワードのハッシュ化は **Clerk に完全委譲** しています。自前実装はありません。
+`NODE_ENV !== 'production'` かつ `Cf-Access-Jwt-Assertion` ヘッダーが無い場合に限り、
+`DEV_ACCESS_EMAIL` 環境変数から擬似 identity（`sub: 'dev-user'`）を返します。
+本番では絶対に発動しません（`resolveDevIdentity()` が `NODE_ENV === 'production'` を明示的にガードしている）。
 
-### 多要素認証（MFA）
+### パスワードハッシュ / MFA
 
-Clerk は組み込み MFA 機能（TOTP / SMS OTP）を提供しています。**現在は未有効化**。
-
-有効化する場合は Clerk Dashboard → Settings → Security → Multi-factor から設定します（詳細は「ブルートフォース攻撃対策」セクション参照）。
-
-### Edge での JWT 検証（仕組み）
-
-`auth()` は `getAuthDataFromRequest` を通じて、`clerkMiddleware` がリクエストに付与した署名済みヘッダーを読み取ります。ミドルウェアの `authenticateRequest` はセッションのハンドシェイクやトークン更新時に Clerk API への外部通信が発生し得ます。通常リクエストではローカル検証で完結しますが、「常に外部リクエスト不要」ではありません。
-
-### Clerk v7 と Cloudflare Workers の注意点
-
-Clerk v7 はモジュール評価時に `CLERK_SECRET_KEY` を読み取ります。OpenNext は初回リクエスト内で `process.env` を設定するため、モジュールロード時点では環境変数が未設定になる問題があります。
-
-これを解消するため、`scripts/patch-open-next.mjs` がビルド後の `.open-next/cloudflare/init.js` を修正し、`CLERK_SECRET_KEY` 等を `process.env` にモジュールロード前に事前充填します。このパッチは `build:cf` スクリプトに組み込まれており、**手動実行は不要**です。
+パスワード管理・MFA は Cloudflare Access が委譲する Identity Provider（Google など）側の責務であり、
+本アプリはパスワードやハッシュを一切保持しません。

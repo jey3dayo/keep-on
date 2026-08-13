@@ -56,14 +56,14 @@ table UserSettings {
 }
 
 table User {
-  clerkId text [not null, unique, note: 'Clerk認証ID']
   createdAt text [not null, note: 'レコード作成日時 (ISO8601形式)']
-  email text [not null, unique, note: 'メールアドレス']
+  email text [not null, unique, note: 'メールアドレス (identity の正キー)']
+  externalId text [not null, unique, note: '外部 IdP のサブジェクト識別子 (Cloudflare Access JWT の sub)']
   id text [pk, not null, note: 'ユーザーID (CUID2形式)']
   updatedAt text [not null, note: 'レコード更新日時 (ISO8601形式)']
   weekStart text [not null, default: 'monday', note: '週の開始曜日 (0: 日曜, 1: 月曜)']
 
-  Note: 'ユーザー情報テーブル\nClerkで認証されたユーザーのデータを管理'
+  Note: 'ユーザー情報テーブル\nCloudflare Access で認証されたユーザーのデータを管理'
 }
 
 ref Checkin_habitId_Habit_id_fk: Checkin.habitId > Habit.id [delete: cascade, update: no action]

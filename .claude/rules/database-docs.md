@@ -85,15 +85,15 @@ DrizzleスキーマにJSDocコメントを追加することで、ドキュメ�
 ```typescript
 /**
  * ユーザー情報テーブル
- * Clerkで認証されたユーザーのデータを管理
+ * Cloudflare Access で認証されたユーザーのデータを管理
  */
 export const users = sqliteTable("User", {
   /** ユーザーID (CUID2形式) */
   id: text("id")
     .primaryKey()
     .$defaultFn(() => createId()),
-  /** Clerk認証ID */
-  clerkId: text("clerkId").notNull().unique(),
+  /** 外部 IdP のサブジェクト識別子 (Cloudflare Access JWT の sub) */
+  externalId: text("externalId").notNull().unique(),
   // ...
 });
 ```

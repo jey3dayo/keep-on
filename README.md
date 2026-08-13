@@ -14,7 +14,7 @@ KeepOn は、習慣形成をサポートするモダンな Web アプリケー�
 ## 主な特徴
 
 - 🚀 **Edge Computing**: Cloudflare Workers で高速・低レイテンシ
-- 🔒 **セキュア**: dotenvx 暗号化 + Clerk v7 認証 + セキュリティヘッダー
+- 🔒 **セキュア**: dotenvx 暗号化 + Cloudflare Access 認証 + セキュリティヘッダー
 - 🤖 **完全自動化**: Infrastructure as Code + GitHub Actions CI/CD
 - 🎨 **モダンUI**: Radix Colors + ダークモード対応
 - 📱 **PWA**: プログレッシブ Web アプリ（インストール対応）
@@ -30,7 +30,7 @@ KeepOn は、習慣形成をサポートするモダンな Web アプリケー�
 
 - フロントエンド: Next.js 16 (App Router, Turbopack)
 - デプロイ: Cloudflare Workers (OpenNext)
-- 認証: Clerk v7
+- 認証: Cloudflare Access
 - DB: Cloudflare D1 (SQLite)
 - ORM: Drizzle ORM + drizzle-kit
 - バリデーション: Valibot
@@ -82,15 +82,15 @@ pnpm install
 
 #### 認証情報の取得先
 
-- Clerk: https://dashboard.clerk.com/
+- Cloudflare Access: https://one.dash.cloudflare.com/
 
 ### 3. DB スキーマの同期（Drizzle）
 
 ```bash
 pnpm db:generate   # マイグレーション生成
-# 生成済みマイグレーションを適用する場合:
-pnpm db:migrate:local -- drizzle/<migration>.sql    # ローカル D1
-pnpm db:migrate:remote -- drizzle/<migration>.sql   # リモート D1
+# 未適用のマイグレーションを適用する場合（native migrations）:
+pnpm db:migrate:local    # ローカル D1
+pnpm db:migrate:remote   # リモート D1
 ```
 
 ### 4. 開発サーバー起動
@@ -147,10 +147,10 @@ pnpm format           # Biome で整形
 pnpm lint             # Biome でチェック
 
 # データベース
-pnpm db:generate                                     # Drizzle マイグレーション生成
-pnpm db:migrate:local -- drizzle/<migration>.sql     # マイグレーション適用（ローカル D1）
-pnpm db:migrate:remote -- drizzle/<migration>.sql    # マイグレーション適用（リモート D1）
-pnpm db:studio                                       # Drizzle Studio 起動
+pnpm db:generate         # Drizzle マイグレーション生成
+pnpm db:migrate:local    # 未適用マイグレーションの適用（ローカル D1）
+pnpm db:migrate:remote   # 未適用マイグレーションの適用（リモート D1）
+pnpm db:studio           # Drizzle Studio 起動
 
 # Cloudflare
 pnpm build:cf         # OpenNext ビルド
@@ -183,9 +183,7 @@ keep-on/
 ├── src/
 │   ├── app/          # Next.js App Router
 │   │   ├── (dashboard)/ # 認証済みルート（dashboard, habits, analytics, settings）
-│   │   ├── actions/  # Server Actions
-│   │   ├── sign-in/  # Clerk サインイン
-│   │   └── sign-up/  # Clerk サインアップ
+│   │   └── actions/  # Server Actions
 │   ├── components/   # 共有コンポーネント（shadcn/ui ラッパー含む）
 │   ├── constants/    # 定数定義
 │   ├── contexts/     # React Context（SyncContext など）
@@ -250,7 +248,7 @@ GitHub Secrets に以下を設定後、`main` ブランチへのプッシュで�
 
 - [x] プロジェクト初期セットアップ
 - [x] Next.js 16 + Drizzle + Wrangler 4 へのアップグレード
-- [x] Clerk v7 認証統合
+- [x] Cloudflare Access 認証統合
 - [x] Cloudflare D1 データベース接続
 - [x] Drizzle マイグレーション
 - [x] Infrastructure as Code 完全自動化（wrangler.jsonc, GitHub Actions, Secrets管理）

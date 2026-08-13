@@ -47,18 +47,20 @@ export default function InteractiveComponent() {
 }
 ```
 
-### 2. Clerk の `auth()` はサーバー側でのみ使用
+### 2. 認証情報の取得はサーバー/クライアントで手段を分ける
 
-Clerk の `auth()` 関数は Server Components または Server Actions でのみ使用可能です。
-Client Components では `useAuth()` フックを使用してください。
+サーバー側は `getAccessIdentity()`（`src/lib/auth/access.ts`）で Cloudflare Access JWT を検証します。
+Client Components ではサーバー検証済みの identity を `useIdentity()`（`src/contexts/IdentityContext.tsx`）
+経由で参照してください。
 
 ### サーバー側
 
 ```tsx
-import { auth } from "@clerk/nextjs/server";
+import { getAccessIdentity } from "@/lib/auth/access";
 
 export default async function Page() {
-  const { userId } = await auth();
+  const identity = await getAccessIdentity();
+  // identity?.sub, identity?.email
   // ...
 }
 ```
@@ -67,10 +69,10 @@ export default async function Page() {
 
 ```tsx
 "use client";
-import { useAuth } from "@clerk/nextjs";
+import { useIdentity } from "@/contexts/IdentityContext";
 
 export default function Component() {
-  const { userId } = useAuth();
+  const { userId } = useIdentity();
   // ...
 }
 ```

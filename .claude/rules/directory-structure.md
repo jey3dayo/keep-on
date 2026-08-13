@@ -138,7 +138,7 @@ export function isHabitCompleted(
 
 - 生のDrizzle操作のみを行う
 - Result.try などのエラーハンドリングは含めない
-- 外部ライブラリ（Clerk等）への依存を排除
+- 認証プロバイダー（Cloudflare Access 等）への依存を排除
 - 引数は抽出済みデータのみを受け取る（テスト容易性の確保）
 
 返り値の型: 生のDrizzle返り値のみ（`Promise<T>`）
@@ -164,7 +164,7 @@ import { getDb } from "@/lib/db";
 import { users } from "@/db/schema";
 
 interface UpsertUserInput {
-  clerkId: string;
+  externalId: string;
   email: string;
 }
 
@@ -173,11 +173,11 @@ export async function upsertUser(input: UpsertUserInput) {
   const [user] = await db
     .insert(users)
     .values({
-      clerkId: input.clerkId,
+      externalId: input.externalId,
       email: input.email,
     })
     .onConflictDoUpdate({
-      target: users.clerkId,
+      target: users.externalId,
       set: {
         email: input.email,
         updatedAt: new Date(),

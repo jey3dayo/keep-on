@@ -34,10 +34,10 @@ KeepOn プロジェクトのブラウザデバッグ手順。汎用的なツー�
 })();
 ```
 
-### Clerk 認証
+### Cloudflare Access 認証
 
-- headless でリダイレクトループ → 実ブラウザで問題なければ headless 固有（無視可）
-- ログインフローのテストは `testing.md` のクイックリファレンスを参照
+- headless でリダイレクトループ → 実ブラウザで問題なければ headless 固有（無視可、歴史的記述: 移行前は Clerk で同様の事象があった）
+- ログインフローは `testing.md` を参照（Google ログイン。自動 E2E 向けの Access service token 方式は今後整備）
 
 ## WSL2 環境でのセットアップ
 

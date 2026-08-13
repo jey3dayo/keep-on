@@ -92,12 +92,11 @@ src/app/
 │       └── page.tsx    # 並列実行の再現・検証
 ├── offline/
 │   └── page.tsx        # オフライン時フォールバック
-├── manifest.ts         # Metadata Route
-├── sign-in/[[...sign-in]]/
-│   └── page.tsx        # Clerk サインインページ
-└── sign-up/[[...sign-up]]/
-    └── page.tsx        # Clerk サインアップページ
+└── manifest.ts         # Metadata Route
 ```
+
+サインイン/サインアップは Cloudflare Access がエッジで担うため、アプリ側の `sign-in/` `sign-up/`
+ルートは存在しない（historical: 2026-08 以前は Clerk の `sign-in/[[...sign-in]]/` `sign-up/[[...sign-up]]/` が存在した）。
 
 ### `src/app/actions/` - Server Actions
 
@@ -152,14 +151,14 @@ export async function createHabit(formData: FormData) {
 - `db-retry.ts`: D1 接続のリトライロジック
 - `logging.ts`: LOG_LEVEL ベースの軽量ログ/計測ユーティリティ
 - `sentry.ts`: Sentry 送信ラッパー（共通タグ/コンテキスト付与）
-- `user.ts`: Clerk ユーザーを `users` テーブルへ同期（upsert）
+- `user.ts`: Cloudflare Access で認証されたユーザーを `users` テーブルへ同期（upsert）
 - `queries/`: ドメインごとのDBアクセス層（habit/checkin/user/user-settings/period/skip など、Drizzle クエリ）
 - `cache/`: Cloudflare KV を使ったアプリ内キャッシュ（analytics/habit/user/offline-queue など）
 - `cloudflare/`: Workers 専用ユーティリティ（`waitUntil` など）
 - `errors/`: ドメインエラー定義とシリアライズ変換
 - `pwa/`: Service Worker 関連のユーティリティ
 - `server/`: Server Component 専用のユーティリティ（cookies/date/timeout など）
-- `utils/`: ドメインユーティリティを集約（clerk/color/cookies/date/guards/habits/toast など）
+- `utils/`: ドメインユーティリティを集約（color/cookies/date/guards/habits/toast など）
 - テストファイル: `*.test.ts` / `__tests__/`（対象ファイルと同じディレクトリ or サブフォルダ）
 
 ### `src/lib/` の例
@@ -193,7 +192,7 @@ Drizzle のテーブル定義を集約。
 ### データモデル構造
 
 ```text
-User (Clerk 認証ユーザー)
+User (Cloudflare Access 認証ユーザー)
 └── Habit (習慣)
     └── Checkin (チェックイン記録)
 ```
@@ -212,7 +211,6 @@ User (Clerk 認証ユーザー)
 
 - `basics/`: アプリ固有の基本コンポーネント（Button, Input, Theme など）
 - サブディレクトリ: 機能別グルーピング（例: `habits/`, `dashboard/`, `settings/`, `pwa/`, `streak/`）
-- `clerk/`: Clerk 認証関連の UI ラッパー（UserButton など）
 - `modals/`: モーダル表示コンポーネント（Route Interception と連携）
 - `providers/`: Context Provider のラッパー（SyncProvider など）
 - `sidebar/`: サイドバーナビゲーション
