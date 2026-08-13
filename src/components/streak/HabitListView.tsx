@@ -236,7 +236,13 @@ function arrowDelta(key: string) {
  * iOS の UISegmentedControl に倣った期間フィルタ。
  * 凹んだ 1 本のトラックの中で、選択中のセグメントだけが手前の pill として浮く。
  */
-function PeriodSegmentedControl({ onChange, value }: { onChange: (value: PeriodFilter) => void; value: PeriodFilter }) {
+export function PeriodSegmentedControl({
+  onChange,
+  value,
+}: {
+  onChange: (value: PeriodFilter) => void
+  value: PeriodFilter
+}) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       const delta = arrowDelta(event.key)
