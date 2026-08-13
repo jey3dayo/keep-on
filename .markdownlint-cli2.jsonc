@@ -23,5 +23,15 @@
     ".claude/skills",
     ".plans",
     "tmp"
+  ],
+  "overrides": [
+    {
+      // Next.js maintains this file's managed block, which contains a second H1.
+      "filter": ["AGENTS.md"],
+      "config": {
+        "MD025": false
+      },
+      "combine": "merge"
+    }
   ]
 }
