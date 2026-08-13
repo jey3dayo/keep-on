@@ -9,6 +9,8 @@
     "nodejs_compat_populate_process_env",
     "global_fetch_strictly_public"
   ],
+  // 本番は custom domain のみで配信し、workers.dev URL を Cloudflare Access の裏口にしない
+  "workers_dev": false,
   "assets": {
     "binding": "ASSETS",
     "directory": ".open-next/assets"
@@ -39,6 +41,10 @@
   ],
   "env": {
     "preview": {
+      // トップレベルで workers_dev を false にしたため、PR プレビューの唯一の入口である workers.dev URL を維持するには明示上書きが必要
+      "workers_dev": true,
+      // top-level の routes(本番 custom domain)を継承すると preview デプロイ時に custom domain が付け替わるため空配列で遮断
+      "routes": [],
       "vars": {
         "NEXTJS_ENV": "preview",
         "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuamV5M2RheW8ubmV0JA",
