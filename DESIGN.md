@@ -253,7 +253,7 @@ YAML の `*-emphasis` / `habit-*` / `streak-*` / `overlay` は新規 UI の正�
 - habit-default / habit-emphasis: リスト側の習慣固有色。バーや大きな色面は `habit-default`、アイコン文字を載せる円は `habit-emphasis`。同一習慣内で色を一貫させる。
 - overlay / streak-progress / streak-glow: モーダル背後とストリーク進捗・完了グロー。
 
-没入背景（`primary` 直上、card 等の面を挟まない箇所）のテキストとアイコンは `white` / `white/80` 系を使い、`foreground` / `muted-foreground` を直接使わない。これらのトークンは background・card 面向けにライト/ダークで反転する設計のため、`primary` 上では意図せず低コントラストになる。
+没入背景（`primary` 直上、card 等の面を挟まない箇所）のテキストとアイコンは `white` / `white/80` 系を使い、`foreground` / `muted-foreground` を直接使わない。これらのトークンは background・card 面向けにライト/ダークで反転する設計のため、`primary` 上では意図せず低コントラストになる。同様に、没入背景上の凹み面・フォーカスリング・浅い影は `black/20` `white/80` `black/10` などの alpha 直指定を使ってよい（テーマ非依存の陰影であり、semantic token を経由しない意図的な例外）。
 
 ストリーク没入では、primary の上に薄い白の radial と暗い縦グラデーションを重ねて奥行きを出す。進捗線はほぼ不透明な白、完了時のみ白い soft glow。
 
