@@ -69,9 +69,19 @@ describe('resetHabitProgressAction', () => {
     vi.mocked(getServerDateKey).mockResolvedValue(todayKey)
     vi.mocked(getCurrentUserId).mockResolvedValue(userId)
     vi.mocked(getUserWeekStartById).mockResolvedValue('monday')
-    vi.mocked(deleteAllCheckinsByHabitAndPeriod).mockResolvedValue(
-      {} as Awaited<ReturnType<typeof deleteAllCheckinsByHabitAndPeriod>>
-    )
+    vi.mocked(deleteAllCheckinsByHabitAndPeriod).mockResolvedValue({
+      meta: {
+        changed_db: true,
+        changes: 0,
+        duration: 0,
+        last_row_id: 0,
+        rows_read: 0,
+        rows_written: 0,
+        size_after: 0,
+      },
+      results: [],
+      success: true,
+    })
   })
 
   it('dateKeyを省略した場合はtodayKeyで解決されて成功する', async () => {
