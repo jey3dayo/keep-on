@@ -24,6 +24,8 @@ KeepOn は、習慣形成をサポートするモダンな Web アプリケー�
 - 📊 **アナリティクス**: 総チェックイン数などの統計ダッシュボード
 - ⚙️ **設定**: タイムゾーン・テーマなどのユーザー設定
 - 📦 **アーカイブ/スキップ**: 習慣の一時休止・スキップ対応
+- ✍️ **習慣管理**: 習慣の作成・編集・復元と、誤った当日記録のリセット
+- 📆 **期間と頻度**: 習慣・チェックインを日次／週次／月次と設定した頻度で記録し、期間ごとの進捗と履歴を確認
 - 🛡️ **エラー監視**: Sentry 統合（Cloudflare Workers 向け）
 
 ## 技術スタック
@@ -42,6 +44,10 @@ KeepOn は、習慣形成をサポートするモダンな Web アプリケー�
 - コンポーネント開発: Storybook
 - エラー監視: Sentry (Cloudflare Workers)
 - PWA: manifest.json + PWA アイコン一式
+
+## アーキテクチャ
+
+Cloudflare Access がアプリケーション手前で認証を強制し、Next.js App Router を OpenNext 経由で Cloudflare Workers にデプロイします。アプリケーションはリクエストごとに Access JWT を検証し、Cloudflare D1 を Drizzle ORM で利用します。
 
 ## 本番環境
 
@@ -175,7 +181,6 @@ mise run deploy:preview # ローカルプレビュー
 ```text
 keep-on/
 ├── .claude/          # Claude Code 設定・ルール
-├── .kiro/            # Kiro steering ドキュメント
 ├── assets/           # 元画像（ロゴなど）
 ├── drizzle.config.ts # Drizzle Kit 設定
 ├── e2e/              # Playwright E2E テスト
@@ -279,6 +284,9 @@ GitHub Secrets に以下を設定後、`main` ブランチへのプッシュで�
 2. 機能拡張
    - [ ] 習慣のカテゴリ/タグ管理
    - [ ] 目標設定（リマインダー時刻の保存は済み、配信は未実装）
+   - [ ] 長期トレンドを含む高度な分析ダッシュボード
+   - [ ] 友人とのストリーク共有
+   - [ ] ゲスト体験（ログイン不要の試用）
 
 3. パフォーマンス
    - [ ] レート制限実装

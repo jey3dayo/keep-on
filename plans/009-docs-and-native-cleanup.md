@@ -2,7 +2,7 @@
 
 > **Executor instructions**: Docs/deps cleanup only. Do not change application runtime code. Reviewer maintains plans/README index if dispatched.
 >
-> **Drift check**: `git diff --stat d5df968..HEAD -- AGENTS.md README.md TODO.md package.json pnpm-lock.yaml .claude/rules/dotenvx.md .claude/rules/database-migration.md .kiro/steering/product.md DESIGN_REVIEW.md plans/README.md`
+> **Drift check**: `git diff --stat d5df968..HEAD -- AGENTS.md README.md todo.txt done.txt package.json pnpm-lock.yaml .claude/rules/dotenvx.md .claude/rules/database-migration.md DESIGN_REVIEW.md plans/README.md`
 
 ## Status
 
@@ -15,7 +15,7 @@
 
 ## Why this matters
 
-`AGENTS.md` still tells agents to run `pnpm db:push`, which does not exist — day-one schema sync fails. Product/README/plans index still describe shipped features as TODO or claim E2E has zero specs. `@typescript/native` duplicates already-installed `typescript@^7.0.2`, and `TODO.md` still frames TS7/jsdom as pending majors.
+`AGENTS.md` still tells agents to run `pnpm db:push`, which does not exist — day-one schema sync fails. Product/README/plans index still describe shipped features as TODO or claim E2E has zero specs. `@typescript/native` duplicates already-installed `typescript@^7.0.2`. 当時のタスク管理文書では TS7/jsdom を未対応 major として扱っている。
 
 ## Current state
 
@@ -24,12 +24,12 @@
 - `.claude/rules/database-migration.md` — multiple `db:push` / `db:migrate` references
 - Real scripts in `package.json`: `db:generate`, `db:migrate:local`, `db:migrate:remote`, `db:studio`
 - README already documents migrate scripts correctly (`README.md:92-93`)
-- `.kiro/steering/product.md:33` — calendar「将来実装予定」but `HabitCalendarHeatmap` ships; skip feature undocumented
+- The former product-status document described calendar as「将来実装予定」although `HabitCalendarHeatmap` ships; README now owns the corrected product status, including skip
 - `README.md:275-283` — unchecked offline SW etc. while SW exists; reminder delivery still missing
 - `plans/README.md` — still says E2E 0 specs / plans uncommitted / test typecheck hole without quarantine note
 - `DESIGN_REVIEW.md:42` — `@/components/Input` (wrong; should be `@/components/basics/Input`)
 - `package.json:104` — `"@typescript/native": "npm:typescript@^7.0.2"` unused; `typescript` and `jsdom` already at 7 / 30
-- `TODO.md:52-58` — stale major-update backlog
+- 当時のタスク管理文書 — stale major-update backlog
 
 ## Commands
 
@@ -46,11 +46,11 @@
 - `AGENTS.md`
 - `.claude/rules/dotenvx.md`
 - `.claude/rules/database-migration.md` (replace nonexistent scripts with generate + migrate:local/remote; keep historical migration doc intent)
-- `.kiro/steering/product.md` (calendar shipped; add skip to core features; leave notifications/social/guest as future)
+- `README.md` (calendar shipped; add skip to core features; leave notifications/social/guest as future)
 - `README.md` (「次のステップ」only — check off limited offline; split reminderTime storage vs push delivery)
 - `plans/README.md` (append 2026-08-13 section for 007+; fix stale leftovers about E2E 0 / uncommitted / typecheck; keep history of 001–006)
 - `DESIGN_REVIEW.md` (Input path fix)
-- `TODO.md` (rewrite TS7/jsdom section: majors landed; remaining is remove native alias + optional dual TS6 API note)
+- `todo.txt` / `done.txt` (rewrite TS7/jsdom section: majors landed; remaining is remove native alias + optional dual TS6 API note)
 - `package.json` / `pnpm-lock.yaml` via `pnpm remove @typescript/native -D`
 
 **Out of scope**: `docs/migrations/2026-01-25-prisma-to-drizzle.md` historical narrative (optional one-line note OK if you touch it; not required), any `src/**` code, installing new deps
@@ -65,10 +65,10 @@
 
 ### Step 1: Fix db:push references
 
-Replace with the real flow used in README/structure.md, e.g.:
+Replace with the real flow used in README.md and AGENTS.md, e.g.:
 
 1. `pnpm db:generate`
-2. `pnpm db:migrate:local -- drizzle/<migration>.sql`
+2. `pnpm db:migrate:local`
 
 Update AGENTS development steps and the two rule files accordingly.
 
@@ -76,18 +76,18 @@ Update AGENTS development steps and the two rule files accordingly.
 
 ### Step 2: Product + README + DESIGN_REVIEW + plans index
 
-- product.md: calendar = shipped on habit detail; document skip; keep 通知 as future
+- README.md: the former product-status document is corrected so calendar is shipped on habit detail; document skip; keep 通知 as future
 - README next steps: offline limited = done; reminder **delivery** remains TODO
 - DESIGN_REVIEW: `@/components/basics/Input`
-- plans/README: note 001–006 DONE on main; E2E smoke exists but write-path not gated; typecheck gate exists with quarantine in TODO.md; add rows for 007–013 as TODO
+- plans/README: note 001–006 DONE on main; E2E smoke exists but write-path not gated; typecheck gate exists with quarantine in todo.txt; add rows for 007–013 as TODO
 
 **Verify**: spot-check the corrected sentences exist.
 
-### Step 3: Remove `@typescript/native` and refresh TODO.md
+### Step 3: Remove `@typescript/native` and refresh task tracking
 
 Run `pnpm remove @typescript/native -D`. Keep `@typescript/typescript6` (used by `scripts/lib/extract-jsdoc.ts`).
 
-Update TODO.md major-update section to reflect current truth.
+Update `todo.txt` / `done.txt` major-update entries to reflect current truth.
 
 **Verify**: `pnpm exec tsc --noEmit` exit 0; `rg "@typescript/native" package.json` no matches
 

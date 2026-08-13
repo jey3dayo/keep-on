@@ -44,7 +44,7 @@ improve スキルによる監査計画の索引。
 
 - **007**: `validators/habit-action.ts`, `actions/habits/{checkin-shared,skip,reset,checkin,remove-checkin}.ts`, `DashboardWrapper.tsx`, action tests
 - **008**: `hooks/useOfflineCheckin.ts`, `hooks/useOfflineCheckin.test.ts`
-- **009**: `AGENTS.md`, `.claude/rules/*`, `product.md`, `README.md`, `plans/README.md`, `DESIGN_REVIEW.md`, `todo.txt`, `done.txt`, `package.json`（native 削除・タスク記録の正本を移行）
+- **009**: `AGENTS.md`, `.claude/rules/*`, `README.md`, `plans/README.md`, `DESIGN_REVIEW.md`, `todo.txt`, `done.txt`, `package.json`（native 削除・タスク記録の正本を移行）
 - **010**: `habit-calendar.ts`, `habits/[id]/page.tsx`, `habit-read.ts`, `dashboard/page.tsx`, `HabitTable.tsx`
 - **011**: `actions/habits/__tests__/*`（新規）
 - **012**: `lib/pwa/__tests__/offline-queue.test.ts`（+ 条件付き fake-indexeddb）

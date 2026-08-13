@@ -4,5 +4,5 @@
 
 - プロジェクト概要・開発規約・検証ゲート・デバッグ手順: `AGENTS.md`
 - Claude 固有の注意（Known Non-Issues）: ルートの `CLAUDE.md`
+- プロダクト・セットアップ・構成: `README.md`
 - 個別規約: `.claude/rules/`
-- プロジェクト全体の知識: `.kiro/steering/`
