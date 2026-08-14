@@ -217,6 +217,28 @@ pnpm sentry-cli releases files "$(git rev-parse HEAD)" upload-sourcemaps .open-n
 pnpm sentry-cli releases finalize "$(git rev-parse HEAD)"
 ```
 
+## API で issue を参照する
+
+ブラウザを開かずに issue やイベントを確認できる。トークンは 1Password から読み出し、シェル履歴やログへ出さない。
+
+```bash
+T=$(op item get ikksduz7inq3ms2vifjklr2sui --vault Personal \
+  --fields "API Read Token (event/org/project:read)" --reveal)
+
+# 直近 24h の issue 一覧
+curl -s -H "Authorization: Bearer $T" \
+  "https://sentry.io/api/0/projects/jey3dayo/keep-on/issues/?statsPeriod=24h"
+
+# 特定 issue の最新イベント
+curl -s -H "Authorization: Bearer $T" \
+  "https://sentry.io/api/0/issues/<issue-id>/events/latest/"
+```
+
+`statsPeriod` に指定できるのは `''` / `24h` / `14d` のみ（`1h` は 400 になる）。
+
+claude.ai の Sentry コネクタ（`mcp__claude_ai_Sentry__*`）は `jey3dayo` org の権限を持たず 403 になるため、
+この API 経路を使う。
+
 ## トラブルシューティング
 
 ### SENTRY_DSN が設定されていない
