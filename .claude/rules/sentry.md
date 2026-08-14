@@ -2,7 +2,25 @@
 
 ## 概要
 
-Cloudflare Workers で動作する `@sentry/cloudflare` を使用したエラー監視とパフォーマンス追跡。
+`@sentry/nextjs` によるエラー監視とパフォーマンス追跡。OpenNext + Cloudflare Workers 上で動作する。
+
+Sentry 公式の「Next.js on Cloudflare」ガイドに従い、`@sentry/cloudflare` の内部 API（`CloudflareClient` /
+`makeCloudflareTransport` / `defaultStackParser`）を手組みしない。過去にその方式で webpack のモジュール解決が
+失敗し実装を撤去した経緯があるため（#146, commit 01a7724）、`@sentry/nextjs` の公開 API のみを使う。
+
+### 構成ファイル
+
+- `instrumentation.ts` — サーバー / edge の `Sentry.init`、`onRequestError`
+- `instrumentation-client.ts` — クライアントの `Sentry.init`、`onRouterTransitionStart`
+- `next.config.ts` — `withSentryConfig` でのラップ（source map は auth token 設定時のみ）
+- `src/lib/sentry.ts` — `captureException` / `captureMessage` / `withSentryScope` ラッパー
+
+### Cloudflare Workers 側の要件
+
+`wrangler.jsonc` で以下が必須（公式要件）：
+
+- `compatibility_flags` に `nodejs_compat`
+- `compatibility_date` が `2025-08-16` 以降（SDK が送信に使う `https.request` の導入日）
 
 ## セットアップ
 
@@ -10,10 +28,10 @@ Cloudflare Workers で動作する `@sentry/cloudflare` を使用したエラー
 
 [Sentry Dashboard](https://sentry.io/) でプロジェクトを作成：
 
-1. Organizationを作成 (例: `yourcompany`)
+1. Organizationを作成 (例: `jey3dayo`)
 2. プロジェクトを作成 (例: `keep-on`)
-3. プラットフォームを選択: `Cloudflare Workers`
-4. DSN をコピー (例: `https://...@o....ingest.sentry.io/...`)
+3. プラットフォームを選択: `Next.js`
+4. DSN をコピー (例: `https://...@o....ingest.us.sentry.io/...`)
 
 ### 2. 環境変数の設定
 
@@ -39,15 +57,23 @@ GitHub リポジトリの Settings → Secrets and variables → Actions で設�
 `.env` に追加（dotenvx で暗号化）：
 
 ```bash
-# Sentry DSN
-SENTRY_DSN="https://...@o....ingest.sentry.io/..."
+# サーバー / edge ランタイム用
+SENTRY_DSN="https://...@o....ingest.us.sentry.io/..."
+# クライアントバンドルに焼き込む用（ビルド時に必要。DSN は公開値）
+NEXT_PUBLIC_SENTRY_DSN="https://...@o....ingest.us.sentry.io/..."
 ```
 
-暗号化：
+登録（値ごとに暗号化される）：
 
 ```bash
-pnpm env:encrypt
+pnpm exec dotenvx set SENTRY_DSN "<DSN>"
+pnpm exec dotenvx set NEXT_PUBLIC_SENTRY_DSN "<DSN>"
 ```
+
+`NEXT_PUBLIC_SENTRY_DSN` はビルド時に JS バンドルへ焼き込まれるため、`build:cf`（`dotenvx run --overload`）
+経由でビルドしないとクライアント側の Sentry が無効になる。
+
+DSN・Cloudflare の credential は 1Password の `Personal / KeepOn`（API Credential）に保管している。
 
 ## 使用方法
 
@@ -155,11 +181,17 @@ beforeSend(event) {
 
 ## ソースマップのアップロード
 
-GitHub Actions で自動的にソースマップをアップロードし、エラーのスタックトレースを人間が読める形式に変換：
+**現状は未設定**。`.github/workflows/deploy.yml` にアップロードステップは無く（`# TODO: Sentry ソースマップ
+アップロードは後のフェーズで実装` のまま）、`SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` の
+GitHub Secrets も未登録。そのため本番のスタックトレースは minify されたまま表示される。
 
-### ワークフロー
+`next.config.ts` の `withSentryConfig` は `SENTRY_AUTH_TOKEN` が設定されているときだけ source map の
+アップロードを有効化する。有効化するなら GitHub Secrets を登録してビルドジョブに env を渡すのが最も簡単で、
+下記の `sentry-cli` を使う手動ステップと二重管理にならないよう、どちらか一方に統一する。
 
-`.github/workflows/deploy.yml` で自動実行：
+### ワークフロー（sentry-cli を使う場合の例）
+
+`.github/workflows/deploy.yml` に追加する：
 
 ```yaml
 - name: Upload source maps to Sentry
@@ -282,7 +314,7 @@ captureException(new Error("Database query failed"), {
 ### 4. パフォーマンス監視を活用
 
 ```typescript
-import { startSpan } from "@sentry/cloudflare";
+import { startSpan } from "@sentry/nextjs";
 
 const result = await startSpan(
   { name: "database-query", op: "db.query" },
