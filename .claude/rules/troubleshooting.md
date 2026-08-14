@@ -8,10 +8,10 @@
 
 ```bash
 # Secrets を確認
-pnpm wrangler secret list
+pnpm cf:secret list
 
-# 不足している場合は設定
-./scripts/setup-cloudflare-secrets.sh
+# 不足している場合は個別に設定（値は対話入力）
+pnpm cf:secret put SENTRY_DSN
 ```
 
 ## dotenvx 復号エラー

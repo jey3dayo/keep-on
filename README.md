@@ -220,10 +220,8 @@ keep-on/
 
 #### Secrets管理（Git管理外）
 
-初回セットアップ時に以下のスクリプトで一括設定：
-
 ```bash
-./scripts/setup-cloudflare-secrets-bulk.sh
+echo '<DSN>' | pnpm cf:secret put SENTRY_DSN
 ```
 
 #### CI/CD 自動デプロイ

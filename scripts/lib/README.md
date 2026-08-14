@@ -317,8 +317,6 @@ success "すべての処理が完了しました"
 
 ### 高優先度
 
-- `setup-cloudflare-secrets.sh`
-- `setup-cloudflare-secrets-bulk.sh`
 - `setup-auth-state.sh`
 - `debug-session.sh`
 
@@ -326,7 +324,6 @@ success "すべての処理が完了しました"
 
 - `get-workers-metrics.sh`
 - `setup-cloudflare-alerts.sh`
-- `generate-secrets-json.sh`
 
 ### 低優先度
 
