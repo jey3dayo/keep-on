@@ -1,6 +1,6 @@
 import { weekStartToDay } from '@/constants/habit'
 import { resetDb } from '@/lib/db'
-import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
+import { AuthorizationError, getHabitAuthorizationClientMessage, UnauthorizedError } from '@/lib/errors/habit'
 import { isTimeoutError, logSpan, logSpanOptional, logWarn } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
@@ -62,14 +62,15 @@ export function createHabitCheckinSpans(timeoutMs: number): HabitCheckinSpans {
 export async function requireHabitForUserWithRetry(params: RequireHabitForUserParams): Promise<HabitRecord> {
   const { habitId, userId, meta, runWithRetry, actionName } = params
   const habit = await runWithRetry(`${actionName}.getHabitById`, () => getHabitById(habitId), meta)
-  if (!habit) {
-    throw new AuthorizationError({ detail: '習慣が見つかりません' })
-  }
-  if (habit.userId !== userId) {
-    throw new AuthorizationError({ detail: 'この習慣にアクセスする権限がありません' })
-  }
-  if (habit.archived) {
-    throw new AuthorizationError({ detail: 'アーカイブされた習慣は操作できません' })
+  if (!(habit && habit.userId === userId && !habit.archived)) {
+    let reason: 'archived' | 'forbidden' | 'not_found' = 'archived'
+    if (!habit) {
+      reason = 'not_found'
+    } else if (habit.userId !== userId) {
+      reason = 'forbidden'
+    }
+    logWarn('habits.authorize:denied', { ...meta, habitId, reason, userId })
+    throw new AuthorizationError({ detail: getHabitAuthorizationClientMessage() })
   }
   return habit
 }

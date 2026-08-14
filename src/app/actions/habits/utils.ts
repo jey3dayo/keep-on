@@ -5,6 +5,7 @@ import { invalidateHabitsCache } from '@/lib/cache/habit-cache'
 import {
   AuthorizationError,
   DatabaseError,
+  getHabitAuthorizationClientMessage,
   NotFoundError,
   UnauthorizedError,
   ValidationError,
@@ -70,12 +71,8 @@ export async function requireUserId(): HabitActionResult<string> {
 export async function requireOwnedHabit(habitId: string, userId: string): HabitActionResult<HabitRecord> {
   const habit = await getHabitById(habitId)
 
-  if (!habit) {
-    return actionError(serializeHabitError(new NotFoundError()))
-  }
-
-  if (habit.userId !== userId) {
-    return actionError(serializeHabitError(new AuthorizationError()))
+  if (!habit || habit.userId !== userId) {
+    return actionError(serializeHabitError(new AuthorizationError({ detail: getHabitAuthorizationClientMessage() })))
   }
 
   return actionOk(habit)

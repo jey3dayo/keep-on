@@ -3,7 +3,7 @@
 import { Result } from '@praha/byethrow'
 import { weekStartToDay } from '@/constants/habit'
 import { toActionResult } from '@/lib/actions/result'
-import { AuthorizationError, UnauthorizedError } from '@/lib/errors/habit'
+import { AuthorizationError, getHabitAuthorizationClientMessage, UnauthorizedError } from '@/lib/errors/habit'
 import { deleteAllCheckinsByHabitAndPeriod } from '@/lib/queries/checkin'
 import { getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
@@ -29,15 +29,9 @@ export async function resetHabitProgressAction(habitId: string, dateKey?: string
           // habit取得とweekStart取得は互いに独立したクエリのため並列実行する
           const [habit, weekStart] = await Promise.all([getHabitById(input.habitId), getUserWeekStartById(userId)])
 
-          // habit所有権チェック
-          if (!habit) {
-            throw new AuthorizationError({ detail: '習慣が見つかりません' })
-          }
-          if (habit.userId !== userId) {
-            throw new AuthorizationError({ detail: 'この習慣にアクセスする権限がありません' })
-          }
-          if (habit.archived) {
-            throw new AuthorizationError({ detail: 'アーカイブされた習慣は操作できません' })
+          // habit所有権チェック（クライアントには単一メッセージのみ返す）
+          if (!(habit && habit.userId === userId && !habit.archived)) {
+            throw new AuthorizationError({ detail: getHabitAuthorizationClientMessage() })
           }
 
           const weekStartDay = weekStartToDay(weekStart)

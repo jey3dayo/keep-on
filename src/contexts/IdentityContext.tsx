@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react'
+import { resolveIdentityOnMeFetchFailure } from '@/contexts/identity-cache-policy'
 import { isAuthInterceptedResponse } from '@/lib/auth/access-intercept'
 
 const IDENTITY_STORAGE_KEY = 'ko_identity'
@@ -91,7 +92,13 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         if (isCancelled) {
           return
         }
-        // 真のネットワーク失敗だけキャッシュ復元。Access 割り込みはここに来ない
+        // online なのに fetch 失敗はキャッシュを信じない。オフライン時のみ復元
+        const online = typeof navigator === 'undefined' ? true : navigator.onLine
+        const resolution = resolveIdentityOnMeFetchFailure(online)
+        if (resolution.action === 'clear') {
+          clearIdentityState(setState)
+          return
+        }
         setState({ isLoaded: true, userId: readCachedUserId() })
         return
       }

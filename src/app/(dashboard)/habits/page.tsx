@@ -47,7 +47,7 @@ export default async function HabitsPage() {
           </Link>
         </Button>
       </div>
-      <HabitTable externalId={user.externalId} requestMeta={requestMeta} userId={user.id} />
+      <HabitTable requestMeta={requestMeta} userId={user.id} />
     </PageShell>
   )
 }

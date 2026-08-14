@@ -1,4 +1,10 @@
 import { ErrorFactory } from '@praha/error-factory'
+import i18n from '@/lib/i18n-server'
+
+/** クライアント向け所有権 denial の単一メッセージ（存在・他者・アーカイブを区別しない） */
+export function getHabitAuthorizationClientMessage(): string {
+  return i18n.t('errors.habits.forbidden')
+}
 
 /**
  * 認証エラー

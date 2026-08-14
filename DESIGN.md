@@ -120,6 +120,16 @@ components:
     typography: "{typography.body-sm}"
     rounded: "{rounded.md}"
     height: "{spacing.control}"
+  icon-button:
+    backgroundColor: "{colors.background}"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.full}"
+    size: 44px
+  icon-button-hover:
+    backgroundColor: "{colors.accent}"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.full}"
+    size: 44px
   card:
     backgroundColor: "{colors.card}"
     textColor: "{colors.card-foreground}"
@@ -309,15 +319,17 @@ PWA:
 - xl (14px): 標準カード、デスクトップ inset。
 - 2xl (16px): リスト習慣カード、ボトムシート上端、カスタム確認面。
 - 3xl (24px): sticky な大きなサマリー面。
-- full: チェックイン円、フィルター pill、色スウォッチ、FAB 的な追加ボタン。
+- full: チェックイン円、フィルター pill、色スウォッチ、FAB 的な追加ボタン、アイコン単体の chrome コントロール（ヘッダーのサイドバー開閉・テーマ切替・サインアウトなど）。
 
-同じ役割のコントロールで角丸を混ぜない。円は Habit / Check-in のアイデンティティなので、リストでもシンプルビューでも維持する。
+同じ役割のコントロールで角丸を混ぜない。円は Habit / Check-in のアイデンティティなので、リストでもシンプルビューでも維持する。ラベル付きの標準ボタンは `md`、アイコンだけのツールバー操作は `full` で揃える。同じヘッダー内で四角ホバーと丸ホバーを混在させない。
 
 ## Components
 
 ### Buttons
 
-Primary は塗りと短い影。Destructive は危険操作のみ。Ghost は低強調。押下フィードバックは小さな scale-down（おおよそ 0.95）。ホバーの拡大はインタラクティブな強調面に限り、常用ナビや高頻度チェックインには載せない。
+Primary は塗りと短い影。Destructive は危険操作のみ。Ghost は低強調（ラベル付きは `rounded.md`）。押下フィードバックは小さな scale-down（おおよそ 0.95）。ホバーの拡大はインタラクティブな強調面に限り、常用ナビや高頻度チェックインには載せない。
+
+アイコン単体の chrome コントロール（`icon-button`）は反応面を `rounded.full` にする。ホバーは `accent` の円形ハイライト、押下は即座の scale-down。ラベル付き Ghost / Primary の角丸をアイコン単体へ流用しない。
 
 主要 CTA の「習慣を追加」は foreground 塗り・full pill・強めの影で、一覧の末尾や空状態から見つけやすくする。
 
@@ -337,7 +349,7 @@ Primary は塗りと短い影。Destructive は危険操作のみ。Ghost は低
 
 ロゴ等の SVG マークをアイコン群と並べるときは、viewBox を余白込みの全面ではなく実形状の bounding box にトリムし、光学サイズ（実描画の高さ）を隣接アイコンと揃える。viewBox に余白が残ると、同じ `h-*` 指定でも実描画が縮小し、隣のアイコンより小さく・上下中心もずれて見える。
 
-ヘッダーの階層は次で作る: ページタイトルは font-semibold + わずかな negative tracking（-0.01em）、ブランドワードマークは tracking-tight、ロゴとタイトルを分ける区切り線は `bg-foreground/20` で控えめに、補助アイコン（サイドバー開閉等）は非活性時 `text-foreground/80`、hover で `foreground` まで上げる。
+ヘッダーの階層は次で作る: ページタイトルは font-semibold + わずかな negative tracking（-0.01em）、ブランドワードマークは tracking-tight、ロゴとタイトルを分ける区切り線は `bg-foreground/20` で控えめに、補助アイコン（サイドバー開閉・テーマ・サインアウト等）は `icon-button`（円形ヒット／ホバー面）、非活性時 `text-foreground/80`、hover で `foreground` まで上げる。
 
 ### Overlays
 
@@ -358,6 +370,7 @@ Drawer は下から。Sheet/Dialog は中央または下端。背後は overlay�
 - セマンティック色ロールを使い、画面ごとに新しい hex を増やさない。
 - border で区切り、影は補助にする。
 - チェックイン結果をすぐ見せる（色・リング・短い motion）。
+- 同じ役割のコントロールで角丸を混ぜない。ヘッダーのアイコン単体はすべて `icon-button`（full）に揃える。
 - 数字に tabular numerals を使う。
 - safe-area を固定 UI に必ず足す。
 - reduced-motion で transform を抑え、必要な状態変化だけ残す。

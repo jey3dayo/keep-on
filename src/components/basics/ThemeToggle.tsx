@@ -55,7 +55,7 @@ export function ThemeToggle({ buttonVariant = 'secondary', buttonClassName }: Th
         <DropdownMenuTrigger asChild>
           <Button
             aria-label={`${currentLabel}モード中`}
-            className={cn('rounded-full bg-transparent p-0 hover:bg-white/10 dark:hover:bg-white/5', buttonClassName)}
+            className={cn('icon-button bg-transparent p-0', buttonClassName)}
             size="icon"
             variant={buttonVariant}
           >
