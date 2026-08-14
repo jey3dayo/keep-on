@@ -1,4 +1,5 @@
 import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
+import { withSentryConfig } from '@sentry/nextjs'
 import type { NextConfig } from 'next'
 
 // 開発環境でCloudflare Context APIを利用可能にする
@@ -96,4 +97,14 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+export default withSentryConfig(nextConfig, {
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: !process.env.CI,
+  // Cloudflare Workers はソースマップの動的取得エンドポイントを提供しないため、
+  // クライアントバンドルの隠しソースマップ生成のみ有効化しビルド時 upload はしない
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+})
