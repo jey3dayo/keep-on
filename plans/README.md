@@ -3,7 +3,8 @@
 improve スキルによる監査計画の索引。
 
 - 2026-08-10（`HEAD = 88f423b`）: plans 001–006（いずれも **DONE**・main に取り込み済み）
-- 2026-08-13（`HEAD = d5df968`）: plans 007–013（本ラウンド）
+- 2026-08-13（`HEAD = d5df968`）: plans 007–013（007–010 **DONE**、011–013 **TODO**）
+- 2026-08-14（`HEAD = 0f714c1`）: plans 014–019（本ラウンド・おすすめ + 軽微）
 
 各実行者は計画を最後まで読んでから着手し、STOP conditions を尊重すること。
 **コミットは worktree 内のみ。ユーザーブランチへの merge / push はしない。**
@@ -28,6 +29,12 @@ improve スキルによる監査計画の索引。
 | 011  | checkin/skip/reset/create の Action 層テスト                                      | P1       | M      | 007 推奨   | TODO   |
 | 012  | IndexedDB offline-queue 直接テスト                                                | P2       | M      | —          | TODO   |
 | 013  | analytics の checkin 重複読取統合                                                 | P2       | M      | —          | TODO   |
+| 014  | online 時の /api/me 失敗で stale identity を復元しない                            | P1       | S      | —          | TODO   |
+| 015  | SW のユーザー HTML cache fallback 廃止と sign-out purge 強化                      | P1       | M      | —          | TODO   |
+| 016  | habit 所有権エラーのクライアント応答を統一                                        | P1       | S      | —          | TODO   |
+| 017  | /habits 一覧で progress 取得をやめる                                              | P1       | S      | —          | TODO   |
+| 018  | weekStart 時の habits KV 無効化と habit 経路の revalidatePath 拡張                | P1       | S      | —          | TODO   |
+| 019  | user KV の schema 検証と cache hit 時 email reconcile                             | P2       | S      | —          | TODO   |
 
 006 の quarantine 残は `todo.txt` の先頭項目を参照。
 
@@ -39,20 +46,26 @@ improve スキルによる監査計画の索引。
 - **007 → 011**: 011 は 007 のゲート（dateKey 窓・archived）を断言できると強い。007 未適用なら現行 authz のみでよい。
 - **008 / 009 / 010 / 012 / 013** はファイル集合が概ね独立 → 並列可。
 - **007** は `DashboardWrapper` / actions を触る。008 は hooks のみなので 007 と並列可。
+- **014 / 015**: 端末上のユーザー境界（identity vs SW cache）。コード依存なし → 並列可。概念的には両方入れると共有端末リスクが揃う。
+- **016 / 017 / 018 / 019**: 互いに独立 → 並列可。
+- **018** の `revalidatePath` 拡張は 017 とファイル衝突なし。
+- **011–013**（前回残）と **014–019** も概ね独立。011 と 016 はどちらも `actions/habits` を触りうるので同時実行時は注意。
 
-### ファイル集合（衝突確認用・007+）
+### ファイル集合（衝突確認用・014+）
 
-- **007**: `validators/habit-action.ts`, `actions/habits/{checkin-shared,skip,reset,checkin,remove-checkin}.ts`, `DashboardWrapper.tsx`, action tests
-- **008**: `hooks/useOfflineCheckin.ts`, `hooks/useOfflineCheckin.test.ts`
-- **009**: `AGENTS.md`, `.claude/rules/*`, `README.md`, `plans/README.md`, `DESIGN_REVIEW.md`, `todo.txt`, `done.txt`, `package.json`（native 削除・タスク記録の正本を移行）
-- **010**: `habit-calendar.ts`, `habits/[id]/page.tsx`, `habit-read.ts`, `dashboard/page.tsx`, `HabitTable.tsx`
-- **011**: `actions/habits/__tests__/*`（新規）
-- **012**: `lib/pwa/__tests__/offline-queue.test.ts`（+ 条件付き fake-indexeddb）
-- **013**: `analytics/page.tsx`, 必要なら queries 集計ヘルパ
+- **014**: `IdentityContext.tsx`, `identity-cache-policy.ts`(+test)
+- **015**: `public/sw.js`, `constants/pwa.ts`, `clear-user-caches.ts`(+test), `SiteHeader.tsx`, `ServiceWorkerRegistration.tsx`
+- **016**: `actions/habits/{utils,checkin-shared,reset}.ts`, habit action tests, 必要なら `serializable` / error 定数
+- **017**: `HabitTable.tsx`, 必要なら `habits/page.tsx` / `HabitTableClient.tsx`
+- **018**: `user-settings.ts`, `updateUserSettings.ts`, `actions/habits/utils.ts`, settings/habit action tests
+- **019**: `user-cache.ts`, `user.ts`, `lib/__tests__/user.test.ts`
 
-## 2026-08-13 で計画化した検出（todo.txt `+improve` と対応）
+## 2026-08-14 で計画化した検出
 
-推奨セット 1–5 → 007（1–3 統合）, 008（4）, 009（5+docs/deps）。残り → 010–013。
+推奨 1–5 → **014**（identity online guard）, **015**（SW cache isolation）, **016**（ownership error unify）, **017**（habits list overfetch）, **018**（weekStart invalidate + path revalidate; finding 5+6 統合）。
+軽微 → **019**（user KV validate + email reconcile; finding 7+9 統合）。
+
+未計画（意図的）: `/api/checkin` route テスト（TEST-08, M）, CI での Playwright 実行（DX-10, M）, direction（reminder push / offline skip / Access E2E / rate limit）。
 
 ## Findings considered and rejected / closed since prior audit
 
@@ -62,3 +75,9 @@ improve スキルによる監査計画の索引。
 - E2E spec 0 件 — ナビ smoke は追加済み。書込パス未ゲートは TEST として残すが 011/012 が優先
 - `noJsxPropsBind` / optimistic `pendingCount` / cache versioning / preview 共有 D1 / dotenvx `.env` — 前回どおり by-design
 - updateUserSettings 競合・dashboard client remount — `todo.txt` バックログのまま（本ラウンド外）
+- `/health` 詳細公開 — Playwright 死活向けの意図的公開寄り。優先度低のため未計画
+- `deleteLatestCheckin` count-then-act — 低頻度レース・MED confidence。見送り
+- offline checkin batch API — 契約設計が大きく今回外
+- `habit-read` 分割 / HabitTable の loader 切り出し — 017 の後で十分
+- Storybook `image-size` high — dev のみ・本番未到達。今はやらない
+- Prisma→Drizzle 古い migration doc — 影響小。docs 掃除時でよい
