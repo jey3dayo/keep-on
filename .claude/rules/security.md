@@ -105,7 +105,7 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 - `script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com`: Next.js の動作と Cloudflare Turnstile / Analytics に必要
 - `style-src 'self' 'unsafe-inline'`: Tailwind CSSのインラインスタイル対応
 - `img-src 'self' data: blob:`: 画像ソース
-- `connect-src 'self' https://keep-on.jey3dayo.net https://challenges.cloudflare.com https://cloudflareinsights.com`: API接続。Cloudflare Access 自体はエッジで JWT を検証してからオリジンへ到達するため、Access 用のドメインを CSP に追加する必要はない
+- `connect-src 'self' https://keep-on.jey3dayo.net https://challenges.cloudflare.com https://cloudflareinsights.com https://o4511908351180800.ingest.us.sentry.io`: API接続。Cloudflare Access 自体はエッジで JWT を検証してからオリジンへ到達するため、Access 用のドメインを CSP に追加する必要はない。Sentry のクライアント transport は ingest ホストへ直接 POST するため、プロジェクト固有のホストを明示的に許可する（許可しないとクライアント側のエラー送信がブラウザにブロックされる）
 - `frame-ancestors 'none'`: iframe内での表示を禁止（クリックジャッキング対策）
 
 ### 注意

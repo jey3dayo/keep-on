@@ -35,13 +35,15 @@ jobs:
       - name: Build for Cloudflare
         env:
           DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
+          # SENTRY_AUTH_TOKEN があるときだけ withSentryConfig が source map を
+          # アップロードする。未設定のローカルビルドでは何も送らない。
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         run: |
           echo "::group::Build timing"
           time pnpm build:cf
           echo "::endgroup::"
-
-      # TODO: Sentry ソースマップアップロードは後のフェーズで実装
-      # Issue #146 参照
 
       - name: Apply D1 migrations (production)
         env:
