@@ -10,8 +10,8 @@
 # Secrets を確認
 pnpm cf:secret list
 
-# 不足している場合は個別に設定（値は対話入力）
-pnpm cf:secret put SENTRY_DSN
+# 不足している場合は .env（dotenvx 暗号化済み）の値をそのまま渡す
+pnpm exec dotenvx get SENTRY_DSN | pnpm cf:secret put SENTRY_DSN
 ```
 
 ## dotenvx 復号エラー

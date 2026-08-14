@@ -31,9 +31,14 @@
 `wrangler secret` コマンドで Cloudflare に保存：
 
 ```bash
-# 値はプロンプトへ対話入力する（コマンド引数に書くとシェル履歴に残る）
-pnpm cf:secret put SENTRY_DSN
+# .env（dotenvx 暗号化済み）を正本として渡す
+pnpm exec dotenvx get SENTRY_DSN | pnpm cf:secret put SENTRY_DSN
+
+# .env に無い値を新規登録する場合はプロンプトへ対話入力する
+pnpm cf:secret put NEW_SECRET
 ```
+
+値をコマンド引数に書くとシェル履歴へ平文で残るため、`.env` からのパイプか対話入力のどちらかを使う。
 
 ##### 特徴
 
@@ -92,8 +97,8 @@ pnpm wrangler kv namespace create NEXT_INC_CACHE_KV
 export CLOUDFLARE_API_TOKEN="your-token"
 export CLOUDFLARE_ACCOUNT_ID="your-account-id"
 
-# SENTRY_DSN を設定（値はプロンプトへ対話入力する）
-pnpm cf:secret put SENTRY_DSN
+# SENTRY_DSN を設定（.env の値をそのまま渡す）
+pnpm exec dotenvx get SENTRY_DSN | pnpm cf:secret put SENTRY_DSN
 ```
 
 #### 4. デプロイ実行
@@ -182,8 +187,8 @@ git push origin main
 `wrangler secret put` で個別登録する（一時 JSON は使わない）：
 
 ```bash
-# 値はプロンプトへ対話入力する（コマンド引数に書くとシェル履歴に残る）
-pnpm cf:secret put SENTRY_DSN
+# .env（dotenvx 暗号化済み）を正本として渡す
+pnpm exec dotenvx get SENTRY_DSN | pnpm cf:secret put SENTRY_DSN
 ```
 
 詳細は `.claude/rules/sentry.md` を参照。

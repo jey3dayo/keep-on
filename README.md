@@ -221,8 +221,8 @@ keep-on/
 #### Secrets管理（Git管理外）
 
 ```bash
-# 値はプロンプトへ対話入力する（コマンド引数に書くとシェル履歴に残る）
-pnpm cf:secret put SENTRY_DSN
+# .env（dotenvx 暗号化済み）を正本として渡す
+pnpm exec dotenvx get SENTRY_DSN | pnpm cf:secret put SENTRY_DSN
 ```
 
 #### CI/CD 自動デプロイ

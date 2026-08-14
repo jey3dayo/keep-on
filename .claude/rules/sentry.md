@@ -38,8 +38,8 @@ Sentry 公式の「Next.js on Cloudflare」ガイドに従い、`@sentry/cloudfl
 #### Cloudflare Secrets
 
 ```bash
-# SENTRY_DSN を設定（値はプロンプトへ対話入力する）
-pnpm cf:secret put SENTRY_DSN
+# SENTRY_DSN を設定（.env の値をそのまま渡す）
+pnpm exec dotenvx get SENTRY_DSN | pnpm cf:secret put SENTRY_DSN
 ```
 
 #### GitHub Secrets
@@ -252,8 +252,8 @@ SENTRY_DSN is not set. Sentry will not be initialized.
 #### 解決方法
 
 ```bash
-# Cloudflare Secrets に設定
-pnpm cf:secret put SENTRY_DSN
+# Cloudflare Secrets に設定（.env の値をそのまま渡す）
+pnpm exec dotenvx get SENTRY_DSN | pnpm cf:secret put SENTRY_DSN
 
 # ローカル開発用（.envに追加して暗号化）
 pnpm env:encrypt
