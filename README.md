@@ -220,10 +220,7 @@ keep-on/
 
 #### Secrets管理（Git管理外）
 
-```bash
-# .env（dotenvx 暗号化済み）を正本として渡す
-pnpm exec dotenvx get SENTRY_DSN | pnpm cf:secret put SENTRY_DSN
-```
+登録手順は `.claude/rules/cloudflare-deployment.md` の「Secrets登録方法」を参照。
 
 #### CI/CD 自動デプロイ
 
