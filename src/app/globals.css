@@ -407,6 +407,12 @@
     transition: none;
   }
 
+  /* 押下時の縮小は装飾のみ。レイアウトに影響しないため無効化する */
+  .icon-button:active,
+  .color-swatch:active {
+    transform: none;
+  }
+
   .long-press-fill {
     opacity: 0;
     clip-path: none;
