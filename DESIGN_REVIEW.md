@@ -40,6 +40,7 @@ KeepOn の UI 変更をレビューし、ルールの置き場所を決めるた
 - a11y（フォーカス、ラベル、キーボード）が共通化できるもの
 - `src/components/ui/` は直接編集しない。見た目のカスタムは `src/components/` 配下のラッパーで行う
 - フォーム入力の共有は `@/components/basics/Input` を優先する
+- ヘッダー等のアイコン単体 chrome は `DESIGN.md` の `icon-button` に合わせ、実装は共有クラス（`globals.css` の `.icon-button`）か `basics/` ラッパー経由。`ui/sidebar` の `SidebarTrigger` は直接編集せず `className` で揃える
 - ダッシュボードの没入背景は `src/components/streak/DashboardBackground.tsx` に統合済み。アイコンビュー（`HabitSimpleView`）とリストビュー（`StreakDashboard`）の両方がこれを使う。新しい没入ビューを追加する場合も同様に共有する
 
 ### feature-local に残す
