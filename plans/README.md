@@ -29,10 +29,10 @@ improve スキルによる監査計画の索引。
 | 011  | checkin/skip/reset/create の Action 層テスト                                      | P1       | M      | 007 推奨   | TODO   |
 | 012  | IndexedDB offline-queue 直接テスト                                                | P2       | M      | —          | TODO   |
 | 013  | analytics の checkin 重複読取統合                                                 | P2       | M      | —          | TODO   |
-| 014  | online 時の /api/me 失敗で stale identity を復元しない                            | P1       | S      | —          | TODO   |
+| 014  | online 時の /api/me 失敗で stale identity を復元しない                            | P1       | S      | —          | DONE   |
 | 015  | SW のユーザー HTML cache fallback 廃止と sign-out purge 強化                      | P1       | M      | —          | TODO   |
-| 016  | habit 所有権エラーのクライアント応答を統一                                        | P1       | S      | —          | TODO   |
-| 017  | /habits 一覧で progress 取得をやめる                                              | P1       | S      | —          | TODO   |
+| 016  | habit 所有権エラーのクライアント応答を統一                                        | P1       | S      | —          | DONE   |
+| 017  | /habits 一覧で progress 取得をやめる                                              | P1       | S      | —          | DONE   |
 | 018  | weekStart 時の habits KV 無効化と habit 経路の revalidatePath 拡張                | P1       | S      | —          | TODO   |
 | 019  | user KV の schema 検証と cache hit 時 email reconcile                             | P2       | S      | —          | TODO   |
 
