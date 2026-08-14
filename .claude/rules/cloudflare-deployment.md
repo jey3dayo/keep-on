@@ -28,11 +28,7 @@
 
 #### 2. シークレット（Git コミット不可）
 
-`wrangler secret` コマンドで Cloudflare に保存：
-
-```bash
-echo '<value>' | pnpm wrangler secret put SENTRY_DSN
-```
+`wrangler secret` コマンドで Cloudflare に保存する（手順は後述の「Secrets登録方法」）。
 
 ##### 特徴
 
@@ -86,14 +82,7 @@ pnpm wrangler kv namespace create NEXT_INC_CACHE_KV
 
 #### 3. シークレット設定
 
-```bash
-# Cloudflare API トークンと Account ID を環境変数に設定
-export CLOUDFLARE_API_TOKEN="your-token"
-export CLOUDFLARE_ACCOUNT_ID="your-account-id"
-
-# SENTRY_DSN を設定
-echo 'https://...@o....ingest.sentry.io/...' | pnpm wrangler secret put SENTRY_DSN
-```
+「Secrets登録方法」の手順で `SENTRY_DSN` を登録する。
 
 #### 4. デプロイ実行
 
@@ -178,43 +167,17 @@ git push origin main
 
 ## Secrets登録方法
 
-### バルク登録（推奨）
-
-`wrangler secret bulk` を使った一括登録：
+`wrangler secret put` で個別登録する（一時 JSON は使わない）。値をコマンド引数に書くとシェル履歴へ平文で残るため、`.env` からのパイプか対話入力のどちらかを使う。
 
 ```bash
-# バルク登録スクリプトを実行
-./scripts/setup-cloudflare-secrets-bulk.sh
+# .env（dotenvx 暗号化済み）を正本として渡す
+pnpm exec dotenvx get SENTRY_DSN | pnpm cf:secret put SENTRY_DSN
+
+# .env に無い値を新規登録する場合はプロンプトへ対話入力する
+pnpm cf:secret put NEW_SECRET
 ```
 
-### 仕組み
-
-1. `.env` から環境変数を読み込み
-2. `.secrets.json` を生成（一時ファイル、自動削除）
-3. `wrangler secret bulk` で一括登録
-
-### 必要な環境変数
-
-- `CLOUDFLARE_API_TOKEN`
-- `CLOUDFLARE_ACCOUNT_ID`
-- `DOTENV_PRIVATE_KEY`（dotenvx復号用）
-
-### 登録されるSecrets
-
-- `SENTRY_DSN`（設定されている場合）
-
-### GitHub Actions での自動同期
-
-`.github/workflows/sync-secrets.yml` で手動トリガー可能：
-
-1. GitHub リポジトリの **Actions** タブを開く
-2. Sync Secrets to Cloudflare ワークフローを選択
-3. Run workflow をクリック
-
-### 注意事項
-
-- 既存のSecretsを上書きします
-- GitHub Secrets（`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `DOTENV_PRIVATE_KEY`）が必要
+登録済み一覧は `pnpm cf:secret list` で確認する。
 
 ---
 

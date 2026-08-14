@@ -6,13 +6,7 @@
 
 ### 解決方法
 
-```bash
-# Secrets を確認
-pnpm wrangler secret list
-
-# 不足している場合は設定
-./scripts/setup-cloudflare-secrets.sh
-```
+`pnpm cf:secret list` で不足を確認し、`.claude/rules/cloudflare-deployment.md` の「Secrets登録方法」の手順で登録する。
 
 ## dotenvx 復号エラー
 

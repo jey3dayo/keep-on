@@ -220,11 +220,7 @@ keep-on/
 
 #### Secrets管理（Git管理外）
 
-初回セットアップ時に以下のスクリプトで一括設定：
-
-```bash
-./scripts/setup-cloudflare-secrets-bulk.sh
-```
+登録手順は `.claude/rules/cloudflare-deployment.md` の「Secrets登録方法」を参照。
 
 #### CI/CD 自動デプロイ
 

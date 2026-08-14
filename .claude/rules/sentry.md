@@ -37,10 +37,7 @@ Sentry 公式の「Next.js on Cloudflare」ガイドに従い、`@sentry/cloudfl
 
 #### Cloudflare Secrets
 
-```bash
-# SENTRY_DSN を設定
-echo '<DSN>' | pnpm wrangler secret put SENTRY_DSN
-```
+`.claude/rules/cloudflare-deployment.md` の「Secrets登録方法」の手順で `SENTRY_DSN` を登録する。
 
 #### GitHub Secrets
 
@@ -251,13 +248,8 @@ SENTRY_DSN is not set. Sentry will not be initialized.
 
 #### 解決方法
 
-```bash
-# Cloudflare Secrets に設定
-echo '<DSN>' | pnpm wrangler secret put SENTRY_DSN
-
-# ローカル開発用（.envに追加して暗号化）
-pnpm env:encrypt
-```
+`.claude/rules/cloudflare-deployment.md` の「Secrets登録方法」の手順で登録する。
+ローカル開発用は `.env` に追加して `pnpm env:encrypt` で暗号化する。
 
 ### ソースマップがアップロードされない
 
