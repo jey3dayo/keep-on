@@ -279,6 +279,20 @@
   @apply border-4 border-black/20 dark:border-white/20;
 }
 
+/* アイコン単体ボタン（ヘッダーのトグル類）。反応面を円形に統一し、押下へ即座に反応させる。
+   Tailwind の rounded-md / hover:bg-* は utilities レイヤー側なので、レイヤー外のこの定義が優先される。 */
+.icon-button {
+  @apply rounded-full transition-[background-color,transform] duration-150 ease-out;
+}
+
+.icon-button:hover {
+  @apply bg-accent;
+}
+
+.icon-button:active {
+  @apply scale-95;
+}
+
 .color-swatch {
   @apply w-8 h-8 rounded-full transition-transform active:scale-90;
 }
