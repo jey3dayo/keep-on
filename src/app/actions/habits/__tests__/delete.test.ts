@@ -56,7 +56,7 @@ describe('deleteHabitAction', () => {
     }
   })
 
-  it('存在しない習慣の場合はNotFoundErrorを取得', async () => {
+  it('存在しない習慣の場合はAuthorizationErrorを取得', async () => {
     const { getCurrentUserId } = await import('@/lib/user')
     vi.mocked(getCurrentUserId).mockResolvedValue(userId)
 
@@ -66,7 +66,7 @@ describe('deleteHabitAction', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error.name).toBe('NotFoundError')
+      expect(result.error.name).toBe('AuthorizationError')
     }
   })
 

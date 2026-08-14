@@ -2,7 +2,7 @@
 
 import { Result } from '@praha/byethrow'
 import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
-import { NotFoundError } from '@/lib/errors/habit'
+import { AuthorizationError, getHabitAuthorizationClientMessage } from '@/lib/errors/habit'
 import { serializeHabitError } from '@/lib/errors/serializable'
 import { updateHabit } from '@/lib/queries/habit'
 import { validateHabitUpdate } from '@/validators/habit'
@@ -35,7 +35,7 @@ export async function updateHabitAction(
   const habit = await updateHabit(habitId, userId, validationResult.value)
 
   if (!habit) {
-    return actionError(serializeHabitError(new NotFoundError()))
+    return actionError(serializeHabitError(new AuthorizationError({ detail: getHabitAuthorizationClientMessage() })))
   }
 
   await revalidateHabitPaths(userId)

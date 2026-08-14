@@ -66,6 +66,16 @@
       "metaDescription": "新しい習慣を作成する",
       "heading": "新しい習慣を追加",
       "subheading": "続けたい習慣を登録しましょう"
+    },
+    "table": {
+      "emptyTitle": "習慣がまだ登録されていません",
+      "emptyDescription": "新しい習慣を作成してみましょう",
+      "createCta": "新しい習慣"
+    }
+  },
+  "errors": {
+    "habits": {
+      "forbidden": "この操作を実行する権限がありません"
     }
   },
   "navigation": {
