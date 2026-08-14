@@ -181,17 +181,17 @@ beforeSend(event) {
 
 ## ソースマップのアップロード
 
-**現状は未設定**。`.github/workflows/deploy.yml` にアップロードステップは無く（`# TODO: Sentry ソースマップ
-アップロードは後のフェーズで実装` のまま）、`SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` の
-GitHub Secrets も未登録。そのため本番のスタックトレースは minify されたまま表示される。
+`next.config.ts` の `withSentryConfig` が担当する。`SENTRY_AUTH_TOKEN` が設定されているときだけ
+アップロードが有効になるため、トークンを持たないローカルビルドは何も送らない。
 
-`next.config.ts` の `withSentryConfig` は `SENTRY_AUTH_TOKEN` が設定されているときだけ source map の
-アップロードを有効化する。有効化するなら GitHub Secrets を登録してビルドジョブに env を渡すのが最も簡単で、
-下記の `sentry-cli` を使う手動ステップと二重管理にならないよう、どちらか一方に統一する。
+### ワークフロー
 
-### ワークフロー（sentry-cli を使う場合の例）
+`.github/workflows/deploy.yml` の Build ステップに `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` を
+渡してある（GitHub Secrets に登録済み）。`sentry-cli` を別ステップで叩く必要はない。トークンは Sentry の
+**Organization Auth Token**（scope: `org:ci` = Source Map Upload / Release Creation / Code Mappings）で、
+1Password の `Personal / KeepOn` にも保管している。
 
-`.github/workflows/deploy.yml` に追加する：
+`sentry-cli` を使う場合の代替（現在は未使用。二重管理になるのでどちらか一方に統一する）：
 
 ```yaml
 - name: Upload source maps to Sentry
