@@ -165,6 +165,24 @@ git push origin main
 
 ---
 
+## Cloudflare Access アプリの管理（Terraform）
+
+Access アプリケーション（`keep-on` 本体と、静的アセット bypass 用の `keep-on-public-assets`）は
+`terraform/access/` で IaC 管理する。ダッシュボードで直接変更すると drift になるため、変更は
+Terraform 経由で行う（bypass が必要な理由は Issue #190 を参照）。
+
+```bash
+cd terraform/access
+ACC=$(cd ../.. && pnpm exec dotenvx get CLOUDFLARE_ACCOUNT_ID -f .env)
+pnpm exec dotenvx run -f ../../.env -- env TF_VAR_account_id="$ACC" terraform plan
+pnpm exec dotenvx run -f ../../.env -- env TF_VAR_account_id="$ACC" terraform apply
+```
+
+- 認証は `.env` の `CLOUDFLARE_API_TOKEN`（`Access: Apps 編集` 権限付き）
+- state はローカル管理でコミットしない（`.gitignore` 済み）。マシンを移行したら `terraform import` で再取得する
+
+---
+
 ## Secrets登録方法
 
 `wrangler secret put` で個別登録する（一時 JSON は使わない）。値をコマンド引数に書くとシェル履歴へ平文で残るため、`.env` からのパイプか対話入力のどちらかを使う。

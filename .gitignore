@@ -80,3 +80,8 @@ test-results/
 
 # APM dependencies
 apm_modules/
+
+# Terraform（state はローカル管理、コミットしない）
+terraform/**/.terraform/
+terraform/**/*.tfstate
+terraform/**/*.tfstate.backup
