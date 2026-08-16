@@ -26,6 +26,13 @@ resource "cloudflare_zero_trust_access_application" "keep_on" {
   }]
 }
 
+# 既存アプリを、state がない環境でも初回 apply 時に管理下へ取り込む。
+# Access application UUID は秘密情報ではないため、再現可能な import ID として管理する。
+import {
+  to = cloudflare_zero_trust_access_application.keep_on
+  id = "accounts/4e7695e2370bc9cef6ae9f2802517dd3/d9973175-4159-4e35-87f6-fc8049126ee2"
+}
+
 # 静的アセットと PWA ファイルだけ認証不要にする（Issue #190）。
 # 未認証時にこれらが Access ログインへ 302 されると、CSP がリダイレクト先
 # （cloudflareaccess.com）を style-src / script-src 違反としてブロックし画面が崩れる。
@@ -58,4 +65,10 @@ resource "cloudflare_zero_trust_access_application" "keep_on_public_assets" {
       everyone = {}
     }]
   }]
+}
+
+# 静的アセット bypass 用の既存アプリも同様に取り込む。
+import {
+  to = cloudflare_zero_trust_access_application.keep_on_public_assets
+  id = "accounts/4e7695e2370bc9cef6ae9f2802517dd3/bf987fc3-074c-430d-8ca0-eeb781bd6774"
 }

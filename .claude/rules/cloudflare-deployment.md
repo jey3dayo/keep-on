@@ -179,7 +179,7 @@ pnpm exec dotenvx run -f ../../.env -- env TF_VAR_account_id="$ACC" terraform ap
 ```
 
 - 認証は `.env` の `CLOUDFLARE_API_TOKEN`（`Access: Apps 編集` 権限付き）
-- state はローカル管理でコミットしない（`.gitignore` 済み）。マシンを移行したら `terraform import` で再取得する
+- state はローカル管理でコミットしない（`.gitignore` 済み）。既存 2 アプリの UUID は `terraform/access/main.tf` の `import` block に記録済みで、空の state でも上記 `terraform apply` が先に import して管理を引き継ぐ
 
 ---
 
