@@ -200,6 +200,8 @@ keep-on/
 │   ├── transforms/   # データ変換ロジック
 │   ├── types/        # TypeScript 型定義
 │   └── validators/   # バリデーションロジック
+├── terraform/
+│   └── access/       # Cloudflare Access アプリの IaC 定義
 ├── mise.toml         # mise タスク定義
 ├── open-next.config.ts  # OpenNext 設定
 ├── wrangler.jsonc    # Cloudflare Workers 設定
@@ -217,6 +219,7 @@ keep-on/
 - `wrangler.jsonc`: Cloudflare Workers 設定（公開環境変数、KV Namespace）
 - `.github/workflows/deploy.yml`: CI/CD パイプライン
 - `mise.toml`: デプロイタスク定義
+- `terraform/access/`: Cloudflare Access アプリとポリシー（手順は `.claude/rules/cloudflare-deployment.md`）
 
 #### Secrets管理（Git管理外）
 

@@ -6,6 +6,7 @@ import { userSettings, users } from '@/db/schema'
 import { invalidateUserCache } from '@/lib/cache/user-cache'
 import { getDb } from '@/lib/db'
 import { profileQuery } from '@/lib/queries/profiler'
+import { captureException } from '@/lib/sentry'
 import { type UpdateUserSettingsSchemaType, UserSettingsSchema } from '@/schemas/user-settings'
 import type { UserSettings } from '@/types/user-settings'
 
@@ -188,6 +189,7 @@ async function updateWeekStartAndCache(
           externalId,
           userId,
         })
+        captureException(cacheError, { externalId, operation: 'updateWeekStartAndCache.invalidateUserCache', userId })
       }
     }
 
@@ -197,6 +199,8 @@ async function updateWeekStartAndCache(
       settingsId,
       userId,
     })
+    // ここでは Sentry へ送らない。この throw は updateUserSettingsAction の catch で
+    // 必ず捕捉されて送信され、元エラーは cause 経由で linkedErrors が紐づけるため。
     await rollbackUserSettings(userId, settingsId, previousSettings)
     throw new Error('Failed to update users.weekStart. Settings have been rolled back.', { cause: error })
   }

@@ -188,30 +188,17 @@ beforeSend(event) {
 **Organization Auth Token**（scope: `org:ci` = Source Map Upload / Release Creation / Code Mappings）で、
 1Password の `Personal / KeepOn` にも保管している。
 
-`sentry-cli` を使う場合の代替（現在は未使用。二重管理になるのでどちらか一方に統一する）：
-
-```yaml
-- name: Upload source maps to Sentry
-  env:
-    SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-    SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-    SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-  run: |
-    pnpm sentry-cli releases new "${{ github.sha }}"
-    pnpm sentry-cli releases files "${{ github.sha }}" upload-sourcemaps .open-next --url-prefix "~/"
-    pnpm sentry-cli releases finalize "${{ github.sha }}"
-```
+`@sentry/cli` は依存から削除済み。`withSentryConfig` と二重管理になるため、`sentry-cli` を直接叩く手順は用意しない。
 
 ### 手動アップロード
 
-```bash
-# ビルド実行
-pnpm build:cf
+`SENTRY_AUTH_TOKEN` を渡してビルドすれば、その場でアップロードされる。
+トークンは 1Password から読み出す。コマンド引数に書くとシェル履歴へ平文で残る。
 
-# ソースマップをアップロード
-pnpm sentry-cli releases new "$(git rev-parse HEAD)"
-pnpm sentry-cli releases files "$(git rev-parse HEAD)" upload-sourcemaps .open-next --url-prefix "~/"
-pnpm sentry-cli releases finalize "$(git rev-parse HEAD)"
+```bash
+SENTRY_AUTH_TOKEN=$(op item get ikksduz7inq3ms2vifjklr2sui --vault Personal \
+  --fields "CI Auth Token (org:ci)" --reveal) \
+  SENTRY_ORG=jey3dayo SENTRY_PROJECT=keep-on pnpm build:cf
 ```
 
 ## API で issue を参照する
