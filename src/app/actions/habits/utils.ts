@@ -13,6 +13,7 @@ import {
 import { type SerializableHabitError, serializeHabitError } from '@/lib/errors/serializable'
 import { createRequestMeta, formatError, logWarn } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
+import { captureException } from '@/lib/sentry'
 import { getServerDateKey } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId } from '@/lib/user'
@@ -191,6 +192,7 @@ export async function revalidateHabitPaths(userId: string, options: { sync?: boo
     } catch (error) {
       // キャッシュ無効化の失敗は致命的ではないため、ログを記録して継続
       logWarn('revalidateHabitPaths:error', { error: formatError(error), userId })
+      captureException(error, { operation: 'revalidateHabitPaths', userId })
     }
   }
 

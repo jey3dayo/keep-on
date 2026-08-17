@@ -15,6 +15,7 @@ import { formatError, isDatabaseError, logInfo, logWarn, nowMs } from '@/lib/log
 import { getPeriodDateRange } from '@/lib/queries/period'
 import { profileQuery } from '@/lib/queries/profiler'
 import { getUserWeekStart } from '@/lib/queries/user'
+import { captureException } from '@/lib/sentry'
 import { formatDateKey, normalizeCheckinDate, parseDateKey } from '@/lib/utils/date'
 import type { HabitWithProgress } from '@/types/habit'
 
@@ -337,6 +338,12 @@ export async function getHabitsWithProgress(
       logWarn('getHabitsWithProgress:stale-fallback', {
         cachedDateKey: staleSnapshot.dateKey,
         error: formatError(error),
+        requestedDateKey: dateKey,
+        userId,
+      })
+      captureException(error, {
+        cachedDateKey: staleSnapshot.dateKey,
+        operation: 'getHabitsWithProgress:stale-fallback',
         requestedDateKey: dateKey,
         userId,
       })

@@ -5,6 +5,7 @@ import * as v from 'valibot'
 import { actionError, actionOk, type ServerActionResultAsync } from '@/lib/actions/result'
 import type { SerializableSettingsError } from '@/lib/errors/settings'
 import { updateUserSettings } from '@/lib/queries/user-settings'
+import { captureException } from '@/lib/sentry'
 import { getCurrentUserId } from '@/lib/user'
 import { UpdateUserSettingsSchema } from '@/schemas/user-settings'
 import type { UserSettings } from '@/types/user-settings'
@@ -35,6 +36,7 @@ export async function updateUserSettingsAction(
     return actionOk(updated)
   } catch (error) {
     console.error('Failed to update user settings', error)
+    captureException(error, { operation: 'updateUserSettingsAction', userId })
     return actionError({ message: 'ユーザー設定の更新に失敗しました', name: 'DatabaseError' })
   }
 }
