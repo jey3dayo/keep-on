@@ -193,9 +193,12 @@ beforeSend(event) {
 ### 手動アップロード
 
 `SENTRY_AUTH_TOKEN` を渡してビルドすれば、その場でアップロードされる。
+トークンは 1Password から読み出す。コマンド引数に書くとシェル履歴へ平文で残る。
 
 ```bash
-SENTRY_AUTH_TOKEN=<token> SENTRY_ORG=jey3dayo SENTRY_PROJECT=keep-on pnpm build:cf
+SENTRY_AUTH_TOKEN=$(op item get ikksduz7inq3ms2vifjklr2sui --vault Personal \
+  --fields "CI Auth Token (org:ci)" --reveal) \
+  SENTRY_ORG=jey3dayo SENTRY_PROJECT=keep-on pnpm build:cf
 ```
 
 ## API で issue を参照する

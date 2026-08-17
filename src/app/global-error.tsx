@@ -9,7 +9,9 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   }, [error])
 
   return (
-    <html lang="ja">
+    // iOS standalone では body だけ塗ると safe-area がブラウザ既定色のまま残り、
+    // 暗い画面の周囲に白帯が出る。html にも同じ背景を敷く
+    <html lang="ja" style={{ background: '#0f172a' }}>
       <body
         style={{
           alignItems: 'center',
