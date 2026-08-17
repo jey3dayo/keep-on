@@ -17,7 +17,10 @@ export default defineConfig({
       '**/.next/**',
       '**/build/**',
       '**/.{idea,git,cache,output,temp}/**',
+      // `git wt` が作る .worktrees/ と、Claude Code の EnterWorktree が作る .claude/worktrees/。
+      // 除外しないと worktree 内の e2e spec を Vitest が拾い、テスト全体が exit 1 になる
       '**/.worktrees/**',
+      '**/.claude/worktrees/**',
       '**/*.stories.tsx',
       '**/*.stories.ts',
       // e2e は Playwright が実行する。Playwright の testMatch が *.spec.* を要求するため
