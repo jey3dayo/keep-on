@@ -34,12 +34,18 @@ export function ColorPalette({ currentTheme, onThemeChange }: ColorPaletteProps)
     [onThemeChange]
   )
   return (
-    <div className="flex items-center justify-center gap-2">
+    // gap-3(12px): スウォッチ(32px)を ::after で 44px(inset-1.5=6px×2) に広げても隣接分と重ならない間隔
+    <div className="flex items-center justify-center gap-3">
       {colors.map(({ name, bg }) => (
         <Button
           aria-label={`${name} テーマ`}
           aria-pressed={currentTheme === name}
-          className={cn('color-swatch hover:bg-transparent', currentTheme === name && 'color-swatch-selected')}
+          // .color-swatch は globals.css の @layer base 外で w-8 h-8 を強制するため、
+          // 見た目の寸法はそのまま、::after のエキスパンダで当たり判定だけ 44px に広げる
+          className={cn(
+            "color-swatch relative after:absolute after:-inset-1.5 after:content-[''] hover:bg-transparent",
+            currentTheme === name && 'color-swatch-selected'
+          )}
           data-theme={name}
           key={name}
           onClick={handleThemeChange}

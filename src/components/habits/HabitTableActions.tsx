@@ -33,7 +33,8 @@ export function HabitTableActions({
   const stopPropagation = useCallback((event: React.MouseEvent) => event.stopPropagation(), [])
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-1">
+    // 44px の「編集」「アーカイブ」（破壊的操作）が隣接するため gap-2(8px) を確保
+    <div className="flex flex-wrap items-center justify-end gap-2">
       {!archived && (
         <Button aria-label="編集" className="shrink-0" onClick={handleEdit} size="icon" title="編集" variant="ghost">
           <Pencil className="h-4 w-4" />

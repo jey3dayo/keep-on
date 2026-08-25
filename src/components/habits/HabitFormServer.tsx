@@ -67,7 +67,10 @@ function HabitFormHeader({
   return (
     <header className="sticky top-0 z-10 flex items-center justify-between border-border/50 border-b bg-background/50 px-4 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/30">
       <Button
-        className="h-auto gap-1 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+        // 内容の高さは 20px。min-h-11 で広げると header(py-3)が 44px→68px に伸びてしまうため、
+        // ::after のエキスパンダで当たり判定だけ広げる。inset-y-3(12px×2) は header の py-3 と
+        // 同じ値なので、ヘッダー高さを変えずに 44px を確保できる
+        className="relative h-auto gap-1 p-0 text-muted-foreground after:absolute after:-inset-x-2 after:-inset-y-3 after:content-[''] hover:bg-transparent hover:text-foreground"
         onClick={onBack}
         type="button"
         variant="ghost"
@@ -80,7 +83,9 @@ function HabitFormHeader({
       </h2>
       <Button
         className={cn(
-          'h-auto p-0 hover:bg-transparent',
+          // 「戻る」と同じ理由でエキスパンダを使う（min-h-11 だと header 高さが 44px→68px に伸びる）。
+          // inset-x-2 は「保存」(全角2文字 ≒ 28px)を 44px に届かせるための横方向の確保
+          "relative h-auto p-0 after:absolute after:-inset-x-2 after:-inset-y-3 after:content-[''] hover:bg-transparent",
           canSubmit ? 'text-foreground hover:opacity-80' : 'cursor-not-allowed text-muted-foreground'
         )}
         disabled={!canSubmit}
@@ -265,10 +270,14 @@ function HabitColorField({ control, t }: HabitFormFieldProps) {
           const isSelected = field.value === color.id
           return (
             <div className="relative h-10 w-10" key={color.id}>
-              {/* RadioGroupItem のビルトイン Indicator は表示できないため、実体は透明な overlay として重ね、見た目は下の div で維持する */}
+              {/* RadioGroupItem のビルトイン Indicator は表示できないため、実体は透明な overlay として重ね、見た目は下の div で維持する。
+                  見た目の div(h-10 w-10)は変えず、透明オーバーレイだけ -inset-0.5 で 44px のタップ領域に広げる。
+                  親は flex-wrap gap-3(12px) のため隣接スウォッチの当たり判定と重ならない。 */}
               <RadioGroupItem
                 aria-label={color.label}
-                className="peer absolute inset-0 h-10 w-10 cursor-pointer rounded-full border-0 text-transparent [&_svg]:hidden"
+                // RadioGroupItem の基底クラスに h-4 w-4 があり、twMerge は h-*/w-* を明示指定しない限り
+                // 上書きしない。h-auto w-auto で無効化し、-inset-0.5 だけでサイズを決めさせる
+                className="peer absolute -inset-0.5 h-auto w-auto cursor-pointer rounded-full border-0 text-transparent [&_svg]:hidden"
                 value={color.id}
               />
               <div
@@ -307,7 +316,9 @@ function HabitFrequencyField({ control, selectedColorValue, t, frequencyLabel }:
         <div className="flex items-center justify-between">
           <Button
             aria-label={t('habits.form.frequencyDecreaseLabel')}
-            className="h-10 w-10 rounded-full p-0"
+            // secondary で背景色が見た目に直結するため寸法(h-10 w-10)は変えず、
+            // ::after のエキスパンダで当たり判定だけ 44px(inset-0.5=2px×2) にする
+            className="relative h-10 w-10 rounded-full p-0 after:absolute after:-inset-0.5 after:content-['']"
             disabled={field.value <= 1}
             onClick={handleDecrease}
             size="icon"
@@ -324,7 +335,9 @@ function HabitFrequencyField({ control, selectedColorValue, t, frequencyLabel }:
           </div>
           <Button
             aria-label={t('habits.form.frequencyIncreaseLabel')}
-            className="h-10 w-10 rounded-full p-0"
+            // secondary で背景色が見た目に直結するため寸法(h-10 w-10)は変えず、
+            // ::after のエキスパンダで当たり判定だけ 44px(inset-0.5=2px×2) にする
+            className="relative h-10 w-10 rounded-full p-0 after:absolute after:-inset-0.5 after:content-['']"
             onClick={handleIncrease}
             size="icon"
             type="button"

@@ -163,7 +163,9 @@ export function HabitListCard({
       <Button
         aria-haspopup="dialog"
         aria-label={`${habit.name}の操作を開く`}
-        className="absolute top-3 right-3 h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+        // 見た目(h-8 w-8 = 32px)は変えず、既に absolute 配置のため ::after の
+        // エキスパンダで当たり判定だけ 44px(inset-1.5=6px×2) に広げる（relative は不要）
+        className="absolute top-3 right-3 h-8 w-8 rounded-full text-muted-foreground after:absolute after:-inset-1.5 after:content-[''] hover:text-foreground"
         onClick={handleMenuClick}
         onPointerDown={handleButtonPointerDown}
         size="icon"
@@ -224,7 +226,8 @@ export function HabitListCard({
               {habit.currentProgress} / {habit.frequency}
             </span>
             {habit.frequency > 1 && onAdd && onRemove && (
-              <div className="flex items-center gap-1.5">
+              // 44px の −/＋ ボタンが誤タップで隣接し増減を取り違えないよう gap-2(8px) を確保
+              <div className="flex items-center gap-2">
                 <Button
                   aria-label="チェックインを1つ減らす"
                   className="h-11 w-11 rounded-full border border-border/70 bg-background/95 p-0 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 active:scale-90 disabled:opacity-45 motion-reduce:transition-none motion-reduce:active:scale-100"

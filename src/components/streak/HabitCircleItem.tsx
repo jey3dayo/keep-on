@@ -172,7 +172,10 @@ export function HabitCircleItem({
           <div className="flex items-center gap-2">
             <Button
               aria-label="チェックインを減らす"
-              className="h-7 w-7 rounded-full bg-white/10 p-0 text-white hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
+              // 円形の見た目(h-7 w-7 = 28px)を保つため、当たり判定は ::after のエキスパンダで
+              // 44px(inset-2=8px×2) に広げる。gap-2(8px)の間に進捗表示の span があり、
+              // 両ボタンのエキスパンダは span の手前で収まるため互いに重ならない
+              className="relative h-7 w-7 rounded-full bg-white/10 p-0 text-white after:absolute after:-inset-2 after:content-[''] hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
               disabled={habit.currentProgress === 0}
               onClick={handleRemoveCheckin}
               size="icon"
@@ -188,7 +191,10 @@ export function HabitCircleItem({
 
             <Button
               aria-label="チェックインを増やす"
-              className="h-7 w-7 rounded-full bg-white/10 p-0 text-white hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
+              // 円形の見た目(h-7 w-7 = 28px)を保つため、当たり判定は ::after のエキスパンダで
+              // 44px(inset-2=8px×2) に広げる。−ボタンとの間には進捗表示の span(min-w-3rem)があり、
+              // エキスパンダは gap-2(8px)を埋めて span の端で止まるため、−ボタンとは重ならない
+              className="relative h-7 w-7 rounded-full bg-white/10 p-0 text-white after:absolute after:-inset-2 after:content-[''] hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
               disabled={isCompleted}
               onClick={handleAddCheckin}
               size="icon"

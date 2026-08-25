@@ -52,7 +52,9 @@ export function HabitPresetSelector({ onClose, onSelectPreset, onCreateCustom }:
         <div className="relative flex items-center justify-center">
           <Button
             aria-label={t('habits.presetSelector.closeLabel')}
-            className="absolute left-0 h-10 w-10 rounded-full p-0"
+            // style で背景色が付き見た目に直結するため寸法(h-10 w-10)は変えず、
+            // 既に absolute 配置のため ::after のエキスパンダで当たり判定だけ 44px(inset-0.5=2px×2) に広げる
+            className="absolute left-0 h-10 w-10 rounded-full p-0 after:absolute after:-inset-0.5 after:content-['']"
             onClick={onClose}
             size="icon"
             style={{ backgroundColor: bgColorLight }}
