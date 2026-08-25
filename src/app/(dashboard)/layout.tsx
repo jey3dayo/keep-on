@@ -37,6 +37,7 @@ export default async function DashboardLayout({
         {
           '--header-height': 'calc(var(--spacing) * 12)',
           '--sidebar-width': 'calc(var(--spacing) * 72)',
+          '--tabbar-height': 'calc(var(--spacing) * 14)',
         } as React.CSSProperties
       }
     >
@@ -46,11 +47,11 @@ export default async function DashboardLayout({
         <SiteHeader />
         {/*
           モバイルの設定ピルは設定タブと重複し、ページドットとビュー切替は各コンテンツへ移したため、
-          旧のフッター slot 機構を廃止した。md:hidden の MobileTabBar は DOM に残るため :has で
-          兄弟の有無を判定せず、md 幅で safe-area を持つ環境（iPad standalone）でも壊れないよう
-          スクロールコンテナの padding を幅ごとに明示する。
+          旧のフッター slot 機構を廃止した。MobileTabBar はコンテンツ上の absolute overlay なので、
+          スクロールコンテナ側でタブバー本体と safe-area 分の padding を予約する。md 幅で safe-area を
+          持つ環境（iPad standalone）では、従来どおりスクロールコンテナ自身が safe-area を確保する。
         */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden max-md:pb-0 md:pb-[env(safe-area-inset-bottom)]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden max-md:pb-[calc(var(--tabbar-height)+env(safe-area-inset-bottom))] md:pb-[env(safe-area-inset-bottom)]">
           {children}
         </div>
         <MobileTabBar />

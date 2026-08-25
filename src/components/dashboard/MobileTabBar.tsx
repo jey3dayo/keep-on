@@ -35,6 +35,12 @@ function TabItem({ item, pathname }: { item: NavItem; pathname: string }) {
  * スマホ幅のナビゲーション。以前はハンバーガー→下部シート(Drawer)だったが、
  * 遷移先を一目で把握できるタブ型に置き換えた。NAV_ITEMS 全項目（main + secondary）を
  * 常時 5 タブとして表示するため、Drawer にあった見出しなし/開閉の概念自体が不要になった。
+ *
+ * フロー内だとバーの背後が body になり、バウンスや Safari の UI 縮小でコンテンツとの間に背景色が露出して
+ * 「ちぎれ」て見えた（実測）。HIG はタブバーをコンテンツ上の overlay と定義し、translucent はコンテンツの
+ * 潜り込みが前提のため、overlay + スクローラ側 padding-bottom でコンテンツを下へ潜り込ませる。
+ * タブの高さは min-h-14（3.5rem）と layout.tsx の --tabbar-height を一致させる。min-h-14 を変える場合は
+ * layout.tsx の変数も揃えること。
  */
 export function MobileTabBar() {
   const pathname = usePathname()
@@ -43,7 +49,7 @@ export function MobileTabBar() {
   return (
     <nav
       aria-label="メインナビゲーション"
-      className="flex shrink-0 border-border/50 border-t bg-background/50 pb-[env(safe-area-inset-bottom)] backdrop-blur-md supports-[backdrop-filter]:bg-background/30 md:hidden"
+      className="absolute inset-x-0 bottom-0 z-30 flex border-border/50 border-t bg-background/50 pb-[env(safe-area-inset-bottom)] backdrop-blur-md supports-[backdrop-filter]:bg-background/30 md:hidden"
     >
       {items.map((item) => (
         <TabItem item={item} key={item.titleKey} pathname={pathname} />
