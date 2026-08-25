@@ -2,7 +2,6 @@
 
 import { LogOut } from 'lucide-react'
 import type * as React from 'react'
-import { MobileNavDrawer } from '@/components/dashboard/MobileNavDrawer'
 import { NavMain } from '@/components/dashboard/NavMain'
 import { NavSecondary } from '@/components/dashboard/NavSecondary'
 import { Sidebar, SidebarContent, SidebarFooter, useSidebar } from '@/components/sidebar/Sidebar'
@@ -12,9 +11,9 @@ import { NAV_ITEMS } from '@/constants/navigation'
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isMobile } = useSidebar()
 
-  // スマホ幅では左サイドバーではなく下部シートでナビゲーションを出す（SidebarTrigger の状態を共有する）
+  // モバイルのナビゲーションは MobileTabBar（layout.tsx）が担うため、サイドバーは描画しない。
   if (isMobile) {
-    return <MobileNavDrawer />
+    return null
   }
 
   return (

@@ -41,7 +41,7 @@ export function SiteHeader() {
   return (
     <header className="flex h-[calc(var(--header-height)+env(safe-area-inset-top))] shrink-0 items-center gap-2 border-border/50 border-b bg-background/50 pt-[env(safe-area-inset-top)] backdrop-blur-md supports-[backdrop-filter]:bg-background/30 md:rounded-t-xl md:border-r">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="icon-button -ml-1 min-h-11 min-w-11 text-foreground/80 hover:text-foreground" />
+        <SidebarTrigger className="icon-button -ml-1 min-h-11 min-w-11 text-foreground/80 hover:text-foreground max-md:hidden" />
         <Link
           className="flex shrink-0 items-center gap-2 rounded-md px-1.5 py-1 text-foreground/90 transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           href="/dashboard"

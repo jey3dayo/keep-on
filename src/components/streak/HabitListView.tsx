@@ -2,7 +2,7 @@
 
 import { Calendar } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import { type KeyboardEvent, useCallback, useMemo, useState } from 'react'
+import { type KeyboardEvent, type ReactNode, useCallback, useMemo, useState } from 'react'
 import { AddHabitButton } from '@/components/basics/Button'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
 import type { OptimisticRollback } from '@/components/habits/types'
@@ -39,6 +39,7 @@ interface HabitListViewProps {
   todayLabel: string
   totalDaily: number
   totalStreak: number
+  viewToggleSlot?: ReactNode
 }
 
 export function HabitListView({
@@ -59,6 +60,7 @@ export function HabitListView({
   todayLabel,
   totalDaily,
   totalStreak,
+  viewToggleSlot,
 }: HabitListViewProps) {
   const [drawerState, setDrawerState] = useState<{ open: boolean; habit: HabitWithProgress | null }>({
     habit: null,
@@ -116,10 +118,13 @@ export function HabitListView({
     <>
       <div className="flex-1 space-y-6 px-4 pt-4 pb-10">
         <header className="sticky top-0 z-20 overflow-hidden rounded-3xl border border-border/60 bg-background/80 px-4 py-4 shadow-black/5 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-          <div className="mb-4">
-            <p className="text-foreground/70 text-xs tracking-wide">{todayLabel}</p>
-            {/* ページの h1 は SiteHeader が持つ。ここはセクション見出しなので h2 */}
-            <h2 className="font-semibold text-2xl text-foreground">今日の習慣</h2>
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-foreground/70 text-xs tracking-wide">{todayLabel}</p>
+              {/* ページの h1 は SiteHeader が持つ。ここはセクション見出しなので h2 */}
+              <h2 className="font-semibold text-2xl text-foreground">今日の習慣</h2>
+            </div>
+            {viewToggleSlot}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { resetHabitProgressAction } from '@/app/actions/habits/reset'
 import { Button } from '@/components/basics/Button'
 import { Icon } from '@/components/basics/Icon'
@@ -14,7 +14,6 @@ import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById } from '@/constants/habit-data'
 import { LONG_PRESS_DURATION_MS, LONG_PRESS_MOVE_THRESHOLD_PX } from '@/constants/interaction'
 import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
-import { useFooterSlot } from '@/contexts/MobileFooterContext'
 import { cn } from '@/lib/utils'
 import { getRingColorFromBackground } from '@/lib/utils/color'
 import { appToast } from '@/lib/utils/toast'
@@ -40,12 +39,11 @@ interface HabitSimpleViewProps {
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
   onRemoveCheckin?: (habitId: string) => Promise<void>
   onResetOptimistic?: (habitId: string) => OptimisticRollback
-  onSettings?: () => void
   onSkip?: (habitId: string) => Promise<void>
   onUnSkip?: (habitId: string) => Promise<void>
-  // 同時にマウントされる別ツリー（DesktopDashboard 経由）でこのビューが表示専用に使われる場合は false にし、
-  // footer スロットへの登録自体を抑止する（登録の競合防止は MobileFooterContext 側の null-node 無視ロジックが担う）
-  showBottomBar?: boolean
+  // デスクトップ経路ではモバイル用ページドットを描画しないため false にする。
+  showPageDots?: boolean
+  viewToggleSlot?: ReactNode
 }
 
 export function HabitSimpleView({
@@ -57,11 +55,11 @@ export function HabitSimpleView({
   onArchiveOptimistic,
   onDeleteOptimistic,
   onResetOptimistic,
-  onSettings,
   onSkip,
   onUnSkip,
   backgroundColor,
-  showBottomBar = true,
+  showPageDots = true,
+  viewToggleSlot,
 }: HabitSimpleViewProps) {
   const router = useRouter()
   const [currentPage, setCurrentPage] = useState(0)
@@ -287,69 +285,11 @@ export function HabitSimpleView({
 
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
 
-  const handleSettings = useCallback(() => {
-    if (onSettings) {
-      onSettings()
-      return
-    }
-    router.push('/settings')
-  }, [onSettings, router])
-
-  useFooterSlot(
-    'left',
-    showBottomBar ? (
-      <div className="flex items-center">
-        <Button
-          aria-label="設定を開く"
-          className="h-11 w-11 rounded-full border border-white/20 bg-white/10 p-0 text-white/80 hover:bg-white/20 hover:text-white"
-          onClick={handleSettings}
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <Icon className="h-6 w-6" name="settings" />
-        </Button>
-
-        {totalPages > 1 ? (
-          // gap-4(16px): ドット(8px)と合わせて中心間 24px。各ドットの ::after を左右 8px 広げると
-          // ちょうど隣と接し、重ならずに 24px 幅の当たり判定が取れる。gap を詰めると重なって
-          // 隣のドットが押せなくなるため縮めないこと
-          <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-4">
-            {pages.map((page) => (
-              <Button
-                aria-label={`ページ ${page + 1}`}
-                // ドットはページ送りの唯一の手段（スワイプ操作は無い）だが、見た目は 8px の
-                // インジケータであることが要件。寸法は変えず ::after で当たり判定だけ広げる。
-                // 44px はドット間隔を極端に空けないと取れないため、隣と重ならない範囲で
-                // WCAG 2.5.8 AA の 24x24 を満たす値（横 24px / 縦 44px）にしている
-                className={cn(
-                  "relative h-2 w-2 rounded-full p-0 transition-[transform,background-color] duration-300 after:absolute after:-inset-x-2 after:-inset-y-[18px] after:content-[''] hover:bg-transparent",
-                  currentPage === page ? 'scale-125 bg-white' : 'bg-white/40 hover:bg-white/60'
-                )}
-                data-page={page}
-                key={`page-${page}`}
-                onClick={handlePageChange}
-                size="icon"
-                type="button"
-                variant="ghost"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="h-2" />
-        )}
-      </div>
-    ) : null
-  )
-
   return (
     <DashboardBackground backgroundColor={bgColor} className="overflow-hidden">
-      {/* pb-24 だった旧値は、body に fixed で浮かせていた DashboardBottomBar の帯（設定ボタン h-11 +
-          周囲の余白）に習慣グリッド最下段が重ならないための予約だった。footer は今は
-          MobileFooterOutlet としてレイアウトに参加し自分の高さを占有するため、この pb は
-          その分の予約は不要。pb-8 は最下段の丸ボタンとスクロール終端の間に見た目上の余白を
-          残すためだけの小さい値（他セクションの pt-8 と揃えた対称の見た目を意図） */}
-      <main className="relative flex flex-1 items-start justify-center px-4 pt-8 pb-8">
+      {viewToggleSlot ? <div className="flex justify-end px-4 pt-3">{viewToggleSlot}</div> : null}
+      {/* 旧 footer slot に確保していた下部余白は、ページドットを本文フローへ移したため不要。 */}
+      <main className="relative flex flex-1 flex-col items-center px-4 pb-8 max-md:pt-0 md:pt-8">
         <div className={cn('grid w-full max-w-md grid-cols-2 gap-6')}>
           {currentHabits.map((habit) => {
             const isCompleted = completedHabitIds.has(habit.id)
@@ -399,6 +339,29 @@ export function HabitSimpleView({
             <p className="text-center font-medium text-base text-white">タスクを追加</p>
           </div>
         </div>
+
+        {/* 設定ピルは設定タブと完全に重複するため削除し、ページドットだけをコンテンツフローに残す。 */}
+        {showPageDots && totalPages > 1 ? (
+          // ドットは見た目を 8px のまま after:-inset-[18px] で 44×44px の当たり判定にする。
+          // gap を詰めるとエキスパンダが重なり隣が押せなくなるため、gap-9 で中心間隔も 44px に固定する。
+          <div className="mt-9 flex items-center justify-center gap-9">
+            {pages.map((page) => (
+              <Button
+                aria-label={`ページ ${page + 1}`}
+                className={cn(
+                  "relative h-2 w-2 rounded-full p-0 transition-[transform,background-color] duration-300 after:absolute after:-inset-[18px] after:content-[''] hover:bg-transparent",
+                  currentPage === page ? 'scale-125 bg-white' : 'bg-white/40 hover:bg-white/60'
+                )}
+                data-page={page}
+                key={`page-${page}`}
+                onClick={handlePageChange}
+                size="icon"
+                type="button"
+                variant="ghost"
+              />
+            ))}
+          </div>
+        ) : null}
       </main>
 
       {/* アクションDrawer */}

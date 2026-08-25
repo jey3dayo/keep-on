@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useFooterSlot } from '@/contexts/MobileFooterContext'
 import { DashboardBackground } from './DashboardBackground'
 import { DashboardViewToggle } from './DashboardViewToggle'
 import { HabitListView } from './HabitListView'
@@ -33,17 +32,6 @@ export function StreakDashboard({
     totalStreak,
   } = useDashboardContent(habits)
 
-  useFooterSlot(
-    'right',
-    <DashboardViewToggle
-      activeButtonClassName="bg-foreground text-background"
-      buttonClassName="rounded-full p-2"
-      currentView={currentView}
-      inactiveButtonClassName="text-muted-foreground"
-      onViewChange={onViewChange}
-    />
-  )
-
   useEffect(() => {
     const root = document.documentElement
     root.style.setProperty('--dashboard-bg', 'var(--primary)')
@@ -64,6 +52,20 @@ export function StreakDashboard({
     }
   }, [])
 
+  // オーバーレイは simple view の習慣グリッドと list view の sticky カードに z-index で重なった実測回帰があったため、
+  // ビューごとのフロー内 slot に渡して、各コンテンツと一緒に配置・スクロールさせる。
+  const viewToggleSlot = (
+    <div className="md:hidden">
+      <DashboardViewToggle
+        activeButtonClassName="bg-foreground text-background"
+        buttonClassName="rounded-full p-2"
+        currentView={currentView}
+        inactiveButtonClassName="text-muted-foreground"
+        onViewChange={onViewChange}
+      />
+    </div>
+  )
+
   return (
     <>
       {currentView === 'simple' ? (
@@ -79,6 +81,7 @@ export function StreakDashboard({
           onResetOptimistic={onResetOptimistic}
           onSkip={onSkip}
           onUnSkip={onUnSkip}
+          viewToggleSlot={viewToggleSlot}
         />
       ) : (
         <DashboardBackground>
@@ -100,6 +103,7 @@ export function StreakDashboard({
             todayLabel={todayLabel}
             totalDaily={totalDaily}
             totalStreak={totalStreak}
+            viewToggleSlot={viewToggleSlot}
           />
         </DashboardBackground>
       )}

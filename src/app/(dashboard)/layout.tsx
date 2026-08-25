@@ -1,12 +1,11 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { AppSidebar } from '@/components/dashboard/AppSidebar'
-import { MobileFooterOutlet } from '@/components/dashboard/MobileFooterOutlet'
+import { MobileTabBar } from '@/components/dashboard/MobileTabBar'
 import { SiteHeader } from '@/components/dashboard/SiteHeader'
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator'
 import { SidebarInset, SidebarProvider } from '@/components/sidebar/Sidebar'
 import { SIGN_IN_PATH } from '@/constants/auth'
-import { MobileFooterProvider } from '@/contexts/MobileFooterContext'
 import { getAccessIdentity } from '@/lib/auth/access'
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'
@@ -45,17 +44,16 @@ export default async function DashboardLayout({
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
-        <MobileFooterProvider>
-          {/* このスクロールコンテナは (dashboard) 配下の全ページに効く。footer(MobileFooterOutlet) が
-              実体を持つページでは footer 自身が safe-area を確保するため、ここでの pb-safe-area は
-              `:has(+ [data-mobile-footer])` で 0 に落として二重確保を避ける。footer が空（/analytics,
-              /settings 等）で何も描画されないページでは、このコンテナが引き続き画面最下端に接するので
-              自前の safe-area 確保を残す必要がある */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden pb-[env(safe-area-inset-bottom)] [&:has(+[data-mobile-footer])]:pb-0">
-            {children}
-          </div>
-          <MobileFooterOutlet />
-        </MobileFooterProvider>
+        {/*
+          モバイルの設定ピルは設定タブと重複し、ページドットとビュー切替は各コンテンツへ移したため、
+          旧のフッター slot 機構を廃止した。md:hidden の MobileTabBar は DOM に残るため :has で
+          兄弟の有無を判定せず、md 幅で safe-area を持つ環境（iPad standalone）でも壊れないよう
+          スクロールコンテナの padding を幅ごとに明示する。
+        */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden max-md:pb-0 md:pb-[env(safe-area-inset-bottom)]">
+          {children}
+        </div>
+        <MobileTabBar />
       </SidebarInset>
       {modal}
     </SidebarProvider>

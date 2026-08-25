@@ -118,9 +118,6 @@ export const Default: Story = {
       storybookToast.info('チェックイン取り消し', `habitId: ${habitId}`)
       return Promise.resolve()
     },
-    onSettings: () => {
-      storybookToast.info('設定', '設定ボタンがクリックされました')
-    },
   },
 }
 
@@ -140,7 +137,6 @@ export const CustomBackground: Story = {
       storybookToast.info('チェックイン取り消し', `habitId: ${habitId}`)
       return Promise.resolve()
     },
-    onSettings: () => undefined,
   },
 }
 

@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { HabitWithProgress } from '@/types/habit'
 import type { User } from '@/types/user'
@@ -42,15 +42,24 @@ afterEach(() => {
 })
 
 describe('DesktopDashboard (simple view)', () => {
-  it('does not portal DashboardBottomBar into document.body', async () => {
+  it('does not render mobile page dots or the tab bar', async () => {
+    const desktopHabits = Array.from({ length: 7 }, (_, index) => ({ ...habit, id: `habit-${index}` }))
+
     render(
-      <DesktopDashboard currentView="simple" habits={[habit]} onViewChange={vi.fn()} todayLabel="8月13日" user={user} />
+      <DesktopDashboard
+        currentView="simple"
+        habits={desktopHabits}
+        onViewChange={vi.fn()}
+        todayLabel="8月13日"
+        user={user}
+      />
     )
 
-    // DashboardBottomBar は useEffect で mounted になった後に createPortal(document.body) する。
-    // showBottomBar={false} により HabitSimpleView 側でマウント自体が抑止されることを固定する。
+    // デスクトップ経路ではモバイル用の設定ピル・ページドット・タブバーを描画しない契約を固定する。
     await waitFor(() => {
       expect(document.querySelector('[aria-label="設定を開く"]')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'ページ 1' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('navigation', { name: 'メインナビゲーション' })).not.toBeInTheDocument()
     })
   })
 })
