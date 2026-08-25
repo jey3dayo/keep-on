@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useFooterSlot } from '@/contexts/MobileFooterContext'
 import { DashboardBackground } from './DashboardBackground'
-import { DashboardBottomBar } from './DashboardBottomBar'
 import { DashboardViewToggle } from './DashboardViewToggle'
 import { HabitListView } from './HabitListView'
 import { HabitSimpleView } from './HabitSimpleView'
@@ -32,6 +32,18 @@ export function StreakDashboard({
     totalDaily,
     totalStreak,
   } = useDashboardContent(habits)
+
+  useFooterSlot(
+    'right',
+    <DashboardViewToggle
+      activeButtonClassName="bg-foreground text-background"
+      buttonClassName="rounded-full p-2"
+      currentView={currentView}
+      inactiveButtonClassName="text-muted-foreground"
+      onViewChange={onViewChange}
+    />
+  )
+
   useEffect(() => {
     const root = document.documentElement
     root.style.setProperty('--dashboard-bg', 'var(--primary)')
@@ -91,19 +103,6 @@ export function StreakDashboard({
           />
         </DashboardBackground>
       )}
-
-      <DashboardBottomBar
-        className="md:hidden"
-        rightSlot={
-          <DashboardViewToggle
-            activeButtonClassName="bg-foreground text-background"
-            buttonClassName="rounded-full p-2"
-            currentView={currentView}
-            inactiveButtonClassName="text-muted-foreground"
-            onViewChange={onViewChange}
-          />
-        }
-      />
     </>
   )
 }

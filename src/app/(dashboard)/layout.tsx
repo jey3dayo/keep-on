@@ -1,10 +1,12 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { AppSidebar } from '@/components/dashboard/AppSidebar'
+import { MobileFooterOutlet } from '@/components/dashboard/MobileFooterOutlet'
 import { SiteHeader } from '@/components/dashboard/SiteHeader'
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator'
 import { SidebarInset, SidebarProvider } from '@/components/sidebar/Sidebar'
 import { SIGN_IN_PATH } from '@/constants/auth'
+import { MobileFooterProvider } from '@/contexts/MobileFooterContext'
 import { getAccessIdentity } from '@/lib/auth/access'
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'
@@ -43,11 +45,17 @@ export default async function DashboardLayout({
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
-        {/* このスクロールコンテナは (dashboard) 配下の全ページに効く。固定 nav を持つページでは nav 側にも
-            safe-area があり重複するが、fixed nav はビューポート基準で重なりは発生しないため許容している */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden pb-[env(safe-area-inset-bottom)]">
-          {children}
-        </div>
+        <MobileFooterProvider>
+          {/* このスクロールコンテナは (dashboard) 配下の全ページに効く。footer(MobileFooterOutlet) が
+              実体を持つページでは footer 自身が safe-area を確保するため、ここでの pb-safe-area は
+              `:has(+ [data-mobile-footer])` で 0 に落として二重確保を避ける。footer が空（/analytics,
+              /settings 等）で何も描画されないページでは、このコンテナが引き続き画面最下端に接するので
+              自前の safe-area 確保を残す必要がある */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden pb-[env(safe-area-inset-bottom)] [&:has(+[data-mobile-footer])]:pb-0">
+            {children}
+          </div>
+          <MobileFooterOutlet />
+        </MobileFooterProvider>
       </SidebarInset>
       {modal}
     </SidebarProvider>
