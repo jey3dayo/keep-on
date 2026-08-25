@@ -54,6 +54,10 @@ export function HabitUnarchiveButton({ habitId, iconOnly = false, onOptimistic }
 
   return (
     <IconLabelButton
+      // iconOnly のときは size="icon"(44px)になり当たり判定が既に十分なため、
+      // エキスパンダは iconOnly=false(size="sm"=32px)のときだけ付ける。
+      // 常時付けると 44px のボタンがさらに広がり隣接要素と重なる
+      className={iconOnly ? undefined : "relative after:absolute after:-inset-y-1.5 after:content-['']"}
       disabled={isRestoring}
       icon={icon}
       iconOnly={iconOnly}

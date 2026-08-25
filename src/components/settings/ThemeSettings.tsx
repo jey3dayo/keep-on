@@ -61,13 +61,22 @@ export function ThemeSettings({
           </div>
           <Tabs onValueChange={handleModeChange} value={currentMode}>
             <TabsList aria-label="表示モード" className="grid w-full grid-cols-3">
-              <TabsTrigger className="flex-1" value="light">
+              {/*
+                  TabsTrigger の実寸(py-1 + text-sm line-height 20px = 28px)は変えず、
+                  ::after のエキスパンダで縦方向のみ当たり判定を 44px(inset-y-2=8px×2 + 28px)
+                  へ広げる。TabsList に overflow-hidden は無いため list 外へのはみ出し(4px)も
+                  切られない。横方向は広げないため隣接タブのエキスパンダ同士は重ならない
+                */}
+              <TabsTrigger className="relative flex-1 after:absolute after:-inset-y-2 after:content-['']" value="light">
                 ライト
               </TabsTrigger>
-              <TabsTrigger className="flex-1" value="dark">
+              <TabsTrigger className="relative flex-1 after:absolute after:-inset-y-2 after:content-['']" value="dark">
                 ダーク
               </TabsTrigger>
-              <TabsTrigger className="flex-1" value="system">
+              <TabsTrigger
+                className="relative flex-1 after:absolute after:-inset-y-2 after:content-['']"
+                value="system"
+              >
                 システム
               </TabsTrigger>
             </TabsList>

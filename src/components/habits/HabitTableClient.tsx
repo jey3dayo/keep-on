@@ -104,7 +104,13 @@ function ArchivedHabitRow({ habit, onDelete, onUnarchive }: ArchivedHabitRowProp
         {habit.archivedAt ? format(new Date(habit.archivedAt), 'yyyy/MM/dd', { locale: ja }) : '-'}
       </TableCell>
       <TableCell className="text-right">
-        <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
+        {/*
+            モバイルでは flex-col で「復元」「完全に削除」が縦に積まれる。
+            各ボタンの当たり判定エキスパンダ(after:-inset-y-1.5 = 6px)が上下で
+            接するよう gap-3(12px = 6px×2)を確保し、破壊的操作である「完全に削除」の
+            判定領域が「復元」側へ食い込まないようにする(gap-2 のままだと 4px 重なる)
+          */}
+        <div className="flex flex-col items-end gap-3 sm:flex-row sm:justify-end">
           <HabitUnarchiveButton habitId={habit.id} onOptimistic={handleUnarchive} />
           <HabitDeleteDialog
             habitId={habit.id}
@@ -112,7 +118,9 @@ function ArchivedHabitRow({ habit, onDelete, onUnarchive }: ArchivedHabitRowProp
             onOptimistic={handleDelete}
             trigger={
               <IconLabelButton
-                className="shrink-0 whitespace-nowrap"
+                // 見た目の寸法(h-8=32px)は変えず、::after のエキスパンダで
+                // 縦方向のみ当たり判定を 44px(inset-y-1.5=6px×2 + 32px)へ広げる
+                className="relative shrink-0 whitespace-nowrap after:absolute after:-inset-y-1.5 after:content-['']"
                 icon={<Trash2 className="h-4 w-4" />}
                 label="完全に削除"
                 size="sm"

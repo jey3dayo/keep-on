@@ -62,8 +62,15 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
     <PageShell>
       {/* Header */}
       <div className="flex items-center gap-3">
+        {/*
+            見た目の寸法(h-8=32px)は変えず、::after のエキスパンダで縦方向のみ当たり判定を
+            44px(inset-y-1.5=6px×2 + 32px)へ広げる。「戻る」と「編集」はヘッダー両端に離れて
+            配置され、間に習慣名ブロックが入るため、エキスパンダ同士は重ならない。
+            コメントを Button の外に置いているのは、asChild(Radix Slot)が React.Children.only で
+            単一の子を要求するため、子の位置に余計なノードを増やさないようにするため
+          */}
         <Button asChild size="sm" variant="ghost">
-          <Link href="/habits">
+          <Link className="relative after:absolute after:-inset-y-1.5 after:content-['']" href="/habits">
             <ChevronLeft className="h-4 w-4" />
             戻る
           </Link>
@@ -83,7 +90,10 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
           </div>
         </div>
         <Button asChild size="sm" variant="outline">
-          <Link href={`/habits/${habit.id}/edit`}>
+          <Link
+            className="relative after:absolute after:-inset-y-1.5 after:content-['']"
+            href={`/habits/${habit.id}/edit`}
+          >
             <Pencil className="mr-1.5 h-4 w-4" />
             編集
           </Link>
