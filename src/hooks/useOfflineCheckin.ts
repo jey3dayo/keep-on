@@ -1,5 +1,6 @@
 'use client'
 
+import { createId } from '@paralleldrive/cuid2'
 import { useCallback, useEffect, useRef } from 'react'
 import { isNonRetryableOfflineCheckinStatus, SW_MSG_SYNC_COMPLETE, SW_SYNC_TAG } from '@/constants/pwa'
 import { useIdentity } from '@/contexts/IdentityContext'
@@ -11,8 +12,6 @@ import {
   type QueuedCheckin,
   removeQueuedCheckin,
 } from '@/lib/pwa/offline-queue'
-
-const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 
 interface ReplayResult {
   failed: number
@@ -74,6 +73,7 @@ const replayQueue = async (currentUserId: string, prefetchedItems?: QueuedChecki
           action: item.action,
           dateKey: item.dateKey,
           habitId: item.habitId,
+          opId: item.id,
           userId: item.userId,
         }),
         headers: { 'Content-Type': 'application/json' },
@@ -183,7 +183,7 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
         action,
         dateKey,
         habitId,
-        id: generateId(),
+        id: createId(),
         timestamp: Date.now(),
         userId: currentUserId,
       }

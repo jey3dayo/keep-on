@@ -129,8 +129,23 @@ class SqliteD1Database implements D1Database {
     return new SqliteD1PreparedStatement(this.db, query)
   }
 
-  batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]> {
-    throw new Error(`SqliteD1Database.batch() is not implemented in the test shim (${statements.length} statements)`)
+  async batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]> {
+    this.db.exec('BEGIN')
+    try {
+      const results: D1Result<T>[] = []
+      for (const statement of statements) {
+        results.push(await statement.all<T>())
+      }
+      this.db.exec('COMMIT')
+      return results
+    } catch (error) {
+      try {
+        this.db.exec('ROLLBACK')
+      } catch {
+        // 元のSQLエラーを呼び出し元へ返すため、rollbackの二次エラーは隠す
+      }
+      throw error
+    }
   }
 
   exec(query: string): Promise<D1ExecResult> {

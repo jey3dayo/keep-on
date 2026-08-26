@@ -1,3 +1,4 @@
+import { isCuid } from '@paralleldrive/cuid2'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SW_SYNC_TAG } from '@/constants/pwa'
@@ -110,6 +111,15 @@ describe('useOfflineCheckin', () => {
     })
 
     expect(fetch).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(fetch).mock.calls[0]?.[1]).toMatchObject({
+      body: JSON.stringify({
+        action: 'add',
+        dateKey: '2026-03-19',
+        habitId: 'habit-queued-1',
+        opId: 'queued-1',
+        userId: CURRENT_USER_ID,
+      }),
+    })
     expect(onReplayComplete).toHaveBeenCalledWith({ failed: 0, replayed: 1 })
   })
 
@@ -271,5 +281,23 @@ describe('useOfflineCheckin', () => {
       'Cannot enqueue offline checkin without a signed-in user'
     )
     expect(mockEnqueueOfflineCheckin).not.toHaveBeenCalled()
+  })
+
+  it('enqueue時にCUID2形式のidを生成し、replay用の操作IDとして保持する', async () => {
+    installServiceWorkerMock(false)
+
+    const { result } = renderHook(() => useOfflineCheckin())
+
+    await result.current.enqueueCheckin('habit-1', 'add', '2026-03-19')
+
+    const item = mockEnqueueOfflineCheckin.mock.calls[0]?.[0]
+    expect(item).toMatchObject({
+      action: 'add',
+      dateKey: '2026-03-19',
+      habitId: 'habit-1',
+      timestamp: expect.any(Number),
+      userId: CURRENT_USER_ID,
+    })
+    expect(isCuid(item.id)).toBe(true)
   })
 })

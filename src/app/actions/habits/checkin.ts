@@ -13,7 +13,7 @@ import { type HabitActionResult, revalidateHabitPaths, runTimedHabitAction } fro
 type CheckinResultData = Pick<CreateCheckinWithLimitResult, 'created' | 'currentCount'>
 
 async function performCheckin(params: HabitCheckinParams): Promise<CheckinResultData> {
-  const { habitId, dateKey, baseMeta, spans } = params
+  const { habitId, dateKey, baseMeta, opId, spans } = params
   const userId = await requireCheckinUserId('action.habits.checkin', baseMeta, spans.timeoutMs)
   const metaWithUser = { ...baseMeta, userId }
 
@@ -42,6 +42,7 @@ async function performCheckin(params: HabitCheckinParams): Promise<CheckinResult
         date: dateKey,
         frequency: habit.frequency,
         habitId,
+        opId,
         period: habit.period,
         weekStartDay,
       }),
@@ -59,14 +60,18 @@ async function performCheckin(params: HabitCheckinParams): Promise<CheckinResult
   return { created: true, currentCount: result.currentCount }
 }
 
-export async function addCheckinAction(habitId: string, dateKey?: string): HabitActionResult<CheckinResultData> {
+export async function addCheckinAction(
+  habitId: string,
+  dateKey?: string,
+  opId?: string
+): HabitActionResult<CheckinResultData> {
   return await runTimedHabitAction(
     { dateKey, habitId },
     {
       actionName: 'action.habits.checkin',
       errorDetail: 'チェックインの切り替えに失敗しました',
       run: async ({ input, baseMeta, spans }) =>
-        await performCheckin({ baseMeta, dateKey: input.dateKey, habitId: input.habitId, spans }),
+        await performCheckin({ baseMeta, dateKey: input.dateKey, habitId: input.habitId, opId, spans }),
     }
   )
 }

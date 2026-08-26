@@ -20,6 +20,7 @@ export interface HabitCheckinParams {
   baseMeta: Record<string, unknown>
   dateKey: string
   habitId: string
+  opId?: string
   spans: HabitCheckinSpans
 }
 

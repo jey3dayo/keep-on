@@ -31,6 +31,7 @@ const MIGRATION_FILES = [
   '0002_small_magus.sql',
   '0003_skip_and_reminder.sql',
   '0004_external_id.sql',
+  '0005_checkin_op.sql',
 ]
 
 function rebuildDb() {
@@ -286,5 +287,121 @@ describe('deleteLatestCheckinByHabitAndPeriod (real SQLite)', () => {
     expect(result.deleted).toBe(false)
     expect(await countCheckins()).toBe(1)
     expect(await selectIds()).toEqual(['outside'])
+  })
+
+  it('同一opIdのremove replayは保存済み結果を返し、別の最新行を削除しない', async () => {
+    await insertUser('user1')
+    await insertHabit('habit1', 'user1', 3)
+    await insertCheckin('older', 'habit1', '2024-01-15', '2024-01-15T00:00:00.000Z')
+    await insertCheckin('newer', 'habit1', '2024-01-15', '2024-01-15T01:00:00.000Z')
+
+    const first = await deleteLatestCheckinByHabitAndPeriod('habit1', '2024-01-15', 'daily', 1, 'remove-op-1')
+    const replay = await deleteLatestCheckinByHabitAndPeriod('habit1', '2024-01-15', 'daily', 1, 'remove-op-1')
+
+    expect(first.deleted).toBe(true)
+    expect(first.checkin?.id).toBe('newer')
+    expect(replay).toEqual(first)
+    expect(await countCheckins()).toBe(1)
+    expect(await selectIds()).toEqual(['older'])
+  })
+
+  it('removeのopIdを別習慣へ流用すると拒否し、別習慣の行を削除しない', async () => {
+    await insertUser('user1')
+    await insertHabit('habit1', 'user1', 3)
+    await insertHabit('habit2', 'user1', 3)
+    await insertCheckin('habit1-checkin', 'habit1', '2024-01-15', '2024-01-15T00:00:00.000Z')
+    await insertCheckin('habit2-checkin', 'habit2', '2024-01-15', '2024-01-15T00:00:00.000Z')
+
+    await deleteLatestCheckinByHabitAndPeriod('habit1', '2024-01-15', 'daily', 1, 'shared-op-2')
+
+    await expect(
+      deleteLatestCheckinByHabitAndPeriod('habit2', '2024-01-15', 'daily', 1, 'shared-op-2')
+    ).rejects.toMatchObject({ name: 'AuthorizationError' })
+    expect(await selectIds()).toEqual(['habit2-checkin'])
+  })
+})
+
+describe('createCheckinWithLimit idempotency (real SQLite)', () => {
+  beforeEach(() => {
+    rebuildDb()
+  })
+
+  it('同一opIdのadd replayはCheckinを重複作成しない', async () => {
+    await insertUser('user1')
+    await insertHabit('habit1', 'user1', 3)
+
+    const first = await createCheckinWithLimit({
+      date: '2024-01-15',
+      frequency: 3,
+      habitId: 'habit1',
+      opId: 'add-op-1',
+      period: 'daily',
+      weekStartDay: 1,
+    })
+    const replay = await createCheckinWithLimit({
+      date: '2024-01-15',
+      frequency: 3,
+      habitId: 'habit1',
+      opId: 'add-op-1',
+      period: 'daily',
+      weekStartDay: 1,
+    })
+
+    expect(first.created).toBe(true)
+    expect(first.checkin?.id).toBe('add-op-1')
+    expect(replay).toEqual({ checkin: null, created: false, currentCount: 1 })
+    expect(await countCheckins()).toBe(1)
+    expect(await selectIds()).toEqual(['add-op-1'])
+  })
+
+  it('addのopIdを別習慣へ流用すると拒否する', async () => {
+    await insertUser('user1')
+    await insertHabit('habit1', 'user1', 3)
+    await insertHabit('habit2', 'user1', 3)
+
+    await createCheckinWithLimit({
+      date: '2024-01-15',
+      frequency: 3,
+      habitId: 'habit1',
+      opId: 'shared-op-1',
+      period: 'daily',
+      weekStartDay: 1,
+    })
+
+    await expect(
+      createCheckinWithLimit({
+        date: '2024-01-15',
+        frequency: 3,
+        habitId: 'habit2',
+        opId: 'shared-op-1',
+        period: 'daily',
+        weekStartDay: 1,
+      })
+    ).rejects.toMatchObject({ name: 'AuthorizationError' })
+    expect(await countCheckins()).toBe(1)
+  })
+
+  it('opIdなしのaddは従来どおり別IDで作成できる', async () => {
+    await insertUser('user1')
+    await insertHabit('habit1', 'user1', 3)
+
+    const first = await createCheckinWithLimit({
+      date: '2024-01-15',
+      frequency: 3,
+      habitId: 'habit1',
+      period: 'daily',
+      weekStartDay: 1,
+    })
+    const second = await createCheckinWithLimit({
+      date: '2024-01-15',
+      frequency: 3,
+      habitId: 'habit1',
+      period: 'daily',
+      weekStartDay: 1,
+    })
+
+    expect(first.created).toBe(true)
+    expect(second.created).toBe(true)
+    expect(await countCheckins()).toBe(2)
   })
 })

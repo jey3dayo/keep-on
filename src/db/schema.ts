@@ -139,6 +139,25 @@ export const checkins = sqliteTable(
 )
 
 /**
+ * チェックイン操作テーブル
+ * オフライン replay の remove を同じ操作として一度だけ適用するための結果台帳
+ */
+export const checkinOps = sqliteTable('CheckinOp', {
+  /** 操作種別 (現在は remove のみ) */
+  action: text('action').notNull(),
+  /** 操作記録日時 (ISO8601形式) */
+  createdAt: text('createdAt')
+    .$defaultFn(() => new Date().toISOString())
+    .notNull(),
+  /** 操作対象の習慣ID。FKは張らず、操作の所有者照合にも使う */
+  habitId: text('habitId').notNull(),
+  /** クライアントが生成する操作ID (CUID2形式) */
+  opId: text('opId').primaryKey(),
+  /** 操作結果のJSON */
+  result: text('result').notNull(),
+})
+
+/**
  * スキップテーブル
  * 意図的にスキップした日を記録（ストリークを維持したまま休む）
  */

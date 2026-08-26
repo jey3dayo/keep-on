@@ -8,6 +8,7 @@ export interface QueuedCheckin {
   action: 'add' | 'remove'
   dateKey: string
   habitId: string
+  /** IndexedDBキー兼、サーバーへ渡す冪等操作ID（CUID2形式） */
   id: string
   timestamp: number
   /** enqueue 時のサインイン中ユーザー。replay 前の本人照合に使う（旧アイテムでは undefined） */

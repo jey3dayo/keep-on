@@ -1,8 +1,9 @@
 import { createId } from '@paralleldrive/cuid2'
-import { and, eq, gte, lte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
 import type { Period, WeekStartDay } from '@/constants/habit'
-import { checkins, habits } from '@/db/schema'
+import { checkinOps, checkins, habits } from '@/db/schema'
 import { getDb } from '@/lib/db'
+import { AuthorizationError, getHabitAuthorizationClientMessage } from '@/lib/errors/habit'
 import { getPeriodDateRange } from '@/lib/queries/period'
 import { profileQuery } from '@/lib/queries/profiler'
 import { normalizeDateKey } from '@/lib/utils/date'
@@ -16,6 +17,7 @@ interface CreateCheckinWithLimitInput {
   date: Date | string
   frequency: number
   habitId: string
+  opId?: string
   period: Period
   weekStartDay?: WeekStartDay
 }
@@ -106,8 +108,16 @@ export async function createCheckinWithLimit(
       const db = getDb()
       const dateKey = normalizeDateKey(input.date)
       const { startKey, endKey } = getPeriodDateRange(dateKey, input.period, input.weekStartDay ?? 1)
-      const newId = createId()
+      const newId = input.opId ?? createId()
       const createdAt = new Date().toISOString()
+
+      if (input.opId !== undefined) {
+        const [existingOperation] = await db.select().from(checkinOps).where(eq(checkinOps.opId, input.opId)).limit(1)
+
+        if (existingOperation) {
+          throw new AuthorizationError({ detail: getHabitAuthorizationClientMessage() })
+        }
+      }
 
       // D1では通常のトランザクションAPIが使えず、同一日付の重複を防ぐUNIQUE制約も撤去済み（migration 0002）。
       // 頻度上限チェックを INSERT 文自身の WHERE 句（相関サブクエリ）に埋め込むことで、
@@ -119,9 +129,24 @@ export async function createCheckinWithLimit(
         WHERE (
           SELECT count(*) FROM ${checkins}
           WHERE ${checkins.habitId} = ${input.habitId} AND ${checkins.date} BETWEEN ${startKey} AND ${endKey}
-        ) < ${input.frequency}
+          ) < ${input.frequency}
+        ON CONFLICT ("id") DO NOTHING
         RETURNING *
       `)
+
+      if (!insertedRows[0] && input.opId !== undefined) {
+        // Checkin の主キー衝突が別ユーザー・別習慣の操作ID流用でないことを確認する。
+        // 同一操作の replay なら同じ習慣・日付の行なので、ここでは無害な no-op として扱う。
+        const [existingCheckin] = await db.all<Record<string, unknown>>(sql`
+          SELECT ${checkins.habitId} AS "habitId", ${checkins.date} AS "date"
+          FROM ${checkins}
+          WHERE ${checkins.id} = ${input.opId}
+          LIMIT 1
+        `)
+        if (existingCheckin && (existingCheckin.habitId !== input.habitId || existingCheckin.date !== dateKey)) {
+          throw new AuthorizationError({ detail: getHabitAuthorizationClientMessage() })
+        }
+      }
 
       // RETURNING にサブクエリを同梱できないため、期間内カウントは別クエリで取得する（挿入有無どちらのパスでも1回）。
       const countResult = await db
@@ -155,6 +180,130 @@ export interface DeleteLatestCheckinResult {
   deleted: boolean
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function parseStoredCheckin(value: unknown): typeof checkins.$inferSelect | null {
+  if (value === null) {
+    return null
+  }
+  if (!isRecord(value)) {
+    throw new Error('Invalid stored checkin operation result')
+  }
+
+  const { createdAt, date, habitId, id } = value
+  if (
+    typeof createdAt !== 'string' ||
+    typeof date !== 'string' ||
+    typeof habitId !== 'string' ||
+    typeof id !== 'string'
+  ) {
+    throw new Error('Invalid stored checkin operation result')
+  }
+
+  return { createdAt, date, habitId, id }
+}
+
+function parseStoredDeleteResult(serialized: string): DeleteLatestCheckinResult {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(serialized) as unknown
+  } catch (error) {
+    throw new Error('Invalid stored checkin operation result', { cause: error })
+  }
+
+  if (!isRecord(parsed)) {
+    throw new Error('Invalid stored checkin operation result')
+  }
+
+  const { checkin, currentCount, deleted } = parsed
+  if (
+    typeof currentCount !== 'number' ||
+    !Number.isInteger(currentCount) ||
+    currentCount < 0 ||
+    typeof deleted !== 'boolean'
+  ) {
+    throw new Error('Invalid stored checkin operation result')
+  }
+
+  const parsedCheckin = parseStoredCheckin(checkin)
+  if (deleted !== (parsedCheckin !== null)) {
+    throw new Error('Invalid stored checkin operation result')
+  }
+
+  return { checkin: parsedCheckin, currentCount, deleted }
+}
+
+type CheckinDatabase = ReturnType<typeof getDb>
+
+async function readStoredDeleteResult(
+  db: CheckinDatabase,
+  habitId: string,
+  opId: string
+): Promise<DeleteLatestCheckinResult | null> {
+  const [existingOperation] = await db.select().from(checkinOps).where(eq(checkinOps.opId, opId)).limit(1)
+  if (!existingOperation) {
+    return null
+  }
+  if (existingOperation.action !== 'remove' || existingOperation.habitId !== habitId) {
+    throw new AuthorizationError({ detail: getHabitAuthorizationClientMessage() })
+  }
+  return parseStoredDeleteResult(existingOperation.result)
+}
+
+async function deleteLatestCheckinWithIdempotency(
+  db: CheckinDatabase,
+  habitId: string,
+  startKey: string,
+  endKey: string,
+  opId: string
+): Promise<DeleteLatestCheckinResult> {
+  const storedResult = await readStoredDeleteResult(db, habitId, opId)
+  if (storedResult) {
+    return storedResult
+  }
+
+  const countResult = await db
+    .select({ count: sql<number>`CAST(count(*) AS INTEGER)` })
+    .from(checkins)
+    .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+
+  const currentCount = countResult[0]?.count ?? 0
+  const [latestCheckin] =
+    currentCount > 0
+      ? await db
+          .select()
+          .from(checkins)
+          .where(and(eq(checkins.habitId, habitId), gte(checkins.date, startKey), lte(checkins.date, endKey)))
+          .orderBy(desc(checkins.date), desc(checkins.createdAt))
+          .limit(1)
+      : []
+
+  const result: DeleteLatestCheckinResult = latestCheckin
+    ? { checkin: latestCheckin, currentCount: currentCount - 1, deleted: true }
+    : { checkin: null, currentCount, deleted: false }
+
+  const operationInsert = db.insert(checkinOps).values({
+    action: 'remove',
+    createdAt: new Date().toISOString(),
+    habitId,
+    opId,
+    result: JSON.stringify(result),
+  })
+
+  if (latestCheckin) {
+    const deleteOperation = db.delete(checkins).where(eq(checkins.id, latestCheckin.id)).returning()
+    // D1 batch は各文を同一トランザクションで扱う。先に操作IDを確保することで、
+    // 同じ replay が並行して到着しても片方だけが削除を実行できる。
+    await db.batch([operationInsert, deleteOperation])
+  } else {
+    await db.batch([operationInsert])
+  }
+
+  return result
+}
+
 /**
  * 期間内の最新チェックインを削除し、削除後のカウントを返す
  *
@@ -166,13 +315,18 @@ export async function deleteLatestCheckinByHabitAndPeriod(
   habitId: string,
   date: Date | string,
   period: Period,
-  weekStartDay: WeekStartDay = 1
+  weekStartDay: WeekStartDay = 1,
+  opId?: string
 ): Promise<DeleteLatestCheckinResult> {
   return await profileQuery(
     'query.deleteLatestCheckinByHabitAndPeriod',
     async () => {
       const db = getDb()
       const { startKey, endKey } = getPeriodDateRange(date, period, weekStartDay)
+
+      if (opId !== undefined) {
+        return await deleteLatestCheckinWithIdempotency(db, habitId, startKey, endKey, opId)
+      }
 
       // 1. 削除前の期間内カウントを取得
       const countResult = await db

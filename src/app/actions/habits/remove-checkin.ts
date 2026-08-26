@@ -15,7 +15,7 @@ interface RemoveCheckinResultData {
 }
 
 async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveCheckinResultData> {
-  const { habitId, dateKey, baseMeta, spans } = params
+  const { habitId, dateKey, baseMeta, opId, spans } = params
   const userId = await requireCheckinUserId('action.habits.removeCheckin', baseMeta, spans.timeoutMs)
   const metaWithUser = { ...baseMeta, userId }
 
@@ -38,7 +38,7 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
 
   const { deleted, currentCount } = await spans.runWithDbTimeout(
     'action.habits.removeCheckin.deleteLatestCheckin',
-    () => deleteLatestCheckinByHabitAndPeriod(habitId, dateKey, habit.period, weekStartDay),
+    () => deleteLatestCheckinByHabitAndPeriod(habitId, dateKey, habit.period, weekStartDay, opId),
     deleteMeta
   )
 
@@ -54,7 +54,8 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
 
 export async function removeCheckinAction(
   habitId: string,
-  dateKey?: string
+  dateKey?: string,
+  opId?: string
 ): HabitActionResult<RemoveCheckinResultData> {
   return await runTimedHabitAction(
     { dateKey, habitId },
@@ -62,7 +63,7 @@ export async function removeCheckinAction(
       actionName: 'action.habits.removeCheckin',
       errorDetail: 'チェックインの削除に失敗しました',
       run: async ({ input, baseMeta, spans }) =>
-        await performRemoveCheckin({ baseMeta, dateKey: input.dateKey, habitId: input.habitId, spans }),
+        await performRemoveCheckin({ baseMeta, dateKey: input.dateKey, habitId: input.habitId, opId, spans }),
     }
   )
 }
