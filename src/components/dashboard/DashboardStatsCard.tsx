@@ -25,12 +25,12 @@ export function DashboardStatsCard({ type, value, total, suffix, className }: Da
         <div className={cn('flex h-6 w-6 items-center justify-center rounded-full', iconBgColor)}>
           <Icon className={cn('h-3.5 w-3.5', iconColor)} name={icon} />
         </div>
-        <span className="text-muted-foreground text-xs">{label}</span>
+        <span className="text-secondary-foreground text-xs">{label}</span>
       </div>
       <p className="font-bold text-xl">
         {value}
-        {total !== undefined && <span className="font-normal text-muted-foreground text-sm"> / {total}</span>}
-        {suffix ? <span className="font-normal text-muted-foreground text-sm"> {suffix}</span> : null}
+        {total !== undefined && <span className="font-normal text-secondary-foreground text-sm"> / {total}</span>}
+        {suffix ? <span className="font-normal text-secondary-foreground text-sm"> {suffix}</span> : null}
       </p>
     </Card>
   )

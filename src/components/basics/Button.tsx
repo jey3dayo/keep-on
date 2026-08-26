@@ -92,7 +92,8 @@ export function CheckInButton({ children, completed = false, className, ...props
         completed && 'ring-2 ring-offset-2 ring-offset-background',
         className
       )}
-      scale="lg"
+      // DESIGN.md:330 に従い、高頻度チェックインは押下反応だけ残して hover 拡大を使わない。
+      scale="none"
       size="icon"
       type="button"
       variant="ghost"

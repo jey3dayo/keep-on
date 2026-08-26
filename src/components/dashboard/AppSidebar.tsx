@@ -27,7 +27,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <div className="flex items-center gap-2 p-2">
           <button
             aria-label="サインアウト"
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="icon-button flex min-h-11 min-w-11 items-center justify-center text-foreground/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={signOut}
             type="button"
           >

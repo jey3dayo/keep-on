@@ -120,7 +120,8 @@ export function HabitCircleItem({
         onPointerLeave={handlePointerLeave}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        scale="md"
+        // DESIGN.md:330 に従い、高頻度チェックインは押下反応だけ残して hover 拡大を使わない。
+        scale="none"
         type="button"
         variant="ghost"
       >
