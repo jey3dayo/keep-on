@@ -49,7 +49,11 @@ jobs:
           echo "$OUTPUT" > /tmp/bundle-size.txt
 
           # サイズを抽出できない場合も計測失敗としてCIを失敗させる。
-          if ! SIZE=$(echo "$OUTPUT" | grep -oP 'Total Upload: \K[\d.]+(?= MB)'); then
+          # wrangler は版によって単位が MB / KiB で変わる（4.125 時点は KiB）。
+          # 旧実装は MB 前提の parse 失敗を size 0 に握りつぶし、チェックが実質無効化されていた。
+          if SIZE_KIB=$(echo "$OUTPUT" | grep -oP 'Total Upload: \K[\d.]+(?= KiB)'); then
+            SIZE=$(awk "BEGIN {printf \"%.2f\", ${SIZE_KIB} / 1024}")
+          elif ! SIZE=$(echo "$OUTPUT" | grep -oP 'Total Upload: \K[\d.]+(?= MB)'); then
             echo "❌ Error: Could not parse bundle size from dry-run output"
             exit 1
           fi
