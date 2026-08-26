@@ -112,7 +112,7 @@ export function HabitCircleItem({
     <div className="flex flex-col items-center gap-3">
       <Button
         aria-label={isCompleted ? `${habit.name}のチェックインを取り消す` : `${habit.name}をチェックイン`}
-        className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0 motion-reduce:active:scale-100"
+        className="relative h-[140px] w-[140px] p-0 transition-transform duration-160 ease-out hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0 motion-reduce:active:scale-100"
         onClick={onCheckin}
         onContextMenu={onContextMenu}
         onPointerCancel={handlePointerCancel}

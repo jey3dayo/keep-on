@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { Button } from './Button'
+import { AddHabitButton, Button, CheckInButton } from './Button'
 
 describe('Button', () => {
   it('子要素をレンダリングする', () => {
@@ -60,5 +60,22 @@ describe('Button', () => {
     render(<Button type="submit">送信</Button>)
     const button = screen.getByRole('button')
     expect(button).toHaveAttribute('type', 'submit')
+  })
+
+  it('チェックインボタンはhover拡大を使わず、reduced-motion対応のpress反応を持つ', () => {
+    render(<CheckInButton>チェックイン</CheckInButton>)
+    const button = screen.getByRole('button', { name: 'チェックイン' })
+
+    expect(button.className).not.toContain('hover:scale-110')
+    expect(button.className).toContain('duration-160')
+    expect(button.className).toContain('motion-reduce:active:scale-100')
+  })
+
+  it('習慣追加CTAのhover強調は維持される', () => {
+    render(<AddHabitButton>習慣を追加</AddHabitButton>)
+    const button = screen.getByRole('button', { name: '習慣を追加' })
+
+    expect(button.className).toContain('hover:scale-105')
+    expect(button.className).toContain('motion-reduce:hover:scale-100')
   })
 })

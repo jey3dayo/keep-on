@@ -10,6 +10,8 @@ import type { OptimisticHandler } from '@/components/habits/types'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import type { HabitWithProgress } from '@/types/habit'
 
+const DRAWER_NAVIGATION_FALLBACK_MS = 600
+
 interface HabitActionDrawerProps {
   habit: HabitWithProgress | null
   onArchiveOptimistic?: OptimisticHandler
@@ -35,7 +37,17 @@ export function HabitActionDrawer({
   const [dialogType, setDialogType] = useState<'reset' | 'archive' | 'delete' | null>(null)
   const [activeHabit, setActiveHabit] = useState<HabitWithProgress | null>(null)
   const [isSkipping, setIsSkipping] = useState(false)
+  const pendingNavigationRef = useRef<string | null>(null)
+  const navigationFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const prevOpenRef = useRef(open)
+
+  const clearNavigationFallback = useCallback(() => {
+    if (navigationFallbackTimerRef.current === null) {
+      return
+    }
+    clearTimeout(navigationFallbackTimerRef.current)
+    navigationFallbackTimerRef.current = null
+  }, [])
 
   useEffect(() => {
     const prevOpen = prevOpenRef.current
@@ -45,10 +57,12 @@ export function HabitActionDrawer({
       setActiveHabit(habit)
       return
     }
-    if (prevOpen && !open && !dialogType) {
+    if (prevOpen && !open && !dialogType && pendingNavigationRef.current === null) {
       setActiveHabit(null)
     }
   }, [habit, open, dialogType])
+
+  useEffect(() => clearNavigationFallback, [clearNavigationFallback])
 
   const openDialog = useCallback(
     (type: 'reset' | 'archive' | 'delete') => {
@@ -69,16 +83,55 @@ export function HabitActionDrawer({
     }
   }, [])
 
-  const handleEdit = useCallback(() => {
-    // Drawerを閉じて、アニメーション完了後に遷移
-    onOpenChange(false)
-    // Vaulのデフォルトアニメーション時間（300ms）より少し長く待つ
-    setTimeout(() => {
-      if (activeHabit) {
-        router.push(`/habits/${activeHabit.id}/edit`)
+  const handleDrawerAnimationEnd = useCallback(
+    (isOpen: boolean) => {
+      if (isOpen) {
+        return
       }
-    }, 350)
-  }, [activeHabit, onOpenChange, router])
+      const destination = pendingNavigationRef.current
+      if (!destination) {
+        return
+      }
+      clearNavigationFallback()
+      pendingNavigationRef.current = null
+      router.push(destination)
+    },
+    [clearNavigationFallback, router]
+  )
+
+  const navigateAfterDrawerClose = useCallback(
+    (destination: string) => {
+      clearNavigationFallback()
+      pendingNavigationRef.current = destination
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        pendingNavigationRef.current = null
+        onOpenChange(false)
+        router.push(destination)
+        return
+      }
+
+      navigationFallbackTimerRef.current = setTimeout(() => {
+        navigationFallbackTimerRef.current = null
+        const fallbackDestination = pendingNavigationRef.current
+        if (!fallbackDestination) {
+          return
+        }
+        pendingNavigationRef.current = null
+        console.warn('HabitActionDrawer: onAnimationEnd(false) が発火しなかったためフォールバック遷移を実行します')
+        router.push(fallbackDestination)
+      }, DRAWER_NAVIGATION_FALLBACK_MS)
+
+      onOpenChange(false)
+    },
+    [clearNavigationFallback, onOpenChange, router]
+  )
+
+  const handleEdit = useCallback(() => {
+    if (activeHabit) {
+      navigateAfterDrawerClose(`/habits/${activeHabit.id}/edit`)
+    }
+  }, [activeHabit, navigateAfterDrawerClose])
 
   const handleSkipToggle = useCallback(async () => {
     if (!activeHabit || isSkipping) {
@@ -98,13 +151,10 @@ export function HabitActionDrawer({
   }, [activeHabit, isSkipping, onOpenChange, onSkip, onUnSkip])
 
   const handleViewDetail = useCallback(() => {
-    onOpenChange(false)
-    setTimeout(() => {
-      if (activeHabit) {
-        router.push(`/habits/${activeHabit.id}`)
-      }
-    }, 350)
-  }, [activeHabit, onOpenChange, router])
+    if (activeHabit) {
+      navigateAfterDrawerClose(`/habits/${activeHabit.id}`)
+    }
+  }, [activeHabit, navigateAfterDrawerClose])
 
   const handleReset = useCallback(() => openDialog('reset'), [openDialog])
   const handleArchive = useCallback(() => openDialog('archive'), [openDialog])
@@ -118,7 +168,7 @@ export function HabitActionDrawer({
 
   return (
     <>
-      <Drawer onOpenChange={onOpenChange} open={open}>
+      <Drawer onAnimationEnd={handleDrawerAnimationEnd} onOpenChange={onOpenChange} open={open}>
         {/* 下端固定の Drawer なので iOS のホームインジケータ分を確保する */}
         <DrawerContent className="pb-[env(safe-area-inset-bottom)]">
           <DrawerHeader className="text-left">

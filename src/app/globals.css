@@ -82,6 +82,133 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes keep-on-motion-enter {
+  from {
+    opacity: var(--motion-enter-opacity, 0);
+    transform: translate3d(
+        var(--motion-enter-translate-x, 0),
+        var(--motion-enter-translate-y, 0),
+        0
+      )
+      scale(var(--motion-enter-scale, 1));
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes keep-on-motion-exit {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: var(--motion-exit-opacity, 0);
+    transform: translate3d(
+        var(--motion-exit-translate-x, 0),
+        var(--motion-exit-translate-y, 0),
+        0
+      )
+      scale(var(--motion-exit-scale, 1));
+  }
+}
+
+@layer utilities {
+  [class*="animate-in"][data-state="open"]:not([data-vaul-drawer]):not(
+    [data-vaul-overlay]
+  ),
+  [class*="animate-in"][data-state="instant-open"]:not([data-vaul-drawer]):not(
+    [data-vaul-overlay]
+  ),
+  [class*="animate-in"][data-state="delayed-open"]:not([data-vaul-drawer]):not(
+    [data-vaul-overlay]
+  ) {
+    animation: keep-on-motion-enter 200ms var(--ease-out) both;
+  }
+
+  [class*="animate-out"][data-state="closed"]:not([data-vaul-drawer]):not(
+    [data-vaul-overlay]
+  ) {
+    animation: keep-on-motion-exit 150ms var(--ease-out) both;
+  }
+
+  [class*="zoom-in-95"] {
+    --motion-enter-scale: 0.95;
+  }
+
+  [class*="zoom-out-95"] {
+    --motion-exit-scale: 0.95;
+  }
+
+  [class*="slide-in-from-top"] {
+    --motion-enter-translate-y: -100%;
+  }
+
+  [class*="slide-in-from-bottom"] {
+    --motion-enter-translate-y: 100%;
+  }
+
+  [class*="slide-in-from-left"] {
+    --motion-enter-translate-x: -100%;
+  }
+
+  [class*="slide-in-from-right"] {
+    --motion-enter-translate-x: 100%;
+  }
+
+  [class*="slide-out-to-top"] {
+    --motion-exit-translate-y: -100%;
+  }
+
+  [class*="slide-out-to-bottom"] {
+    --motion-exit-translate-y: 100%;
+  }
+
+  [class*="slide-out-to-left"] {
+    --motion-exit-translate-x: -100%;
+  }
+
+  [class*="slide-out-to-right"] {
+    --motion-exit-translate-x: 100%;
+  }
+
+  [class*="slide-in-from-top-2"] {
+    --motion-enter-translate-y: calc(var(--spacing) * -2);
+  }
+
+  [class*="slide-in-from-bottom-2"] {
+    --motion-enter-translate-y: calc(var(--spacing) * 2);
+  }
+
+  [class*="slide-in-from-left-2"] {
+    --motion-enter-translate-x: calc(var(--spacing) * -2);
+  }
+
+  [class*="slide-in-from-right-2"] {
+    --motion-enter-translate-x: calc(var(--spacing) * 2);
+  }
+
+  [class*="slide-in-from-left-1/2"] {
+    --motion-enter-translate-x: -50%;
+  }
+
+  [class*="slide-in-from-top-[48%]"] {
+    --motion-enter-translate-y: -48%;
+  }
+
+  [class*="slide-out-to-left-1/2"] {
+    --motion-exit-translate-x: -50%;
+  }
+
+  [class*="slide-out-to-top-[48%]"] {
+    --motion-exit-translate-y: -48%;
+  }
 }
 
 :root {
@@ -299,7 +426,10 @@
 /* アイコン単体ボタン（ヘッダーのトグル類）。反応面を円形に統一し、押下へ即座に反応させる。
    Tailwind の rounded-md / hover:bg-* は utilities レイヤー側なので、レイヤー外のこの定義が優先される。 */
 .icon-button {
-  @apply rounded-full transition-[background-color,transform] duration-150 ease-out;
+  transition:
+    background-color 150ms var(--ease-out),
+    transform 150ms var(--ease-out);
+  @apply rounded-full;
 }
 
 .icon-button:hover {
@@ -321,7 +451,7 @@
 /* 長押し進行（Hold to confirm） */
 .long-press-fill {
   clip-path: inset(0 100% 0 0);
-  transition: clip-path 200ms ease-out;
+  transition: clip-path 200ms var(--ease-out);
 }
 
 .long-press-fill[data-active="true"] {
@@ -334,8 +464,8 @@
   opacity: 0;
   transform: translateY(100%);
   transition:
-    opacity 300ms ease-out,
-    transform 300ms ease-out;
+    opacity 300ms var(--ease-out),
+    transform 300ms var(--ease-out);
 }
 
 .surface-from-bottom[data-entered="true"] {
@@ -347,8 +477,8 @@
   opacity: 0;
   transform: translateY(-100%);
   transition:
-    opacity 200ms ease-out,
-    transform 200ms ease-out;
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
 }
 
 .surface-from-top[data-entered="true"] {
@@ -360,8 +490,8 @@
   opacity: 0;
   transform: scale(0.97);
   transition:
-    opacity 200ms ease-out,
-    transform 200ms ease-out;
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
 }
 
 .dialog-scale-in[data-entered="true"] {
@@ -371,7 +501,7 @@
 
 .dialog-backdrop {
   opacity: 0;
-  transition: opacity 200ms ease-out;
+  transition: opacity 200ms var(--ease-out);
 }
 
 .dialog-backdrop[data-entered="true"] {
@@ -381,7 +511,7 @@
 /* 高頻度インジケータ向け（opacity のみ） */
 .surface-fade {
   opacity: 0;
-  transition: opacity 150ms ease-out;
+  transition: opacity 150ms var(--ease-out);
 }
 
 .surface-fade[data-entered="true"] {
@@ -394,8 +524,8 @@
   opacity: 0;
   transform: scale(0.97);
   transition:
-    opacity 160ms ease-out,
-    transform 160ms ease-out;
+    opacity 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
 }
 
 .checkin-icon-enter[data-entered="true"] {
@@ -407,7 +537,7 @@
 .faq-answer {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 200ms ease-out;
+  transition: grid-template-rows 200ms var(--ease-out);
 }
 
 .faq-answer[data-open="true"] {
@@ -433,12 +563,12 @@
   .long-press-fill {
     opacity: 0;
     clip-path: none;
-    transition: opacity 150ms ease-out;
+    transition: opacity 150ms var(--ease-out);
   }
 
   .long-press-fill[data-active="true"] {
     opacity: 0.4;
-    transition: opacity 150ms ease-out;
+    transition: opacity 150ms var(--ease-out);
   }
 
   .surface-from-bottom,

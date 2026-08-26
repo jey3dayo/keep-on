@@ -4,37 +4,40 @@ import { Icon } from '@/components/basics/Icon'
 import { Button as BaseButton } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-const buttonVariants = cva('focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95', {
-  defaultVariants: {
-    size: 'default',
-    variant: 'default',
-  },
-  variants: {
-    scale: {
-      lg: 'transition-transform hover:scale-110',
-      md: 'transition-transform hover:scale-105',
-      none: '',
-      sm: 'transition-transform hover:scale-102',
+const buttonVariants = cva(
+  'focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 motion-reduce:active:scale-100',
+  {
+    defaultVariants: {
+      size: 'default',
+      variant: 'default',
     },
-    size: {
-      default: 'h-10',
-      // 44px = Apple HIG の最小タップ領域。h-* は twMerge で呼び出し側の明示的な
-      // h-*/w-* 指定に上書きされるため、意図的に小さいアイコンボタン（例: h-7/h-8）は維持される
-      icon: 'h-11 w-11',
-      lg: 'h-11',
-      sm: '',
+    variants: {
+      scale: {
+        lg: 'transition-transform hover:scale-110 motion-reduce:hover:scale-100',
+        md: 'transition-transform hover:scale-105 motion-reduce:hover:scale-100',
+        none: '',
+        sm: 'transition-transform hover:scale-102 motion-reduce:hover:scale-100',
+      },
+      size: {
+        default: 'h-10',
+        // 44px = Apple HIG の最小タップ領域。h-* は twMerge で呼び出し側の明示的な
+        // h-*/w-* 指定に上書きされるため、意図的に小さいアイコンボタン（例: h-7/h-8）は維持される
+        icon: 'h-11 w-11',
+        lg: 'h-11',
+        sm: '',
+      },
+      variant: {
+        default: '',
+        destructive: '',
+        ghost: '',
+        link: '',
+        outline: '',
+        primary: '',
+        secondary: '',
+      },
     },
-    variant: {
-      default: '',
-      destructive: '',
-      ghost: '',
-      link: '',
-      outline: '',
-      primary: '',
-      secondary: '',
-    },
-  },
-})
+  }
+)
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean
@@ -88,7 +91,7 @@ export function CheckInButton({ children, completed = false, className, ...props
   return (
     <Button
       className={cn(
-        'h-14 w-14 flex-shrink-0 rounded-full transition-[background-color,box-shadow,opacity,transform] duration-300 hover:bg-transparent',
+        'h-14 w-14 flex-shrink-0 rounded-full transition-[background-color,box-shadow,opacity,transform] duration-160 ease-out hover:bg-transparent motion-reduce:active:scale-100',
         completed && 'ring-2 ring-offset-2 ring-offset-background',
         className
       )}

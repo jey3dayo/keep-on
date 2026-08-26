@@ -1,5 +1,44 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useCallback } from 'react'
 import { vi } from 'vitest'
+
+interface MockDrawerProps {
+  children: ReactNode
+  onAnimationEnd?: (open: boolean) => void
+  open?: boolean
+}
+
+function MockDrawer({ children, onAnimationEnd, open }: MockDrawerProps) {
+  const handleOpenAnimationEnd = useCallback(() => onAnimationEnd?.(true), [onAnimationEnd])
+  const handleCloseAnimationEnd = useCallback(() => onAnimationEnd?.(false), [onAnimationEnd])
+  const handleAnimationEnd = useCallback(() => onAnimationEnd?.(open === true), [onAnimationEnd, open])
+
+  return (
+    <div
+      data-state={open ? 'open' : 'closed'}
+      data-testid="mock-drawer"
+      data-vaul-drawer=""
+      onAnimationEnd={handleAnimationEnd}
+    >
+      {onAnimationEnd ? (
+        <>
+          <button
+            aria-label="mock drawer animation end open"
+            data-testid="mock-drawer-animation-end-open"
+            onClick={handleOpenAnimationEnd}
+            type="button"
+          />
+          <button
+            aria-label="mock drawer animation end close"
+            data-testid="mock-drawer-animation-end-close"
+            onClick={handleCloseAnimationEnd}
+            type="button"
+          />
+        </>
+      ) : null}
+      {children}
+    </div>
+  )
+}
 
 // localStorage モック（jsdom の実装が不完全な場合に備えて）
 const createLocalStorageMock = () => {
@@ -51,11 +90,7 @@ vi.mock('vaul', async () => {
 
   return {
     ...actual,
-    Root: ({ children, open }: { children: ReactNode; open?: boolean }) => (
-      <div data-state={open ? 'open' : 'closed'} data-vaul-drawer="">
-        {children}
-      </div>
-    ),
+    Root: MockDrawer,
   }
 })
 
@@ -77,11 +112,7 @@ vi.mock('next/navigation', () => ({
 
 // UI Drawer コンポーネントをモック
 vi.mock('@/components/ui/drawer', () => ({
-  Drawer: ({ children, open }: { children: ReactNode; open?: boolean }) => (
-    <div data-state={open ? 'open' : 'closed'} data-vaul-drawer="">
-      {children}
-    </div>
-  ),
+  Drawer: MockDrawer,
   DrawerClose: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DrawerContent: ({ children }: { children: ReactNode }) => (
     <div data-state="open" data-vaul-drawer="">

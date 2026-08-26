@@ -241,7 +241,7 @@ export function HabitSimpleView({
               <Button
                 aria-label={`ページ ${page + 1}`}
                 className={cn(
-                  "relative h-2 w-2 rounded-full p-0 transition-[transform,background-color] duration-300 after:absolute after:-inset-[18px] after:content-[''] hover:bg-transparent",
+                  "relative h-2 w-2 rounded-full p-0 transition-[transform,background-color] duration-200 after:absolute after:-inset-[18px] after:content-[''] hover:bg-transparent motion-reduce:scale-100",
                   currentPage === page ? 'scale-125 bg-white' : 'bg-white/40 hover:bg-white/60'
                 )}
                 data-page={page}

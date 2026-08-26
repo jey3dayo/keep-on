@@ -67,14 +67,20 @@ export function ThemeSettings({
                   へ広げる。TabsList に overflow-hidden は無いため list 外へのはみ出し(4px)も
                   切られない。横方向は広げないため隣接タブのエキスパンダ同士は重ならない
                 */}
-              <TabsTrigger className="relative flex-1 after:absolute after:-inset-y-2 after:content-['']" value="light">
+              <TabsTrigger
+                className="relative flex-1 transition-[color,background-color,box-shadow] duration-150 ease-out after:absolute after:-inset-y-2 after:content-['']"
+                value="light"
+              >
                 ライト
               </TabsTrigger>
-              <TabsTrigger className="relative flex-1 after:absolute after:-inset-y-2 after:content-['']" value="dark">
+              <TabsTrigger
+                className="relative flex-1 transition-[color,background-color,box-shadow] duration-150 ease-out after:absolute after:-inset-y-2 after:content-['']"
+                value="dark"
+              >
                 ダーク
               </TabsTrigger>
               <TabsTrigger
-                className="relative flex-1 after:absolute after:-inset-y-2 after:content-['']"
+                className="relative flex-1 transition-[color,background-color,box-shadow] duration-150 ease-out after:absolute after:-inset-y-2 after:content-['']"
                 value="system"
               >
                 システム
