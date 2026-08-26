@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { LayoutGrid, List } from 'lucide-react'
+import { useCallback, useEffect } from 'react'
+import { useMobileTabBarSlot } from '@/contexts/MobileTabBarSlotContext'
 import { DashboardBackground } from './DashboardBackground'
-import { DashboardViewToggle } from './DashboardViewToggle'
 import { HabitListView } from './HabitListView'
 import { HabitSimpleView } from './HabitSimpleView'
 import type { DashboardViewProps } from './types'
@@ -32,6 +33,26 @@ export function StreakDashboard({
     totalStreak,
   } = useDashboardContent(habits)
 
+  const handleViewToggle = useCallback(() => {
+    onViewChange(currentView === 'simple' ? 'dashboard' : 'simple')
+  }, [currentView, onViewChange])
+
+  const nextViewLabel = currentView === 'simple' ? 'リスト' : 'グリッド'
+  const NextViewIcon = currentView === 'simple' ? List : LayoutGrid
+  const trailingSlot = (
+    <button
+      aria-label={`${nextViewLabel}表示に切り替え`}
+      className="flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-foreground/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:bg-accent/50"
+      onClick={handleViewToggle}
+      type="button"
+    >
+      <NextViewIcon aria-hidden="true" className="size-5 shrink-0" />
+      <span className="truncate text-[10px] leading-none">{nextViewLabel}</span>
+    </button>
+  )
+
+  useMobileTabBarSlot(trailingSlot)
+
   useEffect(() => {
     const root = document.documentElement
     root.style.setProperty('--dashboard-bg', 'var(--primary)')
@@ -52,20 +73,6 @@ export function StreakDashboard({
     }
   }, [])
 
-  // オーバーレイは simple view の習慣グリッドと list view の sticky カードに z-index で重なった実測回帰があったため、
-  // ビューごとのフロー内 slot に渡して、各コンテンツと一緒に配置・スクロールさせる。
-  const viewToggleSlot = (
-    <div className="md:hidden">
-      <DashboardViewToggle
-        activeButtonClassName="bg-foreground text-background"
-        buttonClassName="rounded-full p-2"
-        currentView={currentView}
-        inactiveButtonClassName="text-muted-foreground"
-        onViewChange={onViewChange}
-      />
-    </div>
-  )
-
   return (
     <>
       {currentView === 'simple' ? (
@@ -81,7 +88,6 @@ export function StreakDashboard({
           onResetOptimistic={onResetOptimistic}
           onSkip={onSkip}
           onUnSkip={onUnSkip}
-          viewToggleSlot={viewToggleSlot}
         />
       ) : (
         <DashboardBackground>
@@ -103,7 +109,6 @@ export function StreakDashboard({
             todayLabel={todayLabel}
             totalDaily={totalDaily}
             totalStreak={totalStreak}
-            viewToggleSlot={viewToggleSlot}
           />
         </DashboardBackground>
       )}

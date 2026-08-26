@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { NAV_ITEMS, type NavItem } from '@/constants/navigation'
+import { useMobileTabBarSlotValue } from '@/contexts/MobileTabBarSlotContext'
 import { cn } from '@/lib/utils'
 
 function isActivePath(pathname: string, url: string) {
@@ -25,7 +26,7 @@ function TabItem({ item, pathname }: { item: NavItem; pathname: string }) {
       href={item.url}
       prefetch={false}
     >
-      <item.icon className="size-5 shrink-0" />
+      <item.icon aria-hidden="true" className="size-5 shrink-0" />
       <span className="truncate text-[10px] leading-none">{t(item.titleKey)}</span>
     </Link>
   )
@@ -33,8 +34,8 @@ function TabItem({ item, pathname }: { item: NavItem; pathname: string }) {
 
 /**
  * スマホ幅のナビゲーション。以前はハンバーガー→下部シート(Drawer)だったが、
- * 遷移先を一目で把握できるタブ型に置き換えた。NAV_ITEMS 全項目（main + secondary）を
- * 常時 5 タブとして表示するため、Drawer にあった見出しなし/開閉の概念自体が不要になった。
+ * 遷移先を一目で把握できるタブ型に置き換えた。主要4タブにダッシュボードだけが使う
+ * trailing slot を加えられる構成にし、Drawer にあった見出しなし/開閉の概念をなくしている。
  *
  * フロー内だとバーの背後が body になり、バウンスや Safari の UI 縮小でコンテンツとの間に背景色が露出して
  * 「ちぎれ」て見えた（実測）。HIG はタブバーをコンテンツ上の overlay と定義し、translucent はコンテンツの
@@ -44,7 +45,9 @@ function TabItem({ item, pathname }: { item: NavItem; pathname: string }) {
  */
 export function MobileTabBar() {
   const pathname = usePathname()
-  const items = [...NAV_ITEMS.main, ...NAV_ITEMS.secondary]
+  const trailingSlot = useMobileTabBarSlotValue()
+  // ヘルプはデスクトップの二次ナビに残し、モバイルは主要4タブの横幅と見つけやすさを優先する。
+  const items = [...NAV_ITEMS.main, ...NAV_ITEMS.secondary].filter((item) => item.url !== '/help')
 
   return (
     <nav
@@ -54,6 +57,7 @@ export function MobileTabBar() {
       {items.map((item) => (
         <TabItem item={item} key={item.titleKey} pathname={pathname} />
       ))}
+      {trailingSlot ? <div className="flex min-h-14 flex-1 items-center justify-center">{trailingSlot}</div> : null}
     </nav>
   )
 }

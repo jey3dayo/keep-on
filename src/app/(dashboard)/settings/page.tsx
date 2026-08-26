@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 
 import { PageShell } from '@/components/PageShell'
+import { AccountSettings } from '@/components/settings/AccountSettings'
 import { ThemeSettings } from '@/components/settings/ThemeSettings'
 import { WeekStartSettings } from '@/components/settings/WeekStartSettings'
 import { COLOR_THEME_COOKIE_KEY, isColorTheme } from '@/constants/theme'
@@ -30,6 +31,7 @@ export default async function SettingsPage() {
       <section className="grid min-w-0 gap-6 lg:grid-cols-2">
         <ThemeSettings className="min-w-0" initialColorTheme={initialColorTheme} />
         <WeekStartSettings className="min-w-0" />
+        <AccountSettings className="min-w-0" />
       </section>
     </PageShell>
   )

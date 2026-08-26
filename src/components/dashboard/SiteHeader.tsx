@@ -3,40 +3,19 @@
 import { LogOut } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ThemeToggle } from '@/components/basics/ThemeToggle'
 import { LogoMark } from '@/components/LogoMark'
 import { SyncIndicator } from '@/components/SyncIndicator'
 import { SidebarTrigger } from '@/components/sidebar/Sidebar'
 import { Separator } from '@/components/ui/separator'
-import { ACCESS_LOGOUT_URL } from '@/constants/auth'
 import { getPageTitleKey } from '@/constants/navigation'
-import { SW_MSG_CLEAR_USER_CACHE } from '@/constants/pwa'
-
-function clearLocalIdentityCache(): void {
-  try {
-    localStorage.removeItem('ko_identity')
-  } catch {
-    // localStorage 不可でもログアウト遷移は続行する
-  }
-}
-
-function requestUserCacheClear(): void {
-  navigator.serviceWorker?.controller?.postMessage({ type: SW_MSG_CLEAR_USER_CACHE })
-}
+import { signOut } from '@/lib/auth/sign-out'
 
 export function SiteHeader() {
   const { t } = useTranslation()
   const pathname = usePathname()
   const title = t(getPageTitleKey(pathname))
-
-  const handleSignOut = useCallback(() => {
-    // Access ログアウトへ遷移する前にユーザー固有 HTML / オフラインキューを捨てる
-    clearLocalIdentityCache()
-    requestUserCacheClear()
-    window.location.assign(ACCESS_LOGOUT_URL)
-  }, [])
 
   return (
     <header className="flex h-[calc(var(--header-height)+env(safe-area-inset-top))] shrink-0 items-center gap-2 border-border/50 border-b bg-background/50 pt-[env(safe-area-inset-top)] backdrop-blur-md supports-[backdrop-filter]:bg-background/30 md:rounded-t-xl md:border-r">
@@ -58,14 +37,14 @@ export function SiteHeader() {
         <h1 className="min-w-0 truncate font-semibold text-[15px] text-foreground/90 tracking-[-0.01em]">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
           <SyncIndicator />
-          <ThemeToggle buttonClassName="min-h-11 min-w-11" buttonVariant="ghost" />
+          <ThemeToggle buttonClassName="min-h-11 min-w-11 max-md:hidden" buttonVariant="ghost" />
           <button
             aria-label="サインアウト"
-            className="icon-button flex min-h-11 min-w-11 items-center justify-center text-foreground/80 hover:text-foreground"
-            onClick={handleSignOut}
+            className="icon-button flex min-h-11 min-w-11 items-center justify-center text-foreground/80 hover:text-foreground max-md:hidden"
+            onClick={signOut}
             type="button"
           >
-            <LogOut className="size-4" />
+            <LogOut aria-hidden="true" className="size-4" />
           </button>
         </div>
       </div>

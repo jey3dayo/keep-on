@@ -5,8 +5,8 @@ import type * as React from 'react'
 import { NavMain } from '@/components/dashboard/NavMain'
 import { NavSecondary } from '@/components/dashboard/NavSecondary'
 import { Sidebar, SidebarContent, SidebarFooter, useSidebar } from '@/components/sidebar/Sidebar'
-import { ACCESS_LOGOUT_URL } from '@/constants/auth'
 import { NAV_ITEMS } from '@/constants/navigation'
+import { signOut } from '@/lib/auth/sign-out'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isMobile } = useSidebar()
@@ -25,13 +25,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter className="pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center gap-2 p-2">
-          <a
+          <button
             aria-label="サインアウト"
-            className="flex size-8 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-secondary hover:text-foreground"
-            href={ACCESS_LOGOUT_URL}
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={signOut}
+            type="button"
           >
-            <LogOut className="size-4" />
-          </a>
+            <LogOut aria-hidden="true" className="size-4" />
+          </button>
         </div>
       </SidebarFooter>
     </Sidebar>

@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import { Icon } from '@/components/basics/Icon'
 import type { OptimisticRollback } from '@/components/habits/types'
@@ -37,7 +37,6 @@ interface HabitSimpleViewProps {
   onUnSkip?: (habitId: string) => Promise<void>
   // デスクトップ経路ではモバイル用ページドットを描画しないため false にする。
   showPageDots?: boolean
-  viewToggleSlot?: ReactNode
 }
 
 export function HabitSimpleView({
@@ -53,7 +52,6 @@ export function HabitSimpleView({
   onUnSkip,
   backgroundColor,
   showPageDots = true,
-  viewToggleSlot,
 }: HabitSimpleViewProps) {
   const [currentPage, setCurrentPage] = useState(0)
   const [drawerState, setDrawerState] = useState<{ open: boolean; habit: HabitWithProgress | null }>({
@@ -182,7 +180,6 @@ export function HabitSimpleView({
 
   return (
     <DashboardBackground backgroundColor={bgColor} className="overflow-hidden">
-      {viewToggleSlot ? <div className="flex justify-end px-4 pt-3">{viewToggleSlot}</div> : null}
       {/* 旧 footer slot に確保していた下部余白は、ページドットを本文フローへ移したため不要。 */}
       <main className="relative flex flex-1 flex-col items-center px-4 pb-8 max-md:pt-0 md:pt-8">
         <div className={cn('grid w-full max-w-md grid-cols-2 gap-6')}>
