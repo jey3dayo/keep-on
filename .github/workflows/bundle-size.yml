@@ -39,13 +39,20 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          # Dry-run でサイズチェック
-          OUTPUT=$(pnpm wrangler deploy --dry-run 2>&1 || true)
+          # Dry-run が失敗した場合はサイズを推測せず、CIを失敗させる。
+          if ! OUTPUT=$(pnpm wrangler deploy --dry-run 2>&1); then
+            echo "$OUTPUT"
+            echo "❌ Error: Cloudflare dry-run failed"
+            exit 1
+          fi
           echo "$OUTPUT"
           echo "$OUTPUT" > /tmp/bundle-size.txt
 
-          # サイズを抽出（例: "Total Upload: 12.34 MB"）
-          SIZE=$(echo "$OUTPUT" | grep -oP 'Total Upload: \K[\d.]+(?= MB)' || echo "0")
+          # サイズを抽出できない場合も計測失敗としてCIを失敗させる。
+          if ! SIZE=$(echo "$OUTPUT" | grep -oP 'Total Upload: \K[\d.]+(?= MB)'); then
+            echo "❌ Error: Could not parse bundle size from dry-run output"
+            exit 1
+          fi
           LIMIT=25
 
           echo "Bundle size: ${SIZE}MB (limit: ${LIMIT}MB)"

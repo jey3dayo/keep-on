@@ -31,7 +31,8 @@ export async function createHabit(input: HabitInput) {
         .returning()
       return habit
     },
-    { name: input.name, userId: input.userId }
+    // 習慣名はユーザー入力値のため、運用ログのメタデータに含めない。
+    { userId: input.userId }
   )
 }
 

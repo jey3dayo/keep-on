@@ -39,6 +39,30 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+describe('createHabit', () => {
+  it('習慣名をプロファイルログのメタデータに含めない', async () => {
+    const habitName = '運用ログに残してはいけない習慣名'
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined)
+
+    try {
+      await habitQueries.createHabit({
+        color: 'blue',
+        frequency: 1,
+        icon: 'book-open',
+        name: habitName,
+        period: 'daily',
+        reminderTime: null,
+        userId: 'user-123',
+      })
+
+      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('query.createHabit:complete'))
+      expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining(habitName))
+    } finally {
+      infoSpy.mockRestore()
+    }
+  })
+})
+
 describe('getHabitsWithProgress', () => {
   const baseDate = new Date(2024, 0, 17, 12, 0, 0)
   const habits: Habit[] = [
