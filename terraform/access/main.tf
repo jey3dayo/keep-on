@@ -51,7 +51,11 @@ resource "cloudflare_zero_trust_access_application" "keep_on_public_assets" {
 
   destinations = [
     { type = "public", uri = "keep-on.jey3dayo.net/_next/static/*" },
-    { type = "public", uri = "keep-on.jey3dayo.net/manifest.json" },
+    # manifest は app/manifest.ts 一本化で /manifest.webmanifest へ移行済み（969f7e4）。
+    # ブラウザは manifest を無認証で取得するため bypass が無いと PWA の導入・更新が壊れる。
+    # destinations は 1 アプリ 5 件までの API 制限（error 12130）があるため、
+    # 旧 .json（移行期間用）と新 .webmanifest をワイルドカード 1 件に畳んでいる
+    { type = "public", uri = "keep-on.jey3dayo.net/manifest.*" },
     { type = "public", uri = "keep-on.jey3dayo.net/sw.js" },
     { type = "public", uri = "keep-on.jey3dayo.net/icon-*.png" },
     { type = "public", uri = "keep-on.jey3dayo.net/apple-touch-icon.png" },
