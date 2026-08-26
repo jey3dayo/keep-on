@@ -46,7 +46,8 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
   }
 
   if (habit.userId !== userId) {
-    redirect('/habits')
+    // 所有者以外も404に統一し、習慣IDの存在を推測できないようにする。
+    notFound()
   }
 
   logInfo('request.habits.detail:end', requestMeta)

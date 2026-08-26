@@ -18,7 +18,11 @@ import {
 } from '@/components/ui/alert-dialog'
 import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
 import type { ServerActionResultAsync } from '@/lib/actions/result'
-import { formatSerializableError, type SerializableHabitError } from '@/lib/errors/serializable'
+import {
+  formatSerializableError,
+  GENERIC_ACTION_ERROR_MESSAGE,
+  type SerializableHabitError,
+} from '@/lib/errors/serializable'
 import type { OptimisticHandler } from './types'
 
 interface HabitActionDialogProps {
@@ -121,12 +125,12 @@ export function HabitActionDialog({
       toast.error(errorMessage, {
         description: formatSerializableError(result.error),
       })
-    } catch (error) {
+    } catch {
       if (rollback) {
         rollback()
       }
       toast.error(errorMessage, {
-        description: error instanceof Error ? error.message : '通信エラーが発生しました',
+        description: GENERIC_ACTION_ERROR_MESSAGE,
       })
     } finally {
       setIsProcessing(false)

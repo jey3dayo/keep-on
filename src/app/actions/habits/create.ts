@@ -6,7 +6,7 @@ import { DatabaseError } from '@/lib/errors/habit'
 import { type SerializableHabitError, serializeHabitError } from '@/lib/errors/serializable'
 import { createHabit as createHabitQuery } from '@/lib/queries/habit'
 import { validateHabitInput } from '@/validators/habit'
-import { authenticateUser, revalidateHabitPaths } from './utils'
+import { authenticateUser, revalidateHabitPaths, serializeActionError } from './utils'
 
 /**
  * 習慣を作成するServer Action
@@ -15,30 +15,34 @@ import { authenticateUser, revalidateHabitPaths } from './utils'
  * @returns ServerActionResult<{id: string}, SerializableHabitError>
  */
 export async function createHabit(formData: FormData): ServerActionResultAsync<{ id: string }, SerializableHabitError> {
-  const userIdResult = await authenticateUser()
+  try {
+    const userIdResult = await authenticateUser()
 
-  if (!Result.isSuccess(userIdResult)) {
-    return actionError(serializeHabitError(userIdResult.error))
-  }
+    if (!Result.isSuccess(userIdResult)) {
+      return actionError(serializeHabitError(userIdResult.error))
+    }
 
-  const userId = userIdResult.value
+    const userId = userIdResult.value
 
-  const result = await Result.pipe(
-    validateHabitInput(userId, formData),
-    Result.andThen(
-      async (validInput) =>
-        await Result.try({
-          catch: (error) => new DatabaseError({ cause: error }),
-          try: async () => await createHabitQuery(validInput),
-        })
+    const result = await Result.pipe(
+      validateHabitInput(userId, formData),
+      Result.andThen(
+        async (validInput) =>
+          await Result.try({
+            catch: (error) => new DatabaseError({ cause: error }),
+            try: async () => await createHabitQuery(validInput),
+          })
+      )
     )
-  )
 
-  if (Result.isSuccess(result)) {
-    await revalidateHabitPaths(userId)
-    return actionOk({ id: result.value.id })
+    if (Result.isSuccess(result)) {
+      await revalidateHabitPaths(userId)
+      return actionOk({ id: result.value.id })
+    }
+
+    // エラーをシリアライズ可能な形式に変換
+    return actionError(serializeActionError(result.error, '習慣の作成に失敗しました'))
+  } catch (error) {
+    return actionError(serializeActionError(error, '習慣の作成に失敗しました'))
   }
-
-  // エラーをシリアライズ可能な形式に変換
-  return actionError(serializeHabitError(result.error))
 }

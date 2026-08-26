@@ -10,7 +10,11 @@ import {
   UnauthorizedError,
   ValidationError,
 } from '@/lib/errors/habit'
-import { type SerializableHabitError, serializeHabitError } from '@/lib/errors/serializable'
+import {
+  GENERIC_ACTION_ERROR_MESSAGE,
+  type SerializableHabitError,
+  serializeHabitError,
+} from '@/lib/errors/serializable'
 import { createRequestMeta, formatError, logWarn } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
 import { captureException } from '@/lib/sentry'
@@ -84,76 +88,84 @@ export async function runHabitMutation(
   mutation: HabitMutation,
   options: { precondition?: HabitPrecondition; sync?: boolean } = {}
 ): HabitActionResult {
-  const validation = validateHabitId(habitId)
-  if (!Result.isSuccess(validation)) {
-    return actionError(serializeHabitError(validation.error))
-  }
-
-  const validatedHabitId = validation.value
-  const userIdResult = await requireUserId()
-
-  if (!userIdResult.ok) {
-    return userIdResult
-  }
-
-  const habitResult = await requireOwnedHabit(validatedHabitId, userIdResult.data)
-
-  if (!habitResult.ok) {
-    return habitResult
-  }
-
-  if (options.precondition) {
-    const error = options.precondition(habitResult.data)
-
-    if (error) {
-      return actionError(error)
+  try {
+    const validation = validateHabitId(habitId)
+    if (!Result.isSuccess(validation)) {
+      return actionError(serializeHabitError(validation.error))
     }
+
+    const validatedHabitId = validation.value
+    const userIdResult = await requireUserId()
+
+    if (!userIdResult.ok) {
+      return userIdResult
+    }
+
+    const habitResult = await requireOwnedHabit(validatedHabitId, userIdResult.data)
+
+    if (!habitResult.ok) {
+      return habitResult
+    }
+
+    if (options.precondition) {
+      const error = options.precondition(habitResult.data)
+
+      if (error) {
+        return actionError(error)
+      }
+    }
+
+    const mutated = await mutation(validatedHabitId, userIdResult.data)
+
+    if (!mutated) {
+      return actionError(serializeHabitError(new NotFoundError()))
+    }
+
+    // デフォルトは sync: true（アーカイブ・削除などはユーザーが即座に結果を確認する）
+    await revalidateHabitPaths(userIdResult.data, { sync: options.sync ?? true })
+
+    return actionOk()
+  } catch (error) {
+    return actionError(serializeActionError(error, GENERIC_ACTION_ERROR_MESSAGE))
   }
-
-  const mutated = await mutation(validatedHabitId, userIdResult.data)
-
-  if (!mutated) {
-    return actionError(serializeHabitError(new NotFoundError()))
-  }
-
-  // デフォルトは sync: true（アーカイブ・削除などはユーザーが即座に結果を確認する）
-  await revalidateHabitPaths(userIdResult.data, { sync: options.sync ?? true })
-
-  return actionOk()
 }
 
 export async function runTimedHabitAction<T>(
   actionInput: TimedHabitActionInput,
   options: RunTimedHabitActionOptions<T>
 ): HabitActionResult<T> {
-  const requestMeta = createRequestMeta(options.actionName)
-  const timeoutMs = getRequestTimeoutMs()
-  const spans = createHabitCheckinSpans(timeoutMs)
-  const todayKey = await getServerDateKey()
+  try {
+    const requestMeta = createRequestMeta(options.actionName)
+    const timeoutMs = getRequestTimeoutMs()
+    const spans = createHabitCheckinSpans(timeoutMs)
+    const todayKey = await getServerDateKey()
 
-  const result = await Result.pipe(
-    validateHabitActionInput(actionInput, todayKey),
-    Result.andThen(async (input) => {
-      const baseMeta = options.buildBaseMeta?.(input, requestMeta) ?? {
-        ...requestMeta,
-        dateKey: input.dateKey,
-        habitId: input.habitId,
-      }
+    const result = await Result.pipe(
+      validateHabitActionInput(actionInput, todayKey),
+      Result.andThen(async (input) => {
+        const baseMeta = options.buildBaseMeta?.(input, requestMeta) ?? {
+          ...requestMeta,
+          dateKey: input.dateKey,
+          habitId: input.habitId,
+        }
 
-      return await Result.try({
-        catch: (error) => error,
-        try: async () =>
-          await spans.runWithRequestTimeout(
-            options.actionName,
-            () => options.run({ baseMeta, input, spans }),
-            baseMeta
-          ),
-      })
-    }),
-    Result.mapError((error) => serializeActionError(error, options.errorDetail))
-  )
+        return await Result.try({
+          catch: (error) => error,
+          try: async () =>
+            await spans.runWithRequestTimeout(
+              options.actionName,
+              () => options.run({ baseMeta, input, spans }),
+              baseMeta
+            ),
+        })
+      }),
+      Result.mapError((error) => serializeActionError(error, options.errorDetail))
+    )
 
-  return toActionResult(result)
+    return toActionResult(result)
+  } catch (error) {
+    return actionError(serializeActionError(error, options.errorDetail))
+  }
 }
 
 export function serializeActionError(error: unknown, detail: string): SerializableHabitError {
@@ -166,9 +178,13 @@ export function serializeActionError(error: unknown, detail: string): Serializab
     return serializeHabitError(error)
   }
 
-  const databaseError = error instanceof DatabaseError ? error : new DatabaseError({ cause: error, detail })
+  if (error instanceof DatabaseError) {
+    captureException(error.cause ?? error, { detail, operation: 'habit-action' })
+    return serializeHabitError(error)
+  }
 
-  return serializeHabitError(databaseError)
+  captureException(error, { detail, operation: 'habit-action' })
+  return serializeHabitError(new DatabaseError({ cause: error, detail: GENERIC_ACTION_ERROR_MESSAGE }))
 }
 
 export async function revalidateHabitPaths(userId: string, options: { sync?: boolean } = {}) {

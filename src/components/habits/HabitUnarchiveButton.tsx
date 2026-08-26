@@ -6,7 +6,7 @@ import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import { unarchiveHabitAction } from '@/app/actions/habits/unarchive'
 import { IconLabelButton } from '@/components/basics/IconLabelButton'
-import { formatSerializableError } from '@/lib/errors/serializable'
+import { formatSerializableError, GENERIC_ACTION_ERROR_MESSAGE } from '@/lib/errors/serializable'
 import type { OptimisticHandler } from './types'
 
 interface HabitUnarchiveButtonProps {
@@ -38,12 +38,12 @@ export function HabitUnarchiveButton({ habitId, iconOnly = false, onOptimistic }
       toast.error('復元に失敗しました', {
         description: formatSerializableError(result.error),
       })
-    } catch (error) {
+    } catch {
       if (rollback) {
         rollback()
       }
       toast.error('復元に失敗しました', {
-        description: error instanceof Error ? error.message : undefined,
+        description: GENERIC_ACTION_ERROR_MESSAGE,
       })
     } finally {
       setIsRestoring(false)

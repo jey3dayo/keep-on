@@ -30,10 +30,10 @@ export default async function EditHabitPage({ params }: HabitIdPageProps) {
     notFound()
   }
 
-  // 所有権確認
+  // 所有者以外も404に統一し、習慣IDの存在を推測できないようにする。
   if (habit.userId !== userId) {
     logInfo('habits.edit.page.fetchHabit:forbidden', requestMeta)
-    redirect('/dashboard')
+    notFound()
   }
 
   logInfo('request.habits.edit.page:end', requestMeta)

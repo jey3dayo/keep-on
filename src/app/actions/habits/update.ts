@@ -6,7 +6,7 @@ import { AuthorizationError, getHabitAuthorizationClientMessage } from '@/lib/er
 import { serializeHabitError } from '@/lib/errors/serializable'
 import { updateHabit } from '@/lib/queries/habit'
 import { validateHabitUpdate } from '@/validators/habit'
-import { authenticateUser, revalidateHabitPaths } from './utils'
+import { authenticateUser, revalidateHabitPaths, serializeActionError } from './utils'
 
 /**
  * 習慣を更新するServer Action
@@ -19,26 +19,30 @@ export async function updateHabitAction(
   habitId: string,
   formData: FormData
 ): ServerActionResultAsync<void, ReturnType<typeof serializeHabitError>> {
-  const userIdResult = await authenticateUser()
+  try {
+    const userIdResult = await authenticateUser()
 
-  if (!Result.isSuccess(userIdResult)) {
-    return actionError(serializeHabitError(userIdResult.error))
+    if (!Result.isSuccess(userIdResult)) {
+      return actionError(serializeHabitError(userIdResult.error))
+    }
+
+    const userId = userIdResult.value
+    const validationResult = validateHabitUpdate(formData)
+
+    if (!Result.isSuccess(validationResult)) {
+      return actionError(serializeHabitError(validationResult.error))
+    }
+
+    const habit = await updateHabit(habitId, userId, validationResult.value)
+
+    if (!habit) {
+      return actionError(serializeHabitError(new AuthorizationError({ detail: getHabitAuthorizationClientMessage() })))
+    }
+
+    await revalidateHabitPaths(userId)
+
+    return actionOk()
+  } catch (error) {
+    return actionError(serializeActionError(error, '習慣の更新に失敗しました'))
   }
-
-  const userId = userIdResult.value
-  const validationResult = validateHabitUpdate(formData)
-
-  if (!Result.isSuccess(validationResult)) {
-    return actionError(serializeHabitError(validationResult.error))
-  }
-
-  const habit = await updateHabit(habitId, userId, validationResult.value)
-
-  if (!habit) {
-    return actionError(serializeHabitError(new AuthorizationError({ detail: getHabitAuthorizationClientMessage() })))
-  }
-
-  await revalidateHabitPaths(userId)
-
-  return actionOk()
 }

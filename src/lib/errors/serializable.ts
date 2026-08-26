@@ -11,6 +11,9 @@ export type SerializableHabitError =
   | { name: 'DatabaseError'; message: string }
   | { name: 'NotFoundError'; message: string }
 
+/** 想定外の例外を画面へ返すときに使う、内部情報を含まない共通メッセージ */
+export const GENERIC_ACTION_ERROR_MESSAGE = '操作に失敗しました。しばらくしてからもう一度お試しください'
+
 /**
  * HabitErrorをシリアライズ可能な形式に変換
  *
