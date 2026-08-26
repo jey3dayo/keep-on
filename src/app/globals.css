@@ -138,7 +138,8 @@
 }
 [data-theme="lime"] {
   --primary: var(--lime-10);
-  --primary-foreground: var(--lime-1);
+  /* lime-10 は明るいため、白系の lime-1 ではなく暗色でAAコントラストを確保する。 */
+  --primary-foreground: var(--slate-12);
   --ring: var(--lime-9);
   --accent: var(--lime-3);
 }
@@ -180,7 +181,8 @@
 }
 [data-theme="yellow"] {
   --primary: var(--yellow-10);
-  --primary-foreground: var(--yellow-1);
+  /* yellow-10 は明るいため、白系の yellow-1 ではなく暗色でAAコントラストを確保する。 */
+  --primary-foreground: var(--slate-12);
   --ring: var(--yellow-9);
   --accent: var(--yellow-3);
 }
@@ -189,7 +191,9 @@
   --primary-foreground: var(--orange-12);
 }
 .dark[data-theme="lime"] {
-  --primary-foreground: var(--lime-12);
+  /* lime は dark スケールでも primary(lime-10) が明るい bright color のため、
+     明色の lime-12 では 1.0:1 まで潰れる（実測）。dark でも暗色前景で AA を確保する */
+  --primary-foreground: var(--slate-1);
 }
 .dark[data-theme="red"] {
   --primary-foreground: var(--red-12);
@@ -210,7 +214,8 @@
   --primary-foreground: var(--teal-12);
 }
 .dark[data-theme="yellow"] {
-  --primary-foreground: var(--yellow-12);
+  /* yellow も bright color（dark の primary が明るい）。lime と同じく暗色前景で AA を確保する */
+  --primary-foreground: var(--slate-1);
 }
 
 @layer base {
