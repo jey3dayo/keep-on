@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef } from 'react'
-import { SW_MSG_SYNC_COMPLETE, SW_SYNC_TAG } from '@/constants/pwa'
+import { isNonRetryableOfflineCheckinStatus, SW_MSG_SYNC_COMPLETE, SW_SYNC_TAG } from '@/constants/pwa'
 import { useIdentity } from '@/contexts/IdentityContext'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { isAuthInterceptedResponse } from '@/lib/auth/access-intercept'
@@ -87,10 +87,11 @@ const replayQueue = async (currentUserId: string, prefetchedItems?: QueuedChecki
       if (res.ok) {
         await removeQueuedCheckin(item.id)
         replayed++
-      } else if (res.status === 401 || res.status === 403) {
-        failed++
-        break
-      } else if (res.status >= 400 && res.status < 500) {
+      } else if (isNonRetryableOfflineCheckinStatus(res.status)) {
+        console.warn('[offline-queue] discarding non-retryable checkin', {
+          habitId: item.habitId,
+          status: res.status,
+        })
         await removeQueuedCheckin(item.id)
         failed++
       } else {

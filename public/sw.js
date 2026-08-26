@@ -13,6 +13,10 @@ const PRECACHE_FILES = ['/offline', '/manifest.webmanifest', '/icon-192.png', '/
 // DB_NAME, STORE_NAME, キューアイテムの形（userId を含む）は src/lib/pwa/offline-queue.ts と同期すること
 const DB_NAME = 'keepon-offline'
 const STORE_NAME = 'checkin-queue'
+// 非リトライ status は src/constants/pwa.ts の OFFLINE_CHECKIN_NON_RETRYABLE_STATUSES と同期すること
+const OFFLINE_CHECKIN_NON_RETRYABLE_STATUSES = [400, 403, 404, 409, 422]
+
+const isNonRetryableOfflineCheckinStatus = (status) => OFFLINE_CHECKIN_NON_RETRYABLE_STATUSES.includes(status)
 
 const openDb = () =>
   new Promise((resolve, reject) => {
@@ -47,8 +51,20 @@ const clearOfflineQueue = async () => {
     await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readwrite')
       const req = tx.objectStore(STORE_NAME).clear()
-      req.onsuccess = () => resolve()
-      req.onerror = () => reject(req.error)
+      let requestSucceeded = false
+      req.onsuccess = () => {
+        requestSucceeded = true
+      }
+      req.onerror = () => reject(req.error ?? new Error('IndexedDB request failed'))
+      tx.oncomplete = () => {
+        if (requestSucceeded) {
+          resolve()
+          return
+        }
+        reject(new Error('IndexedDB transaction completed without a successful request'))
+      }
+      tx.onerror = () => reject(tx.error ?? req.error ?? new Error('IndexedDB transaction failed'))
+      tx.onabort = () => reject(tx.error ?? req.error ?? new Error('IndexedDB transaction aborted'))
     })
   } finally {
     db.close()
@@ -229,16 +245,42 @@ self.addEventListener('sync', (event) => {
         new Promise((resolve, reject) => {
           const tx = db.transaction(STORE_NAME, 'readonly')
           const req = tx.objectStore(STORE_NAME).getAll()
-          req.onsuccess = () => resolve(req.result)
-          req.onerror = () => reject(req.error)
+          let requestSucceeded = false
+          let result
+          req.onsuccess = () => {
+            requestSucceeded = true
+            result = req.result
+          }
+          req.onerror = () => reject(req.error ?? new Error('IndexedDB request failed'))
+          tx.oncomplete = () => {
+            if (requestSucceeded) {
+              resolve(result)
+              return
+            }
+            reject(new Error('IndexedDB transaction completed without a successful request'))
+          }
+          tx.onerror = () => reject(tx.error ?? req.error ?? new Error('IndexedDB transaction failed'))
+          tx.onabort = () => reject(tx.error ?? req.error ?? new Error('IndexedDB transaction aborted'))
         })
 
       const deleteItem = (db, id) =>
         new Promise((resolve, reject) => {
           const tx = db.transaction(STORE_NAME, 'readwrite')
           const req = tx.objectStore(STORE_NAME).delete(id)
-          req.onsuccess = () => resolve()
-          req.onerror = () => reject(req.error)
+          let requestSucceeded = false
+          req.onsuccess = () => {
+            requestSucceeded = true
+          }
+          req.onerror = () => reject(req.error ?? new Error('IndexedDB request failed'))
+          tx.oncomplete = () => {
+            if (requestSucceeded) {
+              resolve()
+              return
+            }
+            reject(new Error('IndexedDB transaction completed without a successful request'))
+          }
+          tx.onerror = () => reject(tx.error ?? req.error ?? new Error('IndexedDB transaction failed'))
+          tx.onabort = () => reject(tx.error ?? req.error ?? new Error('IndexedDB transaction aborted'))
         })
 
       // ネットワーク障害時は fetch が throw → waitUntil が reject →
@@ -276,15 +318,18 @@ self.addEventListener('sync', (event) => {
           } else if (res.ok) {
             await deleteItem(db, item.id)
             replayedCount++
-          } else if (res.status === 401 || res.status === 403) {
-            // 認証エラーはセッション復帰後にリトライ可能なのでキューに残す
+          } else if (isNonRetryableOfflineCheckinStatus(res.status)) {
+            console.warn('[sw] discarding non-retryable offline checkin', {
+              habitId: item.habitId,
+              status: res.status,
+            })
+            await deleteItem(db, item.id)
+          } else if (res.status === 401 || res.status === 408 || res.status === 429 || res.status >= 500) {
+            // 認証切れ・レート制限・サーバー障害は将来成功しうるためキューに残す
             hasRetryableError = true
             break
-          } else if (res.status >= 400 && res.status < 500) {
-            // 永続的なバリデーションエラー（422 等）はリトライしても無駄なので削除
-            await deleteItem(db, item.id)
           } else {
-            // 5xx: サーバー一時障害。アイテムはキューに残し、リトライをスケジュール
+            // 未知のステータスは安全側に倒し、アイテムを残してリトライする
             hasRetryableError = true
             break
           }

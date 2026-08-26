@@ -2,6 +2,8 @@ const DB_NAME = 'keepon-offline'
 const DB_VERSION = 1
 const STORE_NAME = 'checkin-queue'
 
+type RequestState<T> = { completed: false } | { completed: true; result: T }
+
 export interface QueuedCheckin {
   action: 'add' | 'remove'
   dateKey: string
@@ -32,10 +34,35 @@ const withDb = async <T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) =
     const tx = db.transaction(STORE_NAME, mode)
     const store = tx.objectStore(STORE_NAME)
     const req = fn(store)
-    req.onsuccess = () => resolve(req.result as T)
-    req.onerror = () => reject(req.error)
-    tx.oncomplete = () => db.close()
-    tx.onerror = () => db.close()
+    let state: RequestState<T> = { completed: false }
+    let isClosed = false
+
+    const closeDb = () => {
+      if (!isClosed) {
+        isClosed = true
+        db.close()
+      }
+    }
+
+    const rejectTransaction = (error: DOMException | null, fallbackMessage: string) => {
+      closeDb()
+      reject(error ?? req.error ?? new Error(fallbackMessage))
+    }
+
+    req.onsuccess = () => {
+      state = { completed: true, result: req.result as T }
+    }
+    req.onerror = () => rejectTransaction(req.error, 'IndexedDB request failed')
+    tx.oncomplete = () => {
+      closeDb()
+      if (state.completed) {
+        resolve(state.result)
+        return
+      }
+      reject(new Error('IndexedDB transaction completed without a successful request'))
+    }
+    tx.onerror = () => rejectTransaction(tx.error, 'IndexedDB transaction failed')
+    tx.onabort = () => rejectTransaction(tx.error, 'IndexedDB transaction aborted')
   })
 }
 

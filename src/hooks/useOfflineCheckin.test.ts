@@ -113,7 +113,7 @@ describe('useOfflineCheckin', () => {
     expect(onReplayComplete).toHaveBeenCalledWith({ failed: 0, replayed: 1 })
   })
 
-  it('永続的な 4xx は破棄して後続 replay を継続する', async () => {
+  it.each([400, 403, 404, 409, 422])('status %s は破棄して後続 replay を継続する', async (status) => {
     mockIsOnline = true
     installServiceWorkerMock(false)
     mockGetAllQueuedCheckins
@@ -125,7 +125,7 @@ describe('useOfflineCheckin', () => {
         headers: new Headers({ 'content-type': 'application/json' }),
         ok: false,
         redirected: false,
-        status: 422,
+        status,
       } as Response)
       .mockResolvedValueOnce(jsonOkResponse())
 
@@ -142,7 +142,7 @@ describe('useOfflineCheckin', () => {
     expect(onReplayComplete).toHaveBeenCalledWith({ failed: 1, replayed: 1 })
   })
 
-  it('retryable な失敗では replay を停止して後続を送らない', async () => {
+  it.each([401, 408, 429, 500, 503])('status %s は replay を停止して後続を送らない', async (status) => {
     mockIsOnline = true
     installServiceWorkerMock(false)
     mockGetAllQueuedCheckins
@@ -152,7 +152,7 @@ describe('useOfflineCheckin', () => {
       headers: new Headers({ 'content-type': 'application/json' }),
       ok: false,
       redirected: false,
-      status: 503,
+      status,
     } as Response)
 
     const onReplayComplete = vi.fn()
