@@ -75,7 +75,7 @@ export function DesktopDashboard({
         </div>
       )}
 
-      <div className="fixed right-6 bottom-6 z-50 hidden md:block lg:right-8">
+      <div className="fixed right-6 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-50 hidden md:block lg:right-8">
         <DashboardViewToggle currentView={currentView} onViewChange={onViewChange} />
       </div>
     </>

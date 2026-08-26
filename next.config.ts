@@ -62,7 +62,7 @@ const nextConfig: NextConfig = {
           { key: 'Cache-Control', value: 'public, max-age=86400' },
           { key: 'CDN-Cache-Control', value: 'public, max-age=86400' },
         ],
-        source: '/manifest.json',
+        source: '/manifest.webmanifest',
       },
       {
         headers: [

@@ -1,9 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { resetHabitProgressAction } from '@/app/actions/habits/reset'
 import { Button } from '@/components/basics/Button'
 import { Icon } from '@/components/basics/Icon'
 import type { OptimisticRollback } from '@/components/habits/types'
@@ -13,13 +11,9 @@ import { ProgressRing } from '@/components/streak/ProgressRing'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById } from '@/constants/habit-data'
 import { LONG_PRESS_DURATION_MS, LONG_PRESS_MOVE_THRESHOLD_PX } from '@/constants/interaction'
-import { RETRY_DELAY_MS, RETRY_MAX_ATTEMPTS } from '@/constants/retry'
 import { cn } from '@/lib/utils'
 import { getRingColorFromBackground } from '@/lib/utils/color'
-import { appToast } from '@/lib/utils/toast'
 import type { HabitWithProgress } from '@/types/habit'
-
-const RESET_DIALOG_EXIT_MS = 200
 
 // Drawerコンポーネントを動的にインポート
 const HabitActionDrawer = dynamic(
@@ -61,11 +55,7 @@ export function HabitSimpleView({
   showPageDots = true,
   viewToggleSlot,
 }: HabitSimpleViewProps) {
-  const router = useRouter()
   const [currentPage, setCurrentPage] = useState(0)
-  const [resetConfirm, setResetConfirm] = useState<{ habitId: string; habitName: string } | null>(null)
-  const [resetDialogEntered, setResetDialogEntered] = useState(false)
-  const [isResetting, setIsResetting] = useState(false)
   const [drawerState, setDrawerState] = useState<{ open: boolean; habit: HabitWithProgress | null }>({
     habit: null,
     open: false,
@@ -74,7 +64,6 @@ export function HabitSimpleView({
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const longPressTriggeredRef = useRef(false)
   const longPressStartPointRef = useRef<{ x: number; y: number } | null>(null)
-  const resetDialogExitTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const habitsPerPage = 6
   const totalPages = Math.max(1, Math.ceil(habits.length / habitsPerPage))
@@ -82,37 +71,6 @@ export function HabitSimpleView({
   useEffect(() => {
     setCurrentPage((current) => Math.min(current, totalPages - 1))
   }, [totalPages])
-
-  useEffect(() => {
-    if (!resetConfirm) {
-      setResetDialogEntered(false)
-      return
-    }
-    const frame = requestAnimationFrame(() => {
-      setResetDialogEntered(true)
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [resetConfirm])
-
-  useEffect(
-    () => () => {
-      if (resetDialogExitTimerRef.current) {
-        clearTimeout(resetDialogExitTimerRef.current)
-      }
-    },
-    []
-  )
-
-  const closeResetDialog = useCallback(() => {
-    setResetDialogEntered(false)
-    if (resetDialogExitTimerRef.current) {
-      clearTimeout(resetDialogExitTimerRef.current)
-    }
-    resetDialogExitTimerRef.current = setTimeout(() => {
-      setResetConfirm(null)
-      resetDialogExitTimerRef.current = null
-    }, RESET_DIALOG_EXIT_MS)
-  }, [])
 
   const currentHabits = useMemo(
     () => habits.slice(currentPage * habitsPerPage, (currentPage + 1) * habitsPerPage),
@@ -151,64 +109,6 @@ export function HabitSimpleView({
     },
     [onAddCheckin, onRemoveCheckin]
   )
-
-  const runResetWithRetry = useCallback(async (habitId: string) => {
-    const maxAttempts = Math.max(1, RETRY_MAX_ATTEMPTS)
-    let lastError: unknown = null
-
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      try {
-        const result = await resetHabitProgressAction(habitId)
-        if (result.ok) {
-          return { ok: true as const, result }
-        }
-        return { ok: false as const, result }
-      } catch (error) {
-        lastError = error
-        if (attempt < maxAttempts - 1 && RETRY_DELAY_MS > 0) {
-          await new Promise<void>((resolve) => {
-            setTimeout(resolve, RETRY_DELAY_MS)
-          })
-        }
-      }
-    }
-
-    return { error: lastError, ok: false as const }
-  }, [])
-
-  const handleResetConfirm = useCallback(async () => {
-    if (!resetConfirm || isResetting) {
-      return
-    }
-
-    const habitId = resetConfirm.habitId
-    const rollback = onResetOptimistic?.(habitId)
-
-    setIsResetting(true)
-    try {
-      const { ok, result, error } = await runResetWithRetry(habitId)
-
-      if (ok) {
-        appToast.success('進捗をリセットしました')
-        closeResetDialog()
-        router.refresh()
-        return
-      }
-
-      if (rollback) {
-        rollback()
-      }
-
-      if (result) {
-        appToast.error('進捗のリセットに失敗しました', result.error)
-        return
-      }
-
-      appToast.error('進捗のリセットに失敗しました', error)
-    } finally {
-      setIsResetting(false)
-    }
-  }, [closeResetDialog, isResetting, onResetOptimistic, resetConfirm, router, runResetWithRetry])
 
   const openDrawer = useCallback((habit: HabitWithProgress) => {
     setDrawerHabitId(habit.id)
@@ -271,11 +171,6 @@ export function HabitSimpleView({
     },
     [closeDrawer]
   )
-  const handleResetBackdropClick = useCallback(() => {
-    if (!isResetting) {
-      closeResetDialog()
-    }
-  }, [closeResetDialog, isResetting])
   const handlePageChange = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     const page = Number(event.currentTarget.dataset.page)
     if (Number.isInteger(page)) {
@@ -377,51 +272,6 @@ export function HabitSimpleView({
         onUnSkip={drawerHabitId && onUnSkip ? () => onUnSkip(drawerHabitId) : undefined}
         open={drawerState.open}
       />
-
-      {resetConfirm ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <Button
-            aria-label="閉じる"
-            className="dialog-backdrop absolute inset-0 h-full w-full bg-black/50 p-0 backdrop-blur-sm hover:bg-black/50"
-            data-entered={resetDialogEntered ? 'true' : undefined}
-            onClick={handleResetBackdropClick}
-            type="button"
-            variant="ghost"
-          />
-
-          <div
-            className="dialog-scale-in relative w-full max-w-xs rounded-2xl bg-card p-6 shadow-2xl"
-            data-entered={resetDialogEntered ? 'true' : undefined}
-          >
-            <h3 className="mb-2 text-center font-semibold text-foreground text-lg">進捗をリセットしますか？</h3>
-            <p className="mb-6 text-center text-muted-foreground text-sm">
-              「{resetConfirm.habitName}」の今日のチェックインを削除して、進捗を0に戻します
-            </p>
-
-            <div className="flex gap-3">
-              <Button
-                className="flex-1 rounded-xl px-4 py-3"
-                disabled={isResetting}
-                onClick={closeResetDialog}
-                type="button"
-                variant="secondary"
-              >
-                キャンセル
-              </Button>
-              <Button
-                className="flex-1 rounded-xl px-4 py-3 text-white"
-                disabled={isResetting}
-                onClick={handleResetConfirm}
-                style={{ backgroundColor: bgColor }}
-                type="button"
-                variant="ghost"
-              >
-                リセットする
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </DashboardBackground>
   )
 }

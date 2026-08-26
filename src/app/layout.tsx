@@ -38,7 +38,6 @@ export const metadata: Metadata = {
       { sizes: '512x512', type: 'image/png', url: '/icon-512.png' },
     ],
   },
-  manifest: '/manifest.json',
   title: 'KeepOn - 習慣トラッキング',
 }
 

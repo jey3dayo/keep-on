@@ -116,7 +116,7 @@ run = "pnpm cf:deploy"
 
 [tasks."deploy:preview"]
 description = "ローカルでCloudflare環境をプレビュー"
-run = "pnpm preview"
+run = "pnpm cf:preview"
 
 # ========================================
 # データベースドキュメント

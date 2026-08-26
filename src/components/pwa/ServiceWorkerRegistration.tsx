@@ -99,9 +99,10 @@ export function ServiceWorkerRegistration() {
     return null
   }
 
-  // standalone では更新トーストもホームインジケータ領域に重なるため、固定 16px ではなく safe-area を避ける。
+  // sonner の mobileOffset と同じ判断で統一し、モバイルではタブバー 3.5rem + 余白 1rem と safe-area を避ける。
+  // md 幅ではタブバーが無いため、standalone でも従来どおり 1rem + safe-area を確保する。
   return (
-    <div className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 rounded-lg border border-border bg-card p-4 shadow-lg">
+    <div className="fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 rounded-lg border border-border bg-card p-4 shadow-lg md:bottom-[calc(1rem+env(safe-area-inset-bottom))]">
       <p className="text-foreground text-sm">新しいバージョンが利用可能です</p>
       <Button className="mt-2" onClick={handleUpdate} type="button" variant="default">
         更新する

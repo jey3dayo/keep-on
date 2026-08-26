@@ -8,7 +8,7 @@ const NEXT_STATIC_MEDIA_PREFIX = '/_next/static/media/'
 // ユーザー固有 HTML をキャッシュ対象にするルート
 const CACHEABLE_ROUTES = ['/dashboard', '/habits', '/analytics']
 
-const PRECACHE_FILES = ['/offline', '/manifest.json', '/icon-192.png', '/icon-512.png']
+const PRECACHE_FILES = ['/offline', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 // DB_NAME, STORE_NAME, キューアイテムの形（userId を含む）は src/lib/pwa/offline-queue.ts と同期すること
 const DB_NAME = 'keepon-offline'

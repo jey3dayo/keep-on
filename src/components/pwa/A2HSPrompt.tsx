@@ -124,10 +124,11 @@ export function A2HSPrompt() {
     </>
   )
 
-  // standalone ではホームインジケータ領域に固定 16px だと食い込むため、safe-area 分を下端から避ける。
+  // sonner の mobileOffset と同じ判断で統一し、モバイルではタブバー 3.5rem + 余白 1rem と safe-area を避ける。
+  // md 幅ではタブバーが無いため、standalone でも従来どおり 1rem + safe-area を確保する。
   return (
     <div
-      className="surface-from-bottom fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 z-50 rounded-lg border border-border bg-card p-4 shadow-lg sm:left-auto sm:w-80"
+      className="surface-from-bottom fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-4 z-50 rounded-lg border border-border bg-card p-4 shadow-lg sm:left-auto sm:w-80 md:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
       data-entered={entered ? 'true' : undefined}
     >
       <Button
