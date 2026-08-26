@@ -218,6 +218,18 @@
   --primary-foreground: var(--slate-1);
 }
 
+/*
+ * sonner の mobile 境界は 600px 固定で、Tailwind の md(768px) と一致しない。
+ * 601〜767px ではタブバー(MobileTabBar)が表示されるのに desktop offset(32px) が使われ、
+ * トーストがタブバーへ約 33px 重なる（実測）。この帯だけ bottom offset を底上げする。
+ * 600px 以下は layout.tsx の Toaster mobileOffset が同じ値を設定している。
+ */
+@media (min-width: 600.02px) and (max-width: 767.98px) {
+  [data-sonner-toaster][data-y-position="bottom"] {
+    --offset-bottom: calc(4.5rem + env(safe-area-inset-bottom)) !important;
+  }
+}
+
 @layer base {
   /*
    * クラシックスクロールバー環境（マウス接続時の macOS 等）で、スクロールの
