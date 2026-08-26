@@ -99,8 +99,9 @@ export function ServiceWorkerRegistration() {
     return null
   }
 
+  // standalone では更新トーストもホームインジケータ領域に重なるため、固定 16px ではなく safe-area を避ける。
   return (
-    <div className="fixed right-4 bottom-4 z-50 rounded-lg border border-border bg-card p-4 shadow-lg">
+    <div className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 rounded-lg border border-border bg-card p-4 shadow-lg">
       <p className="text-foreground text-sm">新しいバージョンが利用可能です</p>
       <Button className="mt-2" onClick={handleUpdate} type="button" variant="default">
         更新する
