@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { habits } from '@/db/schema'
 import { deleteAllCheckinsByHabitAndPeriod } from '@/lib/queries/checkin'
 import { getHabitById } from '@/lib/queries/habit'
-import { getUserWeekStartById } from '@/lib/queries/user'
 import { getServerDateKey } from '@/lib/server/date'
 import { getCurrentUserId } from '@/lib/user'
 import { resetHabitProgressAction } from '../reset'
@@ -35,10 +34,6 @@ vi.mock('@/lib/queries/habit', () => ({
   getHabitById: vi.fn(),
 }))
 
-vi.mock('@/lib/queries/user', () => ({
-  getUserWeekStartById: vi.fn(),
-}))
-
 vi.mock('@/lib/server/date', () => ({
   getServerDateKey: vi.fn(),
 }))
@@ -68,7 +63,6 @@ describe('resetHabitProgressAction', () => {
     vi.clearAllMocks()
     vi.mocked(getServerDateKey).mockResolvedValue(todayKey)
     vi.mocked(getCurrentUserId).mockResolvedValue(userId)
-    vi.mocked(getUserWeekStartById).mockResolvedValue('monday')
     vi.mocked(deleteAllCheckinsByHabitAndPeriod).mockResolvedValue({
       meta: {
         changed_db: true,
@@ -84,13 +78,25 @@ describe('resetHabitProgressAction', () => {
     })
   })
 
-  it('dateKeyを省略した場合はtodayKeyで解決されて成功する', async () => {
-    vi.mocked(getHabitById).mockResolvedValue(buildHabit({ id: habitId, userId }))
+  it.each(['daily', 'weekly', 'monthly'] as const)(
+    '%s習慣でも今日のチェックインだけを削除対象にする',
+    async (period) => {
+      vi.mocked(getHabitById).mockResolvedValue(buildHabit({ id: habitId, period, userId }))
 
-    const result = await resetHabitProgressAction(habitId)
+      const result = await resetHabitProgressAction(habitId)
+
+      expect(result.ok).toBe(true)
+      expect(deleteAllCheckinsByHabitAndPeriod).toHaveBeenCalledWith(habitId, todayKey, 'daily')
+    }
+  )
+
+  it('呼び出し元の過去dateKeyを受け取ってもサーバー側の今日だけを対象にする', async () => {
+    vi.mocked(getHabitById).mockResolvedValue(buildHabit({ id: habitId, period: 'weekly', userId }))
+
+    const result = await resetHabitProgressAction(habitId, '2026-08-12')
 
     expect(result.ok).toBe(true)
-    expect(deleteAllCheckinsByHabitAndPeriod).toHaveBeenCalledWith(habitId, todayKey, 'daily', expect.anything())
+    expect(deleteAllCheckinsByHabitAndPeriod).toHaveBeenCalledWith(habitId, todayKey, 'daily')
   })
 
   it('未来2日以上のdateKeyはValidationErrorを返す', async () => {

@@ -1,12 +1,10 @@
 'use server'
 
 import { Result } from '@praha/byethrow'
-import { weekStartToDay } from '@/constants/habit'
 import { toActionResult } from '@/lib/actions/result'
 import { AuthorizationError, getHabitAuthorizationClientMessage, UnauthorizedError } from '@/lib/errors/habit'
 import { deleteAllCheckinsByHabitAndPeriod } from '@/lib/queries/checkin'
 import { getHabitById } from '@/lib/queries/habit'
-import { getUserWeekStartById } from '@/lib/queries/user'
 import { getServerDateKey } from '@/lib/server/date'
 import { getCurrentUserId } from '@/lib/user'
 import { validateHabitActionInput } from '@/validators/habit-action'
@@ -26,18 +24,16 @@ export async function resetHabitProgressAction(habitId: string, dateKey?: string
             throw new UnauthorizedError({ detail: '認証されていません' })
           }
 
-          // habit取得とweekStart取得は互いに独立したクエリのため並列実行する
-          const [habit, weekStart] = await Promise.all([getHabitById(input.habitId), getUserWeekStartById(userId)])
+          const habit = await getHabitById(input.habitId)
 
           // habit所有権チェック（クライアントには単一メッセージのみ返す）
           if (!(habit && habit.userId === userId && !habit.archived)) {
             throw new AuthorizationError({ detail: getHabitAuthorizationClientMessage() })
           }
 
-          const weekStartDay = weekStartToDay(weekStart)
-
-          // 期間内の全チェックインを削除
-          await deleteAllCheckinsByHabitAndPeriod(input.habitId, input.dateKey, habit.period, weekStartDay)
+          // 表示文言どおり、ユーザーのタイムゾーンにおける今日のチェックインだけを削除する。
+          // daily の期間計算は既存クエリに委譲し、週次・月次の過去日を対象にしない。
+          await deleteAllCheckinsByHabitAndPeriod(input.habitId, todayKey, 'daily')
 
           await revalidateHabitPaths(userId)
         },
