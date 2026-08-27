@@ -32,6 +32,7 @@ const MIGRATION_FILES = [
   '0003_skip_and_reminder.sql',
   '0004_external_id.sql',
   '0005_checkin_op.sql',
+  '0006_checkin_op_created_at_idx.sql',
 ]
 
 function rebuildDb() {
@@ -49,7 +50,7 @@ function rebuildDb() {
   liveDb = drizzle(d1, { schema })
 }
 
-const { checkins, habits, users } = schema
+const { checkinOps, checkins, habits, users } = schema
 
 async function insertUser(id: string) {
   await liveDb.run(sql`INSERT INTO ${users} ("id", "externalId", "email", "createdAt", "updatedAt")
@@ -64,6 +65,13 @@ async function insertHabit(id: string, userId: string, frequency: number) {
 async function insertCheckin(id: string, habitId: string, date: string, createdAt: string) {
   await liveDb.run(
     sql`INSERT INTO ${checkins} ("id", "habitId", "date", "createdAt") VALUES (${id}, ${habitId}, ${date}, ${createdAt})`
+  )
+}
+
+async function insertCheckinOp(opId: string, habitId: string, createdAt: string) {
+  await liveDb.run(
+    sql`INSERT INTO ${checkinOps} ("action", "createdAt", "habitId", "opId", "result")
+      VALUES ('remove', ${createdAt}, ${habitId}, ${opId}, '{}')`
   )
 }
 
@@ -82,6 +90,11 @@ async function selectDates(): Promise<string[]> {
 async function selectIds(): Promise<string[]> {
   const rows = await liveDb.all<{ id: string }>(sql`SELECT ${checkins.id} AS id FROM ${checkins}`)
   return rows.map((row) => row.id)
+}
+
+async function selectCheckinOpIds(): Promise<string[]> {
+  const rows = await liveDb.all<{ opId: string }>(sql`SELECT ${checkinOps.opId} AS opId FROM ${checkinOps}`)
+  return rows.map((row) => row.opId)
 }
 
 describe('sqlite-d1 shim smoke test', () => {
@@ -318,6 +331,26 @@ describe('deleteLatestCheckinByHabitAndPeriod (real SQLite)', () => {
       deleteLatestCheckinByHabitAndPeriod('habit2', '2024-01-15', 'daily', 1, 'shared-op-2')
     ).rejects.toMatchObject({ name: 'AuthorizationError' })
     expect(await selectIds()).toEqual(['habit2-checkin'])
+  })
+
+  it('removeの書き込みに便乗して古いCheckinOpを最大100件削除し、48時間以内の行を残す', async () => {
+    await insertUser('user1')
+    await insertHabit('habit1', 'user1', 3)
+    await insertCheckin('checkin-1', 'habit1', '2024-01-15', '2024-01-15T00:00:00.000Z')
+
+    const expiredAt = new Date(Date.now() - 49 * 60 * 60 * 1000).toISOString()
+    const retainedAt = new Date(Date.now() - 47 * 60 * 60 * 1000).toISOString()
+    for (let index = 0; index < 101; index++) {
+      await insertCheckinOp(`expired-op-${index}`, 'habit1', expiredAt)
+    }
+    await insertCheckinOp('retained-op', 'habit1', retainedAt)
+
+    await deleteLatestCheckinByHabitAndPeriod('habit1', '2024-01-15', 'daily', 1, 'current-op')
+
+    const operationIds = await selectCheckinOpIds()
+    expect(operationIds.filter((opId) => opId.startsWith('expired-op-'))).toHaveLength(1)
+    expect(operationIds).toContain('retained-op')
+    expect(operationIds).toContain('current-op')
   })
 })
 

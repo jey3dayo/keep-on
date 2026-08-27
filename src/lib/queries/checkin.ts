@@ -8,6 +8,9 @@ import { getPeriodDateRange } from '@/lib/queries/period'
 import { profileQuery } from '@/lib/queries/profiler'
 import { normalizeDateKey } from '@/lib/utils/date'
 
+const CHECKIN_OP_RETENTION_MS = 48 * 60 * 60 * 1000
+const CHECKIN_OP_CLEANUP_LIMIT = 100
+
 interface CreateCheckinInput {
   date: Date | string
   habitId: string
@@ -237,6 +240,27 @@ function parseStoredDeleteResult(serialized: string): DeleteLatestCheckinResult 
 
 type CheckinDatabase = ReturnType<typeof getDb>
 
+/**
+ * remove の書き込みに便乗して、期限切れの操作台帳を最大100件削除する。
+ *
+ * 冪等性の保証窓は48時間に縮む。オフラインキューの replay は通常数分〜数時間内であり、
+ * 48時間を超える再送は稀なので、重複より台帳肥大の方が害が大きいという判断による。
+ */
+function buildCheckinOpCleanup(db: CheckinDatabase) {
+  const cutoff = new Date(Date.now() - CHECKIN_OP_RETENTION_MS).toISOString()
+
+  return db.delete(checkinOps).where(
+    sql`
+      rowid IN (
+        SELECT rowid
+        FROM ${checkinOps}
+        WHERE ${checkinOps.createdAt} < ${cutoff}
+        LIMIT ${CHECKIN_OP_CLEANUP_LIMIT}
+      )
+    `
+  )
+}
+
 async function readStoredDeleteResult(
   db: CheckinDatabase,
   habitId: string,
@@ -291,14 +315,15 @@ async function deleteLatestCheckinWithIdempotency(
     opId,
     result: JSON.stringify(result),
   })
+  const cleanupOperation = buildCheckinOpCleanup(db)
 
   if (latestCheckin) {
     const deleteOperation = db.delete(checkins).where(eq(checkins.id, latestCheckin.id)).returning()
     // D1 batch は各文を同一トランザクションで扱う。先に操作IDを確保することで、
     // 同じ replay が並行して到着しても片方だけが削除を実行できる。
-    await db.batch([operationInsert, deleteOperation])
+    await db.batch([operationInsert, deleteOperation, cleanupOperation])
   } else {
-    await db.batch([operationInsert])
+    await db.batch([operationInsert, cleanupOperation])
   }
 
   return result
