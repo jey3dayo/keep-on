@@ -52,7 +52,11 @@ export default async function DashboardLayout({
             タブバー本体と safe-area 分の padding を予約する。md 幅で safe-area を持つ環境
             （iPad standalone）では、従来どおりスクロールコンテナ自身が safe-area を確保する。
           */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden max-md:pb-[calc(var(--tabbar-height)+env(safe-area-inset-bottom))] md:pb-[env(safe-area-inset-bottom)]">
+          <div
+            className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden max-md:pb-[calc(var(--tabbar-height)+env(safe-area-inset-bottom))] md:pb-[env(safe-area-inset-bottom)]"
+            id="main-content"
+            tabIndex={-1}
+          >
             {children}
           </div>
           <MobileTabBar />

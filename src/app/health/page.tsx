@@ -219,7 +219,7 @@ export default async function HealthPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/40">
-      <main className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-12">
+      <main className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-12" id="main-content" tabIndex={-1}>
         <header className="space-y-4">
           <p className="font-semibold text-muted-foreground text-xs uppercase tracking-[0.35em]">KeepOn Health</p>
           <div className="flex flex-wrap items-center justify-between gap-4">

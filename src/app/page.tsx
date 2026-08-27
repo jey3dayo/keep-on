@@ -19,7 +19,7 @@ export default async function Page() {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-background">
+    <main className="flex min-h-dvh items-center justify-center bg-background" id="main-content" tabIndex={-1}>
       <div className="space-y-6 p-8 text-center">
         <h1 className="font-bold text-2xl text-foreground">認証が必要です</h1>
         <p className="text-muted-foreground">

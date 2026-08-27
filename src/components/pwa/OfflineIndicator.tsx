@@ -47,8 +47,10 @@ export function OfflineIndicator() {
 
   return (
     <div
-      className="surface-from-top fixed top-0 right-0 left-0 z-50 bg-yellow-500 px-4 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-2 text-center font-medium text-sm text-white"
+      aria-live="polite"
+      className="surface-from-top fixed top-[calc(var(--header-height)+env(safe-area-inset-top))] right-0 left-0 z-50 bg-yellow-500 px-4 py-2 text-center font-medium text-black text-sm"
       data-entered={entered ? 'true' : undefined}
+      role="status"
     >
       オフラインです。接続が回復すると自動的に同期されます。
     </div>

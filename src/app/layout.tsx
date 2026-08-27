@@ -111,9 +111,7 @@ export default async function RootLayout({
           <I18nProvider>
             <SyncProviderWrapper>
               <ThemeProvider defaultTheme={themeMode}>
-                <div id="main-content" tabIndex={-1}>
-                  {children}
-                </div>
+                {children}
                 {/* モバイルではタブバー（3.5rem）と safe-area の両方を避け、トーストが下端 UI に重ならないようにする。 */}
                 <Toaster
                   mobileOffset={{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
