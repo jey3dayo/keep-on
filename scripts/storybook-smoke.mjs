@@ -192,6 +192,14 @@ const main = async () => {
   await browser.close()
 
   reportFailures(failures)
+
+  // 成功経路では spawn した storybook の child handle が event loop を生かし続け、
+  // process.on('exit') 頼みの cleanup では永久に exit へ到達できない（相互待ち）。
+  // reportFailures は失敗時に process.exit(1) するため、ここへ来た時点で成功が確定している。
+  if (server) {
+    server.kill('SIGTERM')
+  }
+  console.log(`Storybook smoke passed: ${storyIds.length} stories, no runtime errors`)
 }
 
 await main()

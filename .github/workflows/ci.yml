@@ -126,16 +126,28 @@ jobs:
     if: needs.detect-changes.outputs.docs-only == 'true'
 
     steps:
-      - name: Docs-only quality gate
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node environment
+        uses: ./.github/actions/setup-node-env
+
+      - name: Run Markdownlint
+        id: markdownlint
+        shell: bash
+        run: pnpm exec markdownlint-cli2
+
+      - name: Summarize documentation quality gate
+        if: always()
         shell: bash
         run: |
-          echo "✅ Documentation-only changes detected"
-          echo "Skipping CI checks (lint/build)"
           {
-            echo "## Documentation Quality Gate: PASSED ✅"
-            echo "This PR contains only documentation changes:"
-            echo "- ✅ CI checks skipped (appropriate for docs-only changes)"
-            echo "- ✅ Documentation changes approved"
+            echo "## Documentation Quality Gate"
+            if [ "${{ steps.markdownlint.outcome }}" = "success" ]; then
+              echo "- ✅ Markdownlint passed for this documentation-only change"
+            else
+              echo "- ❌ Markdownlint failed for this documentation-only change"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
   unified-quality-gate:

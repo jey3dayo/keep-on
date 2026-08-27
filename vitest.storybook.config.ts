@@ -18,10 +18,13 @@ export default defineConfig({
       '**/build/**',
       '**/.{idea,git,cache,output,temp}/**',
       '**/.worktrees/**',
+      // These stories are covered by the Storybook-side suite below because they have no in-source test block.
+      '**/HabitCalendarHeatmap.stories.tsx',
+      '**/HabitListCard.stories.tsx',
     ],
     globals: true,
-    include: ['**/*.stories.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    passWithNoTests: true,
+    include: ['**/*.stories.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', '.storybook/**/*.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    passWithNoTests: false,
     setupFiles: ['./vitest.setup.ts'],
   },
 })

@@ -22,6 +22,7 @@ const config: StorybookConfig = {
     viteConfig.resolve = viteConfig.resolve ?? {}
     const serverActionsMock = path.resolve(__dirname, './mocks/server-actions.ts')
     const dbMock = path.resolve(__dirname, './mocks/db.ts')
+    const nextThemesMock = path.resolve(__dirname, './mocks/next-themes.tsx')
     const postgresMock = path.resolve(__dirname, './mocks/postgres.ts')
     const srcRoot = path.resolve(__dirname, '../src')
     const serverActionAliases = [
@@ -43,6 +44,7 @@ const config: StorybookConfig = {
       { find: /^@\//, replacement: `${srcRoot}/` },
       ...serverActionAliases,
       { find: /^@\/lib\/db$/, replacement: dbMock },
+      { find: 'next-themes', replacement: nextThemesMock },
       { find: /^postgres$/, replacement: postgresMock },
       ...existingAliases,
     ]
