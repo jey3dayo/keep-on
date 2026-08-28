@@ -17,6 +17,11 @@ import type { HabitWithProgress } from '@/types/habit'
 // 進捗リングのトラック色。背景色から黒mixで派生させると全習慣が濃い縁のドーナツに見えるため、
 // 背景によらない控えめな白トラックに固定する（進捗ストロークは white 0.95 のまま）。
 const RING_BACKGROUND_COLOR = 'rgba(255, 255, 255, 0.2)'
+const HABITS_PER_PAGE = 6
+const COMPLETION_PULSE_DURATION_MS = 300
+const COMPLETION_PULSE_STAGGER_MS = 40
+const COMPLETION_PULSE_TOTAL_DURATION_MS =
+  COMPLETION_PULSE_DURATION_MS + (HABITS_PER_PAGE - 1) * COMPLETION_PULSE_STAGGER_MS
 
 // Drawerコンポーネントを動的にインポート
 const HabitActionDrawer = dynamic(
@@ -66,15 +71,46 @@ export function HabitSimpleView({
   const longPressTriggeredRef = useRef(false)
   const longPressStartPointRef = useRef<{ x: number; y: number } | null>(null)
 
-  const habitsPerPage = 6
-  const totalPages = Math.max(1, Math.ceil(habits.length / habitsPerPage))
+  const totalPages = Math.max(1, Math.ceil(habits.length / HABITS_PER_PAGE))
+  const isAllHabitsCompleted = habits.length > 0 && habits.every((habit) => completedHabitIds.has(habit.id))
+  const previousAllHabitsCompletedRef = useRef(isAllHabitsCompleted)
+  const currentPageRef = useRef(currentPage)
+  const completionCelebrationPageRef = useRef<number | null>(null)
+  const completionCelebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isCelebratingAllCompletion, setIsCelebratingAllCompletion] = useState(false)
+
+  currentPageRef.current = currentPage
+
+  useEffect(() => {
+    const wasAllHabitsCompleted = previousAllHabitsCompletedRef.current
+    if (isAllHabitsCompleted && !wasAllHabitsCompleted) {
+      completionCelebrationPageRef.current = currentPageRef.current
+      setIsCelebratingAllCompletion(true)
+      completionCelebrationTimerRef.current = setTimeout(() => {
+        completionCelebrationPageRef.current = null
+        completionCelebrationTimerRef.current = null
+        setIsCelebratingAllCompletion(false)
+      }, COMPLETION_PULSE_TOTAL_DURATION_MS)
+    } else if (!isAllHabitsCompleted && wasAllHabitsCompleted) {
+      completionCelebrationPageRef.current = null
+      setIsCelebratingAllCompletion(false)
+    }
+    previousAllHabitsCompletedRef.current = isAllHabitsCompleted
+
+    return () => {
+      if (completionCelebrationTimerRef.current !== null) {
+        clearTimeout(completionCelebrationTimerRef.current)
+        completionCelebrationTimerRef.current = null
+      }
+    }
+  }, [isAllHabitsCompleted])
 
   useEffect(() => {
     setCurrentPage((current) => Math.min(current, totalPages - 1))
   }, [totalPages])
 
   const currentHabits = useMemo(
-    () => habits.slice(currentPage * habitsPerPage, (currentPage + 1) * habitsPerPage),
+    () => habits.slice(currentPage * HABITS_PER_PAGE, (currentPage + 1) * HABITS_PER_PAGE),
     [currentPage, habits]
   )
 
@@ -90,7 +126,9 @@ export function HabitSimpleView({
 
   const ringBgColor = RING_BACKGROUND_COLOR
   const {
+    animateToPage,
     cancelSwipe,
+    containerRef,
     handleClickCapture,
     handlePointerCancel,
     handlePointerDown,
@@ -184,12 +222,15 @@ export function HabitSimpleView({
     },
     [closeDrawer]
   )
-  const handlePageChange = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-    const page = Number(event.currentTarget.dataset.page)
-    if (Number.isInteger(page)) {
-      setCurrentPage(page)
-    }
-  }, [])
+  const handlePageChange = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      const page = Number(event.currentTarget.dataset.page)
+      if (Number.isInteger(page)) {
+        animateToPage(page)
+      }
+    },
+    [animateToPage]
+  )
 
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
   const handleSwipePointerCancel = useCallback(
@@ -220,6 +261,7 @@ export function HabitSimpleView({
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handleSwipePointerUp}
+          ref={containerRef}
         >
           <div
             className={cn('flex', isSnapping && 'transition-transform ease-out motion-reduce:transition-none')}
@@ -227,7 +269,7 @@ export function HabitSimpleView({
             style={trackStyle}
           >
             {pages.map((page) => {
-              const pageHabits = habits.slice(page * habitsPerPage, (page + 1) * habitsPerPage)
+              const pageHabits = habits.slice(page * HABITS_PER_PAGE, (page + 1) * HABITS_PER_PAGE)
               return (
                 <div
                   aria-hidden={page !== currentPage}
@@ -236,13 +278,17 @@ export function HabitSimpleView({
                   key={`habit-page-${page}`}
                   style={{ width: `${100 / totalPages}%` }}
                 >
-                  {pageHabits.map((habit) => {
+                  {pageHabits.map((habit, habitIndex) => {
                     const isCompleted = completedHabitIds.has(habit.id)
                     return (
                       <HabitCircleItemContainer
                         bgColor={bgColor}
+                        completionPulseDelayMs={habitIndex * COMPLETION_PULSE_STAGGER_MS}
                         habit={habit}
                         isCompleted={isCompleted}
+                        isCompletionPulseActive={
+                          isCelebratingAllCompletion && page === completionCelebrationPageRef.current
+                        }
                         key={habit.id}
                         onAddCheckin={onAddCheckin}
                         onContextMenu={handleContextMenu}
@@ -332,9 +378,11 @@ function HabitCircleItemContainer({
   ...props
 }: {
   bgColor: string
+  completionPulseDelayMs: number
   ringBgColor: string
   habit: HabitWithProgress
   isCompleted: boolean
+  isCompletionPulseActive: boolean
   onAddCheckin?: (habitId: string) => Promise<void>
   onContextMenu: (event: React.MouseEvent, habit: HabitWithProgress) => void
   onLongPressEnd: (resetTriggered: boolean) => void

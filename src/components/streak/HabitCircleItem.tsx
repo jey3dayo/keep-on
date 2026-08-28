@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useCallback, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { ProgressRing } from '@/components/streak/ProgressRing'
@@ -14,8 +14,10 @@ const LONG_PRESS_VISUAL_DELAY_MS = 100
 
 interface HabitCircleItemProps {
   bgColor: string
+  completionPulseDelayMs?: number
   habit: HabitWithProgress
   isCompleted: boolean
+  isCompletionPulseActive?: boolean
   onAddCheckin?: () => void
   onCheckin: (event: React.MouseEvent<HTMLButtonElement>) => void
   onContextMenu: (e: React.MouseEvent) => void
@@ -28,8 +30,10 @@ interface HabitCircleItemProps {
 
 export function HabitCircleItem({
   bgColor,
+  completionPulseDelayMs = 0,
   habit,
   isCompleted,
+  isCompletionPulseActive = false,
   onAddCheckin,
   onCheckin,
   onContextMenu,
@@ -44,7 +48,22 @@ export function HabitCircleItem({
   const [isHolding, setIsHolding] = useState(false)
   const holdStartPointRef = useRef<{ x: number; y: number } | null>(null)
   const visualDelayTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const previousIsCompletedRef = useRef(isCompleted)
   const fillDurationMs = LONG_PRESS_DURATION_MS - LONG_PRESS_VISUAL_DELAY_MS
+
+  useEffect(() => {
+    const becameCompleted = !previousIsCompletedRef.current && isCompleted
+    previousIsCompletedRef.current = isCompleted
+    if (!becameCompleted || typeof navigator === 'undefined') {
+      return
+    }
+
+    try {
+      navigator.vibrate?.(10)
+    } catch {
+      // Vibration API が公開されていても拒否される環境があるため、UI の状態更新は妨げない。
+    }
+  }, [isCompleted])
 
   const clearHold = useCallback(() => {
     if (visualDelayTimerRef.current) {
@@ -109,7 +128,7 @@ export function HabitCircleItem({
   )
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex scale-100 starting:scale-[0.96] flex-col items-center gap-3 opacity-100 starting:opacity-0 transition-[opacity,scale] duration-200 ease-[var(--ease-out)] motion-reduce:transition-none">
       <Button
         aria-label={isCompleted ? `${habit.name}のチェックインを取り消す` : `${habit.name}をチェックイン`}
         className="relative h-[140px] w-[140px] p-0 transition-transform duration-160 ease-out hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0 motion-reduce:active:scale-100"
@@ -144,11 +163,15 @@ export function HabitCircleItem({
         <div
           className={cn(
             'relative flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full ring-1 ring-white/15 transition-[scale,background-color] duration-300 ease-out motion-reduce:transition-none',
-            isCompleted && 'scale-[1.03] [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]'
+            isCompleted && 'scale-[1.03] [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]',
+            isCompletionPulseActive && 'habit-completion-pulse motion-reduce:animate-none'
           )}
-          style={{
-            backgroundColor: isCompleted ? 'rgba(255, 255, 255, 0.95)' : bgColor,
-          }}
+          style={
+            {
+              '--habit-completion-pulse-delay': `${completionPulseDelayMs}ms`,
+              backgroundColor: isCompleted ? 'rgba(255, 255, 255, 0.95)' : bgColor,
+            } as CSSProperties
+          }
         >
           <div
             aria-hidden="true"

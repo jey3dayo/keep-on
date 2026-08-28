@@ -126,6 +126,14 @@
   }
 }
 
+/* 0%/100% を定義しないことで、完了円のベース scale（1.03）から補間される。
+   固定値 1 を書くとアニメーション終了時に 1 → 1.03 の小ジャンプが出る。 */
+@keyframes habit-completion-pulse {
+  50% {
+    scale: 1.07;
+  }
+}
+
 @layer utilities {
   [class*="animate-in"][data-state="open"]:not([data-vaul-drawer]):not(
     [data-vaul-overlay]
@@ -413,6 +421,11 @@
   @apply transition-colors duration-300;
 }
 
+.habit-completion-pulse {
+  animation: habit-completion-pulse 300ms var(--ease-out) backwards;
+  animation-delay: var(--habit-completion-pulse-delay, 0ms);
+}
+
 /* 横スクロール行のスクロールバーを隠す（チップ行など） */
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -569,6 +582,10 @@
 
 /* reduced-motion 対応（カスタムユーティリティ向け個別指定） */
 @media (prefers-reduced-motion: reduce) {
+  .habit-completion-pulse {
+    animation: none;
+  }
+
   .streak-bg {
     transition: none;
   }

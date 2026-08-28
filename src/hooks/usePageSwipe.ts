@@ -1,4 +1,4 @@
-import type { CSSProperties, MouseEvent, PointerEvent, TransitionEvent } from 'react'
+import type { CSSProperties, MouseEvent, PointerEvent, RefObject, TransitionEvent } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   PAGE_SWIPE_DISTANCE_THRESHOLD_RATIO,
@@ -26,7 +26,9 @@ interface PageSwipeOptions {
 }
 
 interface PageSwipeHandlers {
+  animateToPage: (page: number) => void
   cancelSwipe: () => void
+  containerRef: RefObject<HTMLDivElement | null>
   handleClickCapture: (event: MouseEvent<HTMLDivElement>) => void
   handlePointerCancel: (event: PointerEvent<HTMLDivElement>) => void
   handlePointerDown: (event: PointerEvent<HTMLDivElement>) => void
@@ -127,6 +129,7 @@ export function usePageSwipe({ currentPage, onPageChange, totalPages }: PageSwip
   const [dragOffset, setDragOffset] = useState(0)
   const [isSnapping, setIsSnapping] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const containerRef = useRef<HTMLDivElement | null>(null)
   const activePointerRef = useRef<ActivePointer | null>(null)
   const currentPageRef = useRef(currentPage)
   const previousTotalPagesRef = useRef(totalPages)
@@ -222,7 +225,7 @@ export function usePageSwipe({ currentPage, onPageChange, totalPages }: PageSwip
     (targetPage: number, containerWidth: number) => {
       const page = clampPage(targetPage, totalPages)
       clearSnapTimer()
-      if (prefersReducedMotion) {
+      if (prefersReducedMotion || containerWidth <= 0) {
         pendingPageRef.current = null
         setDragOffset(0)
         setIsSnapping(false)
@@ -246,11 +249,27 @@ export function usePageSwipe({ currentPage, onPageChange, totalPages }: PageSwip
         return
       }
 
-      const direction = page > currentPageRef.current ? -1 : 1
-      setDragOffset(direction * containerWidth)
+      setDragOffset((currentPageRef.current - page) * containerWidth)
       snapTimerRef.current = setTimeout(completeSnap, PAGE_SWIPE_TRANSITION_DURATION_MS + 50)
     },
     [clearSnapTimer, completeSnap, dragOffset, prefersReducedMotion, totalPages]
+  )
+
+  const animateToPage = useCallback(
+    (targetPage: number) => {
+      if (isSnapping || activePointerRef.current) {
+        return
+      }
+
+      const page = clampPage(targetPage, totalPages)
+      if (page === currentPageRef.current) {
+        return
+      }
+
+      const containerWidth = containerRef.current?.getBoundingClientRect().width ?? 0
+      settleInteraction(page, containerWidth)
+    },
+    [isSnapping, settleInteraction, totalPages]
   )
 
   const handlePointerDown = useCallback(
@@ -380,7 +399,9 @@ export function usePageSwipe({ currentPage, onPageChange, totalPages }: PageSwip
   }
 
   return {
+    animateToPage,
     cancelSwipe,
+    containerRef,
     handleClickCapture,
     handlePointerCancel,
     handlePointerDown,
