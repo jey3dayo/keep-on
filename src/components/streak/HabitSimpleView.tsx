@@ -7,13 +7,16 @@ import { Icon } from '@/components/basics/Icon'
 import type { OptimisticRollback } from '@/components/habits/types'
 import { DashboardBackground } from '@/components/streak/DashboardBackground'
 import { HabitCircleItem } from '@/components/streak/HabitCircleItem'
-import { ProgressRing } from '@/components/streak/ProgressRing'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById } from '@/constants/habit-data'
 import { LONG_PRESS_DURATION_MS, LONG_PRESS_MOVE_THRESHOLD_PX } from '@/constants/interaction'
+import { usePageSwipe } from '@/hooks/usePageSwipe'
 import { cn } from '@/lib/utils'
-import { getRingColorFromBackground } from '@/lib/utils/color'
 import type { HabitWithProgress } from '@/types/habit'
+
+// 進捗リングのトラック色。背景色から黒mixで派生させると全習慣が濃い縁のドーナツに見えるため、
+// 背景によらない控えめな白トラックに固定する（進捗ストロークは white 0.95 のまま）。
+const RING_BACKGROUND_COLOR = 'rgba(255, 255, 255, 0.2)'
 
 // Drawerコンポーネントを動的にインポート
 const HabitActionDrawer = dynamic(
@@ -85,7 +88,18 @@ export function HabitSimpleView({
 
   const bgColor = backgroundColor ?? fallbackBgColor
 
-  const ringBgColor = getRingColorFromBackground(bgColor)
+  const ringBgColor = RING_BACKGROUND_COLOR
+  const {
+    cancelSwipe,
+    handleClickCapture,
+    handlePointerCancel,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handleTransitionEnd,
+    isSnapping,
+    trackStyle,
+  } = usePageSwipe({ currentPage, onPageChange: setCurrentPage, totalPages })
 
   const handleProgressClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>, habit: HabitWithProgress, isCompleted: boolean) => {
@@ -123,10 +137,11 @@ export function HabitSimpleView({
       longPressStartPointRef.current = { x: event.clientX, y: event.clientY }
       longPressTimerRef.current = setTimeout(() => {
         longPressTriggeredRef.current = true
+        cancelSwipe()
         openDrawer(habit)
       }, LONG_PRESS_DURATION_MS)
     },
-    [openDrawer]
+    [cancelSwipe, openDrawer]
   )
 
   const handleLongPressMove = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
@@ -177,6 +192,20 @@ export function HabitSimpleView({
   }, [])
 
   const pages = useMemo(() => Array.from({ length: totalPages }, (_, page) => page), [totalPages])
+  const handleSwipePointerCancel = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      handlePointerCancel(event)
+      handleLongPressEnd(true)
+    },
+    [handleLongPressEnd, handlePointerCancel]
+  )
+  const handleSwipePointerUp = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      handlePointerUp(event)
+      handleLongPressEnd(false)
+    },
+    [handleLongPressEnd, handlePointerUp]
+  )
 
   return (
     <DashboardBackground backgroundColor={bgColor} className="overflow-hidden">
@@ -184,53 +213,68 @@ export function HabitSimpleView({
           上パディングはビュートグルがナビへ移ってヘッダー直下が詰まるようになったため、幅によらず確保する。
           縦に溢れる分は layout 側の overflow-y-auto がスクロールで受ける。 */}
       <main className="relative flex flex-1 flex-col items-center px-4 pt-6 pb-8 md:pt-10">
-        <div className={cn('grid w-full max-w-md grid-cols-2 gap-x-6 gap-y-8')}>
-          {currentHabits.map((habit) => {
-            const isCompleted = completedHabitIds.has(habit.id)
-            return (
-              <HabitCircleItemContainer
-                bgColor={bgColor}
-                habit={habit}
-                isCompleted={isCompleted}
-                key={habit.id}
-                onAddCheckin={onAddCheckin}
-                onContextMenu={handleContextMenu}
-                onLongPressEnd={handleLongPressEnd}
-                onLongPressMove={handleLongPressMove}
-                onLongPressStart={handleLongPressStart}
-                onProgressClick={handleProgressClick}
-                onRemoveCheckin={onRemoveCheckin}
-                ringBgColor={ringBgColor}
-              />
-            )
-          })}
+        <div
+          className="w-full max-w-md touch-pan-y overflow-hidden"
+          onClickCapture={handleClickCapture}
+          onPointerCancel={handleSwipePointerCancel}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handleSwipePointerUp}
+        >
+          <div
+            className={cn('flex', isSnapping && 'transition-transform ease-out motion-reduce:transition-none')}
+            onTransitionEnd={handleTransitionEnd}
+            style={trackStyle}
+          >
+            {pages.map((page) => {
+              const pageHabits = habits.slice(page * habitsPerPage, (page + 1) * habitsPerPage)
+              return (
+                <div
+                  aria-hidden={page !== currentPage}
+                  className="grid shrink-0 grid-cols-2 gap-x-6 gap-y-8"
+                  inert={page !== currentPage}
+                  key={`habit-page-${page}`}
+                  style={{ width: `${100 / totalPages}%` }}
+                >
+                  {pageHabits.map((habit) => {
+                    const isCompleted = completedHabitIds.has(habit.id)
+                    return (
+                      <HabitCircleItemContainer
+                        bgColor={bgColor}
+                        habit={habit}
+                        isCompleted={isCompleted}
+                        key={habit.id}
+                        onAddCheckin={onAddCheckin}
+                        onContextMenu={handleContextMenu}
+                        onLongPressEnd={handleLongPressEnd}
+                        onLongPressMove={handleLongPressMove}
+                        onLongPressStart={handleLongPressStart}
+                        onProgressClick={handleProgressClick}
+                        onRemoveCheckin={onRemoveCheckin}
+                        ringBgColor={ringBgColor}
+                      />
+                    )
+                  })}
 
-          <div className="flex flex-col items-center gap-3">
-            <Button
-              aria-label="習慣を追加"
-              className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
-              onClick={onAddHabit}
-              scale="md"
-              type="button"
-              variant="ghost"
-            >
-              <ProgressRing
-                backgroundColor={ringBgColor}
-                progress={0}
-                progressColor="rgba(255, 255, 255, 0.95)"
-                size={140}
-                strokeWidth={6}
-              />
+                  <div className="flex flex-col items-center gap-3">
+                    <Button
+                      aria-label="習慣を追加"
+                      className="relative h-[140px] w-[140px] p-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
+                      onClick={onAddHabit}
+                      scale="md"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <div className="flex h-[120px] w-[120px] items-center justify-center rounded-full border-2 border-white/40 border-dashed bg-white/5">
+                        <Icon className="h-14 w-14 text-white/80" name="plus" />
+                      </div>
+                    </Button>
 
-              <div
-                className="flex h-[120px] w-[120px] items-center justify-center rounded-full ring-1 ring-white/15"
-                style={{ backgroundColor: bgColor }}
-              >
-                <Icon className="h-14 w-14 text-white/90" name="plus" />
-              </div>
-            </Button>
-
-            <p className="text-center font-medium text-base text-white">タスクを追加</p>
+                    <p className="text-center font-medium text-base text-white/80">習慣を追加</p>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
 
