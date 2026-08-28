@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { Fragment } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NAV_ITEMS, type NavItem } from '@/constants/navigation'
 import { useMobileTabBarSlotValue } from '@/contexts/MobileTabBarSlotContext'
@@ -35,7 +36,8 @@ function TabItem({ item, pathname }: { item: NavItem; pathname: string }) {
 /**
  * スマホ幅のナビゲーション。以前はハンバーガー→下部シート(Drawer)だったが、
  * 遷移先を一目で把握できるタブ型に置き換えた。主要4タブにダッシュボードだけが使う
- * trailing slot を加えられる構成にし、Drawer にあった見出しなし/開閉の概念をなくしている。
+ * ビュー切替 slot を加えられる構成にし、Drawer にあった見出しなし/開閉の概念をなくしている。
+ * slot はダッシュボードタブの隣（2番目）に挿入する。作用対象との近接を保ち、設定を右端に固定するため。
  *
  * フロー内だとバーの背後が body になり、バウンスや Safari の UI 縮小でコンテンツとの間に背景色が露出して
  * 「ちぎれ」て見えた（実測）。HIG はタブバーをコンテンツ上の overlay と定義し、translucent はコンテンツの
@@ -55,9 +57,14 @@ export function MobileTabBar() {
       className="absolute inset-x-0 bottom-0 z-30 flex border-border/50 border-t bg-background/50 pb-[env(safe-area-inset-bottom)] backdrop-blur-md supports-[backdrop-filter]:bg-background/30 md:hidden"
     >
       {items.map((item) => (
-        <TabItem item={item} key={item.titleKey} pathname={pathname} />
+        <Fragment key={item.titleKey}>
+          <TabItem item={item} pathname={pathname} />
+          {/* slot はダッシュボードのビュー切替。作用対象のタブの隣に置き、設定を右端に保つ。 */}
+          {item.url === '/dashboard' && trailingSlot ? (
+            <div className="flex min-h-14 flex-1 items-center justify-center">{trailingSlot}</div>
+          ) : null}
+        </Fragment>
       ))}
-      {trailingSlot ? <div className="flex min-h-14 flex-1 items-center justify-center">{trailingSlot}</div> : null}
     </nav>
   )
 }

@@ -50,7 +50,7 @@ describe('MobileTabBar', () => {
     expect(screen.queryByRole('link', { name: 'navigation.help' })).not.toBeInTheDocument()
   })
 
-  it('登録されたtrailing slotを5番目の枠に表示する', () => {
+  it('登録されたslotをダッシュボードタブの隣に表示し、設定を右端に保つ', () => {
     function SlotRegistrar() {
       useMobileTabBarSlot(
         <button aria-label="リスト表示に切り替え" type="button">
@@ -68,6 +68,17 @@ describe('MobileTabBar', () => {
     )
 
     expect(screen.getAllByRole('link')).toHaveLength(4)
-    expect(screen.getByRole('button', { name: 'リスト表示に切り替え' })).toBeInTheDocument()
+
+    // ビュー切替はダッシュボード表示に作用するコントロールなので、ダッシュボードタブの直後に置き、
+    // 設定は慣例どおり右端に保つ
+    const nav = screen.getByRole('navigation', { name: 'メインナビゲーション' })
+    const dashboard = screen.getByRole('link', { name: 'navigation.dashboard' })
+    const toggle = screen.getByRole('button', { name: 'リスト表示に切り替え' })
+    const settings = screen.getByRole('link', { name: 'navigation.settings' })
+
+    const slots = Array.from(nav.children)
+    expect(slots.indexOf(dashboard)).toBe(0)
+    expect(slots[1]?.contains(toggle)).toBe(true)
+    expect(nav.lastElementChild).toBe(settings)
   })
 })
