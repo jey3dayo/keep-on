@@ -1,4 +1,5 @@
-// メッセージタイプ・sync タグは src/constants/pwa.ts と同期すること
+// メッセージタイプ・ナビゲーションSWRメッセージ・sync タグは
+// src/constants/pwa.ts と同期すること
 const CACHE_NAME = 'keepon-v5'
 const OFFLINE_URL = '/offline'
 const NEXT_ASSET_PREFIX = '/_next/'
@@ -38,6 +39,13 @@ const clearUserCache = async (cache) => {
   await Promise.all(
     requests.filter((req) => isUserCacheableRoute(new URL(req.url).pathname)).map((req) => cache.delete(req))
   )
+}
+
+const broadcastToClients = async (message) => {
+  const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' })
+  for (const client of clients) {
+    client.postMessage(message)
+  }
 }
 
 // 端末共有時に前ユーザーのキューが次ユーザーの Cookie でリプレイされるのを防ぐ
@@ -113,6 +121,26 @@ const isAuthNavigationFailure = (response) => {
   return response.redirected || isCrossOriginFinalUrl(response)
 }
 
+const revalidateNavigation = async (request, cache, pathname) => {
+  let networkResp
+  try {
+    networkResp = await fetch(request)
+  } catch {
+    return
+  }
+
+  if (isAuthNavigationFailure(networkResp)) {
+    await clearUserCache(cache)
+    await broadcastToClients({ type: 'NAV_AUTH_LOST' }).catch(() => undefined)
+    return
+  }
+
+  if (networkResp.ok && !networkResp.redirected) {
+    await cache.put(request, networkResp.clone())
+    await broadcastToClients({ path: pathname, type: 'NAV_REVALIDATED' }).catch(() => undefined)
+  }
+}
+
 const extractOfflineAssets = (html) => {
   const assets = new Set()
   const pattern = /["'](\/_next\/static\/[^"']+\.(?:css|js|mjs|woff2?|ttf|otf|eot))["']/g
@@ -184,30 +212,37 @@ self.addEventListener('fetch', (event) => {
     const isCacheable = isUserCacheableRoute(url.pathname)
 
     if (isCacheable) {
-      // 認証ページ相当はキャッシュ露出を避けるため network-first にする
-      event.respondWith(
-        caches.open(CACHE_NAME).then(async (cache) => {
-          const cached = await cache.match(request)
+      const handling = caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(request)
 
-          try {
-            const networkResp = await fetch(request)
+        if (cached) {
+          // stale 即応は直前セッション本人の再訪を前提とした意図的なトレードオフ。
+          // セッション切れ・ユーザー交代時の露出は、背面再検証の NAV_AUTH_LOST と ServiceWorkerRegistration の
+          // CLEAR_USER_CACHE で数秒内に回収する。
+          broadcastToClients({ path: url.pathname, type: 'NAV_STALE_SERVED' }).catch(() => undefined)
+          return { response: cached, revalidate: () => revalidateNavigation(request, cache, url.pathname) }
+        }
 
-            if (isAuthNavigationFailure(networkResp)) {
-              await clearUserCache(cache)
-              return networkResp
-            }
+        try {
+          const networkResp = await fetch(request)
 
-            if (networkResp.ok && !networkResp.redirected) {
-              await cache.put(request, networkResp.clone())
-              return networkResp
-            }
-
-            return cached || networkResp
-          } catch {
-            return cached || caches.match(OFFLINE_URL)
+          if (isAuthNavigationFailure(networkResp)) {
+            await clearUserCache(cache)
+            return { response: networkResp, revalidate: null }
           }
-        })
-      )
+
+          if (networkResp.ok && !networkResp.redirected) {
+            await cache.put(request, networkResp.clone())
+            return { response: networkResp, revalidate: null }
+          }
+
+          return { response: cached || networkResp, revalidate: null }
+        } catch {
+          return { response: cached || caches.match(OFFLINE_URL), revalidate: null }
+        }
+      })
+      event.respondWith(handling.then((h) => h.response))
+      event.waitUntil(handling.then((h) => h.revalidate?.()).catch(() => undefined))
     } else {
       // network-first + offline fallback（その他ページ）
       event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)))

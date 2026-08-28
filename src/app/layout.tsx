@@ -9,6 +9,7 @@ import { I18nProvider } from '@/components/providers/I18nProvider'
 import { SyncProviderWrapper } from '@/components/providers/SyncProviderWrapper'
 import { A2HSPrompt } from '@/components/pwa/A2HSPrompt'
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration'
+import { SwRevalidationIndicator } from '@/components/pwa/SwRevalidationIndicator'
 import { Toaster } from '@/components/ui/sonner'
 import {
   COLOR_THEME_COOKIE_KEY,
@@ -119,6 +120,7 @@ export default async function RootLayout({
                   richColors
                 />
               </ThemeProvider>
+              <SwRevalidationIndicator />
             </SyncProviderWrapper>
           </I18nProvider>
           <ServiceWorkerRegistration />

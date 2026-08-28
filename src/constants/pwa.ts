@@ -14,3 +14,8 @@ export const SW_MSG_SKIP_WAITING = 'SKIP_WAITING' as const
 
 /** クライアント → SW メッセージタイプ（sw.js と同期すること） */
 export const SW_MSG_CLEAR_USER_CACHE = 'CLEAR_USER_CACHE' as const
+
+/** SW → クライアント: ナビゲーション SWR（stale-while-revalidate）関連（sw.js と同期すること） */
+export const SW_MSG_NAV_STALE_SERVED = 'NAV_STALE_SERVED' as const
+export const SW_MSG_NAV_REVALIDATED = 'NAV_REVALIDATED' as const
+export const SW_MSG_NAV_AUTH_LOST = 'NAV_AUTH_LOST' as const
