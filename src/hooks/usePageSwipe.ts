@@ -257,7 +257,7 @@ export function usePageSwipe({ currentPage, onPageChange, totalPages }: PageSwip
 
   const animateToPage = useCallback(
     (targetPage: number) => {
-      if (isSnapping || activePointerRef.current) {
+      if (activePointerRef.current) {
         return
       }
 
@@ -269,15 +269,18 @@ export function usePageSwipe({ currentPage, onPageChange, totalPages }: PageSwip
       const containerWidth = containerRef.current?.getBoundingClientRect().width ?? 0
       settleInteraction(page, containerWidth)
     },
-    [isSnapping, settleInteraction, totalPages]
+    [settleInteraction, totalPages]
   )
 
   const handlePointerDown = useCallback(
     (event: PointerEvent<HTMLDivElement>) => {
-      if (!event.isPrimary || totalPages <= 1 || activePointerRef.current || isSnapping) {
+      if (!event.isPrimary || totalPages <= 1 || activePointerRef.current) {
         return
       }
       didSwipeRef.current = false
+      if (isSnapping) {
+        return
+      }
       const now = getEventTime(event)
       const captureTarget = event.target instanceof Element ? event.target : event.currentTarget
       captureTarget.setPointerCapture(event.pointerId)
