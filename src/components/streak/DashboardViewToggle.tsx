@@ -58,7 +58,7 @@ export function DashboardViewToggle({
             className={cn(
               buttonClassName,
               currentView === option.value ? activeButtonClassName : inactiveButtonClassName,
-              'min-h-11 min-w-11 transition-colors duration-200'
+              'min-h-11 min-w-11 transition-[color,background-color,transform] duration-160 ease-out'
             )}
             data-view={option.value}
             key={option.value}

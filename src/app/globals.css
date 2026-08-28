@@ -475,7 +475,7 @@
 }
 
 .color-swatch {
-  @apply w-8 h-8 rounded-full transition-transform active:scale-90;
+  @apply w-8 h-8 rounded-full transition-transform duration-160 ease-out active:scale-95;
 }
 
 .color-swatch-selected {

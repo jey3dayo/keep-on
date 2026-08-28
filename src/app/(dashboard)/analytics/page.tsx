@@ -284,8 +284,8 @@ export default async function AnalyticsPage() {
                     </p>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-muted/60">
                       <div
-                        className={`h-full ${periodStyles[entry.period].bar} transition-[width] duration-500 motion-reduce:transition-none`}
-                        style={{ width: `${entry.rate}%` }}
+                        className={`h-full w-full ${periodStyles[entry.period].bar} rounded-full transition-transform duration-300 ease-out motion-reduce:transition-none`}
+                        style={{ transform: `translateX(-${100 - entry.rate}%)` }}
                       />
                     </div>
                   </div>
@@ -336,8 +336,8 @@ function StatCard({
           <span className="sr-only">達成率 {progress}%</span>
           <div className="h-2 w-full overflow-hidden rounded-full bg-muted/60">
             <div
-              className="h-full bg-primary transition-[width] duration-500 motion-reduce:transition-none"
-              style={{ width: `${progress}%` }}
+              className="h-full w-full rounded-full bg-primary transition-transform duration-300 ease-out motion-reduce:transition-none"
+              style={{ transform: `translateX(-${100 - progress}%)` }}
             />
           </div>
         </div>
