@@ -125,36 +125,44 @@ export function HabitCircleItem({
         type="button"
         variant="ghost"
       >
-        <ProgressRing
-          backgroundColor={ringBgColor}
-          progress={progressPercent}
-          progressColor="rgba(255, 255, 255, 0.95)"
-          size={140}
-          strokeWidth={6}
-        />
+        <div
+          aria-hidden="true"
+          className={cn(
+            'absolute inset-0 transition-opacity duration-300 motion-reduce:transition-none',
+            isCompleted && 'opacity-0'
+          )}
+        >
+          <ProgressRing
+            backgroundColor={ringBgColor}
+            progress={progressPercent}
+            progressColor="rgba(255, 255, 255, 0.95)"
+            size={140}
+            strokeWidth={6}
+          />
+        </div>
 
         <div
           className={cn(
-            'relative flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full ring-1 ring-white/15 transition-[transform,box-shadow] duration-300 motion-reduce:transition-none',
-            isCompleted && 'scale-105'
+            'relative flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full ring-1 ring-white/15 transition-[scale,background-color] duration-300 ease-out motion-reduce:transition-none',
+            isCompleted && 'scale-[1.03] [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]'
           )}
           style={{
-            backgroundColor: bgColor,
-            boxShadow: isCompleted ? '0 0 24px rgba(255, 255, 255, 0.35)' : 'none',
+            backgroundColor: isCompleted ? 'rgba(255, 255, 255, 0.95)' : bgColor,
           }}
         >
           <div
             aria-hidden="true"
-            className="long-press-fill pointer-events-none absolute inset-0 rounded-full bg-white/30"
+            className={cn(
+              'long-press-fill pointer-events-none absolute inset-0 rounded-full',
+              isCompleted ? 'bg-black/10' : 'bg-white/30'
+            )}
             data-active={isHolding ? 'true' : undefined}
             style={{ '--long-press-fill-ms': `${fillDurationMs}ms` } as CSSProperties}
           />
           <IconComponent
-            className={cn(
-              'relative h-14 w-14 transition-colors duration-300 motion-reduce:transition-none',
-              isCompleted ? 'text-white' : 'text-white/90'
-            )}
+            className="relative h-14 w-14 transition-colors duration-300 motion-reduce:transition-none"
             strokeWidth={1.5}
+            style={{ color: isCompleted ? bgColor : 'rgba(255, 255, 255, 0.9)' }}
           />
         </div>
       </Button>
