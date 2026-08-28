@@ -35,14 +35,16 @@ vi.mock('react-i18next', () => ({
 }))
 
 describe('MobileTabBar', () => {
-  it('ヘルプを除いた4タブを表示し、現在地だけ aria-current を付ける', () => {
+  it('/settingsでも5枠を表示し、2番目のslotは空にする', () => {
     usePathnameMock.mockReturnValue('/settings')
     render(<MobileTabBar />)
 
     const items = [...NAV_ITEMS.main, ...NAV_ITEMS.secondary].filter((item) => item.url !== '/help')
     const nav = screen.getByRole('navigation', { name: 'メインナビゲーション' })
-    expect(nav.children).toHaveLength(4)
+    expect(nav.children).toHaveLength(5)
     expect(screen.getAllByRole('link')).toHaveLength(4)
+    expect(nav.children[1]).toBeEmptyDOMElement()
+    expect(nav.children[1]).toHaveAttribute('aria-hidden', 'true')
 
     for (const item of items) {
       expect(screen.getByRole('link', { name: item.titleKey })).toHaveAttribute('href', item.url)
@@ -51,15 +53,7 @@ describe('MobileTabBar', () => {
     expect(screen.getByRole('link', { name: 'navigation.settings' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: 'navigation.dashboard' })).not.toHaveAttribute('aria-current')
     expect(screen.queryByRole('link', { name: 'navigation.help' })).not.toBeInTheDocument()
-  })
-
-  it('slot未登録でもダッシュボードでは5枠を予約する', () => {
-    usePathnameMock.mockReturnValue('/dashboard')
-    render(<MobileTabBar />)
-
-    const nav = screen.getByRole('navigation', { name: 'メインナビゲーション' })
-    expect(nav.children).toHaveLength(5)
-    expect(nav.children[1]).toBeEmptyDOMElement()
+    expect(nav.lastElementChild).toBe(screen.getByRole('link', { name: 'navigation.settings' }))
   })
 
   it('登録されたslotをダッシュボードタブの隣に表示し、設定を右端に保つ', () => {
