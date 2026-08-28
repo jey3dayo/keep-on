@@ -48,6 +48,7 @@ function TabItem({ item, pathname }: { item: NavItem; pathname: string }) {
 export function MobileTabBar() {
   const pathname = usePathname()
   const trailingSlot = useMobileTabBarSlotValue()
+  const isDashboardRoute = isActivePath(pathname, '/dashboard')
   // ヘルプはデスクトップの二次ナビに残し、モバイルは主要4タブの横幅と見つけやすさを優先する。
   const items = [...NAV_ITEMS.main, ...NAV_ITEMS.secondary].filter((item) => item.url !== '/help')
 
@@ -59,8 +60,8 @@ export function MobileTabBar() {
       {items.map((item) => (
         <Fragment key={item.titleKey}>
           <TabItem item={item} pathname={pathname} />
-          {/* slot はダッシュボードのビュー切替。作用対象のタブの隣に置き、設定を右端に保つ。 */}
-          {item.url === '/dashboard' && trailingSlot ? (
+          {/* ダッシュボードではslot登録前後で5枠を保ち、hydration時のレイアウトずれを防ぐため空枠も予約する。 */}
+          {item.url === '/dashboard' && isDashboardRoute ? (
             <div className="flex min-h-14 flex-1 items-center justify-center">{trailingSlot}</div>
           ) : null}
         </Fragment>

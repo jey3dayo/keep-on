@@ -36,9 +36,12 @@ vi.mock('react-i18next', () => ({
 
 describe('MobileTabBar', () => {
   it('ヘルプを除いた4タブを表示し、現在地だけ aria-current を付ける', () => {
+    usePathnameMock.mockReturnValue('/settings')
     render(<MobileTabBar />)
 
     const items = [...NAV_ITEMS.main, ...NAV_ITEMS.secondary].filter((item) => item.url !== '/help')
+    const nav = screen.getByRole('navigation', { name: 'メインナビゲーション' })
+    expect(nav.children).toHaveLength(4)
     expect(screen.getAllByRole('link')).toHaveLength(4)
 
     for (const item of items) {
@@ -50,7 +53,18 @@ describe('MobileTabBar', () => {
     expect(screen.queryByRole('link', { name: 'navigation.help' })).not.toBeInTheDocument()
   })
 
+  it('slot未登録でもダッシュボードでは5枠を予約する', () => {
+    usePathnameMock.mockReturnValue('/dashboard')
+    render(<MobileTabBar />)
+
+    const nav = screen.getByRole('navigation', { name: 'メインナビゲーション' })
+    expect(nav.children).toHaveLength(5)
+    expect(nav.children[1]).toBeEmptyDOMElement()
+  })
+
   it('登録されたslotをダッシュボードタブの隣に表示し、設定を右端に保つ', () => {
+    usePathnameMock.mockReturnValue('/dashboard')
+
     function SlotRegistrar() {
       useMobileTabBarSlot(
         <button aria-label="リスト表示に切り替え" type="button">
@@ -76,6 +90,7 @@ describe('MobileTabBar', () => {
     const toggle = screen.getByRole('button', { name: 'リスト表示に切り替え' })
     const settings = screen.getByRole('link', { name: 'navigation.settings' })
 
+    expect(nav.children).toHaveLength(5)
     const slots = Array.from(nav.children)
     expect(slots.indexOf(dashboard)).toBe(0)
     expect(slots[1]?.contains(toggle)).toBe(true)

@@ -20,9 +20,15 @@ interface DashboardBackgroundProps {
 export function DashboardBackground({ backgroundColor, children, className, style }: DashboardBackgroundProps) {
   return (
     <div
-      className={cn('streak-bg relative flex min-h-full flex-col', className)}
+      className={cn('streak-bg relative isolate flex min-h-full flex-col', className)}
       style={{ backgroundColor: backgroundColor ?? 'var(--primary)', ...style }}
     >
+      {/* isolate で負の z-index をこの背景内に閉じ、親の SidebarInset 背景に隠れない SSR 下敷きにする。 */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{ backgroundColor: backgroundColor ?? 'var(--primary)' }}
+      />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_50%_0%,rgba(255,255,255,0.18),transparent_55%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.12),transparent_70%)]" />
       <div className="relative flex min-h-0 flex-1 flex-col">{children}</div>
