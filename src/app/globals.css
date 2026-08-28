@@ -43,6 +43,13 @@
 @import "@radix-ui/colors/yellow-dark-alpha.css";
 
 @config "../../tailwind.config.ts";
+
+/*
+ * ホーム画面起動（PWA standalone）でだけ効くユーティリティ variant。
+ * 例: standalone:h-screen。起動直後の dvh 誤計算対策（(dashboard)/layout.tsx 参照）に使う。
+ */
+@custom-variant standalone (@media (display-mode: standalone));
+
 @theme inline {
   /* カラートークン - Tailwind ユーティリティクラスにマッピング */
   --color-background: var(--background);
@@ -365,6 +372,18 @@
    */
   html {
     scrollbar-gutter: stable;
+  }
+
+  /*
+   * iOS（特に standalone 起動）では内側スクローラのオーバースクロールが document へ
+   * チェーンし、シェル（ヘッダー・タブバー）ごとラバーバンドして背後の body 塗りが
+   * 露出する。document 側のバウンスだけを止め、内側スクローラ自身のバウンスは
+   * 触れない（コンテンツだけが伸びるネイティブ相当の挙動を残す）。
+   * iOS Safari 16+ 対応。root scroller が html か body かはエンジンの版で揺れるため両方に当てる。
+   */
+  html,
+  body {
+    overscroll-behavior: none;
   }
 
   * {

@@ -31,8 +31,11 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider
       // シェルの高さを viewport に固定する。min-h だけだとコンテンツが document を伸ばし、
-      // 内側の overflow-y-auto が clamp されず fixed 要素とスクロール位置がずれる
-      className="h-dvh overflow-hidden"
+      // 内側の overflow-y-auto が clamp されず fixed 要素とスクロール位置がずれる。
+      // standalone では 100vh に切り替える: iOS はホーム画面起動直後に dynamic viewport を
+      // 再計測せず 100dvh が実 viewport より小さい値を返し（WebKit 254861 系。回転で直る）、
+      // タブバー下に帯が出る。standalone にはブラウザ chrome が無いため vh が初回フレームから正しい。
+      className="h-dvh standalone:h-screen overflow-hidden"
       defaultOpen={defaultOpen}
       style={
         {
@@ -53,7 +56,7 @@ export default async function DashboardLayout({
             （iPad standalone）では、従来どおりスクロールコンテナ自身が safe-area を確保する。
           */}
           <div
-            className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden max-md:pb-[calc(var(--tabbar-height)+env(safe-area-inset-bottom))] md:pb-[env(safe-area-inset-bottom)]"
+            className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain max-md:pb-[calc(var(--tabbar-height)+env(safe-area-inset-bottom))] md:pb-[env(safe-area-inset-bottom)]"
             id="main-content"
             tabIndex={-1}
           >
