@@ -273,8 +273,11 @@ SENTRY_DSN is not set. Sentry will not be initialized.
 
 4. ローカルでテスト:
 
+   development では既定で Sentry 送信が無効（`enabled: false`）。ローカルから送信して検証する場合は
+   フラグを明示する（サーバー側は `SENTRY_ENABLE_DEV`、クライアント側は `NEXT_PUBLIC_SENTRY_ENABLE_DEV`）。
+
    ```bash
-   pnpm env:run -- pnpm dev
+   SENTRY_ENABLE_DEV=true pnpm env:run -- pnpm dev
    # 意図的にエラーを発生させる
    ```
 
