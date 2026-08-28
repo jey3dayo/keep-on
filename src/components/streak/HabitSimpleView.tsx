@@ -180,9 +180,11 @@ export function HabitSimpleView({
 
   return (
     <DashboardBackground backgroundColor={bgColor} className="overflow-hidden">
-      {/* 旧 footer slot に確保していた下部余白は、ページドットを本文フローへ移したため不要。 */}
-      <main className="relative flex flex-1 flex-col items-center px-4 pb-8 max-md:pt-0 md:pt-8">
-        <div className={cn('grid w-full max-w-md grid-cols-2 gap-6')}>
+      {/* 旧 footer slot に確保していた下部余白は、ページドットを本文フローへ移したため不要。
+          上パディングはビュートグルがナビへ移ってヘッダー直下が詰まるようになったため、幅によらず確保する。
+          縦に溢れる分は layout 側の overflow-y-auto がスクロールで受ける。 */}
+      <main className="relative flex flex-1 flex-col items-center px-4 pt-6 pb-8 md:pt-10">
+        <div className={cn('grid w-full max-w-md grid-cols-2 gap-x-6 gap-y-8')}>
           {currentHabits.map((habit) => {
             const isCompleted = completedHabitIds.has(habit.id)
             return (
