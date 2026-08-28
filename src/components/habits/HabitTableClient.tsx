@@ -256,7 +256,7 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[60px]">アイコン</TableHead>
+                  <TableHead className="w-[60px] whitespace-nowrap">アイコン</TableHead>
                   <TableHead>名前</TableHead>
                   <TableHead>期間</TableHead>
                   <TableHead>頻度</TableHead>
@@ -293,7 +293,7 @@ export function HabitTableClient({ habits }: HabitTableClientProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[60px]">アイコン</TableHead>
+                  <TableHead className="w-[60px] whitespace-nowrap">アイコン</TableHead>
                   <TableHead>名前</TableHead>
                   <TableHead>アーカイブ日</TableHead>
                   <TableHead className="text-right">アクション</TableHead>
