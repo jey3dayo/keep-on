@@ -6,7 +6,7 @@ allowBuilds:
   workerd: true
 
 minimumReleaseAgeExclude:
-  - '@cloudflare/workers-types@5.20260813.1'
+  - '@cloudflare/workers-types@5.20260813.1 || 5.20260828.1'
   - '@storybook/addon-a11y@10.5.8'
   - '@storybook/addon-docs@10.5.8'
   - '@storybook/addon-themes@10.5.8'
@@ -19,6 +19,19 @@ minimumReleaseAgeExclude:
   - miniflare@5.20260811.1-alpha
   - storybook@10.5.8
   - wrangler@4.123.0
+  - '@biomejs/biome@2.5.11'
+  - '@biomejs/cli-darwin-arm64@2.5.11'
+  - '@biomejs/cli-darwin-x64@2.5.11'
+  - '@biomejs/cli-linux-arm64-musl@2.5.11'
+  - '@biomejs/cli-linux-arm64@2.5.11'
+  - '@biomejs/cli-linux-x64-musl@2.5.11'
+  - '@biomejs/cli-linux-x64@2.5.11'
+  - '@biomejs/cli-win32-arm64@2.5.11'
+  - '@biomejs/cli-win32-x64@2.5.11'
+  - '@dotenvx/dotenvx@2.22.0'
+  - '@testing-library/react@16.3.3'
+  - '@vitejs/plugin-react@6.1.1'
+  - lucide-react@1.35.0
 
 # 2026-08-10 pnpm loose mode は未成熟なバージョンを minimumReleaseAgeExclude へ自動追記して
 # 処理を続行してしまうため、リリースゲートが形骸化する（ab04a4b の radix 誤 exclude 事故が実例）。
