@@ -6,10 +6,11 @@ import { type KeyboardEvent, useCallback, useMemo, useState } from 'react'
 import { AddHabitButton } from '@/components/basics/Button'
 import { DashboardStatsCard } from '@/components/dashboard/DashboardStatsCard'
 import type { OptimisticRollback } from '@/components/habits/types'
-import { HabitListCard } from '@/components/streak/HabitListCard'
-import { PERIOD_DISPLAY_NAME, type Period } from '@/constants/habit'
+import { PERIOD_DISPLAY_NAME } from '@/constants/habit'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
+import { HabitListCard } from './HabitListCard'
+import type { HabitsPeriodFilter } from './types'
 
 // Drawerコンポーネントを動的にインポート
 const HabitActionDrawer = dynamic(
@@ -19,8 +20,6 @@ const HabitActionDrawer = dynamic(
   }
 )
 
-type PeriodFilter = 'all' | Period
-
 interface HabitListViewProps {
   completedHabitIds: Set<string>
   filteredHabits: HabitWithProgress[]
@@ -29,12 +28,12 @@ interface HabitListViewProps {
   onAddHabit: () => void
   onArchiveOptimistic?: (habitId: string) => OptimisticRollback
   onDeleteOptimistic?: (habitId: string) => OptimisticRollback
-  onPeriodChange: (filter: 'all' | Period) => void
+  onPeriodChange: (filter: HabitsPeriodFilter) => void
   onRemoveCheckin?: (habitId: string) => Promise<void>
   onResetOptimistic?: (habitId: string) => OptimisticRollback
   onSkip?: (habitId: string) => Promise<void>
   onUnSkip?: (habitId: string) => Promise<void>
-  periodFilter: 'all' | Period
+  periodFilter: HabitsPeriodFilter
   todayActive: number
   todayLabel: string
   totalDaily: number
@@ -66,13 +65,18 @@ export function HabitListView({
   })
   const [drawerHabitId, setDrawerHabitId] = useState<string | null>(null)
 
+  const sourceHabitCount = useMemo(
+    () => habits.filter((habit) => (periodFilter === 'archived' ? habit.archived : !habit.archived)).length,
+    [habits, periodFilter]
+  )
+
   // 件数はセグメント内に置かず、選択中フィルタの結果としてリスト見出し位置に 1 箇所だけ出す
   const countCaption = useMemo(() => {
     if (periodFilter === 'all') {
       return `${filteredHabits.length}件`
     }
-    return `${filteredHabits.length}件 / 全${habits.length}件`
-  }, [filteredHabits.length, habits.length, periodFilter])
+    return `${filteredHabits.length}件 / 全${sourceHabitCount}件`
+  }, [filteredHabits.length, periodFilter, sourceHabitCount])
 
   const sortedHabits = useMemo(() => {
     return filteredHabits.map((habit, index) => ({
@@ -114,13 +118,13 @@ export function HabitListView({
 
   return (
     <>
-      <div className="flex-1 space-y-6 px-4 pt-4 pb-10">
+      <div className="flex-1 space-y-6 pb-10">
         <header className="sticky top-0 z-20 overflow-hidden rounded-3xl border border-border/60 bg-background/80 px-4 py-4 shadow-black/5 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
           <div className="mb-4">
             <div className="min-w-0">
               <p className="text-foreground/70 text-xs tracking-wide">{todayLabel}</p>
               {/* ページの h1 は SiteHeader が持つ。ここはセクション見出しなので h2 */}
-              <h2 className="font-semibold text-2xl text-foreground">今日の習慣</h2>
+              <h2 className="font-semibold text-2xl text-foreground">習慣一覧</h2>
             </div>
           </div>
 
@@ -143,13 +147,15 @@ export function HabitListView({
         <PeriodSegmentedControl onChange={onPeriodChange} value={periodFilter} />
 
         <div className="space-y-3">
-          {habits.length > 0 && <p className="px-1 text-white/80 text-xs tabular-nums">{countCaption}</p>}
+          {sourceHabitCount > 0 && <p className="px-1 text-muted-foreground text-xs tabular-nums">{countCaption}</p>}
           {filteredHabits.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border/70 bg-card/80 shadow-sm">
                 <Calendar className="h-8 w-8 text-muted-foreground" />
               </div>
-              <p className="mb-4 font-semibold text-base text-white">まだ習慣がありません</p>
+              <p className="mb-4 font-semibold text-base text-foreground">
+                {periodFilter === 'archived' ? 'アーカイブ済みの習慣はありません' : 'アクティブな習慣がありません'}
+              </p>
               <AddHabitButton onClick={onAddHabit}>習慣を追加</AddHabitButton>
             </div>
           ) : (
@@ -208,7 +214,7 @@ function HabitListCardItem({
   return (
     <HabitListCard
       completed={completed}
-      dimmed={completed}
+      dimmed={completed || habit.archived}
       habit={habit}
       onAdd={onAddCheckin ? handleAdd : undefined}
       onLongPressOrContextMenu={handleOpenDrawer}
@@ -217,11 +223,12 @@ function HabitListCardItem({
   )
 }
 
-const PERIOD_SEGMENTS: readonly { label: string; value: PeriodFilter }[] = [
+const PERIOD_SEGMENTS: readonly { label: string; value: HabitsPeriodFilter }[] = [
   { label: 'すべて', value: 'all' },
   { label: PERIOD_DISPLAY_NAME.daily, value: 'daily' },
   { label: PERIOD_DISPLAY_NAME.weekly, value: 'weekly' },
   { label: PERIOD_DISPLAY_NAME.monthly, value: 'monthly' },
+  { label: 'アーカイブ済み', value: 'archived' },
 ]
 
 function arrowDelta(key: string) {
@@ -242,8 +249,8 @@ export function PeriodSegmentedControl({
   onChange,
   value,
 }: {
-  onChange: (value: PeriodFilter) => void
-  value: PeriodFilter
+  onChange: (value: HabitsPeriodFilter) => void
+  value: HabitsPeriodFilter
 }) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
@@ -264,7 +271,7 @@ export function PeriodSegmentedControl({
   return (
     <div
       aria-label="期間で絞り込む"
-      className="flex items-stretch gap-1 rounded-full bg-black/20 p-1"
+      className="flex items-stretch gap-1 rounded-full bg-muted/60 p-1"
       onKeyDown={handleKeyDown}
       role="radiogroup"
     >
@@ -289,8 +296,8 @@ function PeriodSegment({
 }: {
   active: boolean
   label: string
-  onSelect: (value: PeriodFilter) => void
-  value: PeriodFilter
+  onSelect: (value: HabitsPeriodFilter) => void
+  value: HabitsPeriodFilter
 }) {
   const handleClick = useCallback(() => onSelect(value), [onSelect, value])
 
@@ -299,8 +306,8 @@ function PeriodSegment({
       aria-checked={active}
       className={cn(
         // press で即時に反応させるため active: の opacity を使う（トラック内で pill が跳ねないよう scale は使わない）
-        'flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full px-1 font-medium text-xs transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 active:opacity-70',
-        active ? 'bg-background text-foreground shadow-black/10 shadow-sm' : 'text-white'
+        'flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full px-1 font-medium text-xs transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:opacity-70',
+        active ? 'bg-background text-foreground shadow-black/10 shadow-sm' : 'text-muted-foreground'
       )}
       onClick={handleClick}
       role="radio"
