@@ -5,7 +5,8 @@ improve スキルによる監査計画の索引。
 - 2026-08-10（`HEAD = 88f423b`）: plans 001–006（いずれも **DONE**・main に取り込み済み）
 - 2026-08-13（`HEAD = d5df968`）: plans 007–013（007–010 **DONE**、011–013 **TODO**）
 - 2026-08-14（`HEAD = 0f714c1`）: plans 014–019（本ラウンド・おすすめ + 軽微）
-- 2026-08-27（`HEAD = 5577aeb`）: plans 020–023（モーション監査・すべて **TODO**）
+- 2026-08-27（`HEAD = 5577aeb`）: plans 020–023（モーション監査・**すべて DONE**。2026-08-29 の reconcile でコード実装を確認: scale="none" 化 / globals.css の motion shim + `--ease-*` トークン / Drawer のイベント駆動遷移 + fallback timer / ThemeSettings の transition プロパティ限定）
+- 2026-08-29（`HEAD = c74f61c`）: plans 024–028（モーション監査 第2ラウンド・すべて **TODO**）
 
 各実行者は計画を最後まで読んでから着手し、STOP conditions を尊重すること。
 **コミットは worktree 内のみ。ユーザーブランチへの merge / push はしない。**
@@ -36,10 +37,15 @@ improve スキルによる監査計画の索引。
 | 017  | /habits 一覧で progress 取得をやめる                                              | P1       | S      | —          | DONE   |
 | 018  | weekStart 時の habits KV 無効化と habit 経路の revalidatePath 拡張                | P1       | S      | —          | TODO   |
 | 019  | user KV の schema 検証と cache hit 時 email reconcile                             | P2       | S      | —          | TODO   |
-| 020  | 高頻度チェックインの hover 拡大を外し、press / reduced-motion を整理              | P1       | S      | 021        | TODO   |
-| 021  | Radix の overlay motion utility を復旧し、共有 easing を導入                      | P1       | M      | —          | TODO   |
-| 022  | Vaul Drawer の終了イベント後に編集・詳細へ遷移                                    | P1       | S      | —          | TODO   |
-| 023  | テーマ切替タブの transition-all を視覚プロパティへ限定                            | P2       | S      | 021        | TODO   |
+| 020  | 高頻度チェックインの hover 拡大を外し、press / reduced-motion を整理              | P1       | S      | 021        | DONE   |
+| 021  | Radix の overlay motion utility を復旧し、共有 easing を導入                      | P1       | M      | —          | DONE   |
+| 022  | Vaul Drawer の終了イベント後に編集・詳細へ遷移                                    | P1       | S      | —          | DONE   |
+| 023  | テーマ切替タブの transition-all を視覚プロパティへ限定                            | P2       | S      | 021        | DONE   |
+| 024  | Tailwind のデフォルト transition 曲線をトークンに揃える                           | P1       | S      | —          | TODO   |
+| 025  | dropdown の transform-origin を v4 構文に修正（トリガー起点で開く）               | P1       | S      | —          | TODO   |
+| 026  | ページスナップ中のチェックインタップ喪失を修正、ドット retarget                   | P1       | S      | —          | TODO   |
+| 027  | 進捗バーの transform 化とリング fill の切断解消                                   | P2       | M      | —          | TODO   |
+| 028  | 押下フィードバックの snap 解消と縮小率 0.95 統一                                  | P2       | S      | 024 推奨   | TODO   |
 
 006 の quarantine 残は `todo.txt` の先頭項目を参照。
 
@@ -70,6 +76,21 @@ improve スキルによる監査計画の索引。
 - **021**: `src/app/globals.css`
 - **022**: `src/components/dashboard/HabitActionDrawer.tsx`, `vitest.mocks.tsx`, `src/components/dashboard/HabitActionDrawer.test.tsx`
 - **023**: `src/components/settings/ThemeSettings.tsx`
+
+## 2026-08-29 animation audit notes（第2ラウンド, `HEAD = c74f61c`）
+
+前回の 020–023 は実装済みを確認して DONE 化。今回は 8 カテゴリ横断監査（4 並列 subagent + 全指摘の親検証）。
+
+- **実行順**: 024（1 行・全体の曲線が変わる）→ 025 / 026 / 027 並列可 → 028（024 の後だと `ease-out` 明示が既定と一致し差分の意味が明確）。
+- **ファイル集合**: 024 = `globals.css` のみ / 025 = `ui/dropdown-menu.tsx` / 026 = `hooks/usePageSwipe.ts`(+test) / 027 = `ProgressRing.tsx`, `HabitListCard.tsx`, `analytics/page.tsx`, `ui/progress.tsx` / 028 = `HabitListCard.tsx`, `DashboardViewToggle.tsx`, `globals.css`。**027 と 028 は `HabitListCard.tsx` を共有、024 と 028 は `globals.css` を共有 → 直列化**。
+- 計画化しなかった検出（次ラウンド候補・重要度順）:
+  - `tailwind.config.ts:14-33` の `check-mark`（`scale(0)` 始まり）/ `progress-fill`（600ms）/ `pulse-ring` は **全て未使用**（grep 0 件）。config は `@config` で live なので削除が安全（latent violation の除去）。`ui/sheet.tsx:34` の inert な `duration-300/500`、`ui/drawer.tsx:22` の vaul 除外で死んでいる `animate-in` クラスも同種の掃除。
+  - reduced-motion 全体安全網（`globals.css:648-657`）が `animate-spin` を初期フレームで凍結し、ローディング表示が「動かない静的アイコン」になる（`ui/sonner.tsx:24`, `HabitActionDialog.tsx:161`, `HabitUnarchiveButton.tsx:53`）。spin だけ穏やかな等価物（opacity pulse 等)へ差し替える例外が必要。
+  - `CheckInIconSwap`（`HabitListCard.tsx:279-297`）の key リマウント + 単発 rAF は入場 transition をスキップし得る。`HabitCircleItem.tsx:131` と同じ `@starting-style`（`starting:`）へ寄せると堅い。
+  - duration の未トークン化（150/160 の混在、`HabitCircleItem.tsx:166` のインライン overshoot bezier）、`ui/sidebar.tsx` の `ease-linear` + layout プロパティ transition（vendored・使用箇所は限定的）、`HabitCircleItem` 入場の 40ms stagger 未適用（機構は `COMPLETION_PULSE_STAGGER_MS` として同ファイルに既存）。
+  - long-press の reduced-motion 代替（`globals.css:599-608`）が「あとどれだけ押すか」の情報を落とす。opacity ランプで duration 情報を残せる。
+- Missed opportunities（追加系・監査所見のみ）: ① `HabitListView.tsx:296-305` の期間フィルタ pill がセグメント間をテレポートする（iOS セグメンテッドコントロールの意図なら共有 pill の translateX が本命）。② `総ストリーク`（`DashboardStatsCard`）の増分が生テキスト swap（1 日 1 回の高感情モーメント）。③ リストビューに入場モーションが無く円ビュー（`starting:`）と非対称。④ 空状態 → 初習慣作成が完全に無演出（once-per-user）。※「今日の進捗」カードは毎チェックインで変わるため animate 禁止（頻度ルール）。
+- 却下 / by-design 確認済み: `ease-out` / `ease-in-out` ユーティリティは `@theme` 上書きで既に強いトークン曲線（弱い built-in ではない）。`ease-in` は 0 件。long-press の 500ms linear は hold 長で正当。usePageSwipe のラバーバンド・速度判定・reduced-motion 追従は正しい実装。ビュー切替の無アニメは頻度ルール上正しい。ProgressRing の 300–500ms は DESIGN.md 明記（027 は幅内での整合のみ）。vaul drawer は自前の velocity ドラッグで正しい。hover: は v4 が `(hover:hover)` でゲート済み。
 
 ## 2026-08-27 animation audit notes
 
