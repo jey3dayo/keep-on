@@ -3,12 +3,27 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/basics/Button'
 import { Icon } from '@/components/basics/Icon'
-import { HabitTable } from '@/components/habits/HabitTable'
+import { HabitsListClient } from '@/components/habits/HabitsListClient'
 import { PageShell } from '@/components/PageShell'
 import { SIGN_IN_PATH } from '@/constants/auth'
-import { createRequestMeta, logInfo, logSpanOptional } from '@/lib/logging'
+import { getHabitsCacheSnapshot } from '@/lib/cache/habit-cache'
+import { withDbRetry } from '@/lib/db-retry'
+import {
+  createRequestMeta,
+  formatError,
+  isDatabaseError,
+  isTimeoutError,
+  logInfo,
+  logSpan,
+  logSpanOptional,
+  logWarn,
+} from '@/lib/logging'
+import { getArchivedHabits, getHabitsWithProgress } from '@/lib/queries/habit'
+import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { syncUser } from '@/lib/user'
+import { formatDateLabel } from '@/lib/utils/date'
+import type { HabitWithProgress } from '@/types/habit'
 
 export const metadata: Metadata = {
   description:
@@ -21,9 +36,25 @@ export const metadata: Metadata = {
   title: '習慣 - KeepOn',
 }
 
+type ArchivedHabit = Awaited<ReturnType<typeof getArchivedHabits>>[number]
+
+function toArchivedHabit(habit: ArchivedHabit): HabitWithProgress {
+  return {
+    ...habit,
+    archived: true,
+    completionRate: 0,
+    currentProgress: 0,
+    skippedToday: false,
+    streak: 0,
+  }
+}
+
 export default async function HabitsPage() {
   const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/habits')
+  const now = new Date()
+  const [dateKey, timeZone] = await Promise.all([getServerDateKey({ date: now }), getServerTimeZone()])
+  const todayLabel = formatDateLabel(now, timeZone)
 
   logInfo('request.habits:start', requestMeta)
 
@@ -34,7 +65,61 @@ export default async function HabitsPage() {
     redirect(SIGN_IN_PATH)
   }
 
-  logInfo('request.habits:end', requestMeta)
+  const cacheSnapshot = await getHabitsCacheSnapshot(user.id)
+  const isStale = cacheSnapshot && (cacheSnapshot.staleAt !== undefined || cacheSnapshot.dateKey !== dateKey)
+  const staleHabits = isStale ? cacheSnapshot.habits : null
+
+  const [activeHabitsResult, archivedHabitsResult] = await Promise.allSettled([
+    logSpan(
+      'habits.progress.query',
+      () =>
+        withDbRetry(
+          'habits.progress',
+          () => getHabitsWithProgress(user.id, user.externalId, dateKey, user.weekStart, cacheSnapshot),
+          { timeoutMs }
+        ),
+      requestMeta,
+      { timeoutMs }
+    ),
+    logSpan(
+      'habits.archived.query',
+      () => withDbRetry('habits.archived', () => getArchivedHabits(user.id), { timeoutMs }),
+      requestMeta,
+      { timeoutMs }
+    ),
+  ])
+
+  let activeHabits: HabitWithProgress[]
+  if (activeHabitsResult.status === 'fulfilled') {
+    activeHabits = activeHabitsResult.value
+  } else if (staleHabits && (isTimeoutError(activeHabitsResult.reason) || isDatabaseError(activeHabitsResult.reason))) {
+    logWarn('habits.progress:stale-fallback', {
+      cachedDateKey: cacheSnapshot?.dateKey,
+      error: formatError(activeHabitsResult.reason),
+      requestedDateKey: dateKey,
+    })
+    activeHabits = staleHabits
+  } else {
+    throw activeHabitsResult.reason
+  }
+
+  let archivedHabits: ArchivedHabit[] = []
+  if (archivedHabitsResult.status === 'fulfilled') {
+    archivedHabits = archivedHabitsResult.value
+  } else if (isTimeoutError(archivedHabitsResult.reason) || isDatabaseError(archivedHabitsResult.reason)) {
+    logWarn('habits.archived:skip', { ...requestMeta, error: formatError(archivedHabitsResult.reason) })
+  } else {
+    throw archivedHabitsResult.reason
+  }
+
+  const allHabits = [...activeHabits, ...archivedHabits.map(toArchivedHabit)]
+
+  logInfo('request.habits:end', {
+    ...requestMeta,
+    active: activeHabits.length,
+    archived: archivedHabits.length,
+    habits: allHabits.length,
+  })
 
   return (
     <PageShell>
@@ -47,7 +132,7 @@ export default async function HabitsPage() {
           </Link>
         </Button>
       </div>
-      <HabitTable requestMeta={requestMeta} userId={user.id} />
+      <HabitsListClient habits={allHabits} todayLabel={todayLabel} />
     </PageShell>
   )
 }

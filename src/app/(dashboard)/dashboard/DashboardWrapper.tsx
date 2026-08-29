@@ -1,501 +1,37 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
-import { addCheckinAction } from '@/app/actions/habits/checkin'
-import { removeCheckinAction } from '@/app/actions/habits/remove-checkin'
-import { addSkipAction, removeSkipAction } from '@/app/actions/habits/skip'
 import { DesktopDashboard } from '@/components/streak/DesktopDashboard'
 import { StreakDashboard } from '@/components/streak/StreakDashboard'
-import {
-  DASHBOARD_VIEW_COOKIE_KEY,
-  type DashboardView,
-  DEFAULT_DASHBOARD_VIEW,
-  MAX_CONCURRENT_CHECKINS,
-} from '@/constants/dashboard'
-import { COMPLETION_THRESHOLD } from '@/constants/habit'
-import { useSyncContext } from '@/contexts/SyncContext'
-import { useBeforeUnload } from '@/hooks/useBeforeUnload'
-import { useOfflineCheckin } from '@/hooks/useOfflineCheckin'
-import { getClientCookie, setClientCookie } from '@/lib/utils/cookies'
-import { formatDateKey } from '@/lib/utils/date'
-import { appToast } from '@/lib/utils/toast'
+import { useHabitCheckinQueue } from '@/hooks/useHabitCheckinQueue'
+import { selectTodayHabits } from '@/lib/utils/habits'
 import type { HabitWithProgress } from '@/types/habit'
 import type { User } from '@/types/user'
 
 interface DashboardWrapperProps {
   habits: HabitWithProgress[]
-  initialView?: DashboardView
   todayLabel: string
   user: User
 }
 
-interface CheckinTask {
-  dateKey: string
-  habitId: string
-  isRemove?: boolean
-  rollback?: () => void
-}
-
-const calculateCompletionRate = (progress: number, frequency: number) =>
-  Math.min(COMPLETION_THRESHOLD, Math.round((progress / frequency) * COMPLETION_THRESHOLD))
-
-export function DashboardWrapper({ habits, todayLabel, user, initialView }: DashboardWrapperProps) {
-  const router = useRouter()
-  const [, startTransition] = useTransition()
-  const { startSync, endSync, isSyncing } = useSyncContext()
-  const { isOnline, enqueueCheckin: enqueueOfflineCheckin } = useOfflineCheckin({
-    onReplayComplete: ({ replayed }) => {
-      if (replayed > 0) {
-        startTransition(() => {
-          router.refresh()
-        })
-      }
-    },
-  })
-  const [currentView, setCurrentView] = useState<DashboardView>(initialView ?? DEFAULT_DASHBOARD_VIEW)
-  const [prevHabits, setPrevHabits] = useState(habits)
-  const [optimisticHabits, setOptimisticHabits] = useState(habits)
-
-  if (prevHabits !== habits) {
-    setPrevHabits(habits)
-    setOptimisticHabits(habits)
-  }
-
-  const pendingCheckinsRef = useRef<Set<string>>(new Set())
-  const pendingCountRef = useRef<Map<string, number>>(new Map())
-  const activeRequestCountRef = useRef(0)
-  const activeHabitsRef = useRef<Set<string>>(new Set())
-  const checkinQueueRef = useRef<CheckinTask[]>([])
-  const drainCheckinQueueRef = useRef<() => void>(() => undefined)
-  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const isRefreshing = useRef(false)
-
-  // ページ離脱警告（同期中のみ）
-  useBeforeUnload(isSyncing)
-
-  const runOptimisticUpdateForHabit = useCallback(
-    (habitId: string, updater: (current: HabitWithProgress[]) => HabitWithProgress[]) => {
-      let previousHabit: HabitWithProgress | null = null
-      let previousIndex = -1
-      setOptimisticHabits((current) => {
-        previousIndex = current.findIndex((habit) => habit.id === habitId)
-        previousHabit = previousIndex >= 0 ? current[previousIndex] : null
-        return updater(current)
-      })
-      return () => {
-        if (!previousHabit) {
-          return
-        }
-        const rollbackHabit = previousHabit
-        setOptimisticHabits((current) => {
-          const existingIndex = current.findIndex((habit) => habit.id === habitId)
-          if (existingIndex >= 0) {
-            const next = [...current]
-            next[existingIndex] = rollbackHabit
-            return next
-          }
-          const next = [...current]
-          const insertIndex = previousIndex >= 0 && previousIndex <= next.length ? previousIndex : next.length
-          next.splice(insertIndex, 0, rollbackHabit)
-          return next
-        })
-      }
-    },
-    []
-  )
-
-  const archiveOptimistically = useCallback(
-    (habitId: string) =>
-      runOptimisticUpdateForHabit(habitId, (current) =>
-        current.map((habit) =>
-          habit.id === habitId
-            ? {
-                ...habit,
-                archived: true,
-                archivedAt: habit.archivedAt ?? new Date().toISOString(),
-              }
-            : habit
-        )
-      ),
-    [runOptimisticUpdateForHabit]
-  )
-
-  const deleteOptimistically = useCallback(
-    (habitId: string) =>
-      runOptimisticUpdateForHabit(habitId, (current) => current.filter((habit) => habit.id !== habitId)),
-    [runOptimisticUpdateForHabit]
-  )
-
-  const resetOptimistically = useCallback(
-    (habitId: string) =>
-      runOptimisticUpdateForHabit(habitId, (current) =>
-        current.map((habit) => {
-          if (habit.id !== habitId) {
-            return habit
-          }
-          const wasCompleted = habit.currentProgress >= habit.frequency
-          return {
-            ...habit,
-            completionRate: 0,
-            currentProgress: 0,
-            streak: wasCompleted ? Math.max(0, habit.streak - 1) : habit.streak,
-          }
-        })
-      ),
-    [runOptimisticUpdateForHabit]
-  )
-
-  const scheduleRefresh = () => {
-    if (refreshTimeoutRef.current) {
-      clearTimeout(refreshTimeoutRef.current)
-    }
-    refreshTimeoutRef.current = setTimeout(() => {
-      // 既にリフレッシュ中の場合はスキップ
-      if (isRefreshing.current) {
-        return
-      }
-      // 保留中のチェックインがある場合はスキップ（clearPendingCheckin で再スケジュールされる）
-      // useRef で最新の pending 状態を参照（クロージャの stale を回避）
-      if (pendingCheckinsRef.current.size > 0) {
-        return
-      }
-      isRefreshing.current = true
-      startTransition(() => {
-        router.refresh()
-        // リフレッシュ完了後、少し待ってからフラグをリセット
-        setTimeout(() => {
-          isRefreshing.current = false
-        }, 1000)
-      })
-    }, 500)
-  }
-
-  const scheduleLazyRefresh = () => {
-    if (refreshTimeoutRef.current) {
-      clearTimeout(refreshTimeoutRef.current)
-    }
-    // 5分後にバックグラウンドリフレッシュ（整合性確保のためのフォールバック）
-    refreshTimeoutRef.current = setTimeout(() => {
-      if (isRefreshing.current || pendingCheckinsRef.current.size > 0) {
-        return
-      }
-      isRefreshing.current = true
-      startTransition(() => {
-        router.refresh()
-        setTimeout(() => {
-          isRefreshing.current = false
-        }, 1000)
-      })
-    }, 300_000) // 5分
-  }
-
-  const updateOptimisticHabitProgress = useCallback(
-    (habitId: string, getNextProgress: (habit: HabitWithProgress) => number) => {
-      setOptimisticHabits((current) =>
-        current.map((habit) => {
-          if (habit.id !== habitId) {
-            return habit
-          }
-          const nextProgress = getNextProgress(habit)
-          const completionRate = calculateCompletionRate(nextProgress, habit.frequency)
-          return {
-            ...habit,
-            completionRate,
-            currentProgress: nextProgress,
-          }
-        })
-      )
-    },
-    []
-  )
-
-  const finalizeCheckinProgress = (habitId: string, serverCount: number) => {
-    updateOptimisticHabitProgress(habitId, () => serverCount)
-  }
-
-  const updateHabitProgress = useCallback(
-    (habitId: string, delta: number) => {
-      updateOptimisticHabitProgress(habitId, (habit) => Math.max(0, habit.currentProgress + delta))
-    },
-    [updateOptimisticHabitProgress]
-  )
-
-  const addPendingCheckin = useCallback(
-    (habitId: string) => {
-      // カウントを増やす
-      const currentCount = pendingCountRef.current.get(habitId) ?? 0
-      pendingCountRef.current.set(habitId, currentCount + 1)
-
-      // 初回のみSetに追加
-      if (currentCount === 0) {
-        pendingCheckinsRef.current.add(habitId)
-      }
-
-      startSync(habitId)
-    },
-    [startSync]
-  )
-
-  const clearPendingCheckin = (habitId: string) => {
-    // カウントを減らす
-    const currentCount = pendingCountRef.current.get(habitId) ?? 0
-    if (currentCount === 0) {
-      // カウントが0の場合は何もしない（二重呼び出し防止）
-      return
-    }
-    if (currentCount <= 1) {
-      pendingCountRef.current.delete(habitId)
-      pendingCheckinsRef.current.delete(habitId)
-
-      // pendingセットが空になった場合、保留されていたリフレッシュを再スケジュール
-      if (pendingCheckinsRef.current.size === 0 && refreshTimeoutRef.current) {
-        scheduleRefresh()
-      }
-    } else {
-      pendingCountRef.current.set(habitId, currentCount - 1)
-    }
-
-    endSync(habitId)
-  }
-
-  const runAddCheckin = async (habitId: string, dateKey: string) => {
-    try {
-      const result = await addCheckinAction(habitId, dateKey)
-      if (result.ok) {
-        return { ok: true as const, result }
-      }
-      return { ok: false as const, result }
-    } catch (error) {
-      return { error, ok: false as const }
-    }
-  }
-
-  const runRemoveCheckin = async (habitId: string, dateKey: string) => {
-    try {
-      const result = await removeCheckinAction(habitId, dateKey)
-      if (result.ok) {
-        return { ok: true as const, result }
-      }
-      return { ok: false as const, result }
-    } catch (error) {
-      return { error, ok: false as const }
-    }
-  }
-
-  const runCheckinTask = async (task: CheckinTask) => {
-    let shouldRollback = Boolean(task.rollback)
-
-    try {
-      const action = task.isRemove ? runRemoveCheckin : runAddCheckin
-      const { ok, result, error } = await action(task.habitId, task.dateKey)
-
-      if (ok) {
-        shouldRollback = false
-        // 最後のpendingタスクのみサーバー値で確定（中間タスクは楽観的状態を維持してフリッカーを防止）
-        const pendingCount = pendingCountRef.current.get(task.habitId) ?? 0
-        if (pendingCount <= 1 && 'currentCount' in result.data) {
-          finalizeCheckinProgress(task.habitId, result.data.currentCount)
-        }
-        // 5分後にバックグラウンドリフレッシュ（整合性確保のためのフォールバック）
-        scheduleLazyRefresh()
-        return
-      }
-
-      // Server Actionから返されたエラーメッセージを表示（一度だけ）
-      if (result && 'error' in result) {
-        appToast.error('チェックインの切り替えに失敗しました', result.error)
-      } else {
-        appToast.error('チェックインの切り替えに失敗しました', error)
-      }
-    } catch (error) {
-      // 予期しないエラーのみキャッチ（Server Actionの結果ではない）
-      appToast.error('チェックインの切り替えに失敗しました', error)
-    } finally {
-      if (shouldRollback && task.rollback) {
-        task.rollback()
-      }
-      clearPendingCheckin(task.habitId)
-    }
-  }
-
-  const startCheckinTask = (task: CheckinTask) => {
-    activeRequestCountRef.current += 1
-    activeHabitsRef.current.add(task.habitId)
-
-    runCheckinTask(task).finally(() => {
-      activeRequestCountRef.current = Math.max(0, activeRequestCountRef.current - 1)
-      activeHabitsRef.current.delete(task.habitId)
-      drainCheckinQueue()
-    })
-  }
-
-  const drainCheckinQueue = () => {
-    while (activeRequestCountRef.current < MAX_CONCURRENT_CHECKINS && checkinQueueRef.current.length > 0) {
-      // まだ実行中でないhabitIdのタスクを優先的に選択
-      const nextIndex = checkinQueueRef.current.findIndex((task) => !activeHabitsRef.current.has(task.habitId))
-      if (nextIndex === -1) {
-        // すべてのキュー内タスクが実行中の習慣 → 待機
-        break
-      }
-      const next = checkinQueueRef.current.splice(nextIndex, 1)[0]
-      if (!next) {
-        return
-      }
-      startCheckinTask(next)
-    }
-  }
-
-  drainCheckinQueueRef.current = drainCheckinQueue
-
-  const enqueueCheckin = useCallback((task: CheckinTask) => {
-    checkinQueueRef.current.push(task)
-    drainCheckinQueueRef.current()
-  }, [])
-
-  // タイムゾーンCookieをバックグラウンドで設定（ブロッキングなし）
-  useEffect(() => {
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    if (!timeZone) {
-      return
-    }
-
-    const existingTimeZone = getClientCookie('ko_tz') ?? ''
-    if (existingTimeZone === timeZone) {
-      return
-    }
-
-    // Cookieを設定してサーバーコンポーネントを再取得
-    setClientCookie('ko_tz', timeZone, { maxAge: 31_536_000, path: '/', sameSite: 'lax' })
-    // タイムゾーン反映のため一度だけrefresh（初回アクセス時のみ）
-    startTransition(() => {
-      router.refresh()
-    })
-  }, [router])
-
-  useEffect(
-    () => () => {
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current)
-      }
-    },
-    []
-  )
-
-  const queueOptimisticCheckin = useCallback(
-    (
-      habitId: string,
-      options: {
-        canApply: (habit: HabitWithProgress) => boolean
-        delta: number
-        isRemove: boolean
-      }
-    ) => {
-      const targetHabit = optimisticHabits.find((habit) => habit.id === habitId)
-      if (!targetHabit) {
-        return
-      }
-      if (!options.canApply(targetHabit)) {
-        return
-      }
-
-      const dateKey = formatDateKey(new Date())
-      updateHabitProgress(habitId, options.delta)
-
-      if (!isOnline) {
-        // オフライン時: IndexedDB にキューイングして楽観的更新のみ
-        startSync(habitId)
-        enqueueOfflineCheckin(habitId, options.isRemove ? 'remove' : 'add', dateKey)
-          .catch(() => {
-            appToast.error('オフラインキューへの保存に失敗しました')
-            updateHabitProgress(habitId, -options.delta)
-          })
-          .finally(() => {
-            endSync(habitId)
-          })
-        return
-      }
-
-      addPendingCheckin(habitId)
-      enqueueCheckin({
-        dateKey,
-        habitId,
-        isRemove: options.isRemove,
-        rollback: () => updateHabitProgress(habitId, -options.delta),
-      })
-    },
-    [
-      addPendingCheckin,
-      endSync,
-      enqueueCheckin,
-      enqueueOfflineCheckin,
-      isOnline,
-      optimisticHabits,
-      startSync,
-      updateHabitProgress,
-    ]
-  )
-
-  const handleAddCheckin = useCallback(
-    (habitId: string): Promise<void> => {
-      queueOptimisticCheckin(habitId, {
-        canApply: (habit) => habit.currentProgress < habit.frequency,
-        delta: 1,
-        isRemove: false,
-      })
-      return Promise.resolve()
-    },
-    [queueOptimisticCheckin]
-  )
-
-  const handleRemoveCheckin = useCallback(
-    (habitId: string): Promise<void> => {
-      queueOptimisticCheckin(habitId, {
-        canApply: (habit) => habit.currentProgress > 0,
-        delta: -1,
-        isRemove: true,
-      })
-      return Promise.resolve()
-    },
-    [queueOptimisticCheckin]
-  )
-
-  const handleSkip = useCallback(async (habitId: string) => {
-    const result = await addSkipAction(habitId, formatDateKey(new Date()))
-    if (result.ok) {
-      appToast.success('今日をスキップしました（ストリーク維持）')
-    } else {
-      appToast.error('スキップの設定に失敗しました')
-    }
-  }, [])
-
-  const handleUnSkip = useCallback(async (habitId: string) => {
-    const result = await removeSkipAction(habitId)
-    if (result.ok) {
-      appToast.success('スキップを解除しました')
-    } else {
-      appToast.error('スキップの解除に失敗しました')
-    }
-  }, [])
-
-  const handleViewChange = useCallback((view: DashboardView) => {
-    setCurrentView(view)
-    setClientCookie(DASHBOARD_VIEW_COOKIE_KEY, view, {
-      maxAge: 60 * 60 * 24 * 365,
-      path: '/',
-      sameSite: 'lax',
-    })
-  }, [])
-
-  const activeHabits = optimisticHabits.filter((habit) => !habit.archived)
+export function DashboardWrapper({ habits, todayLabel, user }: DashboardWrapperProps) {
+  const {
+    archiveOptimistically,
+    deleteOptimistically,
+    handleAddCheckin,
+    handleRemoveCheckin,
+    handleSkip,
+    handleUnSkip,
+    optimisticHabits,
+    resetOptimistically,
+  } = useHabitCheckinQueue(habits)
+  const todayHabits = selectTodayHabits(optimisticHabits)
 
   return (
     <>
       {/* スマホ版: STREAK風フルスクリーンUI */}
       <div className="flex-1 md:hidden">
         <StreakDashboard
-          currentView={currentView}
-          habits={activeHabits}
+          habits={todayHabits}
           onAddCheckin={handleAddCheckin}
           onArchiveOptimistic={archiveOptimistically}
           onDeleteOptimistic={deleteOptimistically}
@@ -503,7 +39,6 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
           onResetOptimistic={resetOptimistically}
           onSkip={handleSkip}
           onUnSkip={handleUnSkip}
-          onViewChange={handleViewChange}
           todayLabel={todayLabel}
         />
       </div>
@@ -511,8 +46,7 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
       {/* PC版: shadcn/ui Cardレイアウト */}
       <div className="hidden flex-1 md:block">
         <DesktopDashboard
-          currentView={currentView}
-          habits={activeHabits}
+          habits={todayHabits}
           onAddCheckin={handleAddCheckin}
           onArchiveOptimistic={archiveOptimistically}
           onDeleteOptimistic={deleteOptimistically}
@@ -520,7 +54,6 @@ export function DashboardWrapper({ habits, todayLabel, user, initialView }: Dash
           onResetOptimistic={resetOptimistically}
           onSkip={handleSkip}
           onUnSkip={handleUnSkip}
-          onViewChange={handleViewChange}
           todayLabel={todayLabel}
           user={user}
         />

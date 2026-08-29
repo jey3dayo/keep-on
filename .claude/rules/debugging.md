@@ -39,6 +39,51 @@ KeepOn プロジェクトのブラウザデバッグ手順。汎用的なツー�
 - headless でリダイレクトループ → 実ブラウザで問題なければ headless 固有（無視可、歴史的記述: 移行前は Clerk で同様の事象があった）
 - ログインフローは `testing.md` を参照（Google ログイン。自動 E2E 向けの Access service token 方式は今後整備）
 
+## CSS / アニメーションは computed style で実測する
+
+**Tailwind のクラスが期待どおりの CSS を生成しているかは、`tsc --noEmit` でも vitest でも検出できない。**
+クラス名は単なる文字列なので、無効なユーティリティを書いても型チェックとテストは通り、
+実際の DOM でだけ効いていない、という壊れ方をする。モーションを変更したら computed style を実測する。
+
+```javascript
+// 適用されている実際の値を読む（クラスが生成されていなければ既定値が返る）
+(() => {
+  const el = document.querySelector("<selector>");
+  const cs = getComputedStyle(el);
+  return JSON.stringify({
+    prop: cs.transitionProperty,
+    dur: cs.transitionDuration,
+    delay: cs.transitionDelay,
+    ease: cs.transitionTimingFunction,
+    scale: cs.scale,
+  });
+})();
+```
+
+タイムライン（どの要素がいつ動くか）を確かめるには rAF でサンプリングする。
+
+```javascript
+(() =>
+  new Promise((resolve) => {
+    const el = document.querySelector("<selector>");
+    const s = [];
+    const t0 = performance.now();
+    trigger(); // クリック等
+    requestAnimationFrame(function tick() {
+      const t = performance.now() - t0;
+      s.push([Math.round(t), getComputedStyle(el).backgroundColor]);
+      t < 500 ? requestAnimationFrame(tick) : resolve(JSON.stringify(s));
+    });
+  }))();
+```
+
+### Tailwind v4 で実際に踏んだ落とし穴
+
+- `transition-transform` と `scale-*` の組み合わせ → `scale-*` は `transform` ではなく **`scale` プロパティ**を出力するため補間されず瞬間移動する。`transition-[scale]` と書く
+- `origin-[--var]` → v4 では無効な構文で、transform-origin が既定（中央）のまま。`origin-(--var)` と書く
+
+どちらも「コードは正しく見えるのに DOM では効いていない」型の不具合で、実測しない限り気づけない。
+
 ## WSL2 環境でのセットアップ
 
 Chrome リモートデバッグの起動:

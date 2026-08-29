@@ -1,4 +1,5 @@
 import type { Period } from '@/constants/habit'
+import type { HabitWithProgress } from '@/types/habit'
 
 /**
  * 習慣を期間でフィルタリング
@@ -9,6 +10,18 @@ import type { Period } from '@/constants/habit'
  */
 export function filterHabitsByPeriod<T extends { period: Period }>(habits: T[], periodFilter: 'all' | Period): T[] {
   return periodFilter === 'all' ? habits : habits.filter((h) => h.period === periodFilter)
+}
+
+export function selectTodayHabits(habits: HabitWithProgress[]): HabitWithProgress[] {
+  return habits.filter((habit) => {
+    if (habit.archived) {
+      return false
+    }
+    if (habit.period === 'daily') {
+      return true
+    }
+    return habit.currentProgress < habit.frequency
+  })
 }
 
 const PERIOD_LABELS: Record<Period, string> = {

@@ -6,7 +6,6 @@ import { SiteHeader } from '@/components/dashboard/SiteHeader'
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator'
 import { SidebarInset, SidebarProvider } from '@/components/sidebar/Sidebar'
 import { SIGN_IN_PATH } from '@/constants/auth'
-import { MobileTabBarSlotProvider } from '@/contexts/MobileTabBarSlotContext'
 import { getAccessIdentity } from '@/lib/auth/access'
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'
@@ -47,24 +46,22 @@ export default async function DashboardLayout({
     >
       <OfflineIndicator />
       <AppSidebar variant="inset" />
-      <MobileTabBarSlotProvider>
-        <SidebarInset>
-          <SiteHeader />
-          {/*
-            MobileTabBar はコンテンツ上の absolute overlay なので、スクロールコンテナ側で
-            タブバー本体と safe-area 分の padding を予約する。md 幅で safe-area を持つ環境
-            （iPad standalone）では、従来どおりスクロールコンテナ自身が safe-area を確保する。
-          */}
-          <div
-            className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain max-md:pb-[calc(var(--tabbar-height)+env(safe-area-inset-bottom))] md:pb-[env(safe-area-inset-bottom)]"
-            id="main-content"
-            tabIndex={-1}
-          >
-            {children}
-          </div>
-          <MobileTabBar />
-        </SidebarInset>
-      </MobileTabBarSlotProvider>
+      <SidebarInset>
+        <SiteHeader />
+        {/*
+          MobileTabBar はコンテンツ上の absolute overlay なので、スクロールコンテナ側で
+          タブバー本体と safe-area 分の padding を予約する。md 幅で safe-area を持つ環境
+          （iPad standalone）では、従来どおりスクロールコンテナ自身が safe-area を確保する。
+        */}
+        <div
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain max-md:pb-[calc(var(--tabbar-height)+env(safe-area-inset-bottom))] md:pb-[env(safe-area-inset-bottom)]"
+          id="main-content"
+          tabIndex={-1}
+        >
+          {children}
+        </div>
+        <MobileTabBar />
+      </SidebarInset>
       {modal}
     </SidebarProvider>
   )

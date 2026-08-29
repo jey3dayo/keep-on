@@ -32,6 +32,7 @@ export function HabitListCard({
   const colorData = getColorById(habit.color ?? DEFAULT_HABIT_COLOR)
   const periodData = getPeriodById(habit.period)
   const IconComponent = getIconById(normalizeIconName(habit.icon)).icon
+  const isArchived = habit.archived
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const longPressTriggeredRef = useRef(false)
   const longPressStartPointRef = useRef<{ x: number; y: number } | null>(null)
@@ -179,7 +180,7 @@ export function HabitListCard({
           aria-label={completed ? `${habit.name}のチェックインを取り消す` : `${habit.name}をチェックイン`}
           aria-pressed={completed}
           completed={completed}
-          disabled={false}
+          disabled={isArchived}
           onClick={handleCheckin}
           style={
             {
@@ -231,7 +232,7 @@ export function HabitListCard({
                 <Button
                   aria-label="チェックインを1つ減らす"
                   className="h-11 w-11 rounded-full border border-border/70 bg-background/95 p-0 text-foreground shadow-sm transition-[color,background-color,transform] duration-160 ease-out hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 active:scale-95 disabled:opacity-45 motion-reduce:transition-none motion-reduce:active:scale-100"
-                  disabled={habit.currentProgress <= 0}
+                  disabled={isArchived || habit.currentProgress <= 0}
                   onClick={handleRemove}
                   size="icon"
                   type="button"
@@ -242,7 +243,7 @@ export function HabitListCard({
                 <Button
                   aria-label="チェックインを1つ増やす"
                   className="h-11 w-11 rounded-full border border-border/70 bg-background/95 p-0 text-foreground shadow-sm transition-[color,background-color,transform] duration-160 ease-out hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 active:scale-95 disabled:opacity-45 motion-reduce:transition-none motion-reduce:active:scale-100"
-                  disabled={habit.currentProgress >= habit.frequency}
+                  disabled={isArchived || habit.currentProgress >= habit.frequency}
                   onClick={handleAdd}
                   size="icon"
                   type="button"

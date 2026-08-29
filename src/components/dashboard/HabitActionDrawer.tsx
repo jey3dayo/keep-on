@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/basics/Button'
@@ -11,6 +12,11 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } f
 import type { HabitWithProgress } from '@/types/habit'
 
 const DRAWER_NAVIGATION_FALLBACK_MS = 600
+
+const HabitUnarchiveButton = dynamic(
+  () => import('@/components/habits/HabitUnarchiveButton').then((mod) => mod.HabitUnarchiveButton),
+  { ssr: false }
+)
 
 interface HabitActionDrawerProps {
   habit: HabitWithProgress | null
@@ -176,16 +182,27 @@ export function HabitActionDrawer({
             <DrawerDescription>{activeHabit?.name}</DrawerDescription>
           </DrawerHeader>
           <div className="grid grid-cols-2 gap-2 p-4 pt-0">
-            <Button className="col-span-2" onClick={handleEdit} variant="outline">
-              編集
-            </Button>
-
-            <Button className="col-span-2" onClick={handleViewDetail} variant="outline">
-              カレンダー履歴を見る
-            </Button>
-
-            {isArchived ? null : (
+            {isArchived ? (
               <>
+                {activeHabit ? (
+                  <div className="col-span-2 flex justify-center">
+                    <HabitUnarchiveButton habitId={activeHabit.id} />
+                  </div>
+                ) : null}
+                <Button className="col-span-2" onClick={handleDelete} variant="outline">
+                  完全に削除
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button className="col-span-2" onClick={handleEdit} variant="outline">
+                  編集
+                </Button>
+
+                <Button className="col-span-2" onClick={handleViewDetail} variant="outline">
+                  カレンダー履歴を見る
+                </Button>
+
                 {onSkip || onUnSkip ? (
                   <Button className="col-span-2" disabled={isSkipping} onClick={handleSkipToggle} variant="outline">
                     {activeHabit?.skippedToday ? '今日のスキップを解除' : '今日をスキップ（ストリーク維持）'}
@@ -199,12 +216,6 @@ export function HabitActionDrawer({
                 </Button>
               </>
             )}
-
-            {isArchived ? (
-              <Button className="col-span-2" onClick={handleDelete} variant="outline">
-                完全に削除
-              </Button>
-            ) : null}
           </div>
         </DrawerContent>
       </Drawer>

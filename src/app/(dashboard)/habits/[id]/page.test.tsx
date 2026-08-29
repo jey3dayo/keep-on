@@ -1,3 +1,4 @@
+import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getHabitById } from '@/lib/queries/habit'
 import { getHabitCalendarData } from '@/lib/queries/habit-calendar'
@@ -70,5 +71,21 @@ describe('HabitDetailPage', () => {
 
     expect(notFoundMock).toHaveBeenCalledOnce()
     expect(redirectMock).not.toHaveBeenCalled()
+  })
+
+  it('アーカイブ済みの習慣でアーカイブバッジを表示する', async () => {
+    vi.mocked(getHabitById).mockResolvedValue({ ...buildHabit('user-123'), archived: true })
+
+    render(await HabitDetailPage({ params: Promise.resolve({ id: 'habit-123' }) }))
+
+    expect(screen.getByText('アーカイブ')).toBeInTheDocument()
+  })
+
+  it('アクティブな習慣ではアーカイブバッジを表示しない', async () => {
+    vi.mocked(getHabitById).mockResolvedValue(buildHabit('user-123'))
+
+    render(await HabitDetailPage({ params: Promise.resolve({ id: 'habit-123' }) }))
+
+    expect(screen.queryByText('アーカイブ')).not.toBeInTheDocument()
   })
 })
