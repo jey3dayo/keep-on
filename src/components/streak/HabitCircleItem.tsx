@@ -3,7 +3,7 @@
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
-import { ProgressRing } from '@/components/streak/ProgressRing'
+import { getProgressRingDurationMs, ProgressRing } from '@/components/streak/ProgressRing'
 import { getIconById } from '@/constants/habit-data'
 import { LONG_PRESS_DURATION_MS, LONG_PRESS_MOVE_THRESHOLD_PX } from '@/constants/interaction'
 import { cn } from '@/lib/utils'
@@ -49,6 +49,13 @@ export function HabitCircleItem({
   const holdStartPointRef = useRef<{ x: number; y: number } | null>(null)
   const visualDelayTimerRef = useRef<NodeJS.Timeout | null>(null)
   const previousIsCompletedRef = useRef(isCompleted)
+  const [previousProgress, setPreviousProgress] = useState(progressPercent)
+  const [progressTransitionDurationMs, setProgressTransitionDurationMs] = useState(() => getProgressRingDurationMs(0))
+  if (previousProgress !== progressPercent) {
+    setPreviousProgress(progressPercent)
+    setProgressTransitionDurationMs(getProgressRingDurationMs(Math.abs(progressPercent - previousProgress)))
+  }
+  const completionTransitionDelayMs = isCompleted ? progressTransitionDurationMs : 0
   const fillDurationMs = LONG_PRESS_DURATION_MS - LONG_PRESS_VISUAL_DELAY_MS
 
   useEffect(() => {
@@ -148,11 +155,13 @@ export function HabitCircleItem({
           aria-hidden="true"
           className={cn(
             'absolute inset-0 scale-100 opacity-100 transition-[opacity,scale] duration-120 ease-[var(--ease-out)] motion-reduce:transition-none',
-            isCompleted && 'scale-[0.94] opacity-0 delay-160'
+            isCompleted && 'scale-[0.94] opacity-0'
           )}
+          style={{ transitionDelay: `${completionTransitionDelayMs}ms` }}
         >
           <ProgressRing
             backgroundColor={ringBgColor}
+            duration={progressTransitionDurationMs}
             progress={progressPercent}
             progressColor="rgba(255, 255, 255, 0.95)"
             size={140}
@@ -163,13 +172,14 @@ export function HabitCircleItem({
         <div
           className={cn(
             'relative flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full ring-1 ring-white/15 transition-[scale,background-color] duration-140 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1),var(--ease-out)] motion-reduce:transition-none',
-            isCompleted && 'scale-[1.03] delay-160',
+            isCompleted && 'scale-[1.03]',
             isCompletionPulseActive && 'habit-completion-pulse motion-reduce:animate-none'
           )}
           style={
             {
               '--habit-completion-pulse-delay': `${completionPulseDelayMs}ms`,
               backgroundColor: isCompleted ? 'rgba(255, 255, 255, 0.95)' : bgColor,
+              transitionDelay: `${completionTransitionDelayMs}ms`,
             } as CSSProperties
           }
         >
@@ -183,12 +193,12 @@ export function HabitCircleItem({
             style={{ '--long-press-fill-ms': `${fillDurationMs}ms` } as CSSProperties}
           />
           <IconComponent
-            className={cn(
-              'relative h-14 w-14 transition-colors duration-140 ease-[var(--ease-out)] motion-reduce:transition-none',
-              isCompleted && 'delay-160'
-            )}
+            className="relative h-14 w-14 transition-colors duration-140 ease-[var(--ease-out)] motion-reduce:transition-none"
             strokeWidth={1.5}
-            style={{ color: isCompleted ? bgColor : 'rgba(255, 255, 255, 0.9)' }}
+            style={{
+              color: isCompleted ? bgColor : 'rgba(255, 255, 255, 0.9)',
+              transitionDelay: `${completionTransitionDelayMs}ms`,
+            }}
           />
         </div>
       </Button>

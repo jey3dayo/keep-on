@@ -21,3 +21,12 @@ export const PAGE_SWIPE_RUBBER_BAND_FACTOR = 0.55
 
 /** ページスナップのアニメーション時間 */
 export const PAGE_SWIPE_TRANSITION_DURATION_MS = 250
+
+/** 進捗1ポイントあたりのリング掃引時間。全周でも約280msとなり、等速の動きを読み取れる長さにする */
+export const PROGRESS_RING_DURATION_PER_PERCENT_MS = 2.8
+
+/** 25%以下の短い掃引でも瞬きにならない最低時間 */
+export const PROGRESS_RING_MIN_DURATION_MS = 130
+
+/** 大きな進捗更新でも300msを超えて操作感を損なわない上限 */
+export const PROGRESS_RING_MAX_DURATION_MS = 300
