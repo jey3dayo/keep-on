@@ -118,6 +118,8 @@ export const Default: Story = {
       storybookToast.info('チェックイン取り消し', `habitId: ${habitId}`)
       return Promise.resolve()
     },
+    todayActive: habits.filter((habit) => habit.period === 'daily' && habit.currentProgress > 0).length,
+    totalDaily: habits.filter((habit) => habit.period === 'daily').length,
   },
 }
 
@@ -137,6 +139,8 @@ export const CustomBackground: Story = {
       storybookToast.info('チェックイン取り消し', `habitId: ${habitId}`)
       return Promise.resolve()
     },
+    todayActive: habits.slice(0, 4).filter((habit) => habit.period === 'daily' && habit.currentProgress > 0).length,
+    totalDaily: habits.slice(0, 4).filter((habit) => habit.period === 'daily').length,
   },
 }
 
