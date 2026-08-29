@@ -5,7 +5,11 @@ import { Button } from '@/components/basics/Button'
 import { Icon, normalizeIconName } from '@/components/basics/Icon'
 import { getProgressRingDurationMs, ProgressRing } from '@/components/streak/ProgressRing'
 import { getIconById } from '@/constants/habit-data'
-import { LONG_PRESS_DURATION_MS, LONG_PRESS_MOVE_THRESHOLD_PX } from '@/constants/interaction'
+import {
+  HABIT_INVERSION_DURATION_MS,
+  LONG_PRESS_DURATION_MS,
+  LONG_PRESS_MOVE_THRESHOLD_PX,
+} from '@/constants/interaction'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
 
@@ -171,7 +175,7 @@ export function HabitCircleItem({
 
         <div
           className={cn(
-            'relative flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full ring-1 ring-white/15 transition-[scale,background-color] duration-140 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1),var(--ease-out)] motion-reduce:transition-none',
+            'relative flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full ring-1 ring-white/15 transition-[scale,background-color] [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1),var(--ease-out)] motion-reduce:transition-none',
             isCompleted && 'scale-[1.03]',
             isCompletionPulseActive && 'habit-completion-pulse motion-reduce:animate-none'
           )}
@@ -180,6 +184,7 @@ export function HabitCircleItem({
               '--habit-completion-pulse-delay': `${completionPulseDelayMs}ms`,
               backgroundColor: isCompleted ? 'rgba(255, 255, 255, 0.95)' : bgColor,
               transitionDelay: `${completionTransitionDelayMs}ms`,
+              transitionDuration: `${HABIT_INVERSION_DURATION_MS}ms`,
             } as CSSProperties
           }
         >
@@ -193,11 +198,12 @@ export function HabitCircleItem({
             style={{ '--long-press-fill-ms': `${fillDurationMs}ms` } as CSSProperties}
           />
           <IconComponent
-            className="relative h-14 w-14 transition-colors duration-140 ease-[var(--ease-out)] motion-reduce:transition-none"
+            className="relative h-14 w-14 transition-colors ease-[var(--ease-out)] motion-reduce:transition-none"
             strokeWidth={1.5}
             style={{
               color: isCompleted ? bgColor : 'rgba(255, 255, 255, 0.9)',
               transitionDelay: `${completionTransitionDelayMs}ms`,
+              transitionDuration: `${HABIT_INVERSION_DURATION_MS}ms`,
             }}
           />
         </div>

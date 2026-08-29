@@ -9,7 +9,12 @@ import { DashboardBackground } from '@/components/streak/DashboardBackground'
 import { HabitCircleItem } from '@/components/streak/HabitCircleItem'
 import { DEFAULT_HABIT_COLOR } from '@/constants/habit'
 import { getColorById } from '@/constants/habit-data'
-import { LONG_PRESS_DURATION_MS, LONG_PRESS_MOVE_THRESHOLD_PX } from '@/constants/interaction'
+import {
+  HABIT_INVERSION_DURATION_MS,
+  LONG_PRESS_DURATION_MS,
+  LONG_PRESS_MOVE_THRESHOLD_PX,
+  PROGRESS_RING_MAX_DURATION_MS,
+} from '@/constants/interaction'
 import { usePageSwipe } from '@/hooks/usePageSwipe'
 import { cn } from '@/lib/utils'
 import type { HabitWithProgress } from '@/types/habit'
@@ -17,11 +22,12 @@ import type { HabitWithProgress } from '@/types/habit'
 // 進捗リングのトラック色。背景色から黒mixで派生させると全習慣が濃い縁のドーナツに見えるため、
 // 背景によらない控えめな白トラックに固定する（進捗ストロークは white 0.95 のまま）。
 const RING_BACKGROUND_COLOR = 'rgba(255, 255, 255, 0.2)'
-const HABITS_PER_PAGE = 6
-const COMPLETION_PULSE_BASE_DELAY_MS = 300
-const COMPLETION_PULSE_DURATION_MS = 300
-const COMPLETION_PULSE_STAGGER_MS = 40
-const COMPLETION_PULSE_TOTAL_DURATION_MS =
+export const HABITS_PER_PAGE = 6
+// ページ全体を一括で pulse するため、習慣ごとに可変なリング掃引がこの時刻までに必ず着地してから開始する。
+export const COMPLETION_PULSE_BASE_DELAY_MS = PROGRESS_RING_MAX_DURATION_MS + HABIT_INVERSION_DURATION_MS
+export const COMPLETION_PULSE_DURATION_MS = 300
+export const COMPLETION_PULSE_STAGGER_MS = 40
+export const COMPLETION_PULSE_TOTAL_DURATION_MS =
   COMPLETION_PULSE_BASE_DELAY_MS + COMPLETION_PULSE_DURATION_MS + (HABITS_PER_PAGE - 1) * COMPLETION_PULSE_STAGGER_MS
 
 // Drawerコンポーネントを動的にインポート

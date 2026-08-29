@@ -30,3 +30,6 @@ export const PROGRESS_RING_MIN_DURATION_MS = 130
 
 /** 大きな進捗更新でも300msを超えて操作感を損なわない上限 */
 export const PROGRESS_RING_MAX_DURATION_MS = 300
+
+/** 完了時の内円反転にかける時間 */
+export const HABIT_INVERSION_DURATION_MS = 140
