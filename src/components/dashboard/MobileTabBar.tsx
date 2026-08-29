@@ -59,15 +59,10 @@ export function MobileTabBar() {
       {items.map((item) => (
         <Fragment key={item.titleKey}>
           <TabItem item={item} pathname={pathname} />
-          {/* ビュー切替slotの枠は全ルート・hydration前後で常に確保し、タブ位置をページ間で不変に保つ。
-              slot が無い間は装飾扱い（aria-hidden）で支援技術から隠す。 */}
-          {item.url === '/dashboard' ? (
-            <div
-              aria-hidden={viewToggleSlot === null || viewToggleSlot === undefined ? 'true' : undefined}
-              className="flex min-h-14 flex-1 items-center justify-center"
-            >
-              {viewToggleSlot}
-            </div>
+          {/* ビュー切替slotは実コンテンツがあるときだけセルとして表示し、空ならセルを畳んで残りのタブを均等幅にする。
+              ダッシュボード表示に作用する操作を隣接させるため、slotがあるページではダッシュボードの直後に置き、ページ間でタブ位置は変わる。 */}
+          {item.url === '/dashboard' && viewToggleSlot !== null && viewToggleSlot !== undefined ? (
+            <div className="flex min-h-14 flex-1 items-center justify-center">{viewToggleSlot}</div>
           ) : null}
         </Fragment>
       ))}

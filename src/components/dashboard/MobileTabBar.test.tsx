@@ -35,16 +35,14 @@ vi.mock('react-i18next', () => ({
 }))
 
 describe('MobileTabBar', () => {
-  it('/settingsでも5枠を表示し、2番目のslotは空にする', () => {
+  it('/settingsでも4枠を表示する', () => {
     usePathnameMock.mockReturnValue('/settings')
     render(<MobileTabBar />)
 
     const items = [...NAV_ITEMS.main, ...NAV_ITEMS.secondary].filter((item) => item.url !== '/help')
     const nav = screen.getByRole('navigation', { name: 'メインナビゲーション' })
-    expect(nav.children).toHaveLength(5)
+    expect(nav.children).toHaveLength(4)
     expect(screen.getAllByRole('link')).toHaveLength(4)
-    expect(nav.children[1]).toBeEmptyDOMElement()
-    expect(nav.children[1]).toHaveAttribute('aria-hidden', 'true')
 
     for (const item of items) {
       expect(screen.getByRole('link', { name: item.titleKey })).toHaveAttribute('href', item.url)
@@ -54,6 +52,15 @@ describe('MobileTabBar', () => {
     expect(screen.getByRole('link', { name: 'navigation.dashboard' })).not.toHaveAttribute('aria-current')
     expect(screen.queryByRole('link', { name: 'navigation.help' })).not.toBeInTheDocument()
     expect(nav.lastElementChild).toBe(screen.getByRole('link', { name: 'navigation.settings' }))
+  })
+
+  it('スロットが無いとき余分なセルを描画しない', () => {
+    usePathnameMock.mockReturnValue('/habits')
+    render(<MobileTabBar />)
+
+    const nav = screen.getByRole('navigation', { name: 'メインナビゲーション' })
+    expect(nav.children).toHaveLength(4)
+    expect(nav.querySelector('div')).not.toBeInTheDocument()
   })
 
   it('登録されたslotをダッシュボードタブの隣に表示し、設定を右端に保つ', () => {
