@@ -52,6 +52,9 @@ interface HabitSimpleViewProps {
   onUnSkip?: (habitId: string) => Promise<void>
   // デスクトップ経路ではモバイル用ページドットを描画しないため false にする。
   showPageDots?: boolean
+  todayActive: number
+  todayLabel?: string
+  totalDaily: number
 }
 
 export function HabitSimpleView({
@@ -66,6 +69,9 @@ export function HabitSimpleView({
   onSkip,
   onUnSkip,
   backgroundColor,
+  todayActive,
+  todayLabel,
+  totalDaily,
   showPageDots = true,
 }: HabitSimpleViewProps) {
   const [currentPage, setCurrentPage] = useState(0)
@@ -130,6 +136,8 @@ export function HabitSimpleView({
   }, [currentHabits])
 
   const bgColor = backgroundColor ?? fallbackBgColor
+  const progressActive = todayActive
+  const progressTotal = totalDaily
 
   const ringBgColor = RING_BACKGROUND_COLOR
   const {
@@ -258,9 +266,18 @@ export function HabitSimpleView({
   return (
     <DashboardBackground backgroundColor={bgColor} className="overflow-hidden">
       {/* 旧 footer slot に確保していた下部余白は、ページドットを本文フローへ移したため不要。
-          上パディングはビュートグルがナビへ移ってヘッダー直下が詰まるようになったため、幅によらず確保する。
+          上パディングはヘッダー直下が詰まらないよう、幅によらず確保する。
           縦に溢れる分は layout 側の overflow-y-auto がスクロールで受ける。 */}
       <main className="relative flex flex-1 flex-col items-center px-4 pt-6 pb-8 md:pt-10">
+        <header className="mb-6 flex w-full max-w-md items-end justify-between gap-4 px-2 text-white">
+          <div className="min-w-0">
+            {todayLabel ? <p className="text-white/70 text-xs tracking-wide">{todayLabel}</p> : null}
+            <h2 className="font-semibold text-2xl">今日の習慣</h2>
+          </div>
+          <p className="shrink-0 text-sm text-white/80 tabular-nums">
+            {progressActive} / {progressTotal} 完了
+          </p>
+        </header>
         <div
           className="w-full max-w-md touch-pan-y overflow-hidden"
           onClickCapture={handleClickCapture}

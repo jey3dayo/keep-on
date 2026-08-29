@@ -1,6 +1,4 @@
 import type { OptimisticRollback } from '@/components/habits/types'
-import type { DashboardView } from '@/constants/dashboard'
-import type { Period } from '@/constants/habit'
 import type { HabitWithProgress } from '@/types/habit'
 
 interface DashboardBaseProps {
@@ -15,9 +13,4 @@ interface DashboardBaseProps {
   todayLabel: string
 }
 
-export interface DashboardViewProps extends DashboardBaseProps {
-  currentView: DashboardView
-  onViewChange: (view: DashboardView) => void
-}
-
-export type DashboardPeriodFilter = 'all' | Period
+export type DashboardViewProps = DashboardBaseProps

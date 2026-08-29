@@ -1,10 +1,6 @@
 'use client'
 
-import { LayoutGrid, List } from 'lucide-react'
-import { useCallback, useEffect } from 'react'
-import { useMobileTabBarSlot } from '@/contexts/MobileTabBarSlotContext'
-import { DashboardBackground } from './DashboardBackground'
-import { HabitListView } from './HabitListView'
+import { useEffect } from 'react'
 import { HabitSimpleView } from './HabitSimpleView'
 import type { DashboardViewProps } from './types'
 import { useDashboardContent } from './useDashboardContent'
@@ -19,39 +15,8 @@ export function StreakDashboard({
   onSkip,
   onUnSkip,
   todayLabel,
-  currentView,
-  onViewChange,
 }: DashboardViewProps) {
-  const {
-    completedHabitIds,
-    filteredHabits,
-    handleAddHabit,
-    periodFilter,
-    setPeriodFilter,
-    todayActive,
-    totalDaily,
-    totalStreak,
-  } = useDashboardContent(habits)
-
-  const handleViewToggle = useCallback(() => {
-    onViewChange(currentView === 'simple' ? 'dashboard' : 'simple')
-  }, [currentView, onViewChange])
-
-  const nextViewLabel = currentView === 'simple' ? 'リスト' : 'グリッド'
-  const NextViewIcon = currentView === 'simple' ? List : LayoutGrid
-  const trailingSlot = (
-    <button
-      aria-label={`${nextViewLabel}表示に切り替え`}
-      className="flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-foreground/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:bg-accent/50"
-      onClick={handleViewToggle}
-      type="button"
-    >
-      <NextViewIcon aria-hidden="true" className="size-5 shrink-0" />
-      <span className="truncate text-[10px] leading-none">{nextViewLabel}</span>
-    </button>
-  )
-
-  useMobileTabBarSlot(trailingSlot)
+  const { completedHabitIds, handleAddHabit, todayActive, totalDaily } = useDashboardContent(habits)
 
   useEffect(() => {
     const root = document.documentElement
@@ -74,44 +39,21 @@ export function StreakDashboard({
   }, [])
 
   return (
-    <>
-      {currentView === 'simple' ? (
-        <HabitSimpleView
-          backgroundColor="var(--primary)"
-          completedHabitIds={completedHabitIds}
-          habits={habits}
-          onAddCheckin={onAddCheckin}
-          onAddHabit={handleAddHabit}
-          onArchiveOptimistic={onArchiveOptimistic}
-          onDeleteOptimistic={onDeleteOptimistic}
-          onRemoveCheckin={onRemoveCheckin}
-          onResetOptimistic={onResetOptimistic}
-          onSkip={onSkip}
-          onUnSkip={onUnSkip}
-        />
-      ) : (
-        <DashboardBackground>
-          <HabitListView
-            completedHabitIds={completedHabitIds}
-            filteredHabits={filteredHabits}
-            habits={habits}
-            onAddCheckin={onAddCheckin}
-            onAddHabit={handleAddHabit}
-            onArchiveOptimistic={onArchiveOptimistic}
-            onDeleteOptimistic={onDeleteOptimistic}
-            onPeriodChange={setPeriodFilter}
-            onRemoveCheckin={onRemoveCheckin}
-            onResetOptimistic={onResetOptimistic}
-            onSkip={onSkip}
-            onUnSkip={onUnSkip}
-            periodFilter={periodFilter}
-            todayActive={todayActive}
-            todayLabel={todayLabel}
-            totalDaily={totalDaily}
-            totalStreak={totalStreak}
-          />
-        </DashboardBackground>
-      )}
-    </>
+    <HabitSimpleView
+      backgroundColor="var(--primary)"
+      completedHabitIds={completedHabitIds}
+      habits={habits}
+      onAddCheckin={onAddCheckin}
+      onAddHabit={handleAddHabit}
+      onArchiveOptimistic={onArchiveOptimistic}
+      onDeleteOptimistic={onDeleteOptimistic}
+      onRemoveCheckin={onRemoveCheckin}
+      onResetOptimistic={onResetOptimistic}
+      onSkip={onSkip}
+      onUnSkip={onUnSkip}
+      todayActive={todayActive}
+      todayLabel={todayLabel}
+      totalDaily={totalDaily}
+    />
   )
 }

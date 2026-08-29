@@ -77,7 +77,6 @@ const user = {
 
 export const Default: Story = {
   args: {
-    currentView: 'dashboard',
     habits,
     onAddCheckin: (habitId) => {
       storybookToast.info('チェックイン追加', `habitId: ${habitId}`)
@@ -87,9 +86,6 @@ export const Default: Story = {
       storybookToast.info('チェックイン取り消し', `habitId: ${habitId}`)
       return Promise.resolve()
     },
-    onViewChange: (view) => {
-      storybookToast.info('表示切り替え', view)
-    },
     todayLabel: '1月29日（木）',
     user,
   },
@@ -97,11 +93,9 @@ export const Default: Story = {
 
 export const Empty: Story = {
   args: {
-    currentView: 'dashboard',
     habits: [],
     onAddCheckin: () => Promise.resolve(),
     onRemoveCheckin: () => Promise.resolve(),
-    onViewChange: () => undefined,
     todayLabel: '1月29日（木）',
     user,
   },
