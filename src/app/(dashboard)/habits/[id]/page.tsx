@@ -84,7 +84,14 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
             <IconComponent className="h-6 w-6 text-white" />
           </div>
           <div className="min-w-0">
-            <h2 className="truncate font-bold text-2xl text-foreground">{habit.name}</h2>
+            <div className="flex min-w-0 items-center gap-2">
+              <h2 className="min-w-0 truncate font-bold text-2xl text-foreground">{habit.name}</h2>
+              {habit.archived ? (
+                <span className="shrink-0 whitespace-nowrap rounded-full border border-muted-foreground/30 px-2 py-0.5 font-medium text-muted-foreground text-xs">
+                  アーカイブ
+                </span>
+              ) : null}
+            </div>
             <p className="text-muted-foreground text-sm">
               {periodLabel} · {habit.frequency}回
             </p>
