@@ -147,8 +147,8 @@ export function HabitCircleItem({
         <div
           aria-hidden="true"
           className={cn(
-            'absolute inset-0 transition-opacity duration-300 motion-reduce:transition-none',
-            isCompleted && 'opacity-0'
+            'absolute inset-0 scale-100 opacity-100 transition-[opacity,scale] duration-120 ease-[var(--ease-out)] motion-reduce:transition-none',
+            isCompleted && 'scale-[0.94] opacity-0 delay-160'
           )}
         >
           <ProgressRing
@@ -162,8 +162,8 @@ export function HabitCircleItem({
 
         <div
           className={cn(
-            'relative flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full ring-1 ring-white/15 transition-[scale,background-color] duration-300 ease-out motion-reduce:transition-none',
-            isCompleted && 'scale-[1.03] [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]',
+            'relative flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full ring-1 ring-white/15 transition-[scale,background-color] duration-140 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1),var(--ease-out)] motion-reduce:transition-none',
+            isCompleted && 'scale-[1.03] delay-160',
             isCompletionPulseActive && 'habit-completion-pulse motion-reduce:animate-none'
           )}
           style={
@@ -183,7 +183,10 @@ export function HabitCircleItem({
             style={{ '--long-press-fill-ms': `${fillDurationMs}ms` } as CSSProperties}
           />
           <IconComponent
-            className="relative h-14 w-14 transition-colors duration-300 motion-reduce:transition-none"
+            className={cn(
+              'relative h-14 w-14 transition-colors duration-140 ease-[var(--ease-out)] motion-reduce:transition-none',
+              isCompleted && 'delay-160'
+            )}
             strokeWidth={1.5}
             style={{ color: isCompleted ? bgColor : 'rgba(255, 255, 255, 0.9)' }}
           />

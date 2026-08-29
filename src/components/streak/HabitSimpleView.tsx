@@ -18,10 +18,11 @@ import type { HabitWithProgress } from '@/types/habit'
 // 背景によらない控えめな白トラックに固定する（進捗ストロークは white 0.95 のまま）。
 const RING_BACKGROUND_COLOR = 'rgba(255, 255, 255, 0.2)'
 const HABITS_PER_PAGE = 6
+const COMPLETION_PULSE_BASE_DELAY_MS = 300
 const COMPLETION_PULSE_DURATION_MS = 300
 const COMPLETION_PULSE_STAGGER_MS = 40
 const COMPLETION_PULSE_TOTAL_DURATION_MS =
-  COMPLETION_PULSE_DURATION_MS + (HABITS_PER_PAGE - 1) * COMPLETION_PULSE_STAGGER_MS
+  COMPLETION_PULSE_BASE_DELAY_MS + COMPLETION_PULSE_DURATION_MS + (HABITS_PER_PAGE - 1) * COMPLETION_PULSE_STAGGER_MS
 
 // Drawerコンポーネントを動的にインポート
 const HabitActionDrawer = dynamic(
@@ -283,7 +284,9 @@ export function HabitSimpleView({
                     return (
                       <HabitCircleItemContainer
                         bgColor={bgColor}
-                        completionPulseDelayMs={habitIndex * COMPLETION_PULSE_STAGGER_MS}
+                        completionPulseDelayMs={
+                          COMPLETION_PULSE_BASE_DELAY_MS + habitIndex * COMPLETION_PULSE_STAGGER_MS
+                        }
                         habit={habit}
                         isCompleted={isCompleted}
                         isCompletionPulseActive={
