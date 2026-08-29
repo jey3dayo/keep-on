@@ -242,12 +242,12 @@ KeepOn は習慣のチェックインに集中する、落ち着いた PWA で�
 三つのトーンを使い分ける:
 
 - Dashboard branded canvas: ダッシュボード（リスト／シンプル）の外枠は `primary` で塗る。カードや円が手前に乗る。
-- Streak immersion: シンプルビューの円チェックイン。白の進捗リング（`habit-circle-ring`）と完了グローで達成を示す。内側の色面はページのブランド色を共有する。
+- Streak immersion: シンプルビューの円チェックイン。白の進捗リング（`habit-circle-ring`）と、完了時の白円反転で達成を示す。内側の色面はページのブランド色を共有し、完了すると白面 + ブランド色アイコンへ反転する。
 - Utility surfaces: 設定、ヘルプ、アナリティクスなどダッシュボード外。明るい card、細い border、短いコピー。全面アクセント塗りにしない。
 
 YAML の `*-emphasis` / `habit-*` / `streak-*` / `overlay` は新規 UI の正本である。既存 CSS 変数へ未配線のものはデザイン目標として扱い、実装追従はレビュー側の負債メモに従う。
 
-モーションは目的があるときだけ。press の小さな scale、進捗の width/stroke、occasional な sheet/drawer、稀なサーフェス入退場。高頻度操作に長い演出を載せない。`prefers-reduced-motion` では transform を抑え、必要な変化は短い opacity に落とす。
+モーションは目的があるときだけ。press の小さな scale、進捗の transform/stroke（バーは width ではなく translateX で動かす）、occasional な sheet/drawer、稀なサーフェス入退場。高頻度操作に長い演出を載せない。`prefers-reduced-motion` では transform を抑え、必要な変化は短い opacity に落とす。
 
 ## Colors
 
@@ -265,7 +265,7 @@ YAML の `*-emphasis` / `habit-*` / `streak-*` / `overlay` は新規 UI の正�
 
 没入背景（`primary` 直上、card 等の面を挟まない箇所）のテキストとアイコンは `white` / `white/80` 系を使い、`foreground` / `muted-foreground` を直接使わない。これらのトークンは background・card 面向けにライト/ダークで反転する設計のため、`primary` 上では意図せず低コントラストになる。同様に、没入背景上の凹み面・フォーカスリング・浅い影は `black/20` `white/80` `black/10` などの alpha 直指定を使ってよい（テーマ非依存の陰影であり、semantic token を経由しない意図的な例外）。
 
-ストリーク没入では、primary の上に薄い白の radial と暗い縦グラデーションを重ねて奥行きを出す。進捗線はほぼ不透明な白、完了時のみ白い soft glow。
+ストリーク没入では、primary の上に薄い白の radial と暗い縦グラデーションを重ねて奥行きを出す。進捗線はほぼ不透明な白、リングのトラックは背景色に依らない白 20%（背景から派生させると全習慣が濃い縁のドーナツに見える）。完了は白円への反転で示し、glow は使わない。
 
 没入背景のグラデーションは上部に白 radial ハイライト、上から下へ透明にフェードする縦グラデーションのみを重ね、**下端は必ず transparent（= 素の `primary` に一致）で終える**。コンテナ外（body / iOS standalone の safe-area・オーバースクロール域）は素の `primary` で塗られているため、下端に不透明な暗色を残すと素の背景色との段差（明るい帯）が出る。この背景はアイコンビュー・リストビューなど没入ビュー全体で共通の一枚として扱い、ビューごとに個別実装しない。
 
@@ -340,8 +340,9 @@ Primary は塗りと短い影。Destructive は危険操作のみ。Ghost は低
 ### Check-in & streak
 
 - リスト: `habit-checkin`（56px）の習慣色円。完了でチェックアイコン。
-- シンプル: `habit-circle-ring`（140px）の進捗リング、`habit-circle`（120px）の色面、アイコン 56px。完了でわずかに拡大し glow。
-- リストの進捗バーは習慣色。シンプルのリングは白。変化は 300–500ms の ease-out。
+- シンプル: `habit-circle-ring`（140px）の進捗リング、`habit-circle`（120px）の色面、アイコン 56px。完了で白円へ反転し、わずかに拡大する。
+- リストの進捗バーは習慣色で translateX（300ms、ease-out）。シンプルのリングは白で、掃引は等速（linear）。掃引時間は移動距離に比例させる（130–300ms）——距離によらず一定時間にすると、いちばん見せたい全周スイープだけが速くなる。
+- 完了演出は順序を持つ。リングを描き切ってから内側の反転（140ms）を始め、全完了の祝福はさらにその着地後に鳴らす。同時に始めるとリングが閉じる姿が見えず、因果が消える。
 
 長押しで操作メニューを開く円は、短タップと区別できる進行表示を持つ。進行は hold-to-confirm の線形 fill。短タップのチェックインでは進行がちらつかないこと。
 

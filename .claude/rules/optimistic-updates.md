@@ -247,6 +247,30 @@ if (prevHabits !== habits) {
 
 注意: `useEffect` ではなく render 中に直接比較することで、フラッシュを防ぐ。
 
+### render 中の ref 更新は「冪等な写し」に限る
+
+前回値を `ref` に持って render 中に書き換えてよいのは、`currentPageRef.current = currentPage` のように
+**値を写すだけ**の冪等な操作に限る。差分の計算のように非冪等な処理を render 中の ref で行うと、
+同一コミット内で 2 回 render されたときに 1 回目で ref が更新済みとなり、2 回目の差分が 0 になる。
+DOM へ反映されるのは 2 回目の値なので、**結果は常に「差分なし」に潰れる**。
+
+Next.js の dev は React StrictMode が既定で有効なため、開発中は必ずこれを踏む。型チェックもテストも
+通り、コードを読む限り正しく見えるのに実際の DOM だけが違う、という形で現れる（2026-08-29 に
+`HabitCircleItem` のリング掃引時間が常に下限へ潰れる不具合として発生）。
+
+差分が要る場合は、上記の props → state 導出パターンで前回値を state に持つ:
+
+```typescript
+const [prevProgress, setPrevProgress] = useState(progress);
+const [durationMs, setDurationMs] = useState(MIN_DURATION_MS);
+if (prevProgress !== progress) {
+  setPrevProgress(progress);
+  setDurationMs(computeDuration(Math.abs(progress - prevProgress)));
+}
+```
+
+2 回目の render では `prevProgress === progress` となり再計算が走らないため冪等になる。
+
 ## 6. どのケースで使うか / 使わないか
 
 ### 使う（楽観的更新が有効なケース）
