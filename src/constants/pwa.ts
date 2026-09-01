@@ -25,3 +25,6 @@ export const SW_USER_CACHEABLE_ROUTE_PREFIXES = ['/dashboard', '/habits', '/anal
 export const SW_MSG_NAV_STALE_SERVED = 'NAV_STALE_SERVED' as const
 export const SW_MSG_NAV_REVALIDATED = 'NAV_REVALIDATED' as const
 export const SW_MSG_NAV_AUTH_LOST = 'NAV_AUTH_LOST' as const
+
+/** ナビゲーション SWR で stale 提供を許す上限（sw.js と同期すること） */
+export const SW_NAV_STALE_MAX_AGE_MS = 60 * 60 * 1000

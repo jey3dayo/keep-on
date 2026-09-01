@@ -6,6 +6,9 @@
 // 旧ビルドのページと新ビルドのページで別 SW が入れ替わり続ける（plan 032 の Why 参照）。
 const SW_BUILD_ID = '__SW_BUILD_ID__'
 const CACHE_NAME = `keepon-${SW_BUILD_ID.startsWith('__') ? 'dev' : SW_BUILD_ID}`
+// 同期先は src/constants/pwa.ts の SW_NAV_STALE_MAX_AGE_MS
+const NAV_STALE_MAX_AGE_MS = 60 * 60 * 1000
+const NAV_CACHED_AT_HEADER = 'x-keepon-cached-at'
 const OFFLINE_URL = '/offline'
 const NEXT_ASSET_PREFIX = '/_next/'
 const NEXT_STATIC_CSS_PREFIX = '/_next/static/css/'
@@ -127,6 +130,16 @@ const isAuthNavigationFailure = (response) => {
   return response.redirected || isCrossOriginFinalUrl(response)
 }
 
+const withNavigationCacheTimestamp = (response) => {
+  const headers = new Headers(response.headers)
+  headers.set(NAV_CACHED_AT_HEADER, String(Date.now()))
+  return new Response(response.body, {
+    headers,
+    status: response.status,
+    statusText: response.statusText,
+  })
+}
+
 const revalidateNavigation = async (request, cache, pathname) => {
   let networkResp
   try {
@@ -142,7 +155,7 @@ const revalidateNavigation = async (request, cache, pathname) => {
   }
 
   if (networkResp.ok && !networkResp.redirected) {
-    await cache.put(request, networkResp.clone())
+    await cache.put(request, withNavigationCacheTimestamp(networkResp.clone()))
     await broadcastToClients({ path: pathname, type: 'NAV_REVALIDATED' }).catch(() => undefined)
   }
 }
@@ -222,11 +235,19 @@ self.addEventListener('fetch', (event) => {
         const cached = await cache.match(request)
 
         if (cached) {
-          // stale 即応は直前セッション本人の再訪を前提とした意図的なトレードオフ。
-          // セッション切れ・ユーザー交代時の露出は、背面再検証の NAV_AUTH_LOST と ServiceWorkerRegistration の
-          // CLEAR_USER_CACHE で数秒内に回収する。
-          broadcastToClients({ path: url.pathname, type: 'NAV_STALE_SERVED' }).catch(() => undefined)
-          return { response: cached, revalidate: () => revalidateNavigation(request, cache, url.pathname) }
+          const cachedAt = Number(cached.headers.get(NAV_CACHED_AT_HEADER))
+          const isFresh = Number.isFinite(cachedAt) && Date.now() - cachedAt <= NAV_STALE_MAX_AGE_MS
+
+          if (isFresh) {
+            // stale 即応は直前セッション本人の再訪を前提とした意図的なトレードオフ。
+            // セッション切れ・ユーザー交代時の露出は、背面再検証の NAV_AUTH_LOST と ServiceWorkerRegistration の
+            // CLEAR_USER_CACHE で数秒内に回収する。
+            // キャッシュされた HTML には日付が焼き込まれており、日付を跨いだ stale 提供は機能的な誤りになる。
+            // 古い HTML は参照するハッシュ付きアセットが origin から消えている確率が高い。
+            // 実機で 8月31日 の HTML が 9月2日 に配信され、CSS 未適用で描画された（2026-09-02 実測）。
+            broadcastToClients({ path: url.pathname, type: 'NAV_STALE_SERVED' }).catch(() => undefined)
+            return { response: cached, revalidate: () => revalidateNavigation(request, cache, url.pathname) }
+          }
         }
 
         try {
@@ -238,7 +259,7 @@ self.addEventListener('fetch', (event) => {
           }
 
           if (networkResp.ok && !networkResp.redirected) {
-            await cache.put(request, networkResp.clone())
+            await cache.put(request, withNavigationCacheTimestamp(networkResp.clone()))
             return { response: networkResp, revalidate: null }
           }
 
