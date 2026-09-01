@@ -10,6 +10,7 @@ improve スキルによる監査計画の索引。
 - 2026-09-01（`HEAD = 23de1b4`）: plan 031（Linear JEY-636・SW キャッシュのビルドスコープ化・**DONE**: `f6f3b6b`。残余の窓（skipWaiting 未自動化）は plan の「既知の限界」に記載）
 - 2026-09-01（`HEAD = be9d915`）: plan 032（plan 031 の実装方式差し替え・本番回帰の修正・**DONE**: `ba13ba5`。本番実測ログは plan 本文に記録）
 - 2026-09-02（`HEAD = d35391d`）: plan 034（実機 PWA 初回起動の未スタイル描画・**DONE**: `c4e7429`。本番実測ログは plan 本文）
+- 2026-09-02（`HEAD = 673492b`）: plan 018（weekStart 変更時のキャッシュ整合・**DONE**: `b6c82cb`）
 
 各実行者は計画を最後まで読んでから着手し、STOP conditions を尊重すること。
 **コミットは worktree 内のみ。ユーザーブランチへの merge / push はしない。**
@@ -38,7 +39,7 @@ improve スキルによる監査計画の索引。
 | 015  | SW のユーザー HTML cache fallback 廃止と sign-out purge 強化                      | P1       | M      | —          | TODO   |
 | 016  | habit 所有権エラーのクライアント応答を統一                                        | P1       | S      | —          | DONE   |
 | 017  | /habits 一覧で progress 取得をやめる                                              | P1       | S      | —          | DONE   |
-| 018  | weekStart 時の habits KV 無効化と habit 経路の revalidatePath 拡張                | P1       | S      | —          | TODO   |
+| 018  | weekStart 時の habits KV 無効化と habit 経路の revalidatePath 拡張                | P1       | S      | —          | DONE   |
 | 019  | user KV の schema 検証と cache hit 時 email reconcile                             | P2       | S      | —          | TODO   |
 | 020  | 高頻度チェックインの hover 拡大を外し、press / reduced-motion を整理              | P1       | S      | 021        | DONE   |
 | 021  | Radix の overlay motion utility を復旧し、共有 easing を導入                      | P1       | M      | —          | DONE   |
