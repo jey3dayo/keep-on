@@ -20,7 +20,7 @@
 
 1. **旧 Step 2「ネットワーク失敗時に `cached` を返すな」は前提が反転した。** `c12c887` の SWR 化により、
    ナビゲーションは失敗時のフォールバックではなく**主経路として、ネットワークを見る前にキャッシュを返す**
-   （`public/sw.js:218-224`）。旧 Step 2 をそのまま適用すると SWR 化そのものの否定になる。
+   （`public/sw.js:221-227`）。旧 Step 2 をそのまま適用すると SWR 化そのものの否定になる。
 2. **旧 Step 1・2 の `SW_CACHE_NAME = 'keepon-v5'` / `keepon-v6` へ bump は実装不能。** plan 031 で
    `CACHE_NAME` は SW 自身の URL クエリから実行時に導出する形（`keepon-${SW_VERSION}`）になり、
    固定文字列リテラルは存在しない。
@@ -50,14 +50,23 @@ SWR の構造上、**controller があって purge が走る場合でも、purge
 - キャッシュをユーザー別に名前空間化（`keepon-${SW_VERSION}-${userIdHash}` 等）→ 規模が大きく、
   共有端末が実際に想定用途に入ると確認できてから投資すべき
 
+また、SW の `CLEAR_USER_CACHE` は `clearUserData` で Cache と offline queue（IndexedDB）の両方を消すが
+（`public/sw.js:86-93`, `:404-406`）、本 plan の client fallback は **Cache API のみ**を対象とする。
+したがって controller 不在時は前ユーザーの offline queue が端末の IndexedDB に残る。replay 時の
+他人送信は `item.userId` とサーバー側の本人照合で防がれている（`public/sw.js:334-348`）が、
+データ自体は残る。IndexedDB の client 直接クリアは Out of scope とする。
+
 本 plan は「purge が走らない穴を塞ぐ」修正であり、「SWR の露出窓を消す」修正ではない。
 `public/sw.js` の cached 分岐コメントにある許容契約はそのまま維持する。
 
 ## Current state
 
 ```js
-// public/sw.js:218-224（SWR の主経路。変更しない）
+// public/sw.js:221-227（SWR の主経路。変更しない）
 if (cached) {
+  // stale 即応は直前セッション本人の再訪を前提とした意図的なトレードオフ。
+  // セッション切れ・ユーザー交代時の露出は、背面再検証の NAV_AUTH_LOST と ServiceWorkerRegistration の
+  // CLEAR_USER_CACHE で数秒内に回収する。
   broadcastToClients({ path: url.pathname, type: 'NAV_STALE_SERVED' }).catch(() => undefined)
   return { response: cached, revalidate: () => revalidateNavigation(request, cache, url.pathname) }
 }
@@ -78,7 +87,7 @@ navigator.serviceWorker?.controller?.postMessage({ type: SW_MSG_CLEAR_USER_CACHE
 ```
 
 `src/lib/pwa/` には `offline-queue.ts` のみ。`src/constants/pwa.ts` にキャッシュ名・ルート定数は無い
-（メッセージタイプのみ）。
+（メッセージタイプ・sync タグ・リトライ判定のみ）。
 
 ## 方針
 
@@ -140,7 +149,38 @@ export const SW_USER_CACHEABLE_ROUTE_PREFIXES = ['/dashboard', '/habits', '/anal
 ### Step 3: 呼び出し側を寄せる
 
 - `src/lib/auth/sign-out.ts` — `requestUserCacheClear()` を `clearUserCachesBestEffort()` に置き換える。
-  `window.location.assign` の前に**呼び出しを開始する**（await はしない。fire-and-forget で可）
+  **fire-and-forget にしてはならない。** `ACCESS_LOGOUT_URL` は cross-origin
+  （`src/constants/auth.ts:3`）で、`window.location.assign` により document が unload されると
+  `caches.keys()` → `open` → `keys()` → `delete` の非同期チェーンが途中で打ち切られうる。
+  従来の `postMessage` 経路は SW 側の `event.waitUntil` が独立に完走するが（`public/sw.js:404-406`）、
+  controller 不在時はその保証が無い。**まさに本 plan が塞ぐシナリオで purge が unload に負ける。**
+
+  そのため purge の完了を**短い timeout 付きで待ってから**遷移する。ただし `signOut` は3箇所で
+  `onClick={signOut}` として使われている（`src/components/dashboard/SiteHeader.tsx:44`、
+  `src/components/dashboard/AppSidebar.tsx:31`、`src/components/settings/AccountSettings.tsx:19`）ため、
+  **`signOut(): void` のシグネチャは変更しない**。内部で async 関数へ委譲し、`finally` で必ず遷移する。
+
+  ```ts
+  const PURGE_TIMEOUT_MS = 700
+
+  async function purgeThenRedirect(): Promise<void> {
+    try {
+      await Promise.race([
+        clearUserCachesBestEffort(),
+        new Promise<void>((resolve) => setTimeout(resolve, PURGE_TIMEOUT_MS)),
+      ])
+    } finally {
+      // purge が失敗・timeout しても Access のログアウトへは必ず遷移する
+      window.location.assign(ACCESS_LOGOUT_URL)
+    }
+  }
+
+  export function signOut(): void {
+    clearLocalIdentityCache()
+    void purgeThenRedirect()
+  }
+  ```
+
 - `src/components/pwa/ServiceWorkerRegistration.tsx:25,36` — 生 `postMessage` を同ヘルパー呼び出しへ置き換える。
   不要になった `SW_MSG_CLEAR_USER_CACHE` の import は外す（ヘルパー内へ移る）
 
@@ -170,6 +210,10 @@ export const SW_USER_CACHEABLE_ROUTE_PREFIXES = ['/dashboard', '/habits', '/anal
 | 型 | `node_modules/.bin/tsc --noEmit` | exit 0 |
 | テストの型 | `node_modules/.bin/tsc --project tsconfig.test.json --noEmit` | exit 0 |
 | 新規テスト | `node_modules/.bin/vitest run src/lib/pwa` | all pass |
+
+`node_modules/.bin/` を直接叩くのは worker sandbox 内で pnpm が signature verification に失敗するため。
+`vitest.setup.ts` は env に依存しない（`jest-dom` と `vitest.mocks` の import のみ）ので、repo 標準の
+`pnpm test:run`（dotenvx wrapper）と結果は変わらない。orchestrator 側の最終ゲートは `lefthook run pre-push`。
 | 既存 SW 関連 | `node_modules/.bin/vitest run src/hooks/useSwRevalidation.test.ts src/hooks/useOfflineCheckin.test.ts` | all pass |
 | 空白混入 | `git diff --check` | exit 0 |
 
