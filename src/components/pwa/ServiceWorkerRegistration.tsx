@@ -57,7 +57,8 @@ export function ServiceWorkerRegistration() {
     }
 
     navigator.serviceWorker
-      .register('/sw.js')
+      // 登録URLをビルドごとに変えて、デプロイ時のSW更新を検知させる
+      .register(`/sw.js?v=${process.env.NEXT_PUBLIC_SW_VERSION}`)
       .then((reg) => {
         setRegistration(reg)
 
