@@ -269,10 +269,10 @@ export function HabitSimpleView({
           上パディングはヘッダー直下が詰まらないよう、幅によらず確保する。
           縦に溢れる分は layout 側の overflow-y-auto がスクロールで受ける。 */}
       <main className="relative flex flex-1 flex-col items-center px-4 pt-6 pb-8 md:pt-10">
-        <header className="mb-6 flex w-full max-w-md items-end justify-between gap-4 px-2 text-white">
+        <header className="mb-6 flex w-full max-w-md items-end justify-between gap-4 px-2 text-white md:max-w-2xl xl:max-w-3xl">
           <div className="min-w-0">
             {todayLabel ? <p className="text-white/70 text-xs tracking-wide">{todayLabel}</p> : null}
-            <h2 className="font-semibold text-2xl">今日の習慣</h2>
+            <h2 className="font-semibold text-2xl md:text-3xl md:tracking-[-0.02em]">今日の習慣</h2>
           </div>
           <p className="shrink-0 text-sm text-white/80 tabular-nums">
             {progressActive} / {progressTotal} 完了
@@ -282,7 +282,7 @@ export function HabitSimpleView({
         <div
           aria-label="習慣ページ"
           aria-roledescription="カルーセル"
-          className="w-full max-w-md touch-pan-y overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
+          className="w-full max-w-md touch-pan-y overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0 md:max-w-2xl xl:max-w-3xl"
           onClickCapture={handleClickCapture}
           onKeyDown={handleKeyDown}
           onPointerCancel={handleSwipePointerCancel}
@@ -303,7 +303,7 @@ export function HabitSimpleView({
               return (
                 <div
                   aria-hidden={page !== currentPage}
-                  className="grid shrink-0 grid-cols-2 gap-x-6 gap-y-8"
+                  className="grid shrink-0 grid-cols-2 gap-x-6 gap-y-8 md:gap-x-10 md:gap-y-12"
                   inert={page !== currentPage}
                   key={`habit-page-${page}`}
                   style={{ width: `${100 / totalPages}%` }}

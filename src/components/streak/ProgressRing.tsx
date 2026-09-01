@@ -31,7 +31,7 @@ export function ProgressRing({
   const strokeDashoffset = circumference - (progress / 100) * circumference
 
   return (
-    <svg aria-hidden="true" className="absolute inset-0 -rotate-90" height={size} width={size}>
+    <svg aria-hidden="true" className="absolute inset-0 h-full w-full -rotate-90" viewBox={`0 0 ${size} ${size}`}>
       <circle cx={size / 2} cy={size / 2} fill="none" r={radius} stroke={backgroundColor} strokeWidth={strokeWidth} />
       <circle
         className="transition-[stroke-dashoffset] ease-linear motion-reduce:transition-none"
