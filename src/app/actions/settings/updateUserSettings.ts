@@ -32,6 +32,8 @@ export async function updateUserSettingsAction(
 
     revalidatePath('/dashboard')
     revalidatePath('/settings')
+    revalidatePath('/habits')
+    revalidatePath('/analytics')
 
     return actionOk(updated)
   } catch (error) {

@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { updateUserSettings } from '@/lib/queries/user-settings'
 import type { UserSettings } from '@/types/user-settings'
@@ -41,6 +42,10 @@ describe('updateUserSettingsAction', () => {
 
     expect(result.ok).toBe(true)
     expect(updateUserSettings).toHaveBeenCalledWith(userId, { themeMode: 'dark' })
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard')
+    expect(revalidatePath).toHaveBeenCalledWith('/settings')
+    expect(revalidatePath).toHaveBeenCalledWith('/habits')
+    expect(revalidatePath).toHaveBeenCalledWith('/analytics')
   })
 
   it('未認証ユーザーはUnauthorizedErrorを取得', async () => {

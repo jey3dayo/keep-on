@@ -192,6 +192,8 @@ export async function revalidateHabitPaths(userId: string, options: { sync?: boo
 
   // revalidatePath は即座に実行（Server Actions の場合のみ有効）
   revalidatePath('/dashboard')
+  revalidatePath('/habits')
+  revalidatePath('/analytics')
 
   // キャッシュ無効化処理を並列実行
   const invalidateCaches = async () => {

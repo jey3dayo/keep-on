@@ -3,6 +3,8 @@ import * as v from 'valibot'
 import { DEFAULT_WEEK_START, type WeekStart } from '@/constants/habit'
 import { DEFAULT_COLOR_THEME, DEFAULT_THEME_MODE } from '@/constants/theme'
 import { userSettings, users } from '@/db/schema'
+import { invalidateAnalyticsCache } from '@/lib/cache/analytics-cache'
+import { invalidateHabitsCache } from '@/lib/cache/habit-cache'
 import { invalidateUserCache } from '@/lib/cache/user-cache'
 import { getDb } from '@/lib/db'
 import { profileQuery } from '@/lib/queries/profiler'
@@ -179,18 +181,20 @@ async function updateWeekStartAndCache(
   try {
     const externalId = await updateUsersWeekStartWithRetry(userId, weekStart)
 
-    if (externalId) {
-      try {
-        await invalidateUserCache(externalId)
-      } catch (cacheError) {
-        // Cache invalidation failure is non-critical; log but don't fail the operation
-        console.warn('updateWeekStartAndCache: cache invalidation failed (non-critical)', {
-          error: cacheError instanceof Error ? cacheError.message : String(cacheError),
-          externalId,
-          userId,
-        })
-        captureException(cacheError, { externalId, operation: 'updateWeekStartAndCache.invalidateUserCache', userId })
-      }
+    try {
+      await Promise.all([
+        externalId ? invalidateUserCache(externalId) : Promise.resolve(),
+        invalidateHabitsCache(userId),
+        invalidateAnalyticsCache(userId),
+      ])
+    } catch (cacheError) {
+      // Cache invalidation failure is non-critical; log but don't fail the operation
+      console.warn('updateWeekStartAndCache: cache invalidation failed (non-critical)', {
+        error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+        externalId,
+        userId,
+      })
+      captureException(cacheError, { externalId, operation: 'updateWeekStartAndCache.invalidateCaches', userId })
     }
 
     return externalId

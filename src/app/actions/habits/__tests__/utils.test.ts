@@ -1,5 +1,8 @@
+import { revalidatePath } from 'next/cache'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { habits } from '@/db/schema'
+import { invalidateAnalyticsCache } from '@/lib/cache/analytics-cache'
+import { invalidateHabitsCache } from '@/lib/cache/habit-cache'
 import { GENERIC_ACTION_ERROR_MESSAGE } from '@/lib/errors/serializable'
 import { getHabitById } from '@/lib/queries/habit'
 import { getCurrentUserId } from '@/lib/user'
@@ -24,6 +27,18 @@ vi.mock('@/lib/user', () => ({
 
 vi.mock('@/lib/sentry', () => ({
   captureException: captureExceptionMock,
+}))
+
+vi.mock('@/lib/cache/analytics-cache', () => ({
+  invalidateAnalyticsCache: vi.fn(),
+}))
+
+vi.mock('@/lib/cache/habit-cache', () => ({
+  invalidateHabitsCache: vi.fn(),
+}))
+
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
 }))
 
 const activeHabit: Habit = {
@@ -72,5 +87,16 @@ describe('runHabitMutation', () => {
     } finally {
       consoleErrorSpy.mockRestore()
     }
+  })
+
+  it('習慣変更後に習慣関連のパスを再検証し、キャッシュを無効化する', async () => {
+    const result = await runHabitMutation('habit-123', async () => true)
+
+    expect(result.ok).toBe(true)
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard')
+    expect(revalidatePath).toHaveBeenCalledWith('/habits')
+    expect(revalidatePath).toHaveBeenCalledWith('/analytics')
+    expect(invalidateHabitsCache).toHaveBeenCalledWith('user-123')
+    expect(invalidateAnalyticsCache).toHaveBeenCalledWith('user-123')
   })
 })
