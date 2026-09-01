@@ -7,6 +7,7 @@ improve スキルによる監査計画の索引。
 - 2026-08-14（`HEAD = 0f714c1`）: plans 014–019（本ラウンド・おすすめ + 軽微）
 - 2026-08-27（`HEAD = 5577aeb`）: plans 020–023（モーション監査・**すべて DONE**。2026-08-29 の reconcile でコード実装を確認: scale="none" 化 / globals.css の motion shim + `--ease-*` トークン / Drawer のイベント駆動遷移 + fallback timer / ThemeSettings の transition プロパティ限定）
 - 2026-08-29（`HEAD = c74f61c`）: plans 024–028（モーション監査 第2ラウンド・すべて **TODO**）
+- 2026-09-01（`HEAD = 23de1b4`）: plan 031（Linear JEY-636・SW キャッシュのビルドスコープ化）
 
 各実行者は計画を最後まで読んでから着手し、STOP conditions を尊重すること。
 **コミットは worktree 内のみ。ユーザーブランチへの merge / push はしない。**
@@ -46,6 +47,7 @@ improve スキルによる監査計画の索引。
 | 026  | ページスナップ中のチェックインタップ喪失を修正、ドット retarget                   | P1       | S      | —          | TODO   |
 | 027  | 進捗バーの transform 化とリング fill の切断解消                                   | P2       | M      | —          | TODO   |
 | 028  | 押下フィードバックの snap 解消と縮小率 0.95 統一                                  | P2       | S      | 024 推奨   | TODO   |
+| 031  | SW キャッシュをビルド単位にスコープ（JEY-636）                                    | P1       | S      | —          | TODO   |
 
 006 の quarantine 残は `todo.txt` の先頭項目を参照。
 
