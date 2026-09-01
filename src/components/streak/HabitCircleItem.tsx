@@ -142,7 +142,7 @@ export function HabitCircleItem({
     <div className="flex scale-100 starting:scale-[0.96] flex-col items-center gap-3 opacity-100 starting:opacity-0 transition-[opacity,scale] duration-200 ease-[var(--ease-out)] motion-reduce:transition-none">
       <Button
         aria-label={isCompleted ? `${habit.name}のチェックインを取り消す` : `${habit.name}をチェックイン`}
-        className="relative h-[140px] w-[140px] p-0 transition-transform duration-160 ease-out hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0 motion-reduce:active:scale-100"
+        className="relative h-[140px] w-[140px] p-0 transition-transform duration-160 ease-out hover:bg-transparent focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0 motion-reduce:active:scale-100 md:h-[180px] md:w-[180px] xl:h-[200px] xl:w-[200px]"
         onClick={onCheckin}
         onContextMenu={onContextMenu}
         onPointerCancel={handlePointerCancel}
@@ -175,7 +175,7 @@ export function HabitCircleItem({
 
         <div
           className={cn(
-            'relative flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full ring-1 ring-white/15 transition-[scale,background-color] [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1),var(--ease-out)] motion-reduce:transition-none',
+            'relative flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full ring-1 ring-white/15 transition-[scale,background-color] [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1),var(--ease-out)] motion-reduce:transition-none md:h-[160px] md:w-[160px] xl:h-[180px] xl:w-[180px]',
             isCompleted && 'scale-[1.03]',
             isCompletionPulseActive && 'habit-completion-pulse motion-reduce:animate-none'
           )}
@@ -212,7 +212,7 @@ export function HabitCircleItem({
       <div className="flex flex-col items-center gap-2">
         <p
           className={cn(
-            'max-w-[160px] text-center font-medium text-base text-white leading-tight',
+            'max-w-[160px] text-center font-medium text-base text-white leading-tight md:max-w-[200px] md:text-lg',
             isCompleted && 'opacity-80'
           )}
         >
