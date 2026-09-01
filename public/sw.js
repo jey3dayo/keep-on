@@ -235,8 +235,14 @@ self.addEventListener('fetch', (event) => {
         const cached = await cache.match(request)
 
         if (cached) {
-          const cachedAt = Number(cached.headers.get(NAV_CACHED_AT_HEADER))
-          const isFresh = Number.isFinite(cachedAt) && Date.now() - cachedAt <= NAV_STALE_MAX_AGE_MS
+          const cachedAtHeader = cached.headers.get(NAV_CACHED_AT_HEADER)
+          // ヘッダー無しは plan 034 以前に投入されたキャッシュなので、期限切れ扱いにする。
+          const cachedAt = cachedAtHeader === null || cachedAtHeader === '' ? Number.NaN : Number(cachedAtHeader)
+          const age = Date.now() - cachedAt
+          // 固定1時間の上限では、23:30投入のHTMLが翌00:20まで fresh になる日跨ぎの残存窓がある。
+          // PWAコールドスタートでは navigate 時点にwindow clientがなく、NAV_STALE_SERVEDを
+          // useSwRevalidationのfallbackで回収できないため、日付境界を完全には保証しない。
+          const isFresh = Number.isFinite(age) && age >= 0 && age <= NAV_STALE_MAX_AGE_MS
 
           if (isFresh) {
             // stale 即応は直前セッション本人の再訪を前提とした意図的なトレードオフ。
@@ -263,8 +269,14 @@ self.addEventListener('fetch', (event) => {
             return { response: networkResp, revalidate: null }
           }
 
+          if (cached) {
+            broadcastToClients({ path: url.pathname, type: 'NAV_STALE_SERVED' }).catch(() => undefined)
+          }
           return { response: cached || networkResp, revalidate: null }
         } catch {
+          if (cached) {
+            broadcastToClients({ path: url.pathname, type: 'NAV_STALE_SERVED' }).catch(() => undefined)
+          }
           return { response: cached || caches.match(OFFLINE_URL), revalidate: null }
         }
       })
