@@ -1,4 +1,4 @@
-import type { CSSProperties, MouseEvent, PointerEvent, RefObject, TransitionEvent } from 'react'
+import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent, RefObject, TransitionEvent } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   PAGE_SWIPE_DISTANCE_THRESHOLD_RATIO,
@@ -30,6 +30,7 @@ interface PageSwipeHandlers {
   cancelSwipe: () => void
   containerRef: RefObject<HTMLDivElement | null>
   handleClickCapture: (event: MouseEvent<HTMLDivElement>) => void
+  handleKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void
   handlePointerCancel: (event: PointerEvent<HTMLDivElement>) => void
   handlePointerDown: (event: PointerEvent<HTMLDivElement>) => void
   handlePointerMove: (event: PointerEvent<HTMLDivElement>) => void
@@ -272,6 +273,33 @@ export function usePageSwipe({ currentPage, onPageChange, totalPages }: PageSwip
     [settleInteraction, totalPages]
   )
 
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (activePointerRef.current) {
+        return
+      }
+
+      let direction = 0
+      if (event.key === 'ArrowLeft') {
+        direction = -1
+      } else if (event.key === 'ArrowRight') {
+        direction = 1
+      }
+      if (direction === 0) {
+        return
+      }
+
+      const targetPage = currentPageRef.current + direction
+      if (targetPage < 0 || targetPage >= totalPages) {
+        return
+      }
+
+      event.preventDefault()
+      animateToPage(targetPage)
+    },
+    [animateToPage, totalPages]
+  )
+
   const handlePointerDown = useCallback(
     (event: PointerEvent<HTMLDivElement>) => {
       if (!event.isPrimary || totalPages <= 1 || activePointerRef.current) {
@@ -406,6 +434,7 @@ export function usePageSwipe({ currentPage, onPageChange, totalPages }: PageSwip
     cancelSwipe,
     containerRef,
     handleClickCapture,
+    handleKeyDown,
     handlePointerCancel,
     handlePointerDown,
     handlePointerMove,

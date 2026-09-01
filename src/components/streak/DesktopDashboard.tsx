@@ -35,7 +35,6 @@ export function DesktopDashboard({
       onResetOptimistic={onResetOptimistic}
       onSkip={onSkip}
       onUnSkip={onUnSkip}
-      showPageDots={false}
       todayActive={todayActive}
       todayLabel={todayLabel}
       totalDaily={totalDaily}

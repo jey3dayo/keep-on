@@ -50,7 +50,6 @@ interface HabitSimpleViewProps {
   onResetOptimistic?: (habitId: string) => OptimisticRollback
   onSkip?: (habitId: string) => Promise<void>
   onUnSkip?: (habitId: string) => Promise<void>
-  // デスクトップ経路ではモバイル用ページドットを描画しないため false にする。
   showPageDots?: boolean
   todayActive: number
   todayLabel?: string
@@ -145,6 +144,7 @@ export function HabitSimpleView({
     cancelSwipe,
     containerRef,
     handleClickCapture,
+    handleKeyDown,
     handlePointerCancel,
     handlePointerDown,
     handlePointerMove,
@@ -278,14 +278,20 @@ export function HabitSimpleView({
             {progressActive} / {progressTotal} 完了
           </p>
         </header>
+        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: ページ移動用にフォーカスするグループコンテナへキー操作を割り当てる */}
         <div
-          className="w-full max-w-md touch-pan-y overflow-hidden"
+          aria-label="習慣ページ"
+          aria-roledescription="カルーセル"
+          className="w-full max-w-md touch-pan-y overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
           onClickCapture={handleClickCapture}
+          onKeyDown={handleKeyDown}
           onPointerCancel={handleSwipePointerCancel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handleSwipePointerUp}
           ref={containerRef}
+          role="group"
+          tabIndex={totalPages > 1 ? 0 : undefined}
         >
           <div
             className={cn('flex', isSnapping && 'transition-transform ease-out motion-reduce:transition-none')}
