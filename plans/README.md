@@ -6,8 +6,8 @@ improve スキルによる監査計画の索引。
 - 2026-08-13（`HEAD = d5df968`）: plans 007–013（007–010 **DONE**、011–013 **TODO**）
 - 2026-08-14（`HEAD = 0f714c1`）: plans 014–019（本ラウンド・おすすめ + 軽微）
 - 2026-08-27（`HEAD = 5577aeb`）: plans 020–023（モーション監査・**すべて DONE**。2026-08-29 の reconcile でコード実装を確認: scale="none" 化 / globals.css の motion shim + `--ease-*` トークン / Drawer のイベント駆動遷移 + fallback timer / ThemeSettings の transition プロパティ限定）
-- 2026-08-29（`HEAD = c74f61c`）: plans 024–028（モーション監査 第2ラウンド・すべて **TODO**）
-- 2026-09-01（`HEAD = 23de1b4`）: plan 031（Linear JEY-636・SW キャッシュのビルドスコープ化）
+- 2026-08-29（`HEAD = c74f61c`）: plans 024–028（モーション監査 第2ラウンド・**すべて DONE**。2026-09-01 の reconcile でコード実装を確認: 024=`e775db2` / 025+026=`93f1bf6` / 027+028=`d317f3a`）
+- 2026-09-01（`HEAD = 23de1b4`）: plan 031（Linear JEY-636・SW キャッシュのビルドスコープ化・**DONE**: `f6f3b6b`。残余の窓（skipWaiting 未自動化）は plan の「既知の限界」に記載）
 
 各実行者は計画を最後まで読んでから着手し、STOP conditions を尊重すること。
 **コミットは worktree 内のみ。ユーザーブランチへの merge / push はしない。**
@@ -42,12 +42,12 @@ improve スキルによる監査計画の索引。
 | 021  | Radix の overlay motion utility を復旧し、共有 easing を導入                      | P1       | M      | —          | DONE   |
 | 022  | Vaul Drawer の終了イベント後に編集・詳細へ遷移                                    | P1       | S      | —          | DONE   |
 | 023  | テーマ切替タブの transition-all を視覚プロパティへ限定                            | P2       | S      | 021        | DONE   |
-| 024  | Tailwind のデフォルト transition 曲線をトークンに揃える                           | P1       | S      | —          | TODO   |
-| 025  | dropdown の transform-origin を v4 構文に修正（トリガー起点で開く）               | P1       | S      | —          | TODO   |
-| 026  | ページスナップ中のチェックインタップ喪失を修正、ドット retarget                   | P1       | S      | —          | TODO   |
-| 027  | 進捗バーの transform 化とリング fill の切断解消                                   | P2       | M      | —          | TODO   |
-| 028  | 押下フィードバックの snap 解消と縮小率 0.95 統一                                  | P2       | S      | 024 推奨   | TODO   |
-| 031  | SW キャッシュをビルド単位にスコープ（JEY-636）                                    | P1       | S      | —          | TODO   |
+| 024  | Tailwind のデフォルト transition 曲線をトークンに揃える                           | P1       | S      | —          | DONE   |
+| 025  | dropdown の transform-origin を v4 構文に修正（トリガー起点で開く）               | P1       | S      | —          | DONE   |
+| 026  | ページスナップ中のチェックインタップ喪失を修正、ドット retarget                   | P1       | S      | —          | DONE   |
+| 027  | 進捗バーの transform 化とリング fill の切断解消                                   | P2       | M      | —          | DONE   |
+| 028  | 押下フィードバックの snap 解消と縮小率 0.95 統一                                  | P2       | S      | 024 推奨   | DONE   |
+| 031  | SW キャッシュをビルド単位にスコープ（JEY-636）                                    | P1       | S      | —          | DONE   |
 
 006 の quarantine 残は `todo.txt` の先頭項目を参照。
 
