@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/basics/Button'
-import { SW_MSG_CLEAR_USER_CACHE, SW_MSG_SKIP_WAITING } from '@/constants/pwa'
+import { SW_MSG_SKIP_WAITING } from '@/constants/pwa'
 import { useIdentity } from '@/contexts/IdentityContext'
+import { clearUserCachesBestEffort } from '@/lib/pwa/clear-user-caches'
 
 export function ServiceWorkerRegistration() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
@@ -22,7 +23,7 @@ export function ServiceWorkerRegistration() {
       previousUserId.current = userId
       // 期限切れ後に別ユーザーがログインした場合、前ユーザーのデータを破棄する
       if (prev && prev !== userId) {
-        navigator.serviceWorker?.controller?.postMessage({ type: SW_MSG_CLEAR_USER_CACHE })
+        clearUserCachesBestEffort().catch(() => undefined)
       }
       return
     }
@@ -33,7 +34,7 @@ export function ServiceWorkerRegistration() {
     }
 
     previousUserId.current = null
-    navigator.serviceWorker?.controller?.postMessage({ type: SW_MSG_CLEAR_USER_CACHE })
+    clearUserCachesBestEffort().catch(() => undefined)
   }, [isSignedIn, userId])
 
   useEffect(() => {

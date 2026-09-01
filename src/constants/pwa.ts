@@ -15,6 +15,12 @@ export const SW_MSG_SKIP_WAITING = 'SKIP_WAITING' as const
 /** クライアント → SW メッセージタイプ（sw.js と同期すること） */
 export const SW_MSG_CLEAR_USER_CACHE = 'CLEAR_USER_CACHE' as const
 
+/** SW キャッシュ名のプレフィックス（sw.js の CACHE_NAME はビルド連動のため前方一致で扱う） */
+export const SW_CACHE_NAME_PREFIX = 'keepon-' as const
+
+/** ユーザー固有 HTML をキャッシュするルート（sw.js の CACHEABLE_ROUTES と同期すること） */
+export const SW_USER_CACHEABLE_ROUTE_PREFIXES = ['/dashboard', '/habits', '/analytics'] as const
+
 /** SW → クライアント: ナビゲーション SWR（stale-while-revalidate）関連（sw.js と同期すること） */
 export const SW_MSG_NAV_STALE_SERVED = 'NAV_STALE_SERVED' as const
 export const SW_MSG_NAV_REVALIDATED = 'NAV_REVALIDATED' as const

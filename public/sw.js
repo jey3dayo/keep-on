@@ -10,6 +10,7 @@ const NEXT_STATIC_CSS_PREFIX = '/_next/static/css/'
 const NEXT_STATIC_MEDIA_PREFIX = '/_next/static/media/'
 
 // ユーザー固有 HTML をキャッシュ対象にするルート
+// ルート定義の同期先は src/constants/pwa.ts の SW_USER_CACHEABLE_ROUTE_PREFIXES
 const CACHEABLE_ROUTES = ['/dashboard', '/habits', '/analytics']
 
 const PRECACHE_FILES = ['/offline', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
