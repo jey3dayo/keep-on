@@ -8,7 +8,7 @@ improve スキルによる監査計画の索引。
 - 2026-08-27（`HEAD = 5577aeb`）: plans 020–023（モーション監査・**すべて DONE**。2026-08-29 の reconcile でコード実装を確認: scale="none" 化 / globals.css の motion shim + `--ease-*` トークン / Drawer のイベント駆動遷移 + fallback timer / ThemeSettings の transition プロパティ限定）
 - 2026-08-29（`HEAD = c74f61c`）: plans 024–028（モーション監査 第2ラウンド・**すべて DONE**。2026-09-01 の reconcile でコード実装を確認: 024=`e775db2` / 025+026=`93f1bf6` / 027+028=`d317f3a`）
 - 2026-09-01（`HEAD = 23de1b4`）: plan 031（Linear JEY-636・SW キャッシュのビルドスコープ化・**DONE**: `f6f3b6b`。残余の窓（skipWaiting 未自動化）は plan の「既知の限界」に記載）
-- 2026-09-01（`HEAD = be9d915`）: plan 032（plan 031 の実装方式差し替え・本番回帰の修正）
+- 2026-09-01（`HEAD = be9d915`）: plan 032（plan 031 の実装方式差し替え・本番回帰の修正・**DONE**: `ba13ba5`。本番実測ログは plan 本文に記録）
 
 各実行者は計画を最後まで読んでから着手し、STOP conditions を尊重すること。
 **コミットは worktree 内のみ。ユーザーブランチへの merge / push はしない。**
@@ -49,7 +49,7 @@ improve スキルによる監査計画の索引。
 | 027  | 進捗バーの transform 化とリング fill の切断解消                                   | P2       | M      | —          | DONE   |
 | 028  | 押下フィードバックの snap 解消と縮小率 0.95 統一                                  | P2       | S      | 024 推奨   | DONE   |
 | 031  | SW キャッシュをビルド単位にスコープ（JEY-636）                                    | P1       | S      | —          | DONE   |
-| 032  | SW のビルド識別を登録 URL からファイルスタンプへ移す（031 の回帰修正）            | P1       | M      | 031        | TODO   |
+| 032  | SW のビルド識別を登録 URL からファイルスタンプへ移す（031 の回帰修正）            | P1       | M      | 031        | DONE   |
 
 006 の quarantine 残は `todo.txt` の先頭項目を参照。
 
