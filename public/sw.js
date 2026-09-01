@@ -1,6 +1,6 @@
 // メッセージタイプ・ナビゲーションSWRメッセージ・sync タグは
 // src/constants/pwa.ts と同期すること
-// ビルド後処理（scripts/stamp-sw-version.mjs）が __SW_BUILD_ID__ を実ビルド ID へ置換する。
+// ビルド後処理（scripts/stamp-sw-version.mjs）が下の定数のプレースホルダを実ビルド ID へ置換する。
 // 置換されない場合（ローカルの public/ 直参照・dev）は 'dev' として動く。
 // 登録 URL にクエリを付けてはならない: 登録しに来たページのビルドに CACHE_NAME が依存し、
 // 旧ビルドのページと新ビルドのページで別 SW が入れ替わり続ける（plan 032 の Why 参照）。
