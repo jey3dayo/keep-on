@@ -58,8 +58,8 @@ export function ServiceWorkerRegistration() {
     }
 
     navigator.serviceWorker
-      // 登録URLをビルドごとに変えて、デプロイ時のSW更新を検知させる
-      .register(`/sw.js?v=${process.env.NEXT_PUBLIC_SW_VERSION}`)
+      // SW 自身にビルド ID を埋め込むため、登録 URL は安定させる
+      .register('/sw.js')
       .then((reg) => {
         setRegistration(reg)
 
@@ -87,14 +87,22 @@ export function ServiceWorkerRegistration() {
   }, [])
 
   const handleUpdate = useCallback(() => {
-    if (registration?.waiting) {
-      registration.waiting.postMessage({ type: SW_MSG_SKIP_WAITING })
-
-      // 新しいService Workerが制御権を取得するまで待機
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        window.location.reload()
-      })
+    const waiting = registration?.waiting
+    if (!waiting) {
+      setUpdateAvailable(false)
+      return
     }
+
+    waiting.postMessage({ type: SW_MSG_SKIP_WAITING })
+
+    // 新しいService Workerが制御権を取得するまで待機
+    navigator.serviceWorker.addEventListener(
+      'controllerchange',
+      () => {
+        window.location.reload()
+      },
+      { once: true }
+    )
   }, [registration])
 
   if (!updateAvailable) {

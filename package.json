@@ -5,7 +5,7 @@
   "scripts": {
     "agent:browser": "tsx scripts/agent-browser-playwright.ts",
     "build": "if [ -n \"$CF_BUILD\" ]; then dotenvx run --overload -- next build; else dotenvx run --overload -f .env -f .env.development -- next build; fi",
-    "build:cf": "CF_BUILD=1 dotenvx run --overload -- opennextjs-cloudflare build",
+    "build:cf": "CF_BUILD=1 dotenvx run --overload -- opennextjs-cloudflare build && node scripts/stamp-sw-version.mjs",
     "cf:alerts": "./scripts/setup-cloudflare-alerts.sh",
     "cf:deploy": "dotenvx run --overload -- wrangler deploy",
     "cf:logs": "dotenvx run -- wrangler tail --format pretty",

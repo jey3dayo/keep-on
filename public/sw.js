@@ -1,9 +1,11 @@
 // メッセージタイプ・ナビゲーションSWRメッセージ・sync タグは
 // src/constants/pwa.ts と同期すること
-// ビルドをまたぐと旧HTMLがデプロイで消えたCSSを参照するため、SWキャッシュをビルド単位に分ける。
-// activate の掃除で旧ビルドのキャッシュを回収する。
-const SW_VERSION = new URL(self.location.href).searchParams.get('v') || 'dev'
-const CACHE_NAME = `keepon-${SW_VERSION}`
+// ビルド後処理（scripts/stamp-sw-version.mjs）が __SW_BUILD_ID__ を実ビルド ID へ置換する。
+// 置換されない場合（ローカルの public/ 直参照・dev）は 'dev' として動く。
+// 登録 URL にクエリを付けてはならない: 登録しに来たページのビルドに CACHE_NAME が依存し、
+// 旧ビルドのページと新ビルドのページで別 SW が入れ替わり続ける（plan 032 の Why 参照）。
+const SW_BUILD_ID = '__SW_BUILD_ID__'
+const CACHE_NAME = `keepon-${SW_BUILD_ID.startsWith('__') ? 'dev' : SW_BUILD_ID}`
 const OFFLINE_URL = '/offline'
 const NEXT_ASSET_PREFIX = '/_next/'
 const NEXT_STATIC_CSS_PREFIX = '/_next/static/css/'

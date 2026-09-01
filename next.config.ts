@@ -1,21 +1,6 @@
-import { execSync } from 'node:child_process'
 import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 import { withSentryConfig } from '@sentry/nextjs'
 import type { NextConfig } from 'next'
-
-const resolveSwVersion = () => {
-  const githubSha = process.env.GITHUB_SHA?.trim()
-  if (githubSha) {
-    return githubSha.slice(0, 12)
-  }
-
-  try {
-    const gitSha = execSync('git rev-parse --short=12 HEAD', { encoding: 'utf8' }).trim()
-    return gitSha || 'dev'
-  } catch {
-    return 'dev'
-  }
-}
 
 // 開発環境でCloudflare Context APIを利用可能にする
 if (process.env.NODE_ENV === 'development') {
@@ -23,10 +8,6 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const nextConfig: NextConfig = {
-  env: {
-    // デプロイをまたいで旧HTMLと消えたCSSが組み合わさるのを防ぐため、SWキャッシュをビルド単位に分ける
-    NEXT_PUBLIC_SW_VERSION: resolveSwVersion(),
-  },
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
