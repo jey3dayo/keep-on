@@ -20,7 +20,8 @@ const CACHEABLE_ROUTES = ['/dashboard', '/habits', '/analytics']
 
 const PRECACHE_FILES = ['/offline', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
-// DB_NAME, STORE_NAME, キューアイテムの形（id を opId として使う・userId を含む）は src/lib/pwa/offline-queue.ts と同期すること
+// DB_NAME, STORE_NAME, キューアイテムの形（id を opId として使う・userId / occurredAt を含む）は
+// src/lib/pwa/offline-queue.ts と同期すること
 const DB_NAME = 'keepon-offline'
 const STORE_NAME = 'checkin-queue'
 // 非リトライ status は src/constants/pwa.ts の OFFLINE_CHECKIN_NON_RETRYABLE_STATUSES と同期すること
@@ -380,6 +381,7 @@ self.addEventListener('sync', (event) => {
               action: item.action,
               dateKey: item.dateKey,
               habitId: item.habitId,
+              occurredAt: item.occurredAt,
               opId: item.id,
               userId: item.userId,
             }),

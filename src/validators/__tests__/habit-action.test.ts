@@ -75,4 +75,68 @@ describe('validateHabitActionInput', () => {
       expect(result.error.field).toBe('dateKey')
     }
   })
+
+  describe('occurredAt が渡された場合', () => {
+    // dayStartHour=26（2:00 が境界）、Asia/Tokyo。01:30 はまだ前日（09-01）として記録される
+    const context = { dayStartHour: 26 as const, timeZone: 'Asia/Tokyo' }
+    // 2026-09-02 01:30 JST = 2026-09-01T16:30:00.000Z
+    const occurredAt = '2026-09-01T16:30:00.000Z'
+    // その瞬間のサーバー基準日（getServerDateKey が同じ dayStartHour で算出した値）
+    const boundaryTodayKey = '2026-09-01'
+
+    it('dateKeyより優先して採用される', () => {
+      // クライアントは暦どおりの当日（09-02）を dateKey として送ってくる想定
+      const result = validateHabitActionInput({ dateKey: '2026-09-02', habitId, occurredAt }, boundaryTodayKey, context)
+
+      expect(Result.isSuccess(result)).toBe(true)
+      if (Result.isSuccess(result)) {
+        expect(result.value).toEqual({ dateKey: '2026-09-01', habitId })
+      }
+    })
+
+    it('境界直後でクライアントの dateKey と導出結果が割れても許容ウィンドウで弾かれない', () => {
+      const result = validateHabitActionInput({ dateKey: '2026-09-02', habitId, occurredAt }, boundaryTodayKey, context)
+
+      expect(Result.isSuccess(result)).toBe(true)
+    })
+
+    it('dateKey省略でoccurredAtのみでも導出される', () => {
+      const result = validateHabitActionInput({ habitId, occurredAt }, boundaryTodayKey, context)
+
+      expect(Result.isSuccess(result)).toBe(true)
+      if (Result.isSuccess(result)) {
+        expect(result.value.dateKey).toBe('2026-09-01')
+      }
+    })
+
+    it('不正なoccurredAtはValidationErrorを返す', () => {
+      const result = validateHabitActionInput({ habitId, occurredAt: 'not-a-timestamp' }, boundaryTodayKey, context)
+
+      expect(Result.isFailure(result)).toBe(true)
+      if (Result.isFailure(result)) {
+        expect(result.error).toBeInstanceOf(ValidationError)
+        expect(result.error.field).toBe('occurredAt')
+      }
+    })
+
+    it('導出後のdateKeyが許容ウィンドウ外ならValidationErrorを返す', () => {
+      // todayKey を occurredAt 由来の日付（09-01）より2日前にする → 導出後の判定で未来2日として弾かれる
+      const result = validateHabitActionInput({ habitId, occurredAt }, '2026-08-30', context)
+
+      expect(Result.isFailure(result)).toBe(true)
+      if (Result.isFailure(result)) {
+        expect(result.error).toBeInstanceOf(ValidationError)
+        expect(result.error.field).toBe('occurredAt')
+      }
+    })
+
+    it('context省略時はoccurredAtを無視し従来どおりdateKey/todayKeyで解決する', () => {
+      const result = validateHabitActionInput({ dateKey: '2026-08-14', habitId, occurredAt }, todayKey)
+
+      expect(Result.isSuccess(result)).toBe(true)
+      if (Result.isSuccess(result)) {
+        expect(result.value.dateKey).toBe('2026-08-14')
+      }
+    })
+  })
 })

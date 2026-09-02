@@ -315,7 +315,11 @@ describe('DashboardWrapper の挙動固定', () => {
         await Promise.resolve()
       })
 
-      expect(addSkipAction).toHaveBeenCalledWith('habit-1', expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/))
+      expect(addSkipAction).toHaveBeenCalledWith(
+        'habit-1',
+        expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        expect.any(String)
+      )
       expect(appToast.success).toHaveBeenCalledWith('今日をスキップしました（ストリーク維持）')
     })
 

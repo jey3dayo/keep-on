@@ -1,10 +1,9 @@
 import { weekStartToDay } from '@/constants/habit'
 import { resetDb } from '@/lib/db'
-import { AuthorizationError, getHabitAuthorizationClientMessage, UnauthorizedError } from '@/lib/errors/habit'
-import { isTimeoutError, logSpan, logSpanOptional, logWarn } from '@/lib/logging'
+import { AuthorizationError, getHabitAuthorizationClientMessage } from '@/lib/errors/habit'
+import { isTimeoutError, logSpan, logWarn } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
 import { getUserWeekStartById } from '@/lib/queries/user'
-import { getCurrentUserId } from '@/lib/user'
 
 export type SpanRunner = <T>(name: string, fn: () => Promise<T>, data?: Record<string, unknown>) => Promise<T>
 
@@ -22,6 +21,7 @@ export interface HabitCheckinParams {
   habitId: string
   opId?: string
   spans: HabitCheckinSpans
+  userId: string
 }
 
 export type HabitRecord = NonNullable<Awaited<ReturnType<typeof getHabitById>>>
@@ -74,24 +74,6 @@ export async function requireHabitForUserWithRetry(params: RequireHabitForUserPa
     throw new AuthorizationError({ detail: getHabitAuthorizationClientMessage() })
   }
   return habit
-}
-
-/**
- * checkin/remove-checkin 共通: userId を取得して認証確認
- * @param actionPrefix - ログスパン名のプレフィックス（例: 'action.habits.checkin'）
- */
-export async function requireCheckinUserId(
-  actionPrefix: string,
-  baseMeta: Record<string, unknown>,
-  timeoutMs: number
-): Promise<string> {
-  const userId = await logSpanOptional(`${actionPrefix}.getCurrentUserId`, () => getCurrentUserId(), baseMeta, {
-    timeoutMs,
-  })
-  if (!userId) {
-    throw new UnauthorizedError({ detail: '認証されていません' })
-  }
-  return userId
 }
 
 /**
