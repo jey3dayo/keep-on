@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import * as v from 'valibot'
-import { DEFAULT_WEEK_START, type WeekStart } from '@/constants/habit'
+import { DEFAULT_DAY_START_HOUR, DEFAULT_WEEK_START } from '@/constants/habit'
 import { DEFAULT_COLOR_THEME, DEFAULT_THEME_MODE } from '@/constants/theme'
 import { userSettings, users } from '@/db/schema'
 import { invalidateAnalyticsCache } from '@/lib/cache/analytics-cache'
@@ -13,17 +13,25 @@ import { type UpdateUserSettingsSchemaType, UserSettingsSchema } from '@/schemas
 import type { UserSettings } from '@/types/user-settings'
 
 /**
- * users.weekStart を更新（リトライ機構付き）
+ * users テーブルへ複製している設定列（weekStart / dayStartHour）の部分集合。
+ *
+ * userSettings が正本だが、habits クエリの dateKey 計算がこれらの列を直接参照するため
+ * users 側にも複製している。両方を1回の呼び出しで更新できるよう patch 形式にしている。
+ */
+type UsersMirroredSettings = Partial<Pick<typeof users.$inferInsert, 'weekStart' | 'dayStartHour'>>
+
+/**
+ * users の複製列（weekStart / dayStartHour）を更新（リトライ機構付き）
  *
  * @param userId - ユーザーID
- * @param weekStart - 新しいweekStart値（"monday" | "sunday"）
+ * @param patch - 更新する列と値（weekStart / dayStartHour のいずれか、または両方）
  * @param maxRetries - 最大リトライ回数（デフォルト: 3）
  * @returns externalId または null
  * @throws Error 更新に失敗した場合
  */
-async function updateUsersWeekStartWithRetry(
+async function updateUsersMirroredSettingsWithRetry(
   userId: string,
-  weekStart: WeekStart,
+  patch: UsersMirroredSettings,
   maxRetries = 3
 ): Promise<string | null> {
   const db = getDb()
@@ -31,7 +39,7 @@ async function updateUsersWeekStartWithRetry(
 
   while (retryCount < maxRetries) {
     try {
-      const [user] = await db.update(users).set({ weekStart }).where(eq(users.id, userId)).returning()
+      const [user] = await db.update(users).set(patch).where(eq(users.id, userId)).returning()
 
       // User not found is not a transient error - fail immediately without retry
       if (!user) {
@@ -43,15 +51,19 @@ async function updateUsersWeekStartWithRetry(
       // Don't retry non-transient errors (user existence, validation errors, etc.)
       const errorMessage = error instanceof Error ? error.message : String(error)
       if (errorMessage.includes('User not found')) {
-        console.error('updateUsersWeekStartWithRetry: non-retryable error', { error: errorMessage, userId })
+        console.error('updateUsersMirroredSettingsWithRetry: non-retryable error', {
+          error: errorMessage,
+          patch,
+          userId,
+        })
         throw error
       }
 
       retryCount++
-      console.error(`updateUsersWeekStartWithRetry: attempt ${retryCount}/${maxRetries} failed`, {
+      console.error(`updateUsersMirroredSettingsWithRetry: attempt ${retryCount}/${maxRetries} failed`, {
         error: errorMessage,
+        patch,
         userId,
-        weekStart,
       })
 
       if (retryCount >= maxRetries) {
@@ -88,6 +100,7 @@ async function rollbackUserSettings(
         .update(userSettings)
         .set({
           colorTheme: previousSettings.colorTheme,
+          dayStartHour: previousSettings.dayStartHour,
           themeMode: previousSettings.themeMode,
           updatedAt: previousSettings.updatedAt,
           weekStart: previousSettings.weekStart,
@@ -139,6 +152,7 @@ async function upsertUserSettings(
     .values({
       colorTheme: settings.colorTheme ?? DEFAULT_COLOR_THEME,
       createdAt: now,
+      dayStartHour: settings.dayStartHour ?? DEFAULT_DAY_START_HOUR,
       themeMode: settings.themeMode ?? DEFAULT_THEME_MODE,
       updatedAt: now,
       userId,
@@ -148,6 +162,7 @@ async function upsertUserSettings(
       // id / userId / createdAt は絶対に更新しない（mass assignment 防止のためキー名はリテラルで列挙）
       set: {
         ...(settings.colorTheme === undefined ? {} : { colorTheme: settings.colorTheme }),
+        ...(settings.dayStartHour === undefined ? {} : { dayStartHour: settings.dayStartHour }),
         ...(settings.themeMode === undefined ? {} : { themeMode: settings.themeMode }),
         ...(settings.weekStart === undefined ? {} : { weekStart: settings.weekStart }),
         updatedAt: now,
@@ -164,22 +179,25 @@ async function upsertUserSettings(
 }
 
 /**
- * users.weekStart を更新してキャッシュを無効化
+ * users の複製列（weekStart / dayStartHour）を更新してキャッシュを無効化
+ *
+ * どちらの列が変わっても `habits:user:{userId}` に保存された dateKey の前提が変わるため、
+ * 変更対象列によらず同じ無効化対象（habits / analytics / user）を無効化する。
  *
  * @param userId - ユーザーID
  * @param settingsId - userSettings のID（ロールバック用）
- * @param weekStart - 新しいweekStart値（"monday" | "sunday"）
+ * @param patch - users へ書き込む列と値（weekStart / dayStartHour のいずれか、または両方）
  * @param previousSettings - ロールバック用の以前の設定（null = 新規作成）
  * @returns externalId または null
  */
-async function updateWeekStartAndCache(
+async function updateUsersMirroredSettingsAndCache(
   userId: string,
   settingsId: string,
-  weekStart: WeekStart,
+  patch: UsersMirroredSettings,
   previousSettings: typeof userSettings.$inferSelect | null
 ): Promise<string | null> {
   try {
-    const externalId = await updateUsersWeekStartWithRetry(userId, weekStart)
+    const externalId = await updateUsersMirroredSettingsWithRetry(userId, patch)
 
     try {
       await Promise.all([
@@ -189,24 +207,31 @@ async function updateWeekStartAndCache(
       ])
     } catch (cacheError) {
       // Cache invalidation failure is non-critical; log but don't fail the operation
-      console.warn('updateWeekStartAndCache: cache invalidation failed (non-critical)', {
+      console.warn('updateUsersMirroredSettingsAndCache: cache invalidation failed (non-critical)', {
         error: cacheError instanceof Error ? cacheError.message : String(cacheError),
         externalId,
         userId,
       })
-      captureException(cacheError, { externalId, operation: 'updateWeekStartAndCache.invalidateCaches', userId })
+      captureException(cacheError, {
+        externalId,
+        operation: 'updateUsersMirroredSettingsAndCache.invalidateCaches',
+        userId,
+      })
     }
 
     return externalId
   } catch (error) {
-    console.error('updateWeekStartAndCache: users.weekStart update failed, rolling back', {
+    const columns = Object.keys(patch)
+    const columnLabel = columns.length === 1 ? columns[0] : `{${columns.join(', ')}}`
+    console.error('updateUsersMirroredSettingsAndCache: users update failed, rolling back', {
+      columns,
       settingsId,
       userId,
     })
     // ここでは Sentry へ送らない。この throw は updateUserSettingsAction の catch で
     // 必ず捕捉されて送信され、元エラーは cause 経由で linkedErrors が紐づけるため。
     await rollbackUserSettings(userId, settingsId, previousSettings)
-    throw new Error('Failed to update users.weekStart. Settings have been rolled back.', { cause: error })
+    throw new Error(`Failed to update users.${columnLabel}. Settings have been rolled back.`, { cause: error })
   }
 }
 
@@ -234,9 +259,16 @@ export async function updateUserSettings(
         // Phase 1: Upsert user settings (returns both next and previous settings for rollback)
         const { nextSettings, previousSettings } = await upsertUserSettings(userId, settings, now)
 
-        // Phase 2: Update weekStart in users table if provided (with retry, rollback, and cache invalidation)
+        // Phase 2: Mirror weekStart / dayStartHour into users if provided (single UPDATE, retry, rollback, cache invalidation)
+        const mirroredPatch: UsersMirroredSettings = {}
         if (settings.weekStart !== undefined) {
-          await updateWeekStartAndCache(userId, nextSettings.id, settings.weekStart, previousSettings)
+          mirroredPatch.weekStart = settings.weekStart
+        }
+        if (settings.dayStartHour !== undefined) {
+          mirroredPatch.dayStartHour = settings.dayStartHour
+        }
+        if (Object.keys(mirroredPatch).length > 0) {
+          await updateUsersMirroredSettingsAndCache(userId, nextSettings.id, mirroredPatch, previousSettings)
         }
 
         // Phase 3: Validate settings

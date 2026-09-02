@@ -22,6 +22,7 @@ describe('updateUserSettingsAction', () => {
   const mockSettings = {
     colorTheme: 'orange',
     createdAt: '2026-01-01T00:00:00.000Z',
+    dayStartHour: 24,
     id: 'settings-123',
     themeMode: 'dark',
     updatedAt: '2026-01-01T00:00:00.000Z',
@@ -63,6 +64,24 @@ describe('updateUserSettingsAction', () => {
 
   it('不正な値は拒否され、DB層は呼ばれない', async () => {
     const input: Record<string, unknown> = { themeMode: 'rainbow' }
+
+    const result = await updateUserSettingsAction(input)
+
+    expect(result.ok).toBe(false)
+    expect(updateUserSettings).not.toHaveBeenCalled()
+  })
+
+  it('dayStartHourを更新できる', async () => {
+    vi.mocked(updateUserSettings).mockResolvedValue({ ...mockSettings, dayStartHour: 26 })
+
+    const result = await updateUserSettingsAction({ dayStartHour: 26 })
+
+    expect(result.ok).toBe(true)
+    expect(updateUserSettings).toHaveBeenCalledWith(userId, { dayStartHour: 26 })
+  })
+
+  it('選択肢外のdayStartHourは拒否され、DB層は呼ばれない', async () => {
+    const input: Record<string, unknown> = { dayStartHour: 30 }
 
     const result = await updateUserSettingsAction(input)
 
