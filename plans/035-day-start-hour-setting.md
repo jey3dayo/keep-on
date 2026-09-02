@@ -2,84 +2,111 @@
 
 > **Executor instructions**: この plan を順に実施し、検証をすべて実行する。STOP 条件に当たったら停止して報告する。
 >
-> **Drift check**: `git diff --stat e78bade..HEAD -- src/db/schema.ts src/lib/server/date.ts src/lib/utils/date.ts src/lib/queries/user-settings.ts src/constants/habit.ts`
+> **Drift check**: `git diff --stat c449dde..HEAD -- src/db/schema.ts src/schemas/ src/lib/server/date.ts src/lib/utils/date.ts src/lib/queries/user-settings.ts src/validators/habit-action.ts src/hooks/useHabitCheckinQueue.ts public/sw.js`
 
 ## Status
 
 - **Priority**: P2
-- **Effort**: M
-- **Risk**: MED（永続データ構造の変更 + 日付境界という全体に効く挙動）
+- **Effort**: L（初案の M から上方修正。理由は「改訂の経緯」）
+- **Risk**: MED-HIGH（永続データ構造 + 書き込み経路の契約 + 日付境界という全体に効く挙動）
 - **Depends on**: none
 - **Category**: feature
-- **Planned at**: commit `e78bade`, 2026-09-02
+- **Planned at**: commit `c449dde`, 2026-09-02
+- **Revised at**: 2026-09-02（独立レビューで初案が NEEDS_REWORK。全面改訂）
 - **Tracks**: Linear JEY-638
 
-## Why this matters
+## 改訂の経緯（初案が壊れていた理由）
 
-チェックインの所属日が暦上の 0 時で切り替わるため、夜型のユーザーが 1 時にチェックインすると翌日の記録になり、
-主観的には同じ 1 日の続きなのにストリークが途切れる。
+初案は「`getServerDateKey` が日付境界の単一集約点だから、そこにオフセットを入れれば全体へ効く」としていた。
+これは**書き込み経路で成立しない**。
 
-**繰り越し時刻を 24〜29 時（0 時〜朝 5 時）の 1 時間刻み・6 択**にする。既定は 24 時で既存挙動を変えない。
+- クライアントが online / offline / skip の全経路で `formatDateKey(new Date())`（ブラウザの暦日）を
+  **明示 `dateKey` として送信**する（`src/hooks/useHabitCheckinQueue.ts`）
+- `src/validators/habit-action.ts:63-83` は、`input.dateKey` が渡され許容ウィンドウ内なら
+  **サーバー算出の `todayKey` ではなくクライアントの値を採用**する
+- 同じ経路が `public/sw.js` のオフライン replay と `src/app/api/checkin/route.ts` にもある
 
-上限を 29 時にするのは、それ以上だと**朝の習慣が前日に記録され始める**ため（6 時始まりでは「朝 6 時のランニング」が
-昨日の分になる）。分刻みの連続ピッカーにはしない。
+つまり初案のままでは、26 時設定で 1:30 にチェックインしてもクライアントが翌暦日を送るため翌日として記録され、
+**本機能の目的が主要経路で無効**になる。
 
-## 調査で確定した事実
+クライアントが `dateKey` を送るのには理由がある。**オフライン replay** で「23:50 に offline で打った操作を
+00:10 に送信する」場合、操作時刻の日付へ帰属させる必要があるため。
 
-- **日付境界の単一集約点がある**: `getServerDateKey()`（`src/lib/server/date.ts`）。参照は 9 ファイルすべてこれ経由
-- **過去データは遡って変わらない**: `Checkin.date` は `YYYY-MM-DD` の文字列で確定保存（`src/db/schema.ts:126`）
-- **制約衝突は起きない**: `Checkin` に `(habitId, date)` の UNIQUE は無く index のみ（`schema.ts:136-138`）。
-  同日複数チェックインが前提の設計
-- **既存の類似設定 `weekStart` は `user` オブジェクト経由でサーバへ渡っている**:
-  `getHabitsWithProgress(user.id, user.externalId, dateKey, user.weekStart, ...)`
-  （`dashboard/page.tsx:57`、`analytics/page.tsx:73`、`habits/page.tsx:78`）
+### なぜクライアント側にオフセットを配る案を採らないか
+
+「クライアントにも `dayStartHour` を渡して同じ計算をさせる」案は**採らない**。
+クライアント側の設定は localStorage 由来で**端末ごと**になる（`src/hooks/use-week-start.ts` と同じ構造）。
+実測でアクセントカラーがデスクトップと iPhone で異なっていた事例があり、同じ仕組みでは
+**日付境界が端末ごとに変わる**。同じ 1:00 のチェックインが端末によって別の日に入るのは、
+データ帰属の設定として許容できない。
+
+**したがって日付境界の決定はサーバーに一本化する。**
 
 ## 方針
 
-**`getServerDateKey` に DB 参照を追加してはならない。** 本リポジトリでは「本番 D1 は 1 クエリ = 1 往復、
-直列クエリが連打詰まりの原因」という実測知見があり、`getServerDateKey` は
-`runHabitMutation`（`src/app/actions/habits/utils.ts:141`）などの hot path から呼ばれる。
+**クライアントは「いつ操作したか」を送り、サーバーが「どの日か」を決める。**
 
-代わりに **`weekStart` と同じ経路**に乗せる。既に読み込み済みの `user` から値を渡し、
-`getServerDateKey` は受け取った値で計算するだけにする。DB 往復は増えない。
+既にオフライン キュー（IndexedDB）へ積まれた項目との後方互換を壊さないため、**加算的に導入**する。
 
-```text
-getServerDateKey({ dayStartHour }) で受け取り、
-チェックイン時刻から dayStartHour - 24 時間を引いた結果の日付を dateKey とする
-（dayStartHour=26 なら 2 時間引く。9/2 01:30 → 9/1）
-```
+1. クライアントは `occurredAt`（ISO8601 の操作時刻）を送る。**既存の `dateKey` 送信は残す**
+2. サーバーは `occurredAt` があれば「`occurredAt` + タイムゾーン + `dayStartHour`」から `dateKey` を導出し、
+   無ければ従来どおり受け取った `dateKey` を使う（後方互換）
+3. これにより IndexedDB のスキーマ移行が不要で、積まれた古い項目もそのまま replay できる
 
-**`dayStartHour` は必須パラメータにする。** 省略可能にすると渡し忘れた呼び出し元が黙って 24 時扱いになり、
-「記録先と表示のズレ」という最悪の壊れ方をする。必須にすれば型検査が全 9 箇所を強制的に洗い出す。
+`dayStartHour` はサーバーが DB から読む。ただし **`getServerDateKey` に DB 参照を足さない**
+（本番 D1 は 1 クエリ = 1 往復で、hot path から呼ばれる）。`weekStart` と同型の複製構造に乗せる。
+
+## 調査で確定した事実
+
+- **`getServerDateKey` の呼び出しは 5 ファイル 5 箇所**（`reset.ts:15` / `habits/utils.ts:141` /
+  `habits/page.tsx:56` / `dashboard/page.tsx:38` / `analytics/page.tsx:61`）。初案の「9 ファイル」は誤り
+  （import を含むファイル数をテスト込みで数えていた）
+- **そのうち 4 箇所は user 取得より前に実行している**
+- **`weekStart` は `users`（`src/db/schema.ts:34`）と `userSettings`（`:64`）の両方に複製**され、
+  更新時に two-phase write + rollback + `invalidateUserCache` で同期している。
+  `user` 経由で渡せるのはこの複製があるから
+- **過去データは遡って変わらない**: `Checkin.date` は `YYYY-MM-DD` で確定保存（`schema.ts:126`）
+- **制約衝突は起きない**: `Checkin` に `(habitId, date)` の UNIQUE は無く index のみ（`schema.ts:136-138`）
+- **マイグレーションは安全**: `integer .default(24).notNull()` の ADD COLUMN は SQLite で既存行に定数 default が入る
+- 許容ウィンドウ `DATE_KEY_WINDOW_DAYS = { future: 1, past: 365 }`（`habit-action.ts:12`）の
+  `future: 1` は「クライアント・サーバー間のクロックスキューを許容するため」とコメントされている
 
 ## Scope
 
 **In scope**:
 
-- `src/constants/habit.ts` — `DayStartHour` 型（`24 | 25 | 26 | 27 | 28 | 29`）、`DEFAULT_DAY_START_HOUR = 24`、選択肢定義
-- `src/db/schema.ts` — `userSettings` に `dayStartHour` 列（integer、default 24、notNull）
+- `src/constants/habit.ts` — `DayStartHour` 型（`24 | 25 | 26 | 27 | 28 | 29`）、`DEFAULT_DAY_START_HOUR = 24`、選択肢定義、`isDayStartHour`
+- `src/db/schema.ts` — **`users` と `userSettings` の両方**に `dayStartHour` 列（integer、default 24、notNull）
 - `drizzle/` — 生成したマイグレーション
-- `src/lib/utils/date.ts` — オフセットを考慮した dateKey 算出
-- `src/lib/server/date.ts` — `getServerDateKey` が `dayStartHour` を必須で受け取る
-- `getServerDateKey` の全呼び出し元（型検査で洗い出すこと）
-- `src/lib/queries/user-settings.ts` — 読み書き
-- `src/app/actions/settings/` — 更新 action（`updateWeekStart.ts` に倣う）
-- `src/hooks/` — client hook（`use-week-start.ts` に倣う）
-- `src/components/settings/DayStartHourSettings.tsx`（新規、`WeekStartSettings.tsx` に倣う）と設定ページへの追加
+- `src/schemas/user.ts` — Valibot スキーマへ `dayStartHour` を追加
+- `src/lib/utils/date.ts` — オフセットを考慮した dateKey 算出（純関数）
+- `src/lib/server/date.ts` — `getServerDateKey` が `dayStartHour` を受け取る
+- `getServerDateKey` の呼び出し元 5 箇所
+- `src/lib/queries/user-settings.ts` — `weekStart` と同型の dual-write と `invalidateUserCache`
+- `src/app/actions/settings/` — 更新 action
+- `src/validators/habit-action.ts` — `occurredAt` からの dateKey 導出
+- `src/app/actions/habits/` — action シグネチャへ `occurredAt` を加算
+- `src/app/api/checkin/route.ts` と `CheckinRequestSchema` — `occurredAt` を optional で受ける
+- `src/hooks/useHabitCheckinQueue.ts` — `occurredAt` を送る
+- `src/lib/pwa/offline-queue.ts` と `public/sw.js` — キュー項目に `occurredAt` を optional で持たせ replay で送る
+- `src/hooks/` — client hook（表示用）
+- `src/components/settings/DayStartHourSettings.tsx`（新規）と設定ページへの追加
+- 表示ラベルと heatmap の today 判定
 - 上記のテスト
 
 **Out of scope**:
 
 - 過去の `Checkin.date` の再計算・移行
-- タイムゾーン設定そのものの変更（`ko_tz` cookie の仕組みは維持）
+- クライアント側での dateKey 算出そのものの撤去（後方互換のため残す）
+- IndexedDB のスキーマバージョン変更（optional 追加のみ）
+- タイムゾーン設定の変更（`ko_tz` cookie の仕組みは維持）
 - SW の鮮度上限（`plans/034`）の変更
-- 分単位の粒度
 
 ## Steps
 
 ### Step 1: 定数と型
 
-`src/constants/habit.ts` に `WeekStart` の定義に倣って追加する。
+`src/constants/habit.ts` に `WeekStart` の定義様式に倣って追加する。
 
 ```ts
 export type DayStartHour = 24 | 25 | 26 | 27 | 28 | 29
@@ -88,60 +115,92 @@ export const DAY_START_HOURS: readonly DayStartHour[] = [24, 25, 26, 27, 28, 29]
 export function isDayStartHour(value: number): value is DayStartHour
 ```
 
-### Step 2: スキーマとマイグレーション
+### Step 2: 純関数としてのオフセット計算
 
-`userSettings` に列を追加する。`weekStart` 列の定義様式に合わせること。
+`src/lib/utils/date.ts` に追加する。**日付境界の計算はこの 1 関数だけに置く。**
+
+- 入力は「instant（`Date`）・タイムゾーン（任意）・`dayStartHour`」
+- **`dayStartHour - 24` 時間を減算した instant** に対して、既存のタイムゾーン処理
+  （`getDateKeyInTimeZone`、失敗時 `formatDateKey`）を適用する
+- `dayStartHour = 24` のとき現行と**完全に同じ結果**になること
+
+### Step 3: スキーマとマイグレーション（dual-write の土台）
+
+`users` と `userSettings` の**両方**に `dayStartHour` 列を追加する。`weekStart` 列の定義様式に合わせる。
 
 - 型は integer、`.default(24).notNull()`
-- Drizzle のマイグレーション生成コマンドはリポジトリの `package.json` scripts を確認して使う
-- **既存行に 24 が入ることを SQL で確認する**（`ALTER TABLE ... DEFAULT` の挙動）
+- `src/schemas/user.ts` の Valibot スキーマへ `dayStartHour` を追加（user-cache のパースが通るように）
+- マイグレーション生成は `node_modules/.bin/drizzle-kit` を直接使う。**D1 への適用はしない**（CI が行う）
 
 生成された SQL をそのまま報告に貼ること。
 
-### Step 3: dateKey の算出にオフセットを入れる
+### Step 4: クエリの dual-write
 
-`src/lib/utils/date.ts` にオフセット対応の関数を追加し、`src/lib/server/date.ts` の
-`getServerDateKey` から使う。
+`src/lib/queries/user-settings.ts` で、`weekStart` の更新処理（`updateWeekStartAndCache` の
+two-phase write + rollback + キャッシュ無効化）と**同型**に `dayStartHour` を実装する。
 
-- `getServerDateKey({ dayStartHour, date?, cookieKey? })` として **`dayStartHour` を必須**にする
-- 既存のタイムゾーン処理（`ko_tz` cookie → `getDateKeyInTimeZone`、失敗時 `formatDateKey`）は維持し、
-  **オフセット適用後の時刻**に対して従来どおり適用する
-- **オフセットは `dayStartHour - 24` 時間の減算**。24 なら 0 で現行と完全に同じ結果になること
+- `users` と `userSettings` の両方を更新し、片方の失敗で整合が崩れないようにする
+- `invalidateUserCache(externalId)` に加え、`plans/018` で入れた `invalidateHabitsCache(userId)` /
+  `invalidateAnalyticsCache(userId)` も呼ぶ（日付境界が動けば `habits:user:{userId}` の `dateKey` 前提が変わる）
+- キャッシュ無効化の失敗は非致命のまま
 
-**この関数以外に日付境界のロジックを作らない。** 表示用の「今日」も同じ関数を経由させる。
+### Step 5: `getServerDateKey` と呼び出し元
 
-### Step 4: 呼び出し元を通す
+`getServerDateKey({ dayStartHour, date?, cookieKey? })` として `dayStartHour` を受け取り、Step 2 の関数を使う。
 
-`node_modules/.bin/tsc --noEmit` を実行し、`dayStartHour` 必須化で落ちた全箇所を洗い出す。
-各呼び出し元で、既に読み込み済みの `user` から値を渡す（`weekStart` と同じ経路）。
+**呼び出し元の並べ替え方針**（初案で worker に判断が残っていた点をここで確定する）:
 
-**user を持たない呼び出し元があった場合は BLOCKED を送って停止する。** その箇所の設計判断は plan の範囲外。
+- **`user` を取得した後に `todayKey` を算出する順序へ並べ替える**。`getCurrentUserId` と `syncUser` の
+  二重呼び出しを増やさないこと
+- `habits/utils.ts:141`（`runHabitMutation`）と `reset.ts:15` は認証前に算出しているので、認証後へ移す
+- `dashboard/page.tsx:38` と `habits/page.tsx:56` は `Promise.all` で `syncUser` と並列に実行しているので、
+  `syncUser` の結果を待ってから算出する形へ変える
+- **並べ替えで DB 往復が増える設計になった場合は BLOCKED を送る**
 
-### Step 5: クエリと action
+### Step 6: 書き込み経路に `occurredAt` を通す
 
-- `src/lib/queries/user-settings.ts` — `dayStartHour` の読み書きを追加。
-  **weekStart 変更時と同じくキャッシュ無効化を行う**（日付境界が動けば `habits:user:{userId}` の
-  `dateKey` 前提が変わるため）。`plans/018` で入れた `invalidateHabitsCache` / `invalidateAnalyticsCache` の
-  呼び出しに合わせる
-- `src/app/actions/settings/` — 更新 action を `updateWeekStart.ts` に倣って作る。
-  成功時の `revalidatePath` は `plans/018` で拡張した4パスに合わせる
+**加算的に導入する。既存の `dateKey` 引数・フィールドは削除しない。**
 
-### Step 6: 設定 UI
+1. `src/validators/habit-action.ts` — 入力に `occurredAt`（optional）を追加。
+   **`occurredAt` があればそれと `dayStartHour` から `dateKey` を導出し、その値を採用する**。
+   無ければ従来どおり `input.dateKey` → `todayKey` の順で解決する。
+   許容ウィンドウの検査は**導出後の `dateKey`** に対して行う
+2. `src/app/actions/habits/` の action — `occurredAt` を optional 引数として受け、validator へ渡す
+3. `src/app/api/checkin/route.ts` と `CheckinRequestSchema` — `occurredAt` を optional で受ける
+4. `src/hooks/useHabitCheckinQueue.ts` — `occurredAt` に操作時刻（`new Date().toISOString()`）を入れて送る
+5. `src/lib/pwa/offline-queue.ts` と `public/sw.js` — キュー項目に `occurredAt` を optional で持たせ、
+   replay で送る。**IndexedDB のスキーマバージョンは変えない**（optional 追加なので既存項目は読める）
+
+### Step 7: 表示の「今日」を記録先と一致させる
+
+初案で「最悪の壊れ方」と書いたズレを塞ぐ。
+
+- ページの「今日」ラベル（`formatDateLabel(now, timeZone)` を使っている箇所）を、
+  **Step 5 で算出した `dateKey` 由来**に揃える
+- `src/components/habits/HabitCalendarHeatmap.tsx` の today 判定は client の `new Date()` 由来なので、
+  **サーバーから渡された `dateKey` を使う**形へ変える
+
+**この Step を飛ばしてはならない。** 記録先と表示がズレた状態は、設定が無い状態より悪い。
+
+### Step 8: 設定 UI
 
 `src/components/settings/DayStartHourSettings.tsx` を新規作成する。
-**`WeekStartSettings.tsx` の構造・クラス・スケルトン・トースト文言の様式をそのまま踏襲すること。**
+**`WeekStartSettings.tsx` の構造・クラス・Skeleton・トースト文言の様式をそのまま踏襲する。**
 
 - `RadioGroup` で 6 択
-- ラベルは `24時（0:00）` `25時（1:00）` … `29時（5:00）` のように**両表記を併記**する
-- 説明文は「この時刻までは前日として記録します」の主旨。24 時のみ「暦どおりに切り替えます」
+- ラベルは `24時（0:00）` `25時（1:00）` … `29時（5:00）` のように**両表記を併記**
+- 説明は「この時刻までは前日として記録します」の主旨。24 時のみ「暦どおりに切り替えます」
 - 設定ページへ `WeekStartSettings` の隣に追加する
 
-### Step 7: テスト
+### Step 9: テスト
 
-- `src/lib/utils/date.ts` のオフセット算出: 24 で現行と同一、26 で `9/2 01:30 → 9/1`、
+- Step 2 の純関数: `dayStartHour = 24` で現行と同一、26 で `9/2 01:30 → 9/1` /
   `9/2 02:00 → 9/2`（境界そのもの）、29 で `9/2 04:59 → 9/1` / `9/2 05:00 → 9/2`
 - タイムゾーン併用時にオフセットが正しく効くこと
-- 更新 action のテスト（`updateWeekStart` のテストに倣う）
+- **DST 切替日**（`America/New_York` 等）の挙動を仕様としてテストで固定する
+- `occurredAt` があるときは `dateKey` より優先されること、無いときは従来どおりであること
+- **境界直後に client の `dateKey` と server 導出値が割れるケース**が許容ウィンドウで弾かれないこと
+- 更新 action と dual-write のテスト
 
 **テストは振る舞いの契約だけを検証する。呼び出し回数（`toHaveBeenCalledTimes`）、順序
 （`toHaveBeenNthCalledWith`）、CSS クラス（`toHaveClass`）は固定しない。**
@@ -153,27 +212,31 @@ export function isDayStartHour(value: number): value is DayStartHour
 | Lint | `node_modules/.bin/biome check --write <触ったファイル>` | exit 0 |
 | 型 | `node_modules/.bin/tsc --noEmit` | exit 0 |
 | テストの型 | `node_modules/.bin/tsc --project tsconfig.test.json --noEmit` | exit 0 |
-| テスト | `node_modules/.bin/vitest run src/lib/utils src/lib/server src/app/actions/settings` | all pass |
+| テスト | `node_modules/.bin/vitest run src/lib src/app/actions src/validators src/hooks` | all pass |
 | 空白混入 | `git diff --check` | exit 0 |
 
 報告に含めること。
 
 - 生成されたマイグレーション SQL の全文
-- `getServerDateKey` の呼び出し元を型検査でどう洗い出し、それぞれ何を渡したかの一覧
+- `getServerDateKey` の呼び出し元 5 箇所を**どう並べ替えたか**の一覧
 - `dayStartHour = 24` で現行と完全に同じ dateKey になることを示すテスト
+- `occurredAt` が無い古いキュー項目が従来どおり replay できることを示すテスト
+- `git status --short --untracked-files=all`
 
 orchestrator が full gate（`lefthook run pre-push`）と本番デプロイ後の D1 マイグレーション適用を確認する。
 
 ## STOP conditions
 
-- `getServerDateKey` の呼び出し元に `user` を持たないものがあった場合
+- Step 5 の並べ替えで DB 往復が増える設計になった場合
+- `occurredAt` の加算だけでは後方互換が保てず IndexedDB のスキーマ変更が必要になった場合
+- 日付境界の計算が Step 2 の 1 関数に収まらない設計になった場合
 - マイグレーションが既存データの移行判断を必要とする場合
-- `getServerDateKey` 以外に日付境界のロジックを作らないと成立しない設計になった場合
 - 依存3ファイル（`package.json` の dependencies / `pnpm-lock.yaml` / `pnpm-workspace.yaml`）の変更が必要になった場合
+- 同一根本原因で 3 回失敗した場合
 
 ## 関連
 
-- Linear JEY-638
+- Linear JEY-638（改訂の経緯とレビュー findings は issue のコメントに記録済み）
 - `plans/018` — weekStart 変更時のキャッシュ無効化。本 plan も同じ無効化に乗る
-- `plans/034` — SW ナビゲーションの鮮度上限。「深夜跨ぎの残存窓」の位置が本設定で動く
+- `plans/034` — SW ナビゲーションの鮮度上限。交点はオフライン replay の dateKey のみ
 - `.claude/rules/caching-strategy.md` — `habits:user:{userId}` の `dateKey` バージョン管理
