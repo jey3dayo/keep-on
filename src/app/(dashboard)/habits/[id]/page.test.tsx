@@ -2,8 +2,9 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getHabitById } from '@/lib/queries/habit'
 import { getHabitCalendarData } from '@/lib/queries/habit-calendar'
-import { getCurrentUserId } from '@/lib/user'
+import { syncUser } from '@/lib/user'
 import type { Habit } from '@/types/habit'
+import type { User } from '@/types/user'
 import HabitDetailPage from './page'
 
 const { notFoundMock, redirectMock } = vi.hoisted(() => ({
@@ -31,8 +32,24 @@ vi.mock('@/lib/queries/habit-calendar', () => ({
 }))
 
 vi.mock('@/lib/user', () => ({
-  getCurrentUserId: vi.fn(),
+  syncUser: vi.fn(),
 }))
+
+vi.mock('@/lib/server/date', () => ({
+  getServerDateKey: vi.fn().mockResolvedValue('2026-01-01'),
+}))
+
+function buildUser(id: string): User {
+  return {
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    dayStartHour: 24,
+    email: 'user@example.com',
+    externalId: 'external-id',
+    id,
+    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    weekStart: 'monday',
+  }
+}
 
 function buildHabit(userId: string): Habit {
   return {
@@ -54,7 +71,7 @@ function buildHabit(userId: string): Habit {
 describe('HabitDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getCurrentUserId).mockResolvedValue('user-123')
+    vi.mocked(syncUser).mockResolvedValue(buildUser('user-123'))
     vi.mocked(getHabitCalendarData).mockResolvedValue({
       checkinCounts: new Map(),
       skipDates: new Set(),

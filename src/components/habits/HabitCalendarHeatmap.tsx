@@ -4,6 +4,7 @@ import { addDays, eachDayOfInterval, endOfMonth, format, getDay, startOfMonth, s
 import { ja } from 'date-fns/locale'
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
+import { parseDateKey } from '@/lib/utils/date'
 
 interface HabitCalendarHeatmapProps {
   accentColor: string
@@ -11,6 +12,11 @@ interface HabitCalendarHeatmapProps {
   frequency: number
   months?: number
   skipDates?: string[]
+  /**
+   * サーバーで算出した「今日」の dateKey（dayStartHour 考慮済み）。
+   * client の `new Date()` を使うと記録先（サーバー算出の dateKey）と today 判定がズレる。
+   */
+  todayDateKey: string
 }
 
 interface DayCell {
@@ -151,8 +157,9 @@ export function HabitCalendarHeatmap({
   accentColor,
   frequency,
   months = 6,
+  todayDateKey,
 }: HabitCalendarHeatmapProps) {
-  const today = useMemo(() => new Date(), [])
+  const today = useMemo(() => parseDateKey(todayDateKey), [todayDateKey])
 
   const legendSteps = useMemo(() => getLegendSteps(frequency), [frequency])
   const skipSet = useMemo(() => new Set(skipDates), [skipDates])

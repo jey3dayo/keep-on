@@ -58,7 +58,7 @@ export default async function AnalyticsPage() {
     redirect(SIGN_IN_PATH)
   }
 
-  const dateKey = await getServerDateKey()
+  const dateKey = await getServerDateKey({ dayStartHour: user.dayStartHour })
   const baseDate = parseDateKey(dateKey)
   const startDateKey = formatDateKey(subDays(baseDate, 6))
   const endDateKey = formatDateKey(baseDate)
