@@ -1,5 +1,51 @@
+import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
-import { isDatabaseError, isTimeoutError, logSpan } from '../logging'
+import { isDatabaseError, isTimeoutError, logSpan, summarizeIssues } from '../logging'
+
+describe('summarizeIssues', () => {
+  // 契約: valibot の issue.path は各セグメントに input（パース対象オブジェクト全体）を保持するため、
+  // そのままログへ渡すと PII（ここでは email）が Cloudflare Workers のログに残る。
+  // summarizeIssues は path / expected / received のみを返し、input を一切含めてはならない。
+  it('email などの PII を含む input をログ出力用の要約から除外する', () => {
+    const Schema = v.object({
+      email: v.pipe(v.string(), v.email()),
+      name: v.string(),
+    })
+    const piiEmail = 'user@example.com'
+    const result = v.safeParse(Schema, { email: piiEmail, name: 123 })
+    if (result.success) {
+      throw new Error('test setup expects a validation failure')
+    }
+
+    const summarized = summarizeIssues(result.issues)
+    const serialized = JSON.stringify(summarized)
+
+    expect(serialized).not.toContain(piiEmail)
+    expect(serialized).not.toContain('input')
+  })
+
+  it('path / expected / received を issue から抽出する', () => {
+    const Schema = v.object({ name: v.string() })
+    const result = v.safeParse(Schema, { name: 123 })
+    if (result.success) {
+      throw new Error('test setup expects a validation failure')
+    }
+
+    const summarized = summarizeIssues(result.issues)
+
+    expect(summarized).toEqual([
+      {
+        expected: 'string',
+        path: 'name',
+        received: '123',
+      },
+    ])
+  })
+
+  it('issues が undefined の場合は空配列を返す', () => {
+    expect(summarizeIssues(undefined)).toEqual([])
+  })
+})
 
 describe('isDatabaseError', () => {
   // 契約: classifyConnectionError が 'timeout' | 'network' | 'connection' を返す場合のみ

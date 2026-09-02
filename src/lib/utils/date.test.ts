@@ -78,7 +78,7 @@ describe('getDateKeyWithDayStart', () => {
     // 「ローカル時刻が 05:00 未満なら前日」という単純な読み替えにはならない。
     // 2026-11-01T08:45:00.000Z（ローカル 03:45 EST。06:00Z に EST へ戻っているため）は前日の日付になる
     const beforeBoundary = new Date('2026-11-01T08:45:00.000Z')
-    // 2026-11-01T09:00:00.000Z（ローカル 04:00 EDT）から当日の日付に切り替わる
+    // 2026-11-01T09:00:00.000Z（ローカル 04:00 EST。06:00Z に EST へ戻っているため）から当日の日付に切り替わる
     const atBoundary = new Date('2026-11-01T09:00:00.000Z')
 
     expect(getDateKeyWithDayStart(beforeBoundary, 29, timeZone)).toBe('2026-10-31')

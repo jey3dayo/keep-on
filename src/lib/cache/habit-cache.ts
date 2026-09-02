@@ -1,6 +1,6 @@
 import * as v from 'valibot'
 import { getKV } from '@/lib/cache/kv'
-import { formatError, logInfo, logWarn } from '@/lib/logging'
+import { formatError, logInfo, logWarn, summarizeIssues } from '@/lib/logging'
 import { HabitsCacheDataSchema } from '@/schemas/cache'
 import type { HabitWithProgress } from '@/types/habit'
 
@@ -37,7 +37,7 @@ export async function getHabitsCacheSnapshot(userId: string): Promise<HabitsCach
     if (!parseResult.success) {
       logWarn('habit-cache:invalid-data', {
         error: 'Schema validation failed',
-        issues: parseResult.issues,
+        issues: summarizeIssues(parseResult.issues),
         userId,
       })
       return null
@@ -93,7 +93,7 @@ export async function invalidateHabitsCache(userId: string): Promise<void> {
       await kv.delete(key)
       logWarn('habit-cache:invalidate:drop', {
         error: 'Schema validation failed',
-        issues: parseResult.issues,
+        issues: summarizeIssues(parseResult.issues),
         userId,
       })
       return

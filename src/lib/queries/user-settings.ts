@@ -7,6 +7,7 @@ import { invalidateAnalyticsCache } from '@/lib/cache/analytics-cache'
 import { invalidateHabitsCache } from '@/lib/cache/habit-cache'
 import { invalidateUserCache } from '@/lib/cache/user-cache'
 import { getDb } from '@/lib/db'
+import { summarizeIssues } from '@/lib/logging'
 import { profileQuery } from '@/lib/queries/profiler'
 import { captureException } from '@/lib/sentry'
 import { type UpdateUserSettingsSchemaType, UserSettingsSchema } from '@/schemas/user-settings'
@@ -275,7 +276,7 @@ export async function updateUserSettings(
         const parsed = v.safeParse(UserSettingsSchema, nextSettings)
         if (!parsed.success) {
           console.error('updateUserSettings: validation failed', {
-            issues: parsed.issues,
+            issues: summarizeIssues(parsed.issues),
             userId,
           })
           throw new Error('Failed to update user settings: invalid data')

@@ -3,7 +3,7 @@ import { getUserFromCache, setUserCache } from '@/lib/cache/user-cache'
 import { resetDb } from '@/lib/db'
 import { extractDbErrorInfo } from '@/lib/errors/db'
 import { safeParseUser } from '@/schemas/user'
-import { isTimeoutError, logError, logSpan, logWarn } from './logging'
+import { isTimeoutError, logError, logSpan, logWarn, summarizeIssues } from './logging'
 import { claimUserByEmail, getUserByExternalId, upsertUser } from './queries/user'
 import { getRequestTimeoutMs } from './server/timeout'
 
@@ -38,7 +38,7 @@ function parseUserRecord(user: unknown, source: 'existing' | 'claim' | 'upsert',
   }
   const parsed = safeParseUser(user)
   if (!parsed.success) {
-    logError('user.schema:invalid', { externalId, issues: parsed.issues, source })
+    logError('user.schema:invalid', { externalId, issues: summarizeIssues(parsed.issues), source })
     return null
   }
   return parsed.output
