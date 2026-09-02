@@ -205,6 +205,12 @@ two-phase write + rollback + キャッシュ無効化）と**同型**に `daySta
 **テストは振る舞いの契約だけを検証する。呼び出し回数（`toHaveBeenCalledTimes`）、順序
 （`toHaveBeenNthCalledWith`）、CSS クラス（`toHaveClass`）は固定しない。**
 
+### Step 10: リファクタリング（`refactoring` スキル）
+
+Step 1〜9 の全検証が通った後、orchestrator が `refactoring` スキルを実行する（similarity-ts による重複検出、
+react-doctor 診断、デッドコード・未使用 export の整理）。対象は本 plan で触ったファイル集合に限る。
+挙動を変える変更は入れず、Step 9 のテストが引き続き通ることを完了条件とする。
+
 ## Verify
 
 | 目的 | コマンド | 期待 |
