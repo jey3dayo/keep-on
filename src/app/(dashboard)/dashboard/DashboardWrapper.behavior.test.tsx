@@ -122,6 +122,7 @@ const baseHabit: HabitWithProgress = {
 
 const mockUser: User = {
   createdAt: new Date('2025-01-01T00:00:00.000Z'),
+  dayStartHour: 24,
   email: 'test@example.com',
   externalId: 'access-sub-1',
   id: 'user-1',

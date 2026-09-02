@@ -66,3 +66,27 @@ export function weekStartToDay(weekStart: WeekStart): WeekStartDay {
  * 完了判定の閾値（目標達成率）
  */
 export const COMPLETION_THRESHOLD = 100
+
+/**
+ * 日付が切り替わる時刻（時）。24 は暦どおり、25〜29 は深夜帯を前日として扱う猶予時間
+ */
+export type DayStartHour = 24 | 25 | 26 | 27 | 28 | 29
+
+/**
+ * デフォルトの日付切り替え時刻（暦どおり）
+ */
+export const DEFAULT_DAY_START_HOUR: DayStartHour = 24
+
+/**
+ * 選択可能な日付切り替え時刻の一覧
+ */
+export const DAY_START_HOURS: readonly DayStartHour[] = [24, 25, 26, 27, 28, 29]
+
+/**
+ * 値が DayStartHour として妥当かを判定
+ *
+ * @param value - 判定対象の数値
+ */
+export function isDayStartHour(value: number): value is DayStartHour {
+  return value === 24 || value === 25 || value === 26 || value === 27 || value === 28 || value === 29
+}

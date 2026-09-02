@@ -4,6 +4,7 @@ import { safeParseUser } from './user'
 describe('safeParseUser', () => {
   it('文字列の日時をDateに変換できる', () => {
     const result = safeParseUser({
+      dayStartHour: 24,
       externalId: 'access-sub-123',
       createdAt: '2024-01-01T00:00:00.000Z',
       email: 'test@example.com',
@@ -35,6 +36,7 @@ describe('safeParseUser', () => {
   it('Date型の日時も許可する', () => {
     const now = new Date()
     const result = safeParseUser({
+      dayStartHour: 26,
       externalId: 'access-sub-456',
       createdAt: now,
       email: 'test2@example.com',
@@ -44,5 +46,20 @@ describe('safeParseUser', () => {
     })
 
     expect(result.success).toBe(true)
+  })
+
+  it('範囲外のdayStartHourはエラーになる', () => {
+    const now = new Date()
+    const result = safeParseUser({
+      dayStartHour: 30,
+      externalId: 'access-sub-999',
+      createdAt: now,
+      email: 'invalid-hour@example.com',
+      id: 'user-999',
+      updatedAt: now,
+      weekStart: 'monday',
+    })
+
+    expect(result.success).toBe(false)
   })
 })
