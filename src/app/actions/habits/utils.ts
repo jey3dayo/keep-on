@@ -1,5 +1,6 @@
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
+import type { WeekStart } from '@/constants/habit'
 import { actionError, actionOk, type ServerActionResultAsync, toActionResult } from '@/lib/actions/result'
 import { invalidateHabitsCache } from '@/lib/cache/habit-cache'
 import {
@@ -48,6 +49,7 @@ interface RunTimedHabitActionOptions<T> {
     baseMeta: Record<string, unknown>
     spans: HabitCheckinSpans
     userId: string
+    weekStart: WeekStart
   }) => Promise<T>
 }
 
@@ -168,7 +170,7 @@ export async function runTimedHabitAction<T>(
           try: async () =>
             await spans.runWithRequestTimeout(
               options.actionName,
-              () => options.run({ baseMeta, input, spans, userId: user.id }),
+              () => options.run({ baseMeta, input, spans, userId: user.id, weekStart: user.weekStart }),
               baseMeta
             ),
         })

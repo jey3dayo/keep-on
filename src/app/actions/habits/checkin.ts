@@ -1,27 +1,24 @@
 'use server'
 
+import { weekStartToDay } from '@/constants/habit'
 import { logInfo } from '@/lib/logging'
 import { type CreateCheckinWithLimitResult, createCheckinWithLimit } from '@/lib/queries/checkin'
-import { type HabitCheckinParams, requireHabitForUserWithRetry, resolveCheckinWeekStartDay } from './checkin-shared'
+import { type HabitCheckinParams, requireHabitForUserWithRetry } from './checkin-shared'
 import { type HabitActionResult, revalidateHabitPaths, runTimedHabitAction } from './utils'
 
 type CheckinResultData = Pick<CreateCheckinWithLimitResult, 'created' | 'currentCount'>
 
 async function performCheckin(params: HabitCheckinParams): Promise<CheckinResultData> {
-  const { habitId, dateKey, baseMeta, opId, spans, userId } = params
+  const { habitId, dateKey, baseMeta, opId, spans, userId, weekStartDay } = params
   const metaWithUser = { ...baseMeta, userId }
 
-  // クエリを並列実行してレイテンシを削減
-  const [habit, weekStartDay] = await Promise.all([
-    requireHabitForUserWithRetry({
-      actionName: 'action.habits.checkin',
-      habitId,
-      meta: metaWithUser,
-      runWithRetry: spans.runWithRetry,
-      userId,
-    }),
-    resolveCheckinWeekStartDay('action.habits.checkin', userId, metaWithUser, spans.runWithRetry),
-  ])
+  const habit = await requireHabitForUserWithRetry({
+    actionName: 'action.habits.checkin',
+    habitId,
+    meta: metaWithUser,
+    runWithRetry: spans.runWithRetry,
+    userId,
+  })
 
   const countMeta = {
     ...metaWithUser,
@@ -65,8 +62,16 @@ export async function addCheckinAction(
     {
       actionName: 'action.habits.checkin',
       errorDetail: 'チェックインの切り替えに失敗しました',
-      run: async ({ input, baseMeta, spans, userId }) =>
-        await performCheckin({ baseMeta, dateKey: input.dateKey, habitId: input.habitId, opId, spans, userId }),
+      run: async ({ input, baseMeta, spans, userId, weekStart }) =>
+        await performCheckin({
+          baseMeta,
+          dateKey: input.dateKey,
+          habitId: input.habitId,
+          opId,
+          spans,
+          userId,
+          weekStartDay: weekStartToDay(weekStart),
+        }),
     }
   )
 }

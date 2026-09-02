@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { habits } from '@/db/schema'
 import { createCheckinWithLimit } from '@/lib/queries/checkin'
 import { getHabitById } from '@/lib/queries/habit'
-import { getUserWeekStartById } from '@/lib/queries/user'
 import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { syncUser } from '@/lib/user'
 import { addCheckinAction } from '../checkin'
@@ -27,7 +26,7 @@ function buildHabit(overrides: Partial<Habit> = {}): Habit {
   }
 }
 
-function buildUser(overrides: { dayStartHour?: 24 | 25 | 26 | 27 | 28 | 29 } = {}) {
+function buildUser(overrides: { dayStartHour?: 24 | 25 | 26 | 27 | 28 | 29; weekStart?: 'monday' | 'sunday' } = {}) {
   return {
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     dayStartHour: overrides.dayStartHour ?? (24 as const),
@@ -35,7 +34,7 @@ function buildUser(overrides: { dayStartHour?: 24 | 25 | 26 | 27 | 28 | 29 } = {
     externalId: 'access-sub-123',
     id: 'user-123',
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
-    weekStart: 'monday' as const,
+    weekStart: overrides.weekStart ?? ('monday' as const),
   }
 }
 
@@ -45,10 +44,6 @@ vi.mock('@/lib/queries/checkin', () => ({
 
 vi.mock('@/lib/queries/habit', () => ({
   getHabitById: vi.fn(),
-}))
-
-vi.mock('@/lib/queries/user', () => ({
-  getUserWeekStartById: vi.fn(),
 }))
 
 vi.mock('@/lib/server/date', () => ({
@@ -82,7 +77,6 @@ describe('addCheckinAction', () => {
     vi.mocked(getServerTimeZone).mockResolvedValue('Asia/Tokyo')
     vi.mocked(syncUser).mockResolvedValue(buildUser())
     vi.mocked(getHabitById).mockResolvedValue(buildHabit({ id: habitId }))
-    vi.mocked(getUserWeekStartById).mockResolvedValue('monday')
     vi.mocked(createCheckinWithLimit).mockResolvedValue({ checkin: null, created: true, currentCount: 1 })
   })
 
@@ -123,5 +117,21 @@ describe('addCheckinAction', () => {
 
     expect(result.ok).toBe(true)
     expect(createCheckinWithLimit).toHaveBeenCalledWith(expect.objectContaining({ date: '2026-08-13' }))
+  })
+
+  it('ユーザーのweekStartから週開始日を解決してcreateCheckinWithLimitへ渡す（sunday）', async () => {
+    vi.mocked(syncUser).mockResolvedValue(buildUser({ weekStart: 'sunday' }))
+
+    await addCheckinAction(habitId)
+
+    expect(createCheckinWithLimit).toHaveBeenCalledWith(expect.objectContaining({ weekStartDay: 0 }))
+  })
+
+  it('ユーザーのweekStartから週開始日を解決してcreateCheckinWithLimitへ渡す（monday）', async () => {
+    vi.mocked(syncUser).mockResolvedValue(buildUser({ weekStart: 'monday' }))
+
+    await addCheckinAction(habitId)
+
+    expect(createCheckinWithLimit).toHaveBeenCalledWith(expect.objectContaining({ weekStartDay: 1 }))
   })
 })
