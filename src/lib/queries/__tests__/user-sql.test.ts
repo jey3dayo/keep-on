@@ -32,7 +32,7 @@ const MIGRATION_FILES = [
   '0004_external_id.sql',
   '0005_checkin_op.sql',
   '0006_checkin_op_created_at_idx.sql',
-  '0007_bitter_thunderball.sql',
+  '0007_day_start_hour.sql',
 ]
 
 beforeEach(() => {

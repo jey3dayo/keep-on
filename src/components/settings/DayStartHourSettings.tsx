@@ -11,8 +11,7 @@ import { appToast } from '@/lib/utils/toast'
 
 const DAY_START_HOUR_OPTIONS: Array<{ value: DayStartHour; label: string; description: string }> = DAY_START_HOURS.map(
   (hour) => ({
-    description:
-      hour === 24 ? '暦どおりに切り替えます。' : `この時刻までは前日として記録します（${hour - 24}:00 まで）。`,
+    description: hour === 24 ? '暦どおりに切り替えます。' : `${hour - 24}:00 になるまでは前日として記録します。`,
     label: `${hour}時（${hour - 24}:00）`,
     value: hour,
   })

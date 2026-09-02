@@ -76,12 +76,24 @@ describe('getDateKeyWithDayStart', () => {
     // instant から実時間で 5 時間（dayStartHour=29 のオフセット）を引いてからタイムゾーンの
     // 暦日を求める仕様のため、フォールバックで 1 時間分の壁時計が重複するこの日は
     // 「ローカル時刻が 05:00 未満なら前日」という単純な読み替えにはならない。
-    // 2026-11-01T08:45:00.000Z（ローカル 03:45 EDT）は前日の日付になる
+    // 2026-11-01T08:45:00.000Z（ローカル 03:45 EST。06:00Z に EST へ戻っているため）は前日の日付になる
     const beforeBoundary = new Date('2026-11-01T08:45:00.000Z')
     // 2026-11-01T09:00:00.000Z（ローカル 04:00 EDT）から当日の日付に切り替わる
     const atBoundary = new Date('2026-11-01T09:00:00.000Z')
 
     expect(getDateKeyWithDayStart(beforeBoundary, 29, timeZone)).toBe('2026-10-31')
     expect(getDateKeyWithDayStart(atBoundary, 29, timeZone)).toBe('2026-11-01')
+  })
+
+  it('不正な dayStartHour（型を迂回して渡った値）は DEFAULT_DAY_START_HOUR(24) と同じ結果になる', () => {
+    const instant = new Date('2026-09-02T16:30:00.000Z')
+    const timeZone = 'Asia/Tokyo'
+    // KV キャッシュの JSON パース漏れ等で undefined/0 のような値が実行時に渡るケースの防御を検証する。
+    // 型システム上は起こらないため、テストに限り unknown 経由でキャストする
+    const invalidValues = [undefined, 0] as unknown as DayStartHour[]
+
+    for (const invalid of invalidValues) {
+      expect(getDateKeyWithDayStart(instant, invalid, timeZone)).toBe(getDateKeyWithDayStart(instant, 24, timeZone))
+    }
   })
 })

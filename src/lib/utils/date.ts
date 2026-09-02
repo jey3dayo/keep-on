@@ -1,4 +1,4 @@
-import type { DayStartHour } from '@/constants/habit'
+import { type DayStartHour, DEFAULT_DAY_START_HOUR, isDayStartHour } from '@/constants/habit'
 
 const DATE_KEY_REGEX = /^(\d{4})-(\d{2})-(\d{2})$/
 const DAY_NAMES_JA = ['日', '月', '火', '水', '木', '金', '土']
@@ -76,7 +76,10 @@ export function getDateKeyInTimeZone(date: Date, timeZone: string): string {
  * @param timeZone - 省略時はローカルタイムゾーンの暦日を使う
  */
 export function getDateKeyWithDayStart(instant: Date, dayStartHour: DayStartHour, timeZone?: string): string {
-  const offsetMs = (dayStartHour - 24) * MS_PER_HOUR
+  // 型上は DayStartHour だが、KV キャッシュなど JSON を経由した値は実行時に型を保証できない。
+  // 不正値が漏れてもクラッシュせず暦どおりの挙動へ落とす最終防衛線
+  const safeDayStartHour = isDayStartHour(dayStartHour) ? dayStartHour : DEFAULT_DAY_START_HOUR
+  const offsetMs = (safeDayStartHour - 24) * MS_PER_HOUR
   const adjusted = new Date(instant.getTime() - offsetMs)
   if (!timeZone) {
     return formatDateKey(adjusted)
