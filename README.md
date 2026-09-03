@@ -99,6 +99,10 @@ pnpm db:migrate:local    # ローカル D1
 pnpm db:migrate:remote   # リモート D1
 ```
 
+ローカル D1 は `pnpm dev` 実行時に `predev` フックが `db:migrate:local` を自動実行するため、
+マイグレーションを含むブランチへ切り替えた後も手動実行は不要（`.wrangler/state/v3/d1` に対して非対話で適用される）。
+リモート D1 への適用は引き続き手動で `pnpm db:migrate:remote` を実行する。
+
 ### 4. 開発サーバー起動
 
 ```bash

@@ -20,6 +20,7 @@
     "db:migrate:remote": "dotenvx run -- wrangler d1 migrations apply keep-on-db --remote",
     "db:studio": "dotenvx run --overload -f .env -f .env.development -- drizzle-kit studio --dialect=sqlite",
     "deploy": "run-s build:cf cf:deploy",
+    "predev": "CI=1 pnpm run db:migrate:local",
     "dev": "dotenvx run --overload -f .env -f .env.development -- next dev --turbopack",
     "doctor": "ultracite doctor",
     "doctor:react": "react-doctor .",

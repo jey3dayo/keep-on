@@ -14,6 +14,8 @@
 - **Planned at**: commit `c449dde`, 2026-09-02
 - **Revised at**: 2026-09-02（独立レビューで初案が NEEDS_REWORK。全面改訂）
 - **Tracks**: Linear JEY-638
+- **Shipped at**: 2026-09-03、PR #197（merge `a55afd2`、deploy run 33701714770）
+- **Status**: DONE
 
 ## 改訂の経緯（初案が壊れていた理由）
 
@@ -229,13 +231,21 @@ react-doctor 診断、デッドコード・未使用 export の整理）。対�
 
 報告に含めること。
 
-- 生成されたマイグレーション SQL の全文
+- 生成されたマイグレーション SQL の全文（`drizzle/meta` は gitignore 対象で journal が stale のため、生成番号・名前を既存の連番と `000N_説明名.sql` 様式へ手で直し、SQL を目視レビューする）
 - `getServerDateKey` の呼び出し元 5 箇所を**どう並べ替えたか**の一覧
 - `dayStartHour = 24` で現行と完全に同じ dateKey になることを示すテスト
 - `occurredAt` が無い古いキュー項目が従来どおり replay できることを示すテスト
 - `git status --short --untracked-files=all`
 
 orchestrator が full gate（`lefthook run pre-push`）と本番デプロイ後の D1 マイグレーション適用を確認する。
+
+## 本番実測（2026-09-03、PR #197 merge `a55afd2` デプロイ後）
+
+- deploy workflow 33701714770 成功（2m9s）。`wrangler d1 migrations list keep-on-db --remote` は「No migrations to apply」で `0007_day_start_hour.sql` 適用済み
+- `/health` 200、`/dashboard` は Cloudflare Access へ 302（未認証時の正常系）
+- Sentry 直近 24h に `dayStartHour` / `occurredAt` / `schema-mismatch` / `D1_ERROR` を含む新規 issue なし
+- 独立レビュー: 1 回目 NEEDS_REWORK（旧 KV ユーザーキャッシュに `dayStartHour` が無く NaN 経由で 422 になる high）→ `getUserFromCache` にスキーマ検証を入れて APPROVE。Valibot issues のログ PII 混入（medium）も同 PR で修正
+- ローカル開発では `.wrangler/state` の D1 に 0007 が未適用で /dashboard が 500 になった。`predev` で `db:migrate:local` を自動実行する対策を別 PR で導入
 
 ## STOP conditions
 
