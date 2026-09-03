@@ -124,6 +124,12 @@ export function isDayStartHour(value: number): value is DayStartHour
   （`getDateKeyInTimeZone`、失敗時 `formatDateKey`）を適用する
 - `dayStartHour = 24` のとき現行と**完全に同じ結果**になること
 
+**DST 切替日の扱い（プロダクト判断）**: オフセットは「壁時計の時刻」ではなく「固定 duration」で減算する。
+このため夏時間を持つタイムゾーンでは、年 2 日の切替日だけ境界の壁時計時刻が 1 時間ずれる
+（例: `America/New_York` の秋戻し日は 29 時設定の境界が 04:00 になる）。主用途の JST には DST が無く、
+壁時計方式は切替時刻の前後で「存在しない / 二重に存在する時刻」の扱いが必要になり複雑さに見合わないため、
+固定 duration を仕様としてテストで固定する。
+
 ### Step 3: スキーマとマイグレーション（dual-write の土台）
 
 `users` と `userSettings` の**両方**に `dayStartHour` 列を追加する。`weekStart` 列の定義様式に合わせる。
