@@ -20,7 +20,7 @@ const CACHEABLE_ROUTES = ['/dashboard', '/habits', '/analytics']
 
 const PRECACHE_FILES = ['/offline', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
-// DB_NAME, STORE_NAME, キューアイテムの形（id を opId として使う・userId / occurredAt を含む）は
+// DB_NAME, STORE_NAME, キューアイテムの形（id を opId として使う・userId / occurredAt / timeZone を含む）は
 // src/lib/pwa/offline-queue.ts と同期すること
 const DB_NAME = 'keepon-offline'
 const STORE_NAME = 'checkin-queue'
@@ -383,6 +383,7 @@ self.addEventListener('sync', (event) => {
               habitId: item.habitId,
               occurredAt: item.occurredAt,
               opId: item.id,
+              timeZone: item.timeZone,
               userId: item.userId,
             }),
             headers: { 'Content-Type': 'application/json' },

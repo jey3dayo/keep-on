@@ -47,10 +47,11 @@ export async function removeCheckinAction(
   habitId: string,
   dateKey?: string,
   opId?: string,
-  occurredAt?: string
+  occurredAt?: string,
+  timeZone?: string
 ): HabitActionResult<RemoveCheckinResultData> {
   return await runTimedHabitAction(
-    { dateKey, habitId, occurredAt },
+    { dateKey, habitId, occurredAt, timeZone },
     {
       actionName: 'action.habits.removeCheckin',
       errorDetail: 'チェックインの削除に失敗しました',

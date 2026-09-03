@@ -20,6 +20,15 @@ interface ReplayResult {
 
 const hasBgSync = () => 'serviceWorker' in navigator && 'SyncManager' in window
 
+const getClientTimeZone = (): string | undefined => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined
+  } catch {
+    // タイムゾーンを取得できない環境でも、旧キューと同じ形式で replay できるよう省略する
+    return undefined
+  }
+}
+
 const registerBackgroundSync = async (): Promise<boolean> => {
   if (!hasBgSync()) {
     return false
@@ -75,6 +84,7 @@ const replayQueue = async (currentUserId: string, prefetchedItems?: QueuedChecki
           habitId: item.habitId,
           occurredAt: item.occurredAt,
           opId: item.id,
+          timeZone: item.timeZone,
           userId: item.userId,
         }),
         headers: { 'Content-Type': 'application/json' },
@@ -187,6 +197,7 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
         id: createId(),
         occurredAt,
         timestamp: Date.now(),
+        timeZone: getClientTimeZone(),
         userId: currentUserId,
       }
       await enqueueOfflineCheckin(item)

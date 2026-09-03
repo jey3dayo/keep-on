@@ -119,6 +119,19 @@ describe('addCheckinAction', () => {
     expect(createCheckinWithLimit).toHaveBeenCalledWith(expect.objectContaining({ date: '2026-08-13' }))
   })
 
+  it('timeZone引数がcookieのタイムゾーンより優先される', async () => {
+    const result = await addCheckinAction(
+      habitId,
+      '2026-08-14',
+      undefined,
+      '2026-08-14T00:30:00.000Z',
+      'America/Los_Angeles'
+    )
+
+    expect(result.ok).toBe(true)
+    expect(createCheckinWithLimit).toHaveBeenCalledWith(expect.objectContaining({ date: '2026-08-13' }))
+  })
+
   it('ユーザーのweekStartから週開始日を解決してcreateCheckinWithLimitへ渡す（sunday）', async () => {
     vi.mocked(syncUser).mockResolvedValue(buildUser({ weekStart: 'sunday' }))
 

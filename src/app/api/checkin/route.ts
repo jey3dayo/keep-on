@@ -14,6 +14,8 @@ const CheckinRequestSchema = v.object({
   occurredAt: v.optional(v.pipe(v.string(), v.isoTimestamp())),
   // オフラインキューの replay が再送を同一操作として識別するために送る
   opId: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(128))),
+  // オフライン replay のみが送る。操作時点のタイムゾーンで dateKey を導出するため
+  timeZone: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(64))),
   // オフラインキューの replay のみが送る。通常のオンラインチェックインでは省略される
   userId: v.optional(v.pipe(v.string(), v.minLength(1))),
 })
@@ -51,7 +53,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { action, dateKey, habitId, occurredAt, opId, userId: queuedUserId } = parseResult.output
+  const { action, dateKey, habitId, occurredAt, opId, timeZone, userId: queuedUserId } = parseResult.output
 
   // 端末共有時に前ユーザーのオフラインキューが別ユーザーの Cookie でリプレイされるのを防ぐ最終防衛線。
   // SW / hook はこの 409 を「永続的な 4xx」として扱い、該当アイテムを破棄する
@@ -61,8 +63,8 @@ export async function POST(request: Request) {
 
   const result =
     action === 'remove'
-      ? await removeCheckinAction(habitId, dateKey, opId, occurredAt)
-      : await addCheckinAction(habitId, dateKey, opId, occurredAt)
+      ? await removeCheckinAction(habitId, dateKey, opId, occurredAt, timeZone)
+      : await addCheckinAction(habitId, dateKey, opId, occurredAt, timeZone)
 
   if (!result.ok) {
     const status = errorToStatus(result.error)
