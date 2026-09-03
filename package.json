@@ -64,7 +64,7 @@
     "@radix-ui/react-tooltip": "^1.2.16",
     "@sentry/nextjs": "^10.71.0",
     "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
+    "cn": "^0.2.3",
     "date-fns": "^4.4.0",
     "drizzle-orm": "0.45.2",
     "http-status-codes": "^2.3.0",
@@ -79,7 +79,6 @@
     "react-hook-form": "^7.86.0",
     "react-i18next": "^17.0.12",
     "sonner": "^2.0.8",
-    "tailwind-merge": "^3.6.0",
     "valibot": "^1.4.2",
     "vaul": "^1.1.2"
   },
