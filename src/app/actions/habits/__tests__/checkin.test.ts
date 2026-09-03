@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { habits } from '@/db/schema'
 import { createCheckinWithLimit } from '@/lib/queries/checkin'
 import { getHabitById } from '@/lib/queries/habit'
@@ -80,6 +80,10 @@ describe('addCheckinAction', () => {
     vi.mocked(createCheckinWithLimit).mockResolvedValue({ checkin: null, created: true, currentCount: 1 })
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('未認証の場合はUnauthorizedErrorを返す', async () => {
     vi.mocked(syncUser).mockResolvedValue(null)
 
@@ -130,6 +134,23 @@ describe('addCheckinAction', () => {
 
     expect(result.ok).toBe(true)
     expect(createCheckinWithLimit).toHaveBeenCalledWith(expect.objectContaining({ date: '2026-08-13' }))
+  })
+
+  it('操作時タイムゾーンをtodayKeyの基準にしてオフラインreplayを受け付ける', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-14T10:00:00.000Z'))
+    vi.mocked(getServerDateKey).mockResolvedValue('2026-08-12')
+
+    const result = await addCheckinAction(
+      habitId,
+      undefined,
+      undefined,
+      '2026-08-14T09:30:00.000Z',
+      'Pacific/Kiritimati'
+    )
+
+    expect(result.ok).toBe(true)
+    expect(createCheckinWithLimit).toHaveBeenCalledWith(expect.objectContaining({ date: '2026-08-14' }))
   })
 
   it('ユーザーのweekStartから週開始日を解決してcreateCheckinWithLimitへ渡す（sunday）', async () => {
