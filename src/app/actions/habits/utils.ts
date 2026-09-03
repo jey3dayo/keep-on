@@ -22,6 +22,7 @@ import { captureException } from '@/lib/sentry'
 import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { getCurrentUserId, syncUser } from '@/lib/user'
+import { getDateKeyWithDayStart, isValidTimeZone } from '@/lib/utils/date'
 import { validateHabitActionInput, validateHabitId } from '@/validators/habit-action'
 import { createHabitCheckinSpans, type HabitCheckinSpans } from './checkin-shared'
 
@@ -153,8 +154,12 @@ export async function runTimedHabitAction<T>(
       return actionError(serializeHabitError(new UnauthorizedError({ detail: '認証されていません' })))
     }
 
+    const hasValidActionTimeZone = actionInput.timeZone !== undefined && isValidTimeZone(actionInput.timeZone)
     const [todayKey, timeZone] = await Promise.all([
-      getServerDateKey({ dayStartHour: user.dayStartHour }),
+      hasValidActionTimeZone
+        ? // derivedDateKey と todayKey を同じタイムゾーン基準で比較するため。基準が異なると replay が未来日として拒否されキューから恒久削除される
+          getDateKeyWithDayStart(new Date(), user.dayStartHour, actionInput.timeZone)
+        : getServerDateKey({ dayStartHour: user.dayStartHour }),
       getServerTimeZone(),
     ])
 
