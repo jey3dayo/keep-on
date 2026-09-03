@@ -32,6 +32,8 @@ export interface TimedHabitActionInput {
   habitId: string
   /** 操作時刻（ISO8601）。あれば dateKey より優先して dayStartHour から dateKey を導出する */
   occurredAt?: string
+  /** オフライン replay 時の操作時点のタイムゾーン。未指定時はサーバー cookie を使う */
+  timeZone?: string
 }
 
 /** バリデーション済み入力。dateKey は省略時も当日として解決済みのため常に string */
@@ -157,7 +159,10 @@ export async function runTimedHabitAction<T>(
     ])
 
     const result = await Result.pipe(
-      validateHabitActionInput(actionInput, todayKey, { dayStartHour: user.dayStartHour, timeZone }),
+      validateHabitActionInput(actionInput, todayKey, {
+        dayStartHour: user.dayStartHour,
+        timeZone,
+      }),
       Result.andThen(async (input) => {
         const baseMeta = options.buildBaseMeta?.(input, requestMeta) ?? {
           ...requestMeta,

@@ -38,12 +38,13 @@ const jsonOkResponse = (status = 200) =>
     status,
   }) as Response
 
-const queuedCheckin = (id: string, userId: string | undefined = CURRENT_USER_ID) => ({
+const queuedCheckin = (id: string, userId: string | undefined = CURRENT_USER_ID, timeZone?: string) => ({
   action: 'add' as const,
   dateKey: '2026-03-19',
   habitId: `habit-${id}`,
   id,
   timestamp: Number(id.replaceAll(/\D/g, '')) || 1,
+  timeZone,
   userId,
 })
 
@@ -94,7 +95,7 @@ describe('useOfflineCheckin', () => {
     installServiceWorkerMock(true)
     mockSyncRegister.mockRejectedValueOnce(new Error('denied'))
     mockGetAllQueuedCheckins
-      .mockResolvedValueOnce([queuedCheckin('queued-1')])
+      .mockResolvedValueOnce([queuedCheckin('queued-1', CURRENT_USER_ID, 'America/Los_Angeles')])
       .mockResolvedValueOnce([queuedCheckin('queued-1')])
     mockRemoveQueuedCheckin.mockResolvedValue(undefined)
     vi.mocked(fetch).mockResolvedValue(jsonOkResponse())
@@ -117,6 +118,7 @@ describe('useOfflineCheckin', () => {
         dateKey: '2026-03-19',
         habitId: 'habit-queued-1',
         opId: 'queued-1',
+        timeZone: 'America/Los_Angeles',
         userId: CURRENT_USER_ID,
       }),
     })
@@ -297,6 +299,7 @@ describe('useOfflineCheckin', () => {
       habitId: 'habit-1',
       occurredAt: '2026-03-19T00:00:00.000Z',
       timestamp: expect.any(Number),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       userId: CURRENT_USER_ID,
     })
     expect(isCuid(item.id)).toBe(true)

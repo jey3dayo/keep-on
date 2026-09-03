@@ -64,6 +64,15 @@ export function getDateKeyInTimeZone(date: Date, timeZone: string): string {
   return `${year}-${month}-${day}`
 }
 
+export function isValidTimeZone(timeZone: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone }).format()
+    return true
+  } catch {
+    return false
+  }
+}
+
 /**
  * dayStartHour を考慮した dateKey を算出する。日付境界の計算はこの関数に一本化する。
  *

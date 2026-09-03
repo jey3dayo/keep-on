@@ -138,5 +138,54 @@ describe('validateHabitActionInput', () => {
         expect(result.value.dateKey).toBe('2026-08-14')
       }
     })
+
+    it('操作時点のタイムゾーンでdateKeyを導出する', () => {
+      const checkinOccurredAt = '2026-03-01T15:30:00.000Z'
+      const tokyoResult = validateHabitActionInput(
+        { dateKey: '2026-03-01', habitId, occurredAt: checkinOccurredAt, timeZone: 'Asia/Tokyo' },
+        '2026-03-01',
+        { dayStartHour: 24, timeZone: 'UTC' }
+      )
+      const losAngelesResult = validateHabitActionInput(
+        { dateKey: '2026-03-01', habitId, occurredAt: checkinOccurredAt, timeZone: 'America/Los_Angeles' },
+        '2026-03-01',
+        { dayStartHour: 24, timeZone: 'UTC' }
+      )
+
+      expect(Result.isSuccess(tokyoResult)).toBe(true)
+      expect(Result.isSuccess(losAngelesResult)).toBe(true)
+      if (Result.isSuccess(tokyoResult) && Result.isSuccess(losAngelesResult)) {
+        expect(tokyoResult.value.dateKey).toBe('2026-03-02')
+        expect(losAngelesResult.value.dateKey).toBe('2026-03-01')
+      }
+    })
+
+    it('不正なタイムゾーンはValidationErrorを返す', () => {
+      const result = validateHabitActionInput(
+        { habitId, occurredAt: '2026-03-01T15:30:00.000Z', timeZone: 'Not/AZone' },
+        '2026-03-01',
+        { dayStartHour: 24, timeZone: 'Asia/Tokyo' }
+      )
+
+      expect(Result.isFailure(result)).toBe(true)
+      if (Result.isFailure(result)) {
+        expect(result.error).toBeInstanceOf(ValidationError)
+        expect(result.error.field).toBe('timeZone')
+        expect(result.error.reason).toBe('Invalid timeZone')
+      }
+    })
+
+    it('cookie由来の不正なcontext.timeZoneでも失敗せずdateKeyを返す', () => {
+      const result = validateHabitActionInput({ habitId, occurredAt: '2026-03-01T15:30:00.000Z' }, '2026-03-01', {
+        dayStartHour: 24,
+        timeZone: 'Not/AZone',
+      })
+
+      expect(Result.isSuccess(result)).toBe(true)
+      if (Result.isSuccess(result)) {
+        expect(result.value.habitId).toBe(habitId)
+        expect(result.value.dateKey).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+      }
+    })
   })
 })

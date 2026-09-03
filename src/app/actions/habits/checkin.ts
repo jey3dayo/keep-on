@@ -55,10 +55,11 @@ export async function addCheckinAction(
   habitId: string,
   dateKey?: string,
   opId?: string,
-  occurredAt?: string
+  occurredAt?: string,
+  timeZone?: string
 ): HabitActionResult<CheckinResultData> {
   return await runTimedHabitAction(
-    { dateKey, habitId, occurredAt },
+    { dateKey, habitId, occurredAt, timeZone },
     {
       actionName: 'action.habits.checkin',
       errorDetail: 'チェックインの切り替えに失敗しました',

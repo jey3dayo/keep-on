@@ -13,6 +13,8 @@ export interface QueuedCheckin {
   /** 操作時刻（ISO8601）。あれば replay 時に dateKey より優先される（旧アイテムでは undefined） */
   occurredAt?: string
   timestamp: number
+  /** 操作時点のタイムゾーン。replay 時の端末移動で dateKey が変わらないように保持する（旧アイテムでは undefined） */
+  timeZone?: string
   /** enqueue 時のサインイン中ユーザー。replay 前の本人照合に使う（旧アイテムでは undefined） */
   userId?: string
 }
