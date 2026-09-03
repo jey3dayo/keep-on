@@ -73,6 +73,7 @@ const replayQueue = async (currentUserId: string, prefetchedItems?: QueuedChecki
           action: item.action,
           dateKey: item.dateKey,
           habitId: item.habitId,
+          occurredAt: item.occurredAt,
           opId: item.id,
           userId: item.userId,
         }),
@@ -172,7 +173,7 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
   }, [isLoaded, isOnline, userId])
 
   const enqueueCheckin = useCallback(
-    async (habitId: string, action: 'add' | 'remove', dateKey: string): Promise<void> => {
+    async (habitId: string, action: 'add' | 'remove', dateKey: string, occurredAt: string): Promise<void> => {
       const currentUserId = userIdRef.current
       // 未サインインのチェックインはそもそも成功しないため、照合不能なアイテムを積まず reject する
       if (!currentUserId) {
@@ -184,6 +185,7 @@ export function useOfflineCheckin(options: UseOfflineCheckinOptions = {}) {
         dateKey,
         habitId,
         id: createId(),
+        occurredAt,
         timestamp: Date.now(),
         userId: currentUserId,
       }

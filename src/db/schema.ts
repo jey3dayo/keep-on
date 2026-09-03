@@ -1,6 +1,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 import {
+  DEFAULT_DAY_START_HOUR,
   DEFAULT_HABIT_COLOR,
   DEFAULT_HABIT_FREQUENCY,
   DEFAULT_HABIT_ICON,
@@ -18,6 +19,8 @@ export const users = sqliteTable('User', {
   createdAt: text('createdAt')
     .$defaultFn(() => new Date().toISOString())
     .notNull(),
+  /** 日付が切り替わる時刻 (24: 暦どおり, 25-29: 深夜帯を前日として扱う猶予時間) */
+  dayStartHour: integer('dayStartHour').default(DEFAULT_DAY_START_HOUR).notNull(),
   /** メールアドレス (identity の正キー) */
   email: text('email').notNull().unique(),
   /** 外部 IdP のサブジェクト識別子 (Cloudflare Access JWT の sub) */
@@ -45,6 +48,8 @@ export const userSettings = sqliteTable('UserSettings', {
   createdAt: text('createdAt')
     .$defaultFn(() => new Date().toISOString())
     .notNull(),
+  /** 日付が切り替わる時刻 (24: 暦どおり, 25-29: 深夜帯を前日として扱う猶予時間) */
+  dayStartHour: integer('dayStartHour').default(DEFAULT_DAY_START_HOUR).notNull(),
   /** 設定ID (CUID2形式) */
   id: text('id')
     .primaryKey()

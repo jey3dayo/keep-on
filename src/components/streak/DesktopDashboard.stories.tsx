@@ -68,6 +68,7 @@ const habits = [
 
 const user = {
   createdAt: new Date('2025-01-01'),
+  dayStartHour: 24 as const,
   email: 'demo@example.com',
   externalId: 'access-1',
   id: 'user-1',

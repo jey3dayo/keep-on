@@ -1,5 +1,7 @@
 import { Result } from '@praha/byethrow'
+import type { DayStartHour } from '@/constants/habit'
 import { ValidationError } from '@/lib/errors/habit'
+import { getDateKeyWithDayStart } from '@/lib/utils/date'
 import { safeParseDateKey } from '@/schemas/date-key'
 import { safeParseHabitId } from '@/schemas/habit'
 
@@ -48,16 +50,39 @@ export function validateHabitId(habitId: string): Result.Result<string, Validati
 }
 
 /**
- * @param input - 検証対象の habitId / dateKey（dateKey 省略可）
+ * @param input - 検証対象の habitId / dateKey（dateKey 省略可）。`occurredAt`（操作時刻の ISO8601）が
+ *   あれば `context` から導出した dateKey を優先採用する（後方互換のため `dateKey` 引数自体は残す）
  * @param todayKey - 呼び出し元が `getServerDateKey()` で解決した基準日（dateKey 省略時のデフォルト値、かつ許容ウィンドウの起点）
+ * @param context - `occurredAt` から dateKey を導出するための dayStartHour / timeZone。`occurredAt` を
+ *   使わない呼び出し元（reset 等）は省略できる
  */
 export function validateHabitActionInput(
-  input: { habitId: string; dateKey?: string },
-  todayKey: string
+  input: { habitId: string; dateKey?: string; occurredAt?: string },
+  todayKey: string,
+  context?: { dayStartHour: DayStartHour; timeZone?: string }
 ): Result.Result<{ habitId: string; dateKey: string }, ValidationError> {
   const habitIdResult = validateHabitId(input.habitId)
   if (!Result.isSuccess(habitIdResult)) {
     return habitIdResult
+  }
+
+  if (input.occurredAt !== undefined && context) {
+    const occurredAtMs = Date.parse(input.occurredAt)
+    if (Number.isNaN(occurredAtMs)) {
+      return Result.fail(new ValidationError({ field: 'occurredAt', reason: 'Invalid occurredAt' }))
+    }
+
+    const derivedDateKey = getDateKeyWithDayStart(new Date(occurredAtMs), context.dayStartHour, context.timeZone)
+    if (!isDateKeyWithinWindow(derivedDateKey, todayKey)) {
+      return Result.fail(
+        new ValidationError({
+          field: 'occurredAt',
+          reason: 'Date key is outside the allowed window',
+        })
+      )
+    }
+
+    return Result.succeed({ dateKey: derivedDateKey, habitId: habitIdResult.value })
   }
 
   if (input.dateKey === undefined) {

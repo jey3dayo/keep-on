@@ -1,5 +1,6 @@
 import { Result } from '@praha/byethrow'
 import { revalidatePath } from 'next/cache'
+import type { WeekStart } from '@/constants/habit'
 import { actionError, actionOk, type ServerActionResultAsync, toActionResult } from '@/lib/actions/result'
 import { invalidateHabitsCache } from '@/lib/cache/habit-cache'
 import {
@@ -18,9 +19,9 @@ import {
 import { createRequestMeta, formatError, logWarn } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
 import { captureException } from '@/lib/sentry'
-import { getServerDateKey } from '@/lib/server/date'
+import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
-import { getCurrentUserId } from '@/lib/user'
+import { getCurrentUserId, syncUser } from '@/lib/user'
 import { validateHabitActionInput, validateHabitId } from '@/validators/habit-action'
 import { createHabitCheckinSpans, type HabitCheckinSpans } from './checkin-shared'
 
@@ -29,6 +30,8 @@ export type HabitActionResult<T = void> = ServerActionResultAsync<T, Serializabl
 export interface TimedHabitActionInput {
   dateKey?: string
   habitId: string
+  /** 操作時刻（ISO8601）。あれば dateKey より優先して dayStartHour から dateKey を導出する */
+  occurredAt?: string
 }
 
 /** バリデーション済み入力。dateKey は省略時も当日として解決済みのため常に string */
@@ -45,6 +48,8 @@ interface RunTimedHabitActionOptions<T> {
     input: ResolvedHabitActionInput
     baseMeta: Record<string, unknown>
     spans: HabitCheckinSpans
+    userId: string
+    weekStart: WeekStart
   }) => Promise<T>
 }
 
@@ -138,10 +143,21 @@ export async function runTimedHabitAction<T>(
     const requestMeta = createRequestMeta(options.actionName)
     const timeoutMs = getRequestTimeoutMs()
     const spans = createHabitCheckinSpans(timeoutMs)
-    const todayKey = await getServerDateKey()
+
+    // 認証を先に行い、その user（id・dayStartHour）を todayKey 算出と options.run の両方へ渡す。
+    // syncUser はキャッシュ済みなら DB 往復を増やさないため、ここで 1 回だけ呼ぶ
+    const user = await syncUser()
+    if (!user) {
+      return actionError(serializeHabitError(new UnauthorizedError({ detail: '認証されていません' })))
+    }
+
+    const [todayKey, timeZone] = await Promise.all([
+      getServerDateKey({ dayStartHour: user.dayStartHour }),
+      getServerTimeZone(),
+    ])
 
     const result = await Result.pipe(
-      validateHabitActionInput(actionInput, todayKey),
+      validateHabitActionInput(actionInput, todayKey, { dayStartHour: user.dayStartHour, timeZone }),
       Result.andThen(async (input) => {
         const baseMeta = options.buildBaseMeta?.(input, requestMeta) ?? {
           ...requestMeta,
@@ -154,7 +170,7 @@ export async function runTimedHabitAction<T>(
           try: async () =>
             await spans.runWithRequestTimeout(
               options.actionName,
-              () => options.run({ baseMeta, input, spans }),
+              () => options.run({ baseMeta, input, spans, userId: user.id, weekStart: user.weekStart }),
               baseMeta
             ),
         })

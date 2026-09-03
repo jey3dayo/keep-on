@@ -10,6 +10,8 @@ export interface QueuedCheckin {
   habitId: string
   /** IndexedDBキー兼、サーバーへ渡す冪等操作ID（CUID2形式） */
   id: string
+  /** 操作時刻（ISO8601）。あれば replay 時に dateKey より優先される（旧アイテムでは undefined） */
+  occurredAt?: string
   timestamp: number
   /** enqueue 時のサインイン中ユーザー。replay 前の本人照合に使う（旧アイテムでは undefined） */
   userId?: string

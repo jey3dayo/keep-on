@@ -1,4 +1,4 @@
-import type { WeekStart } from '@/constants/habit'
+import type { DayStartHour, WeekStart } from '@/constants/habit'
 import type { ColorThemeName } from '@/constants/theme'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
@@ -10,6 +10,7 @@ export type ThemeMode = 'light' | 'dark' | 'system'
 export interface UserSettings {
   colorTheme: ColorThemeName
   createdAt: string
+  dayStartHour: DayStartHour
   id: string
   themeMode: ThemeMode
   updatedAt: string

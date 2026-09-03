@@ -22,7 +22,6 @@ vi.mock('@/lib/queries/habit', () => ({
 
 vi.mock('@/lib/user', () => ({
   getCurrentUserId: vi.fn(),
-  getUserWeekStartById: vi.fn(),
 }))
 
 vi.mock('@/lib/sentry', () => ({

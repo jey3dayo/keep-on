@@ -1,11 +1,15 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 import { PageShell } from '@/components/PageShell'
 import { AccountSettings } from '@/components/settings/AccountSettings'
+import { DayStartHourSettings } from '@/components/settings/DayStartHourSettings'
 import { ThemeSettings } from '@/components/settings/ThemeSettings'
 import { WeekStartSettings } from '@/components/settings/WeekStartSettings'
+import { SIGN_IN_PATH } from '@/constants/auth'
 import { COLOR_THEME_COOKIE_KEY, isColorTheme } from '@/constants/theme'
+import { syncUser } from '@/lib/user'
 
 export const metadata: Metadata = {
   description:
@@ -23,6 +27,12 @@ export default async function SettingsPage() {
   const rawColorTheme = cookieStore.get(COLOR_THEME_COOKIE_KEY)?.value ?? null
   const initialColorTheme = rawColorTheme && isColorTheme(rawColorTheme) ? rawColorTheme : undefined
 
+  const user = await syncUser()
+
+  if (!user) {
+    redirect(SIGN_IN_PATH)
+  }
+
   return (
     <PageShell>
       <header>
@@ -31,6 +41,7 @@ export default async function SettingsPage() {
       <section className="grid min-w-0 gap-6 lg:grid-cols-2">
         <ThemeSettings className="min-w-0" initialColorTheme={initialColorTheme} />
         <WeekStartSettings className="min-w-0" />
+        <DayStartHourSettings className="min-w-0" initialDayStartHour={user.dayStartHour} />
         <AccountSettings className="min-w-0" />
       </section>
     </PageShell>

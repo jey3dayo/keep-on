@@ -1,3 +1,4 @@
+import type { BaseIssue } from 'valibot'
 import { classifyConnectionError } from '@/schemas/db'
 import type { FormattedError, LogLevel } from '@/schemas/logging'
 import { formatErrorObject, parseLogLevel } from '@/schemas/logging'
@@ -76,6 +77,30 @@ export function nowMs(): number {
 
 export function formatError(error: unknown): FormattedError {
   return formatErrorObject(error)
+}
+
+export interface SummarizedIssue {
+  expected: string | null
+  path: string
+  received: string
+}
+
+/**
+ * Valibot の issue をログ出力用に要約する。
+ *
+ * `issue.path` の各セグメントは `input`（パース対象オブジェクト全体、例えば User の email）を
+ * 保持しているため、issues をそのままログへ渡すと PII が Cloudflare Workers のログに残る。
+ * ログには path / expected / received のみを残し、input は含めない。
+ */
+export function summarizeIssues(issues: readonly BaseIssue<unknown>[] | undefined): SummarizedIssue[] {
+  if (!issues) {
+    return []
+  }
+  return issues.map((issue) => ({
+    expected: issue.expected,
+    path: (issue.path ?? []).map((segment) => String(segment.key)).join('.'),
+    received: issue.received,
+  }))
 }
 
 function formatLine(message: string, data?: Record<string, unknown>): string {

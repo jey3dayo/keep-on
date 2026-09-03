@@ -13,10 +13,10 @@ import {
   logWarn,
 } from '@/lib/logging'
 import { getHabitsWithProgress } from '@/lib/queries/habit'
-import { getServerDateKey, getServerTimeZone } from '@/lib/server/date'
+import { getServerDateKey } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
 import { syncUser } from '@/lib/user'
-import { formatDateLabel } from '@/lib/utils/date'
+import { formatDateLabel, parseDateKey } from '@/lib/utils/date'
 import type { HabitWithProgress } from '@/types/habit'
 import { DashboardWrapper } from './DashboardWrapper'
 
@@ -35,8 +35,6 @@ export default async function DashboardPage() {
   const timeoutMs = getRequestTimeoutMs()
   const requestMeta = createRequestMeta('/dashboard')
   const now = new Date()
-  const [dateKey, timeZone] = await Promise.all([getServerDateKey({ date: now }), getServerTimeZone()])
-  const todayLabel = formatDateLabel(now, timeZone)
 
   logInfo('request.dashboard:start', requestMeta)
 
@@ -45,6 +43,12 @@ export default async function DashboardPage() {
   if (!user) {
     redirect(SIGN_IN_PATH)
   }
+
+  // dayStartHour はユーザー設定なので syncUser 後に算出する（getServerDateKey 自体は cookie 読み取りのみで
+  // DB 往復は増えない）
+  const dateKey = await getServerDateKey({ date: now, dayStartHour: user.dayStartHour })
+  // 表示の「今日」は記録先の dateKey と一致させる（ズレると記録と表示が食い違う）
+  const todayLabel = formatDateLabel(parseDateKey(dateKey))
 
   const cacheSnapshot = await getHabitsCacheSnapshot(user.id)
   const isStale = cacheSnapshot && (cacheSnapshot.staleAt !== undefined || cacheSnapshot.dateKey !== dateKey)

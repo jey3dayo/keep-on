@@ -7,7 +7,7 @@ import * as schema from '@/db/schema'
 import { createSqliteD1 } from '@/lib/queries/__tests__/helpers/sqlite-d1'
 import { getHabitById } from '@/lib/queries/habit'
 import { getServerDateKey } from '@/lib/server/date'
-import { getCurrentUserId } from '@/lib/user'
+import { syncUser } from '@/lib/user'
 import { resetHabitProgressAction } from '../reset'
 
 type DrizzleD1Db = ReturnType<typeof drizzle<typeof schema>>
@@ -28,7 +28,7 @@ vi.mock('@/lib/server/date', () => ({
 }))
 
 vi.mock('@/lib/user', () => ({
-  getCurrentUserId: vi.fn(),
+  syncUser: vi.fn(),
 }))
 
 vi.mock('../utils', () => ({
@@ -43,6 +43,9 @@ const MIGRATION_FILES = [
   '0002_small_magus.sql',
   '0003_skip_and_reminder.sql',
   '0004_external_id.sql',
+  '0005_checkin_op.sql',
+  '0006_checkin_op_created_at_idx.sql',
+  '0007_day_start_hour.sql',
 ]
 
 const todayKey = '2026-08-13'
@@ -111,7 +114,15 @@ describe('resetHabitProgressAction (real SQLite)', () => {
     rebuildDb()
     vi.clearAllMocks()
     vi.mocked(getServerDateKey).mockResolvedValue(todayKey)
-    vi.mocked(getCurrentUserId).mockResolvedValue(userId)
+    vi.mocked(syncUser).mockResolvedValue({
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      dayStartHour: 24,
+      email: `${userId}@example.com`,
+      externalId: `access_${userId}`,
+      id: userId,
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      weekStart: 'monday',
+    })
     await seedHabit()
     await insertCheckin('today-checkin', todayKey)
   })

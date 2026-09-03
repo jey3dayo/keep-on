@@ -1,12 +1,8 @@
 'use server'
 
+import { weekStartToDay } from '@/constants/habit'
 import { deleteLatestCheckinByHabitAndPeriod } from '@/lib/queries/checkin'
-import {
-  type HabitCheckinParams,
-  requireCheckinUserId,
-  requireHabitForUserWithRetry,
-  resolveCheckinWeekStartDay,
-} from './checkin-shared'
+import { type HabitCheckinParams, requireHabitForUserWithRetry } from './checkin-shared'
 import { type HabitActionResult, revalidateHabitPaths, runTimedHabitAction } from './utils'
 
 interface RemoveCheckinResultData {
@@ -15,21 +11,16 @@ interface RemoveCheckinResultData {
 }
 
 async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveCheckinResultData> {
-  const { habitId, dateKey, baseMeta, opId, spans } = params
-  const userId = await requireCheckinUserId('action.habits.removeCheckin', baseMeta, spans.timeoutMs)
+  const { habitId, dateKey, baseMeta, opId, spans, userId, weekStartDay } = params
   const metaWithUser = { ...baseMeta, userId }
 
-  // クエリを並列実行してレイテンシを削減
-  const [habit, weekStartDay] = await Promise.all([
-    requireHabitForUserWithRetry({
-      actionName: 'action.habits.removeCheckin',
-      habitId,
-      meta: metaWithUser,
-      runWithRetry: spans.runWithRetry,
-      userId,
-    }),
-    resolveCheckinWeekStartDay('action.habits.removeCheckin', userId, metaWithUser, spans.runWithRetry),
-  ])
+  const habit = await requireHabitForUserWithRetry({
+    actionName: 'action.habits.removeCheckin',
+    habitId,
+    meta: metaWithUser,
+    runWithRetry: spans.runWithRetry,
+    userId,
+  })
 
   const deleteMeta = {
     ...metaWithUser,
@@ -55,15 +46,24 @@ async function performRemoveCheckin(params: HabitCheckinParams): Promise<RemoveC
 export async function removeCheckinAction(
   habitId: string,
   dateKey?: string,
-  opId?: string
+  opId?: string,
+  occurredAt?: string
 ): HabitActionResult<RemoveCheckinResultData> {
   return await runTimedHabitAction(
-    { dateKey, habitId },
+    { dateKey, habitId, occurredAt },
     {
       actionName: 'action.habits.removeCheckin',
       errorDetail: 'チェックインの削除に失敗しました',
-      run: async ({ input, baseMeta, spans }) =>
-        await performRemoveCheckin({ baseMeta, dateKey: input.dateKey, habitId: input.habitId, opId, spans }),
+      run: async ({ input, baseMeta, spans, userId, weekStart }) =>
+        await performRemoveCheckin({
+          baseMeta,
+          dateKey: input.dateKey,
+          habitId: input.habitId,
+          opId,
+          spans,
+          userId,
+          weekStartDay: weekStartToDay(weekStart),
+        }),
     }
   )
 }

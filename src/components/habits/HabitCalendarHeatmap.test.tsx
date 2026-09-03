@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { HabitCalendarHeatmap } from './HabitCalendarHeatmap'
 
 const today = new Date()
+const todayDateKey = format(today, 'yyyy-MM-dd')
 // months={1} で当月グリッドだけを描画するため、月初を跨いで遡ると存在しないセルを指してしまう
 // （毎月1〜2日にだけ落ちる flake が実際に発生した）。遡り日数を当月内にクランプする。
 const dateKey = (daysAgo: number) => format(subDays(today, Math.min(daysAgo, today.getDate() - 1)), 'yyyy-MM-dd')
@@ -16,6 +17,7 @@ function renderHeatmap(checkinCounts: Map<string, number>, frequency: number, sk
       frequency={frequency}
       months={1}
       skipDates={skipDates}
+      todayDateKey={todayDateKey}
     />
   )
 }
@@ -88,7 +90,13 @@ describe('HabitCalendarHeatmap', () => {
 
   it('months=2 のとき 2 ヶ月分のラベルが表示される', () => {
     render(
-      <HabitCalendarHeatmap accentColor="oklch(0.70 0.18 145)" checkinCounts={new Map()} frequency={1} months={2} />
+      <HabitCalendarHeatmap
+        accentColor="oklch(0.70 0.18 145)"
+        checkinCounts={new Map()}
+        frequency={1}
+        months={2}
+        todayDateKey={todayDateKey}
+      />
     )
     // 月ラベルが 2 件あること（「yyyy年M月」形式）
     const monthLabels = screen.getAllByText(/\d{4}年\d+月/)

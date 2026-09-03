@@ -20,6 +20,8 @@ interface CheckinTask {
   dateKey: string
   habitId: string
   isRemove?: boolean
+  /** 操作時刻（ISO8601）。サーバー側で dayStartHour から dateKey を導出するために送る */
+  occurredAt: string
   rollback?: () => void
 }
 
@@ -255,9 +257,9 @@ export function useHabitCheckinQueue(habits: HabitWithProgress[]): UseHabitCheck
     endSync(habitId)
   }
 
-  const runAddCheckin = async (habitId: string, dateKey: string) => {
+  const runAddCheckin = async (habitId: string, dateKey: string, occurredAt: string) => {
     try {
-      const result = await addCheckinAction(habitId, dateKey)
+      const result = await addCheckinAction(habitId, dateKey, undefined, occurredAt)
       if (result.ok) {
         return { ok: true as const, result }
       }
@@ -267,9 +269,9 @@ export function useHabitCheckinQueue(habits: HabitWithProgress[]): UseHabitCheck
     }
   }
 
-  const runRemoveCheckin = async (habitId: string, dateKey: string) => {
+  const runRemoveCheckin = async (habitId: string, dateKey: string, occurredAt: string) => {
     try {
-      const result = await removeCheckinAction(habitId, dateKey)
+      const result = await removeCheckinAction(habitId, dateKey, undefined, occurredAt)
       if (result.ok) {
         return { ok: true as const, result }
       }
@@ -284,7 +286,7 @@ export function useHabitCheckinQueue(habits: HabitWithProgress[]): UseHabitCheck
 
     try {
       const action = task.isRemove ? runRemoveCheckin : runAddCheckin
-      const { ok, result, error } = await action(task.habitId, task.dateKey)
+      const { ok, result, error } = await action(task.habitId, task.dateKey, task.occurredAt)
 
       if (ok) {
         shouldRollback = false
@@ -395,13 +397,15 @@ export function useHabitCheckinQueue(habits: HabitWithProgress[]): UseHabitCheck
         return
       }
 
-      const dateKey = formatDateKey(new Date())
+      const now = new Date()
+      const dateKey = formatDateKey(now)
+      const occurredAt = now.toISOString()
       updateHabitProgress(habitId, options.delta)
 
       if (!isOnline) {
         // オフライン時: IndexedDB にキューイングして楽観的更新のみ
         startSync(habitId)
-        enqueueOfflineCheckin(habitId, options.isRemove ? 'remove' : 'add', dateKey)
+        enqueueOfflineCheckin(habitId, options.isRemove ? 'remove' : 'add', dateKey, occurredAt)
           .catch(() => {
             appToast.error('オフラインキューへの保存に失敗しました')
             updateHabitProgress(habitId, -options.delta)
@@ -417,6 +421,7 @@ export function useHabitCheckinQueue(habits: HabitWithProgress[]): UseHabitCheck
         dateKey,
         habitId,
         isRemove: options.isRemove,
+        occurredAt,
         rollback: () => updateHabitProgress(habitId, -options.delta),
       })
     },
@@ -457,7 +462,8 @@ export function useHabitCheckinQueue(habits: HabitWithProgress[]): UseHabitCheck
   )
 
   const handleSkip = useCallback(async (habitId: string) => {
-    const result = await addSkipAction(habitId, formatDateKey(new Date()))
+    const now = new Date()
+    const result = await addSkipAction(habitId, formatDateKey(now), now.toISOString())
     if (result.ok) {
       appToast.success('今日をスキップしました（ストリーク維持）')
     } else {
@@ -466,7 +472,8 @@ export function useHabitCheckinQueue(habits: HabitWithProgress[]): UseHabitCheck
   }, [])
 
   const handleUnSkip = useCallback(async (habitId: string) => {
-    const result = await removeSkipAction(habitId)
+    const now = new Date()
+    const result = await removeSkipAction(habitId, undefined, now.toISOString())
     if (result.ok) {
       appToast.success('スキップを解除しました')
     } else {

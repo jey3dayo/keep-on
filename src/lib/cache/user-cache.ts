@@ -1,5 +1,6 @@
 import { getKV } from '@/lib/cache/kv'
-import { formatError, logInfo, logWarn } from '@/lib/logging'
+import { formatError, logInfo, logWarn, summarizeIssues } from '@/lib/logging'
+import { safeParseUser } from '@/schemas/user'
 import type { User } from '@/types/user'
 
 const CACHE_TTL_SECONDS = 300 // 5分
@@ -24,9 +25,15 @@ export async function getUserFromCache(externalId: string): Promise<User | null>
       return null
     }
 
-    const user = JSON.parse(cached) as User
+    const parsed = safeParseUser(JSON.parse(cached))
+    if (!parsed.success) {
+      // 旧スキーマのキャッシュ（新フィールド追加前など）はキャッシュ破損ではなくスキーマ変化。
+      // DB から再取得させれば TTL 経過後に新形式で上書きされるため warn に留める
+      logWarn('user.cache:schema-mismatch', { externalId, issues: summarizeIssues(parsed.issues) })
+      return null
+    }
     logInfo('user.cache:hit', { externalId })
-    return user
+    return parsed.output
   } catch (error) {
     logWarn('user.cache:error', { error: formatError(error), externalId })
     return null

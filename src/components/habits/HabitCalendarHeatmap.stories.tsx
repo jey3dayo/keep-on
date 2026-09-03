@@ -15,6 +15,7 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 const today = new Date()
+const todayDateKey = format(today, 'yyyy-MM-dd')
 
 function dateKey(daysAgo: number) {
   return format(subDays(today, daysAgo), 'yyyy-MM-dd')
@@ -64,6 +65,7 @@ export const Frequency1: Story = {
     frequency: 1,
     months: 3,
     skipDates,
+    todayDateKey,
   },
   name: '頻度1（バイナリ）',
 }
@@ -75,6 +77,7 @@ export const Frequency3Gradient: Story = {
     frequency: 3,
     months: 3,
     skipDates,
+    todayDateKey,
   },
   name: '頻度3（グラデーション）',
 }
@@ -85,6 +88,7 @@ export const Empty: Story = {
     checkinCounts: new Map(),
     frequency: 2,
     months: 2,
+    todayDateKey,
   },
   name: '記録なし',
 }
@@ -95,6 +99,7 @@ export const AllComplete: Story = {
     checkinCounts: new Map(Array.from({ length: 30 }, (_, i) => [dateKey(i), 2] as [string, number])),
     frequency: 2,
     months: 2,
+    todayDateKey,
   },
   name: '全日達成',
 }

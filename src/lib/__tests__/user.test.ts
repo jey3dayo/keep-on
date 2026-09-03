@@ -25,6 +25,7 @@ const IDENTITY = { email: 'user@example.com', sub: 'access-sub-1' }
 function userRow(overrides: Record<string, unknown> = {}) {
   return {
     createdAt: '2024-01-01T00:00:00.000Z',
+    dayStartHour: 24,
     email: IDENTITY.email,
     externalId: IDENTITY.sub,
     id: 'user-1',

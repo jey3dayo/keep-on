@@ -110,21 +110,3 @@ export async function getUserWeekStart(externalId: string): Promise<WeekStart> {
     { externalId }
   )
 }
-
-/**
- * ユーザーIDから週開始日設定を取得
- *
- * @param userId - アプリ内ユーザーID
- * @returns 週開始日設定 ('monday' | 'sunday')
- */
-export async function getUserWeekStartById(userId: string): Promise<WeekStart> {
-  return await profileQuery(
-    'query.getUserWeekStartById',
-    async () => {
-      const db = getDb()
-      const [user] = await db.select({ weekStart: users.weekStart }).from(users).where(eq(users.id, userId))
-      return (user?.weekStart as WeekStart) ?? DEFAULT_WEEK_START
-    },
-    { userId }
-  )
-}

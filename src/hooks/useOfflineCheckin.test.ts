@@ -277,9 +277,9 @@ describe('useOfflineCheckin', () => {
 
     const { result } = renderHook(() => useOfflineCheckin())
 
-    await expect(result.current.enqueueCheckin('habit-1', 'add', '2026-03-19')).rejects.toThrow(
-      'Cannot enqueue offline checkin without a signed-in user'
-    )
+    await expect(
+      result.current.enqueueCheckin('habit-1', 'add', '2026-03-19', '2026-03-19T00:00:00.000Z')
+    ).rejects.toThrow('Cannot enqueue offline checkin without a signed-in user')
     expect(mockEnqueueOfflineCheckin).not.toHaveBeenCalled()
   })
 
@@ -288,16 +288,39 @@ describe('useOfflineCheckin', () => {
 
     const { result } = renderHook(() => useOfflineCheckin())
 
-    await result.current.enqueueCheckin('habit-1', 'add', '2026-03-19')
+    await result.current.enqueueCheckin('habit-1', 'add', '2026-03-19', '2026-03-19T00:00:00.000Z')
 
     const item = mockEnqueueOfflineCheckin.mock.calls[0]?.[0]
     expect(item).toMatchObject({
       action: 'add',
       dateKey: '2026-03-19',
       habitId: 'habit-1',
+      occurredAt: '2026-03-19T00:00:00.000Z',
       timestamp: expect.any(Number),
       userId: CURRENT_USER_ID,
     })
     expect(isCuid(item.id)).toBe(true)
+  })
+
+  it('occurredAt が無い古いキュー項目は従来どおり replay できる（occurredAt は request body から省かれる）', async () => {
+    mockIsOnline = true
+    installServiceWorkerMock(false)
+    mockGetAllQueuedCheckins
+      .mockResolvedValueOnce([queuedCheckin('queued-legacy')])
+      .mockResolvedValueOnce([queuedCheckin('queued-legacy')])
+    mockRemoveQueuedCheckin.mockResolvedValue(undefined)
+    vi.mocked(fetch).mockResolvedValue(jsonOkResponse())
+
+    const onReplayComplete = vi.fn()
+
+    renderHook(() => useOfflineCheckin({ onReplayComplete }))
+
+    await waitFor(() => {
+      expect(mockRemoveQueuedCheckin).toHaveBeenCalledWith('queued-legacy')
+    })
+
+    const body = JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))
+    expect(body.occurredAt).toBeUndefined()
+    expect(onReplayComplete).toHaveBeenCalledWith({ failed: 0, replayed: 1 })
   })
 })

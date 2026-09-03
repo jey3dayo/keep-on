@@ -13,8 +13,9 @@ import { getColorById, getIconById } from '@/constants/habit-data'
 import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
 import { getHabitCalendarData } from '@/lib/queries/habit-calendar'
+import { getServerDateKey } from '@/lib/server/date'
 import { getRequestTimeoutMs } from '@/lib/server/timeout'
-import { getCurrentUserId } from '@/lib/user'
+import { syncUser } from '@/lib/user'
 import type { HabitIdPageProps } from '@/types/route'
 
 export async function generateMetadata({ params: _params }: HabitIdPageProps): Promise<Metadata> {
@@ -27,13 +28,18 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
 
   logInfo('request.habits.detail:start', requestMeta)
 
-  const userId = await logSpanOptional('habits.detail.syncUser', () => getCurrentUserId(), requestMeta, {
+  const user = await logSpanOptional('habits.detail.syncUser', () => syncUser(), requestMeta, {
     timeoutMs,
   })
 
-  if (!userId) {
+  if (!user) {
     redirect(SIGN_IN_PATH)
   }
+
+  const userId = user.id
+  // dayStartHour はユーザー設定なので syncUser 後に算出する（getServerDateKey 自体は cookie 読み取りのみで
+  // DB 往復は増えない）
+  const todayDateKey = await getServerDateKey({ dayStartHour: user.dayStartHour })
 
   const { id } = await params
   const [habit, calendarData] = await Promise.all([
@@ -150,6 +156,7 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
             checkinCounts={checkinCounts}
             frequency={habit.frequency}
             skipDates={skipDates}
+            todayDateKey={todayDateKey}
           />
         </CardContent>
       </Card>

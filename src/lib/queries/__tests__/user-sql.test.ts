@@ -30,6 +30,9 @@ const MIGRATION_FILES = [
   '0002_small_magus.sql',
   '0003_skip_and_reminder.sql',
   '0004_external_id.sql',
+  '0005_checkin_op.sql',
+  '0006_checkin_op_created_at_idx.sql',
+  '0007_day_start_hour.sql',
 ]
 
 beforeEach(() => {

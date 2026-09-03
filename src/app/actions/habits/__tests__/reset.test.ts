@@ -3,7 +3,7 @@ import type { habits } from '@/db/schema'
 import { deleteAllCheckinsByHabitAndPeriod } from '@/lib/queries/checkin'
 import { getHabitById } from '@/lib/queries/habit'
 import { getServerDateKey } from '@/lib/server/date'
-import { getCurrentUserId } from '@/lib/user'
+import { syncUser } from '@/lib/user'
 import { resetHabitProgressAction } from '../reset'
 
 type Habit = typeof habits.$inferSelect
@@ -39,7 +39,7 @@ vi.mock('@/lib/server/date', () => ({
 }))
 
 vi.mock('@/lib/user', () => ({
-  getCurrentUserId: vi.fn(),
+  syncUser: vi.fn(),
 }))
 
 vi.mock('@/lib/cache/habit-cache', () => ({
@@ -62,7 +62,15 @@ describe('resetHabitProgressAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getServerDateKey).mockResolvedValue(todayKey)
-    vi.mocked(getCurrentUserId).mockResolvedValue(userId)
+    vi.mocked(syncUser).mockResolvedValue({
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      dayStartHour: 24,
+      email: 'user@example.com',
+      externalId: 'access-sub-123',
+      id: userId,
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      weekStart: 'monday',
+    })
     vi.mocked(deleteAllCheckinsByHabitAndPeriod).mockResolvedValue({
       meta: {
         changed_db: true,
@@ -140,5 +148,34 @@ describe('resetHabitProgressAction', () => {
     if (!result.ok) {
       expect(result.error.name).toBe('AuthorizationError')
     }
+  })
+
+  it('未認証の場合はUnauthorizedErrorを返す', async () => {
+    vi.mocked(syncUser).mockResolvedValue(null)
+
+    const result = await resetHabitProgressAction(habitId)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.name).toBe('UnauthorizedError')
+    }
+    expect(getServerDateKey).not.toHaveBeenCalled()
+  })
+
+  it('dayStartHourをgetServerDateKeyへ渡す', async () => {
+    vi.mocked(syncUser).mockResolvedValue({
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      dayStartHour: 26,
+      email: 'user@example.com',
+      externalId: 'access-sub-123',
+      id: userId,
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      weekStart: 'monday',
+    })
+    vi.mocked(getHabitById).mockResolvedValue(buildHabit({ id: habitId, userId }))
+
+    await resetHabitProgressAction(habitId)
+
+    expect(getServerDateKey).toHaveBeenCalledWith(expect.objectContaining({ dayStartHour: 26 }))
   })
 })

@@ -1,5 +1,6 @@
+import { type DayStartHour, DEFAULT_DAY_START_HOUR } from '@/constants/habit'
 import { getServerCookie } from '@/lib/server/cookies'
-import { formatDateKey, getDateKeyInTimeZone } from '@/lib/utils/date'
+import { getDateKeyWithDayStart } from '@/lib/utils/date'
 
 const DEFAULT_TIMEZONE_COOKIE_KEY = 'ko_tz'
 
@@ -20,15 +21,12 @@ export async function getServerTimeZone(cookieKey: string = DEFAULT_TIMEZONE_COO
   return timeZone || undefined
 }
 
-export async function getServerDateKey(options: { cookieKey?: string; date?: Date } = {}) {
-  const { cookieKey = DEFAULT_TIMEZONE_COOKIE_KEY, date = new Date() } = options
+/**
+ * @param options.dayStartHour - 日付が切り替わる時刻。呼び出し元がユーザーの設定を渡さない場合は
+ *   暦どおり（24）にフォールバックする
+ */
+export async function getServerDateKey(options: { cookieKey?: string; date?: Date; dayStartHour?: DayStartHour } = {}) {
+  const { cookieKey = DEFAULT_TIMEZONE_COOKIE_KEY, date = new Date(), dayStartHour = DEFAULT_DAY_START_HOUR } = options
   const timeZone = await getServerTimeZone(cookieKey)
-  if (!timeZone) {
-    return formatDateKey(date)
-  }
-  try {
-    return getDateKeyInTimeZone(date, timeZone)
-  } catch {
-    return formatDateKey(date)
-  }
+  return getDateKeyWithDayStart(date, dayStartHour, timeZone)
 }
