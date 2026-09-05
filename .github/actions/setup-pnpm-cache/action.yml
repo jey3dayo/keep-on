@@ -22,7 +22,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup pnpm
-      uses: pnpm/action-setup@v6
+      uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
     - name: Resolve pnpm store path
       id: store
@@ -31,7 +31,7 @@ runs:
 
     - name: Restore pnpm store cache
       id: cache
-      uses: actions/cache@v6
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ steps.store.outputs.path }}
         key: ${{ runner.os }}-pnpm-store-${{ hashFiles(format('{0}', inputs.lockfile)) }}
