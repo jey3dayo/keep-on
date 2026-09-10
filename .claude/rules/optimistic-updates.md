@@ -3,7 +3,7 @@
 ## 概要
 
 ユーザーアクションに即時フィードバックを提供するための楽観的更新パターン。
-`DashboardWrapper.tsx` のチェックイン処理を参照実装とする。
+`useHabitCheckinQueue.ts`（`DashboardWrapper.tsx` から利用）のチェックイン処理を参照実装とする。
 
 ## 基本方針
 
@@ -287,6 +287,13 @@ if (prevProgress !== progress) {
 - ロールバックが複雑すぎる操作
 - エラー時の影響範囲が大きい操作
 
+この選択基準は 2 つの独立した判断からなる。
+
+- 日別カウントのように「全削除（0 にする）」を挟む操作など、**非可換な操作が混ざる場合**は、上記の
+  delta ロールバックパターンではなく 8.(a) の「確定値 + 未確定操作列」による再計算方式を使う
+- `router.refresh()` の往復中に追加の操作が起きうる画面では、方式（delta ロールバックか 8.(a) の
+  再計算か）に関係なく 8.(b) の snapshot 整合性チェック（未確定操作の有無・世代比較）が必要になる
+
 ## 7. 連続操作時のフリッカー防止
 
 ### 問題
@@ -328,9 +335,92 @@ if (ok) {
 - 中間タスクは `shouldRollback = false` でロールバックされず、楽観的状態がそのまま維持される
 - 最終的な整合性は `scheduleLazyRefresh`（5分）と `scheduleRefresh`（pending=0後500ms）で保証
 
+## 8. 確定値 + 未確定操作列パターン（日別カウントのカレンダー実装）
+
+`useHabitCheckinQueue.ts` の `queueOptimisticCheckin`（チェックインの ±1 カウント操作）は、失敗時に
+`rollback: () => updateHabitProgress(habitId, -options.delta)` で delta を逆算して巻き戻す方式を
+とっている（1. の `runOptimisticUpdateForHabit` は archive/delete/reset が使うスナップショット復元
+であり、delta の逆算ではない）。この delta ロールバックは操作が可換である前提に立つ。`updateHabitProgress`
+自身が `Math.max(0, ...)` で下限クランプするため、上限・下限のクランプが絡む時点で一般には可換ではない。
+`HabitCalendarHeatmap.tsx` の日別チェックインカレンダーは、クランプに加えて全削除（0 にする）操作も
+混ざり可換性の前提が崩れるケースを実装中に踏んだため、「確定値（サーバー snapshot）＋ 未確定操作列」を
+source of truth とし、表示値はその都度導出する設計に変えた。クランプ・全削除・順序依存がある操作は、
+このパターンで扱う。
+
+### (a) delta ロールバックは操作が可換でないと壊れる
+
+失敗時に「現在の楽観値 + (-1)」を適用する方式は、全削除（0 にする clear 操作）を挟むと壊れる。
+
+例: frequency=1・初期値0 で、応答が返る前に add / clear / add を積むと楽観値は 1。最初の add が
+失敗して `-1` が現在値へ適用されると 0 になり、その後 clear が成功・最後の add が成功しても表示は
+0 のまま固定される（DB は 1）。
+
+対処は、確定値と未確定操作列を分離し、表示は「確定値へ未確定操作列を順に適用した結果」として導出する
+（`computeEffectiveCount` / `computeDisplayCounts`）。成功した操作は確定値へ畳み込んで列から除き、
+失敗した操作は列から除くだけにする。相対的な巻き戻し（delta の逆算）が不要になるため、非可換な操作
+（クランプ・全削除を含む）も登録順に再計算できる。
+
+### (b) サーバー snapshot は世代を識別しないと採用できない
+
+`router.refresh()` を投げてからサーバーが DB を読むまでの間に別の操作が起きると、届いた snapshot が
+その操作を含むのか含まないのか判別できない。含む snapshot を未確定操作列と併せて適用すると二重適用に
+なり、含まない古い snapshot は成功済みの状態を巻き戻す。
+
+対処は2段構え。未確定操作が残っている間は snapshot を無条件に破棄する。加えて、確定値を書き換えた
+回数（成功時のみ増える世代カウンタ）と、refresh を投げた時点の世代を比較し、不一致なら破棄する。
+破棄した snapshot は取り直す。dispatch 時点の世代は、pending が空である（＝進行中の未確定操作がない）
+ことを確認した上で記録する前提であり、この前提が崩れると比較自体が成立しない。
+
+注意: この設計は「一般に複数リクエストの全順序を保証するアルゴリズム」ではない。単一カウンタで
+判別できるのは「dispatch 後に fold が起きたかどうか」だけで、個々の操作の到達順序までは保証しない。
+
+この前提の上でも、カウンタの更新条件を誤ると恒久的な拒否に陥りうる。「push（未確定操作列への追加）
+でも fold（成功時の確定値書き換え）でも進める単一カウンタ」にすると、失敗した操作が世代を進めたまま畳み込まれず、
+かつその失敗を採用基準（比較対象の世代）へ反映する経路がない設計では、**一度でも操作が失敗すると
+その画面の snapshot を恒久的に拒否し続ける**（実装中に検出した回帰）。この参照実装では世代カウンタを
+成功時（fold 時）のみ進めることで、失敗操作が捌けた直後は世代が変化せず、次に届く snapshot が正しく
+採用される。
+
+### (c) 失敗は書き込みの有無で分類して再同期を出し分ける
+
+バリデーション拒否・認可拒否は書き込みが起きていないことが確定しているため再同期は不要。`DatabaseError`
+や通信例外はミューテーション実行中の失敗で書き込みが起きたかどうか分からないため、キューが落ち着いた後に
+サーバー再同期する。この分類を `boolean` に潰すと、失敗理由をユーザーへ誤って伝えることになる（通信エラーを
+「上限に達しています」と表示するなど）。
+
+`created:false`（`createCheckinWithLimit` が返す「このリクエストが行を挿入しなかった」を表すフラグ）は
+上記 2 分類のどちらにも単純には属さない。`createCheckinWithLimit`（`src/lib/queries/checkin.ts`）は
+`INSERT ... ON CONFLICT ("id") DO NOTHING ... RETURNING *` で挿入し、挿入行の id は `opId` があればそれを
+使う。このため `created:false` は次の 2 通りのどちらでも起こる。
+
+- 期間 frequency の上限に達していて、実際に挿入されなかった
+- 同一 `opId` でのリクエスト replay が、以前の呼び出しが書いた行と id が衝突して 0 行しか返さなかった
+  （行はすでに存在し、論理的なミューテーションはすでに適用済み）
+
+つまり `created:false` は「このリクエストは行を挿入しなかった」ことしか意味せず、「論理的なミューテー
+ションが未適用である」ことの証明にはならない。したがって `created:false` 起因の失敗は、バリデーション
+拒否と同列に「再同期不要」と決め打たず、保守的には再同期しておく方が安全側の既定になる（`opId` 冪等化
+を使わない画面や、`opId` の一意性を前提できない呼び出し元では特に）。規範: `created:false` を受け取ったら
+サーバー再同期する（`created:false` は行が挿入されなかったことしか意味せず、期間上限と replay を区別
+しないため）。参照実装は `HabitCalendarHeatmap.tsx` の `limitReached`（`created:false` を再同期対象に
+含めている）。
+
+`opId` による冪等化を使う画面（`HabitCalendarHeatmap.tsx` など、操作ごとに新しい `opId` を発行する場合）
+では replay 自体が起こらないため実害は出にくいが、`created:false` を単純に「失敗」として扱う前に、
+サーバーが返す `currentCount` などの実値で状態を照合する余地があることは踏まえておく。
+
+### (d) 直列化の単位は「共有する制約」に合わせる
+
+frequency の上限が日別ではなく期間単位（daily/weekly/monthly）で共有される画面では、dateKey ごとに
+キューを分けると同じ期間に属する別日の操作が並行実行され、投入順と実行順がずれる（例: 月曜を clear →
+火曜に add、のつもりが add が先に走って期間上限に拒否される）。制約を共有する範囲（この実装では habit
+単位）で単一のタスクチェーンにする。
+
 ## 関連ファイル
 
-- `src/app/(dashboard)/dashboard/DashboardWrapper.tsx` - 参照実装
+- `src/hooks/useHabitCheckinQueue.ts` - `queueOptimisticCheckin` の delta ロールバック方式（1.〜7.）の参照実装
+- `src/app/(dashboard)/dashboard/DashboardWrapper.tsx` - 上記フックを利用するダッシュボード側の呼び出し元
+- `src/components/habits/HabitCalendarHeatmap.tsx` - 確定値 + 未確定操作列パターンの参照実装（8.）
 - `src/contexts/SyncContext.tsx` - グローバル同期状態
 - `src/hooks/useBeforeUnload.ts` - ページ離脱警告
 - `src/constants/dashboard.ts` - `MAX_CONCURRENT_CHECKINS`

@@ -54,6 +54,14 @@ mise run check
 | `noNamespaceImport`       | Drizzle schema の `import * as schema` パターン |
 | `noBarrelFile`            | コンポーネントの re-export パターン             |
 
+### ファイル限定の override
+
+ルール全体やファイル全体を off にする前に、例外が必要なマークアップだけを別ファイルへ切り出し、
+`biome.jsonc` の `overrides` で対象ファイルを絞り込めないか検討する。
+
+例: `a11y/useFocusableInteractive` は `src/components/habits/HabitCalendarGridStructure.tsx` だけで
+off にしている（理由は `biome.jsonc` の該当 override コメントを参照）。
+
 ### 除外ディレクトリ
 
 - `src/components/ui/` - shadcn/ui の自動生成コンポーネント
