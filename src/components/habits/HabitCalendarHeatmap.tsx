@@ -252,6 +252,13 @@ function CalendarCell({ cell, accentColor, frequency, disabled, onTap }: Calenda
       className={cn(
         'aspect-square w-full appearance-none rounded-sm border-0 bg-transparent p-0',
         'disabled:cursor-not-allowed',
+        // フォーカスリング: `src/components/basics/Button.tsx` / `src/components/ui/` と同じ
+        // focus-visible + ring-* の語彙に揃える。セルの背景はアクセントカラーの濃淡で
+        // 習慣ごとに変わるため、ring 色は accentColor に依存しない固定トークン（ring-ring）を使い、
+        // ring-offset-background でオフセット部分をページ背景色にしてどの背景でも視認できるようにする。
+        // grid-cols-7 gap-1（4px）に対して ring-offset-2 + ring-2 は隣接セルの領域までは
+        // 届かないが、丸め誤差での被りに備えて focus 中だけ z-10 で最前面に出す。
+        'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         !disabled && 'cursor-pointer',
         !cell.isCurrentMonth && 'opacity-30',
         cell.isFuture && 'opacity-10',

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { format, subDays } from 'date-fns'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { HabitCalendarHeatmap } from './HabitCalendarHeatmap'
@@ -1754,6 +1755,59 @@ describe('HabitCalendarHeatmap', () => {
       await waitFor(() => {
         expect(addCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, tuesday, expect.any(String))
       })
+    })
+  })
+
+  describe('キーボード操作（WCAG 2.4.7 Focus Visible 対応の回帰防止）', () => {
+    // フォーカスリングの CSS 自体（見た目）はテストで検証できない（class 名の一致では
+    // 「実際にリングが描画されるか」を保証できないため）。ここでは `<button>` の標準挙動として
+    // キーボードのみでフォーカス・操作できることを振る舞いとして確認する。
+
+    it('セルはキーボードでフォーカスできる', () => {
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map(), 3)
+
+      const cell = screen.getByTitle(targetDate)
+      cell.focus()
+
+      expect(cell).toHaveFocus()
+    })
+
+    it('フォーカスしたセルで Enter を押すと、クリックと同じ操作（addCheckinAction）が実行される', async () => {
+      const user = userEvent.setup()
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map(), 3)
+
+      const cell = screen.getByTitle(targetDate)
+      cell.focus()
+      await user.keyboard('{Enter}')
+
+      await waitFor(() => {
+        expect(addCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, targetDate, expect.any(String))
+      })
+    })
+
+    it('フォーカスしたセルで Space を押すと、クリックと同じ操作（addCheckinAction）が実行される', async () => {
+      const user = userEvent.setup()
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map(), 3)
+
+      const cell = screen.getByTitle(targetDate)
+      cell.focus()
+      await user.keyboard('[Space]')
+
+      await waitFor(() => {
+        expect(addCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, targetDate, expect.any(String))
+      })
+    })
+
+    it('disabled なセルはキーボードでフォーカスできない', () => {
+      renderHeatmap(new Map(), 1, [], { archived: true })
+
+      const cell = screen.getByTitle(dateKey(0))
+      cell.focus()
+
+      expect(cell).not.toHaveFocus()
     })
   })
 })
