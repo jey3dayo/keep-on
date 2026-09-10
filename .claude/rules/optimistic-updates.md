@@ -400,9 +400,10 @@ source of truth とし、表示値はその都度導出する設計に変えた�
 つまり `created:false` は「このリクエストは行を挿入しなかった」ことしか意味せず、「論理的なミューテー
 ションが未適用である」ことの証明にはならない。したがって `created:false` 起因の失敗は、バリデーション
 拒否と同列に「再同期不要」と決め打たず、保守的には再同期しておく方が安全側の既定になる（`opId` 冪等化
-を使わない画面や、`opId` の一意性を前提できない呼び出し元では特に）。この論点は `fix/calendar-limit-resync`
-ブランチ（PR #206、本書作成時点で未マージ）で `HabitCalendarHeatmap.tsx` の `limitReached` を再同期対象へ
-加える形で対応が進んでいる。
+を使わない画面や、`opId` の一意性を前提できない呼び出し元では特に）。規範: `created:false` を受け取ったら
+サーバー再同期する（`created:false` は行が挿入されなかったことしか意味せず、期間上限と replay を区別
+しないため）。参照実装は `HabitCalendarHeatmap.tsx` の `limitReached`（`created:false` を再同期対象に
+含めている）。
 
 `opId` による冪等化を使う画面（`HabitCalendarHeatmap.tsx` など、操作ごとに新しい `opId` を発行する場合）
 では replay 自体が起こらないため実害は出にくいが、`created:false` を単純に「失敗」として扱う前に、
