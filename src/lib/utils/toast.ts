@@ -5,6 +5,17 @@ import { toast } from 'sonner'
  * エラー時はconsole.errorも出力する
  */
 export const appToast = {
+  action: (
+    message: string,
+    options: { actionLabel: string; description?: string; duration?: number; id?: string; onAction: () => void }
+  ) => {
+    toast(message, {
+      action: { label: options.actionLabel, onClick: options.onAction },
+      description: options.description,
+      duration: options.duration,
+      id: options.id,
+    })
+  },
   error: (message: string, error?: Error | { message: string } | unknown) => {
     // エラー詳細をコンソールに出力
     if (error) {

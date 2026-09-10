@@ -3,6 +3,17 @@ import { type DayStartHour, DEFAULT_DAY_START_HOUR, isDayStartHour } from '@/con
 const DATE_KEY_REGEX = /^(\d{4})-(\d{2})-(\d{2})$/
 const DAY_NAMES_JA = ['日', '月', '火', '水', '木', '金', '土']
 const MS_PER_HOUR = 60 * 60 * 1000
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+
+/**
+ * dateKey 省略時は当日として扱う。365日は過去チェックインのオフライン再送を許容し、
+ * +1日はクライアント・サーバー間のクロックスキューを許容するための猶予
+ *
+ * `src/validators/habit-action.ts`（サーバー側バリデーション）とクライアント（カレンダーUIの
+ * タップ可否判定）の両方から使うため、i18n-server 等のサーバー専用依存を持つモジュールを
+ * 経由しないこの純粋な util に置く
+ */
+const DATE_KEY_WINDOW_DAYS = { future: 1, past: 365 } as const
 
 export function formatDateKey(date: Date): string {
   const year = date.getFullYear()
@@ -62,6 +73,17 @@ export function getDateKeyInTimeZone(date: Date, timeZone: string): string {
   }
 
   return `${year}-${month}-${day}`
+}
+
+function dateKeyToUtcMillis(dateKey: string): number {
+  const [year, month, day] = dateKey.split('-').map(Number)
+  return Date.UTC(year, month - 1, day)
+}
+
+/** dateKey が todayKey を基準とした許容ウィンドウ（未来1日・過去365日）に収まるか */
+export function isDateKeyWithinWindow(dateKey: string, todayKey: string): boolean {
+  const diffDays = Math.round((dateKeyToUtcMillis(dateKey) - dateKeyToUtcMillis(todayKey)) / MS_PER_DAY)
+  return diffDays >= -DATE_KEY_WINDOW_DAYS.past && diffDays <= DATE_KEY_WINDOW_DAYS.future
 }
 
 export function isValidTimeZone(timeZone: string): boolean {

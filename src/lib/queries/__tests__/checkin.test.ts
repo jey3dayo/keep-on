@@ -56,6 +56,7 @@ import {
   createCheckin,
   createCheckinWithLimit,
   deleteAllCheckinsByHabitAndPeriod,
+  deleteCheckinsByHabitAndDate,
   deleteLatestCheckinByHabitAndPeriod,
   getCheckinsByUserAndDate,
 } from '../checkin'
@@ -236,6 +237,46 @@ describe('deleteAllCheckinsByHabitAndPeriod', () => {
     expect(endCondition).toBeTruthy()
     expect(db.delete).toHaveBeenCalledTimes(1)
     expect(db.where).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('deleteCheckinsByHabitAndDate', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('deletes every checkin for the given habit and date and reports the deleted count', async () => {
+    const db = getDb()
+    const deletedRows = [
+      { createdAt: '2024-01-05T00:00:00.000Z', date: '2024-01-05', habitId: 'habit-3', id: 'checkin-a' },
+      { createdAt: '2024-01-05T01:00:00.000Z', date: '2024-01-05', habitId: 'habit-3', id: 'checkin-b' },
+    ]
+
+    vi.mocked(db.returning).mockResolvedValueOnce(deletedRows)
+
+    const result = await deleteCheckinsByHabitAndDate('habit-3', '2024-01-05')
+    const whereArg = vi.mocked(db.where).mock.calls[0]?.[0] as Condition | undefined
+    const habitCondition = whereArg?.conditions?.find(
+      (condition) => condition.op === 'eq' && condition.right === 'habit-3'
+    )
+    const dateCondition = whereArg?.conditions?.find(
+      (condition) => condition.op === 'eq' && condition.right === '2024-01-05'
+    )
+
+    expect(result).toEqual({ deleted: true, deletedCount: 2 })
+    expect(habitCondition).toBeTruthy()
+    expect(dateCondition).toBeTruthy()
+    expect(db.delete).toHaveBeenCalledTimes(1)
+    expect(db.returning).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns deleted:false when there is nothing to delete for that date', async () => {
+    const db = getDb()
+    vi.mocked(db.returning).mockResolvedValueOnce([])
+
+    const result = await deleteCheckinsByHabitAndDate('habit-3', '2024-01-06')
+
+    expect(result).toEqual({ deleted: false, deletedCount: 0 })
   })
 })
 
