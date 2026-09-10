@@ -153,8 +153,10 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
         <CardContent>
           <HabitCalendarHeatmap
             accentColor={colorData.color}
+            archived={habit.archived}
             checkinCounts={checkinCounts}
             frequency={habit.frequency}
+            habitId={habit.id}
             skipDates={skipDates}
             todayDateKey={todayDateKey}
           />
