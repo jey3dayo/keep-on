@@ -60,6 +60,22 @@
           }
         }
       }
+    },
+    {
+      // WAI-ARIA APG の grid パターンでは、role="row"/"columnheader"/"gridcell" は構造上の
+      // ロールでありフォーカス先ではない。セルが単一のウィジェット（このファイルでは button）
+      // を含む場合、フォーカスはそのウィジェットへ委譲され、複合ウィジェット全体でページの
+      // Tab 順序に含まれるフォーカス可能要素は1つだけになる（roving tabindex はセル内の
+      // button 側で管理する）。useFocusableInteractive はこの「フォーカスが子要素へ委譲される」
+      // パターンを認識せず、構造用の role にも tabIndex を要求してしまうため誤検知になる。
+      "includes": ["src/components/habits/HabitCalendarHeatmap.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useFocusableInteractive": "off"
+          }
+        }
+      }
     }
   ],
   "vcs": {

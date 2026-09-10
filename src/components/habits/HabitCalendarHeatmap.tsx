@@ -1360,15 +1360,21 @@ export function HabitCalendarHeatmap({
               className="space-y-2"
               role="grid"
             >
+              {/*
+                row/columnheader/gridcell はいずれも構造上のロールで、フォーカス先ではない
+                （WAI-ARIA APG grid パターン: 複合ウィジェットとしてページの Tab 順序に含まれる
+                フォーカス可能要素は1つだけで、セルが単一のウィジェット（ここでは button）を
+                含む場合はそのウィジェットへフォーカスが渡る。row/columnheader/gridcell 自体は
+                対象外）。tabIndex は付けず、実際のフォーカス管理は CalendarCell 内の button の
+                roving tabindex（tabIndex 0/-1）に委ねる。
+                biome の a11y/useFocusableInteractive はこの委譲パターンを認識できず
+                誤検知するため、この事情は biome.jsonc 側の scoped override（このファイル・
+                このルールに限定）で対応している
+              */}
               {/* Weekday headers */}
-              <div className="grid grid-cols-7 gap-1" role="row" tabIndex={-1}>
+              <div className="grid grid-cols-7 gap-1" role="row">
                 {WEEKDAY_LABELS.map((label) => (
-                  <div
-                    className="text-center text-muted-foreground text-xs"
-                    key={label}
-                    role="columnheader"
-                    tabIndex={-1}
-                  >
+                  <div className="text-center text-muted-foreground text-xs" key={label} role="columnheader">
                     {label}
                   </div>
                 ))}
@@ -1377,7 +1383,7 @@ export function HabitCalendarHeatmap({
               <div className="space-y-1">
                 {weeks.map((week, wi) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: stable week index
-                  <div className="grid grid-cols-7 gap-1" key={wi} role="row" tabIndex={-1}>
+                  <div className="grid grid-cols-7 gap-1" key={wi} role="row">
                     {week.map((cell) => {
                       const disabled = isCellTapDisabled(cell, archived, todayDateKey)
                       const periodTotal = sumEffectiveCountOverPeriod(
@@ -1409,7 +1415,7 @@ export function HabitCalendarHeatmap({
                       }
 
                       return (
-                        <div key={cell.dateKey} role="gridcell" tabIndex={-1}>
+                        <div key={cell.dateKey} role="gridcell">
                           <CalendarCell
                             accentColor={accentColor}
                             cell={cell}
