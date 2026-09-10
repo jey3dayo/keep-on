@@ -1096,9 +1096,14 @@ describe('HabitCalendarHeatmap', () => {
       expect(refreshMock).toHaveBeenCalledTimes(1)
     })
 
-    it('addCheckinAction が created:false（期間上限、書き込みなしが確定）を返した場合は router.refresh を呼ばない', async () => {
+    it('addCheckinAction が created:false（期間上限）を返した場合、デバウンス後に router.refresh を呼ぶ', async () => {
       // frequency 未満（2/3）でタップするため enqueueTap は add を選ぶ。それでもサーバー側の
-      // 期間（週/月）上限で created:false になり得るケースを想定する
+      // 期間（週/月）上限で created:false になり得るケースを想定する。
+      //
+      // created:false は「書き込みが起きていないこと」は確定しているが、「クライアントの
+      // 期間合計モデルが正しいこと」までは確定しない。他タブ・他端末での書き込みにより
+      // この画面の snapshot が stale なまま同じ判定を繰り返す行き止まり（PR #204 追加レビュー
+      // 指摘）を防ぐため、再同期を起動する必要がある。
       vi.mocked(addCheckinAction).mockResolvedValue({ data: { created: false, currentCount: 2 }, ok: true })
       const targetDate = dateKey(1)
       renderHeatmap(new Map([[targetDate, 2]]), 3)
@@ -1108,9 +1113,90 @@ describe('HabitCalendarHeatmap', () => {
         await Promise.resolve()
       })
 
+      expect(refreshMock).not.toHaveBeenCalled()
+
       await flushRefreshTimer()
 
-      expect(refreshMock).not.toHaveBeenCalled()
+      expect(refreshMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('created:false の後の再同期で届いた新しい snapshot（期間が埋まっている）を採用すると、同じセルの次のタップは add ではなく clear を選ぶ', async () => {
+      // stale snapshot のまま add を選び続ける行き止まり（PR #204 追加レビュー指摘）が
+      // 解消されていることを確認する: 再同期後は「期間が満杯」という最新の事実に基づき、
+      // 次のタップは削除（clear）に切り替わらなければならない。
+      vi.mocked(addCheckinAction).mockResolvedValue({ data: { created: false, currentCount: 2 }, ok: true })
+      const targetDate = dateKey(1)
+      const { rerender } = renderHeatmap(new Map([[targetDate, 2]]), 3)
+
+      fireEvent.click(screen.getByTitle(`${targetDate} 2/3回`))
+      await act(async () => {
+        await Promise.resolve()
+      })
+
+      await flushRefreshTimer()
+      expect(refreshMock).toHaveBeenCalledTimes(1)
+
+      // router.refresh() が実際に取り直した新しい snapshot を模する（他タブ・他端末の
+      // 書き込みにより期間が満杯になっていた、というシナリオ）
+      rerender(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map([[targetDate, 3]])}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={1}
+          skipDates={[]}
+          todayDateKey={todayDateKey}
+        />
+      )
+
+      expect(screen.getByTitle(`${targetDate} 3/3回`)).toBeInTheDocument()
+
+      vi.mocked(addCheckinAction).mockClear()
+      fireEvent.click(screen.getByTitle(`${targetDate} 3/3回`))
+      await act(async () => {
+        await Promise.resolve()
+      })
+
+      expect(clearCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, targetDate)
+      expect(addCheckinAction).not.toHaveBeenCalled()
+    })
+
+    it('連打で created:false が複数回続けて起きても、リフレッシュはデバウンスで1回にまとまる', async () => {
+      // limitReached を再同期条件に加えたことで、連打時に scheduleRefresh が呼ばれる回数が
+      // 増えても、既存のデバウンス（タイマーの再セット）により router.refresh 自体は
+      // 1回にまとまることを確認する。
+      //
+      // 同一セルへの連打は「add → （楽観的に満杯へ達し）clear → add」と循環トグルするため
+      // （壊してはいけない既存の循環トグル仕様）、3回とも add を発行させるには別々の日付を使う。
+      vi.mocked(addCheckinAction).mockResolvedValue({ data: { created: false, currentCount: 2 }, ok: true })
+      const dateA = dateKey(1)
+      const dateB = dateKey(2)
+      const dateC = dateKey(3)
+      renderHeatmap(
+        new Map([
+          [dateA, 2],
+          [dateB, 2],
+          [dateC, 2],
+        ]),
+        3
+      )
+
+      fireEvent.click(screen.getByTitle(`${dateA} 2/3回`))
+      fireEvent.click(screen.getByTitle(`${dateB} 2/3回`))
+      fireEvent.click(screen.getByTitle(`${dateC} 2/3回`))
+
+      // 単一チェーンで直列実行されるため、3件が順に解決するまでマイクロタスクを複数回進める
+      for (let i = 0; i < 30; i++) {
+        await act(async () => {
+          await Promise.resolve()
+        })
+      }
+      expect(addCheckinAction).toHaveBeenCalledTimes(3)
+
+      await flushRefreshTimer()
+
+      expect(refreshMock).toHaveBeenCalledTimes(1)
     })
 
     it('進行中のセルが残っている間はrouter.refreshを実行せず、全て完了してから実行する', async () => {

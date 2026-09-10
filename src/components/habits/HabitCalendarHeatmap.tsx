@@ -72,16 +72,28 @@ interface PendingOp {
  *
  * - `rejected`: 書き込みが起きていないことが確定している Server Action エラー
  *   （どの error name がこれに該当するか、なぜ確定できるかは `classifyActionErrorReason`
- *   を参照）。
- * - `limitReached`: `addCheckinAction` が `created:false` を返した（期間 frequency
- *   上限）。これも書き込みが起きていないことが確定している。
+ *   を参照）。認証・認可・入力検証の拒否であり、クライアントの期間合計モデルとは
+ *   無関係なため再同期は不要。
+ * - `limitReached`: `addCheckinAction` が `created:false` を返した＝**このリクエストが
+ *   行を挿入しなかった**。`createCheckinWithLimit`（`src/lib/queries/checkin.ts`）では
+ *   これが起こる理由が2つある。(1) 期間（週/月）の frequency 上限に達しており、
+ *   INSERT の WHERE 句（相関サブクエリ）が満たされなかった。(2) 同じ opId でのリクエスト
+ *   replay により、INSERT が `ON CONFLICT ("id") DO NOTHING` で無視された（対応する行は
+ *   既に存在し、論理的なミューテーションは適用済み）。どちらの理由でも、クライアントが
+ *   参照していた期間合計（確定値 + 未確定操作列から算出）は実際のサーバー状態と
+ *   食い違っている可能性があり、再同期が必要（他タブ・他端末での書き込みにより
+ *   stale snapshot のまま `add`/`clear` の判定がループする行き止まりを防ぐ）。
+ *   このカレンダーの `performAdd` はタップごとに `createId()` で新しい opId を発行する
+ *   ため、実際には (2) の replay はこの UI 経路からは起きない（別経路からの重複送信に
+ *   備えた分類）。`limitReached` という名前は (1) の上限到達を指すが、実際には (2) も
+ *   含みうることに注意（識別子は既存の判定分岐との対応を保つため変更していない）。
  * - `unknown`: `DatabaseError`。ミューテーション実行中の例外を包む汎用ケースで、
  *   実際には書き込みが成功した後に応答だけが失敗した可能性を排除できない。
  * - `exception`: Server Action 呼び出し自体が例外を投げた（通信断・タイムアウト等）。
  *   `unknown` と同様、書き込みが起きたかどうか分からない。
  *
- * `rejected` / `limitReached` はサーバーとクライアントの間に食い違いを生まないため
- * 再同期は不要、`unknown` / `exception` は食い違いの可能性があるため再同期が必要、
+ * `rejected` はサーバーとクライアントの間に食い違いを生まないため再同期は不要、
+ * `limitReached` / `unknown` / `exception` は食い違いの可能性があるため再同期が必要、
  * という判断に使う。
  */
 type PerformResult =
@@ -1182,8 +1194,16 @@ export function HabitCalendarHeatmap({
   // 再同期（scheduleRefresh）は「書き込み結果が不明な失敗」（unknown / exception）の
   // 後にも起動する。これらは実際には書き込みが成功していた可能性を排除できず、
   // クライアントの確定値がサーバーと食い違ったまま固定される事故を防ぐため。
-  // rejected / limitReached は書き込みが起きていないことが確定しているため、
-  // 再同期は不要（PerformResult の JSDoc 参照）。
+  // limitReached（addCheckinAction が created:false を返した）も再同期の対象に含める。
+  // created:false は「このリクエストが行を挿入しなかった」ことしか意味せず、期間上限と
+  // 同一 opId の replay を区別しない（詳細は PerformResult の JSDoc 参照）。どちらの
+  // 理由でも、クライアントの期間合計（確定値 + 未確定操作列から算出）自体が stale な
+  // 可能性を示す兆候である。他タブ・他端末で同じ期間の枠が埋まった場合、この画面の
+  // snapshot は古いままなので「まだ空きがある」と誤判定して add を選び続け、
+  // created:false → 再同期なし → 次のタップも同じ古い合計で add を選ぶ、という
+  // 行き止まりに陥る（チェックイン済みのセルが clear に到達できず手動リロードするまで
+  // 削除できない）。rejected は認証・認可・入力検証の拒否でクライアントの状態モデルとは
+  // 無関係なため、再同期は不要（PerformResult の JSDoc 参照）。
   //
   // options.silent は enqueueRestore（復元）からの呼び出し用。復元は count 件の
   // add をまとめて発行するため、個別の失敗ごとにトーストを出すと、復元専用の
@@ -1205,7 +1225,12 @@ export function HabitCalendarHeatmap({
         result = { ok: false, reason: 'exception' }
       }
 
-      if (result.ok || result.reason === 'unknown' || result.reason === 'exception') {
+      if (
+        result.ok ||
+        result.reason === 'unknown' ||
+        result.reason === 'exception' ||
+        result.reason === 'limitReached'
+      ) {
         scheduleRefresh()
       }
 
