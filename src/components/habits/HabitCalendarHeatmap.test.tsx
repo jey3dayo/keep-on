@@ -696,7 +696,8 @@ describe('HabitCalendarHeatmap', () => {
       // frequency を超える 3/2 表示を「正しい」と検証してしまっていた（実サーバーでは
       // 起こり得ない状態）。
       const targetDate = dateKey(1)
-      let resolveClear: ((value: { error: { message: string; name: string }; ok: false }) => void) | null = null
+      let resolveClear: ((value: { error: { message: string; name: 'DatabaseError' }; ok: false }) => void) | null =
+        null
       vi.mocked(clearCheckinAction).mockImplementation(
         () =>
           new Promise((resolve) => {
