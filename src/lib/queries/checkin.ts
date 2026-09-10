@@ -390,6 +390,45 @@ export async function deleteLatestCheckinByHabitAndPeriod(
   )
 }
 
+/**
+ * 特定日のチェックイン削除結果
+ *
+ * @property deleted - 1件以上削除されたかどうか
+ * @property deletedCount - 削除された件数
+ */
+export interface DeleteCheckinsByDateResult {
+  deleted: boolean
+  deletedCount: number
+}
+
+/**
+ * 指定した habitId + 日付のチェックインを全件削除する。
+ *
+ * カレンダーヒートマップのセルタップ（循環トグルで上限到達時の全削除）用。
+ * `deleteLatestCheckinByHabitAndPeriod` は期間（週/月）内の最新1件を削除する設計のため、
+ * 特定日を指定した削除には使えない（週次・月次習慣で意図しない別日が消える）。
+ */
+export async function deleteCheckinsByHabitAndDate(
+  habitId: string,
+  date: Date | string
+): Promise<DeleteCheckinsByDateResult> {
+  return await profileQuery(
+    'query.deleteCheckinsByHabitAndDate',
+    async () => {
+      const db = getDb()
+      const dateKey = normalizeDateKey(date)
+
+      const deleted = await db
+        .delete(checkins)
+        .where(and(eq(checkins.habitId, habitId), eq(checkins.date, dateKey)))
+        .returning()
+
+      return { deleted: deleted.length > 0, deletedCount: deleted.length }
+    },
+    { habitId }
+  )
+}
+
 export async function deleteAllCheckinsByHabitAndPeriod(
   habitId: string,
   date: Date | string,
