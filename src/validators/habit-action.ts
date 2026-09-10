@@ -1,29 +1,15 @@
 import { Result } from '@praha/byethrow'
 import type { DayStartHour } from '@/constants/habit'
 import { ValidationError } from '@/lib/errors/habit'
-import { getDateKeyWithDayStart, isValidTimeZone } from '@/lib/utils/date'
+import { getDateKeyWithDayStart, isDateKeyWithinWindow, isValidTimeZone } from '@/lib/utils/date'
 import { safeParseDateKey } from '@/schemas/date-key'
 import { safeParseHabitId } from '@/schemas/habit'
 
 type ValidationTarget = 'habitId' | 'dateKey'
 
-/**
- * dateKey 省略時は当日として扱う。365日は過去チェックインのオフライン再送を許容し、
- * +1日はクライアント・サーバー間のクロックスキューを許容するための猶予
- */
-const DATE_KEY_WINDOW_DAYS = { future: 1, past: 365 } as const
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000
-
-function dateKeyToUtcMillis(dateKey: string): number {
-  const [year, month, day] = dateKey.split('-').map(Number)
-  return Date.UTC(year, month - 1, day)
-}
-
-export function isDateKeyWithinWindow(dateKey: string, todayKey: string): boolean {
-  const diffDays = Math.round((dateKeyToUtcMillis(dateKey) - dateKeyToUtcMillis(todayKey)) / MS_PER_DAY)
-  return diffDays >= -DATE_KEY_WINDOW_DAYS.past && diffDays <= DATE_KEY_WINDOW_DAYS.future
-}
+// client からも import できるよう本体は `@/lib/utils/date`（i18n-server 等のサーバー専用依存を持たない
+// 純粋な util）に置き、既存の import 元（このファイル）からは re-export する
+export { isDateKeyWithinWindow } from '@/lib/utils/date'
 
 function toValidationError(issue: unknown, fallback: ValidationTarget) {
   const record = issue && typeof issue === 'object' ? (issue as Record<string, unknown>) : {}
