@@ -1850,6 +1850,135 @@ describe('HabitCalendarHeatmap', () => {
       expect(zeroTabButtons).toHaveLength(1)
       expect(zeroTabButtons[0]).toHaveAttribute('title', dateKey(0))
     })
+
+    // greptile / Codex の外部レビューで指摘された不具合の回帰防止テスト。
+    // `focusedDateKeyByMonth` の初期化子は初回マウント時にしか走らないため、月境界を
+    // またいで新しい todayDateKey が props で届くと、monthList に新しく加わった当月の
+    // エントリが存在せず null のままになり、その月の全セルが tabIndex=-1 になって
+    // Tab で grid に入れなくなっていた。
+    it('月境界をまたいで新しい todayDateKey が届くと、新しく加わった当月の grid に tabIndex=0 のセルがちょうど1つ存在する', () => {
+      const initialToday = new Date(2026, 8, 15) // 2026-09-15
+      const initialTodayDateKey = format(initialToday, 'yyyy-MM-dd')
+      const nextToday = new Date(2026, 9, 15) // 2026-10-15（翌月）
+      const nextTodayDateKey = format(nextToday, 'yyyy-MM-dd')
+
+      const { rerender } = render(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={2}
+          todayDateKey={initialTodayDateKey}
+        />
+      )
+
+      rerender(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={2}
+          todayDateKey={nextTodayDateKey}
+        />
+      )
+
+      // grids[0] は常に当月（monthList の先頭は subMonths(today, 0)）
+      const grids = screen.getAllByRole('grid')
+      expect(grids).toHaveLength(2)
+      const currentMonthZeroTabButtons = within(grids[0])
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(currentMonthZeroTabButtons).toHaveLength(1)
+      expect(currentMonthZeroTabButtons[0]).not.toBeDisabled()
+      expect(currentMonthZeroTabButtons[0]).toHaveAttribute('title', nextTodayDateKey)
+    })
+
+    it('月境界をまたいでも、既存の月で移動済みのフォーカス位置は保持される', () => {
+      const initialToday = new Date(2026, 8, 15) // 2026-09-15
+      const initialTodayDateKey = format(initialToday, 'yyyy-MM-dd')
+      const nextToday = new Date(2026, 9, 15) // 2026-10-15（翌月）
+      const nextTodayDateKey = format(nextToday, 'yyyy-MM-dd')
+      // 当月（9月）は rerender 後に「既存の月」として残り続ける（過去月として）
+      const previousDayInCurrentMonth = format(subDays(initialToday, 1), 'yyyy-MM-dd')
+
+      const { rerender } = render(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={2}
+          todayDateKey={initialTodayDateKey}
+        />
+      )
+
+      // 当月（9月、grids[0]）の初期フォーカスは今日（9/15）。ArrowLeft で前日（9/14）へ動かし、
+      // 「ユーザーが移動した位置」を作る
+      const initialCell = screen.getByTitle(initialTodayDateKey)
+      initialCell.focus()
+      fireEvent.keyDown(initialCell, { key: 'ArrowLeft' })
+      expect(screen.getByTitle(previousDayInCurrentMonth)).toHaveFocus()
+
+      rerender(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={2}
+          todayDateKey={nextTodayDateKey}
+        />
+      )
+
+      // 9月は rerender 後 grids[1]（過去月）になるが、移動済みのフォーカス位置（9/14）が
+      // 維持されていること（過去月の既定値である月内最後の操作可能日へリセットされないこと）
+      const grids = screen.getAllByRole('grid')
+      expect(grids).toHaveLength(2)
+      const previousMonthZeroTabButtons = within(grids[1])
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(previousMonthZeroTabButtons).toHaveLength(1)
+      expect(previousMonthZeroTabButtons[0]).toHaveAttribute('title', previousDayInCurrentMonth)
+    })
+
+    it('全セルが無効な月では、todayDateKey の変化後も tabIndex=0 のセルが0個のままである', () => {
+      const initialToday = new Date(2026, 8, 15)
+      const initialTodayDateKey = format(initialToday, 'yyyy-MM-dd')
+      const nextToday = new Date(2026, 9, 15)
+      const nextTodayDateKey = format(nextToday, 'yyyy-MM-dd')
+
+      const { rerender } = render(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          archived
+          checkinCounts={new Map()}
+          frequency={1}
+          habitId={DEFAULT_HABIT_ID}
+          months={1}
+          todayDateKey={initialTodayDateKey}
+        />
+      )
+
+      rerender(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          archived
+          checkinCounts={new Map()}
+          frequency={1}
+          habitId={DEFAULT_HABIT_ID}
+          months={1}
+          todayDateKey={nextTodayDateKey}
+        />
+      )
+
+      const grid = screen.getByRole('grid')
+      const zeroTabButtons = within(grid)
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(zeroTabButtons).toHaveLength(0)
+    })
   })
 
   describe('キーボードによるセル間移動（矢印キー・Home/End）', () => {

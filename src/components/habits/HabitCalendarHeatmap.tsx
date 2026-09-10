@@ -15,6 +15,7 @@ import { getPeriodDateRange } from '@/lib/queries/period'
 import { cn } from '@/lib/utils'
 import { formatDateKey, isDateKeyWithinWindow, parseDateKey } from '@/lib/utils/date'
 import { appToast } from '@/lib/utils/toast'
+import { type HabitCalendarGridCellData, HabitCalendarGridStructure } from './HabitCalendarGridStructure'
 
 interface HabitCalendarHeatmapProps {
   accentColor: string
@@ -858,6 +859,10 @@ export function HabitCalendarHeatmap({
     return result
   }, [today, months])
 
+  // monthList のインデックスに対応する monthLabel の一覧。月境界をまたいだ props 更新
+  // （後述の focusedDateKeyByMonth 同期）で「どの月が新しく増えたか」を判定するために使う。
+  const monthLabels = useMemo(() => monthList.map((month) => format(month, 'yyyy年M月', { locale: ja })), [monthList])
+
   // roving tabindex: 月ごとに「現在フォーカスされている dateKey」を1つだけ保持する。
   // ref ではなく state にする理由は、tabIndex（0/-1）を実際に DOM へ反映させ、Tab で
   // grid に再入場したときに正しい停止点へ戻れるようにするため（DOM の tabindex 属性が
@@ -868,16 +873,49 @@ export function HabitCalendarHeatmap({
   // 「再入場時は最後にフォーカスした日を保持する」がそのまま実現される
   // （tabIndex=0 を持つセルは常に1つで、それが Tab の戻り先になるため）。
   const [focusedDateKeyByMonth, setFocusedDateKeyByMonth] = useState<Record<string, string | null>>(() => {
-    const initialCounts = new Map(checkinCounts)
-    const initialSkipSet = new Set(skipDates)
     const map: Record<string, string | null> = {}
     monthList.forEach((month, index) => {
-      const weeks = buildMonthGrid(month, initialCounts, initialSkipSet, today)
-      const monthLabel = format(month, 'yyyy年M月', { locale: ja })
-      map[monthLabel] = computeInitialFocusDateKey(weeks, index === 0, todayDateKey, archived)
+      const weeks = buildMonthGrid(month, confirmedCountsRef.current, confirmedSkipRef.current, today)
+      map[monthLabels[index]] = computeInitialFocusDateKey(weeks, index === 0, todayDateKey, archived)
     })
     return map
   })
+
+  // props → state の同期は render 中の prev !== next 比較で行う（useEffect は使わない。
+  // `.claude/rules/optimistic-updates.md` 参照）。
+  //
+  // 月境界をまたいで新しい `todayDateKey` が届くと、`monthList`（延いては monthLabels）に
+  // 新しい当月が加わる。初回マウント時にしか走らない useState の初期化子だけでは、この
+  // 新しい月の focusedDateKeyByMonth エントリが存在せず null のままになり、その月の全セルが
+  // tabIndex=-1 になって Tab で入れなくなる（greptile / Codex 指摘）。
+  //
+  // monthLabelsKey（文字列化した monthLabels）が変化した時だけ、新しい monthLabels と
+  // 既存の focusedDateKeyByMonth を突き合わせて整合させる:
+  //   - 既存の月（ユーザーが矢印キーで移動済みかもしれない）はそのまま引き継ぐ
+  //   - 新しく加わった月には、初回マウント時と同じ起点算出ロジックで初期位置を設定する
+  //   - monthList から外れた月は次の map に含めないため、自然に整理される（メモリの単調増加を防ぐ）
+  //
+  // この比較・計算は confirmedCountsRef/confirmedSkipRef の「読み取り」のみで、ref への
+  // 書き込みは行わない冪等な処理なので、StrictMode の二重 render でも安全（同じ入力に対して
+  // 同じ next を計算するだけで、2回目の実行が1回目の結果を潰すことはない）。
+  const monthLabelsKey = monthLabels.join('|')
+  const [prevMonthLabelsKey, setPrevMonthLabelsKey] = useState(monthLabelsKey)
+  if (prevMonthLabelsKey !== monthLabelsKey) {
+    setPrevMonthLabelsKey(monthLabelsKey)
+    setFocusedDateKeyByMonth((prev) => {
+      const next: Record<string, string | null> = {}
+      monthList.forEach((month, index) => {
+        const monthLabel = monthLabels[index]
+        if (monthLabel in prev) {
+          next[monthLabel] = prev[monthLabel]
+        } else {
+          const weeks = buildMonthGrid(month, confirmedCountsRef.current, confirmedSkipRef.current, today)
+          next[monthLabel] = computeInitialFocusDateKey(weeks, index === 0, todayDateKey, archived)
+        }
+      })
+      return next
+    })
+  }
 
   const setFocusedDateKey = useCallback((monthLabel: string, dateKey: string) => {
     setFocusedDateKeyByMonth((prev) => ({ ...prev, [monthLabel]: dateKey }))
@@ -1348,100 +1386,73 @@ export function HabitCalendarHeatmap({
         const monthHeadingId = `habit-calendar-month-heading-${monthLabel}`
         const focusedDateKey = focusedDateKeyByMonth[monthLabel] ?? null
 
+        const weekRows: HabitCalendarGridCellData[][] = weeks.map((week) =>
+          week.map((cell) => {
+            const disabled = isCellTapDisabled(cell, archived, todayDateKey)
+            const periodTotal = sumEffectiveCountOverPeriod(
+              cell.dateKey,
+              period,
+              weekStartDay,
+              (key) => counts.get(key) ?? 0
+            )
+            const descriptionText = getCellDescriptionText(cell, archived, todayDateKey, periodTotal >= frequency)
+            const descriptionId = descriptionText ? `habit-calendar-desc-${monthLabel}-${cell.dateKey}` : undefined
+            const isTabStop = !disabled && cell.dateKey === focusedDateKey
+            const refKey = `${monthLabel}:${cell.dateKey}`
+            // disabled セルはネイティブの disabled 属性だけでフォーカス対象から除外される。
+            // disabled な button に明示的な tabIndex（0 や -1）を与えると、一部の DOM 実装
+            // （jsdom を含む）で「disabled のはずなのに .focus() が効いてしまう」挙動になる
+            // ことが実測で確認できたため、disabled セルには tabIndex 自体を渡さない。
+            let cellTabIndex: number | undefined
+            if (disabled) {
+              cellTabIndex = undefined
+            } else {
+              cellTabIndex = isTabStop ? 0 : -1
+            }
+
+            return {
+              content: (
+                <>
+                  <CalendarCell
+                    accentColor={accentColor}
+                    cell={cell}
+                    descriptionId={descriptionId}
+                    disabled={disabled}
+                    frequency={frequency}
+                    monthLabel={monthLabel}
+                    onKeyDown={handleCellKeyDown}
+                    onTap={enqueueTap}
+                    refKey={refKey}
+                    registerCellRef={registerCellRef}
+                    tabIndex={cellTabIndex}
+                    weeks={weeks}
+                  />
+                  {descriptionText ? (
+                    <span className="sr-only" id={descriptionId}>
+                      {descriptionText}
+                    </span>
+                  ) : null}
+                </>
+              ),
+              key: cell.dateKey,
+            }
+          })
+        )
+
         return (
           <div className="space-y-2" key={monthLabel}>
             <div className="font-medium text-foreground text-sm" id={monthHeadingId}>
               {monthLabel}
             </div>
-            {/* 月ごとに独立した grid にする（全体を1つの grid にしない） */}
-            <div
-              aria-describedby={KEYBOARD_INSTRUCTIONS_ID}
-              aria-labelledby={monthHeadingId}
-              className="space-y-2"
-              role="grid"
-            >
-              {/*
-                row/columnheader/gridcell はいずれも構造上のロールで、フォーカス先ではない
-                （WAI-ARIA APG grid パターン: 複合ウィジェットとしてページの Tab 順序に含まれる
-                フォーカス可能要素は1つだけで、セルが単一のウィジェット（ここでは button）を
-                含む場合はそのウィジェットへフォーカスが渡る。row/columnheader/gridcell 自体は
-                対象外）。tabIndex は付けず、実際のフォーカス管理は CalendarCell 内の button の
-                roving tabindex（tabIndex 0/-1）に委ねる。
-                biome の a11y/useFocusableInteractive はこの委譲パターンを認識できず
-                誤検知するため、この事情は biome.jsonc 側の scoped override（このファイル・
-                このルールに限定）で対応している
-              */}
-              {/* Weekday headers */}
-              <div className="grid grid-cols-7 gap-1" role="row">
-                {WEEKDAY_LABELS.map((label) => (
-                  <div className="text-center text-muted-foreground text-xs" key={label} role="columnheader">
-                    {label}
-                  </div>
-                ))}
-              </div>
-              {/* Calendar grid */}
-              <div className="space-y-1">
-                {weeks.map((week, wi) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: stable week index
-                  <div className="grid grid-cols-7 gap-1" key={wi} role="row">
-                    {week.map((cell) => {
-                      const disabled = isCellTapDisabled(cell, archived, todayDateKey)
-                      const periodTotal = sumEffectiveCountOverPeriod(
-                        cell.dateKey,
-                        period,
-                        weekStartDay,
-                        (key) => counts.get(key) ?? 0
-                      )
-                      const descriptionText = getCellDescriptionText(
-                        cell,
-                        archived,
-                        todayDateKey,
-                        periodTotal >= frequency
-                      )
-                      const descriptionId = descriptionText
-                        ? `habit-calendar-desc-${monthLabel}-${cell.dateKey}`
-                        : undefined
-                      const isTabStop = !disabled && cell.dateKey === focusedDateKey
-                      const refKey = `${monthLabel}:${cell.dateKey}`
-                      // disabled セルはネイティブの disabled 属性だけでフォーカス対象から除外される。
-                      // disabled な button に明示的な tabIndex（0 や -1）を与えると、一部の DOM 実装
-                      // （jsdom を含む）で「disabled のはずなのに .focus() が効いてしまう」挙動になる
-                      // ことが実測で確認できたため、disabled セルには tabIndex 自体を渡さない。
-                      let cellTabIndex: number | undefined
-                      if (disabled) {
-                        cellTabIndex = undefined
-                      } else {
-                        cellTabIndex = isTabStop ? 0 : -1
-                      }
-
-                      return (
-                        <div key={cell.dateKey} role="gridcell">
-                          <CalendarCell
-                            accentColor={accentColor}
-                            cell={cell}
-                            descriptionId={descriptionId}
-                            disabled={disabled}
-                            frequency={frequency}
-                            monthLabel={monthLabel}
-                            onKeyDown={handleCellKeyDown}
-                            onTap={enqueueTap}
-                            refKey={refKey}
-                            registerCellRef={registerCellRef}
-                            tabIndex={cellTabIndex}
-                            weeks={weeks}
-                          />
-                          {descriptionText ? (
-                            <span className="sr-only" id={descriptionId}>
-                              {descriptionText}
-                            </span>
-                          ) : null}
-                        </div>
-                      )
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* 月ごとに独立した grid にする（全体を1つの grid にしない）。構造マークアップ
+                （role="grid"/"row"/"columnheader"/"gridcell"）は HabitCalendarGridStructure
+                （biome.jsonc の scoped override 対象）へ切り出し済み */}
+            <HabitCalendarGridStructure
+              keyboardInstructionsId={KEYBOARD_INSTRUCTIONS_ID}
+              monthHeadingId={monthHeadingId}
+              weekdayLabels={WEEKDAY_LABELS}
+              weekRows={weekRows}
+            />
           </div>
         )
       })}
