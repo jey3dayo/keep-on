@@ -945,6 +945,9 @@ export function HabitCalendarHeatmap({
   // `(monthList, archived, todayDateKey)` の関数だから。counts/skipSet は cell.count /
   // cell.isSkip には影響するが disabled 判定には影響しないため、focusSyncKey が同じ間は
   // 毎レンダー検証しても結果は変わらない（＝この間引きは検証結果を変えない）。
+  // このため `isCellTapDisabled` に無効条件を追加するときは、その条件が依存する値を
+  // focusSyncKey にも必ず加えること。加え忘れると、条件が変わっても再検証が走らず、
+  // 無効になったセルが tabIndex=0 のまま残る（または停止点が消える）。
   const focusSyncKey = `${monthLabels.join('|')}|${archived}|${todayDateKey}`
   const [prevFocusSyncKey, setPrevFocusSyncKey] = useState(focusSyncKey)
   if (prevFocusSyncKey !== focusSyncKey) {
