@@ -150,7 +150,13 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
         <CardHeader>
           <CardTitle className="text-base">チェックイン履歴（過去6ヶ月）</CardTitle>
         </CardHeader>
-        <CardContent>
+        {/*
+            狭幅（sm未満）ではセルのタップ領域が44pxに届かないため、カード側の水平paddingを
+            8px程度まで縮めてグリッドの実表示幅を稼ぐ（実測は tmp/a11y-measure/measure-mobile.mjs
+            参照）。gap-1（セル間4px）は維持し、垂直paddingとカード外枠は変えない。
+            凡例・月見出しも同じ CardContent 内にあるため、この padding 変更だけで両方揃う
+          */}
+        <CardContent className="px-2 sm:px-6">
           <HabitCalendarHeatmap
             accentColor={colorData.color}
             archived={habit.archived}
