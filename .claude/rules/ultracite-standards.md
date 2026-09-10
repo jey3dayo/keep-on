@@ -54,6 +54,18 @@ mise run check
 | `noNamespaceImport`       | Drizzle schema の `import * as schema` パターン |
 | `noBarrelFile`            | コンポーネントの re-export パターン             |
 
+### ファイル限定の override
+
+ルール全体やファイル全体を off にする前に、例外が必要なマークアップだけを別ファイルへ切り出し、
+`biome.jsonc` の `overrides` で対象ファイルを絞り込めないか検討する。
+
+例: `a11y/useFocusableInteractive` は `src/components/habits/HabitCalendarGridStructure.tsx` だけで
+off にしている。WAI-ARIA APG の grid パターンでは `role="row"` / `columnheader` / `gridcell` は構造
+ロールで、セルが単一ウィジェット（button）を含む場合フォーカスはそのウィジェットへ委譲されるが、この
+ルールはその委譲パターンを認識せず構造ロールにも tabIndex を要求する。`UseFocusableInteractiveOptions`
+はスキーマ上ロール単位の絞り込みができないため、構造マークアップだけを別ファイルへ切り出して override
+の範囲を最小化した（理由の詳細は `biome.jsonc` の該当 override コメントを参照）。
+
 ### 除外ディレクトリ
 
 - `src/components/ui/` - shadcn/ui の自動生成コンポーネント
