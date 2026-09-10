@@ -4,6 +4,7 @@ import { createId } from '@paralleldrive/cuid2'
 import { addDays, eachDayOfInterval, endOfMonth, format, getDay, startOfMonth, subMonths } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { addCheckinAction } from '@/app/actions/habits/checkin'
 import { clearCheckinAction } from '@/app/actions/habits/clear-checkin'
@@ -14,6 +15,7 @@ import { getPeriodDateRange } from '@/lib/queries/period'
 import { cn } from '@/lib/utils'
 import { formatDateKey, isDateKeyWithinWindow, parseDateKey } from '@/lib/utils/date'
 import { appToast } from '@/lib/utils/toast'
+import { type HabitCalendarGridCellData, HabitCalendarGridStructure } from './HabitCalendarGridStructure'
 
 interface HabitCalendarHeatmapProps {
   accentColor: string
@@ -123,6 +125,12 @@ const ERROR_MESSAGE_BY_KIND: Record<PendingOp['kind'], string> = {
 const REFRESH_DEBOUNCE_MS = 500
 // 全削除の undo トーストを表示しておく時間。ユーザーが気づいて「取り消す」を押す余裕を持たせる
 const CLEAR_UNDO_TOAST_DURATION_MS = 8000
+// grid 全体で共有するキーボード操作説明の id（各月の role="grid" から aria-describedby で参照）
+const KEYBOARD_INSTRUCTIONS_ID = 'habit-calendar-keyboard-instructions'
+// ←/→ で月内の前後の日を探索する際の最大試行回数（月は最大31日なので余裕を持たせる）
+const MAX_DAY_SEARCH_STEPS = 40
+// ↑/↓ で同じ曜日の前後の週を探索する際の最大試行回数（月は最大6週）
+const MAX_WEEK_SEARCH_STEPS = 6
 
 function getCheckinColor(count: number, frequency: number, accentColor: string): string {
   const ratio = Math.min(count / frequency, 1)
@@ -164,6 +172,88 @@ function getCellTitle(cell: DayCell, frequency: number): string {
     return `${cell.dateKey} スキップ`
   }
   return cell.dateKey
+}
+
+/**
+ * スクリーンリーダー向けの `aria-label`。マウス向けの `title`（`getCellTitle`）とは別に、
+ * 「年を省略しない自然言語の日付＋現在の状態のみ」の文字列を作る。次の操作（追加/削除/
+ * スキップ解除）はここに含めない（`aria-describedby` 側の責務。`getCellDescriptionText` 参照）。
+ *
+ * 月外の padding セル（同じ日付が隣接月のグリッドにも重複して現れる）は、操作対象になり得ず
+ * 状態を持たないため、日付のみを返す（冗長な状態説明を足さない）。
+ */
+function getCellAriaLabel(cell: DayCell, frequency: number): string {
+  const dateLabel = format(cell.date, 'yyyy年M月d日', { locale: ja })
+  if (!cell.isCurrentMonth) {
+    return dateLabel
+  }
+  if (cell.isSkip && cell.count === 0) {
+    return `${dateLabel}、スキップ`
+  }
+  if (cell.isSkip) {
+    return `${dateLabel}、目標${frequency}回中${cell.count}回、スキップ`
+  }
+  if (cell.count === 0) {
+    return `${dateLabel}、記録なし`
+  }
+  return `${dateLabel}、目標${frequency}回中${cell.count}回`
+}
+
+/**
+ * 無効セル（タップ不可）の理由を、入力方法に依存しない短い文で返す。`isCellTapDisabled` と
+ * 同じ優先順位（isFuture → archived → 許容ウィンドウ外）で判定する。月外の padding セルは
+ * 操作対象になり得ないため対象外（null）。
+ */
+function getCellDisabledReason(cell: DayCell, archived: boolean, todayDateKey: string): string | null {
+  if (!cell.isCurrentMonth) {
+    return null
+  }
+  if (cell.isFuture) {
+    return '未来の日付のため操作できません'
+  }
+  if (archived) {
+    return 'この習慣はアーカイブ済みのため操作できません'
+  }
+  if (!isDateKeyWithinWindow(cell.dateKey, todayDateKey)) {
+    return '許容期間外のため操作できません'
+  }
+  return null
+}
+
+/**
+ * 有効セルの「次の操作」を、入力方法に依存しない表現（「タップで〜」と書かない）で返す。
+ * `enqueueTap` と同じ優先順位（isSkip を最優先）で判定する。
+ * `isPeriodFull` は呼び出し元が期間合計（daily/weekly/monthly）から算出したもの。
+ * 破壊的な操作（全削除）は件数を含めることで、実行前に影響範囲が分かるようにする。
+ */
+function getCellActionDescription(cell: DayCell, isPeriodFull: boolean): string {
+  if (cell.isSkip) {
+    return 'スキップを解除'
+  }
+  if (cell.count > 0 && isPeriodFull) {
+    return `この日の${cell.count}件を削除`
+  }
+  return '追加'
+}
+
+/**
+ * セルの `aria-describedby` が参照する説明文。無効セルは理由、有効セルは次の操作を返す。
+ * 月外の padding セルは対象外（null）。
+ */
+function getCellDescriptionText(
+  cell: DayCell,
+  archived: boolean,
+  todayDateKey: string,
+  isPeriodFull: boolean
+): string | null {
+  if (!cell.isCurrentMonth) {
+    return null
+  }
+  const disabledReason = getCellDisabledReason(cell, archived, todayDateKey)
+  if (disabledReason) {
+    return disabledReason
+  }
+  return getCellActionDescription(cell, isPeriodFull)
 }
 
 interface SelectedDateInfo {
@@ -232,26 +322,230 @@ function isCellTapDisabled(cell: DayCell, archived: boolean, todayDateKey: strin
   return !cell.isCurrentMonth || cell.isFuture || archived || !isDateKeyWithinWindow(cell.dateKey, todayDateKey)
 }
 
+/** `weeks`（1ヶ月ぶんの週グリッド）から dateKey に一致するセルを探す */
+function findCellInWeeks(weeks: DayCell[][], dateKey: string): DayCell | undefined {
+  for (const week of weeks) {
+    for (const cell of week) {
+      if (cell.dateKey === dateKey) {
+        return cell
+      }
+    }
+  }
+  return undefined
+}
+
+/**
+ * 保存された `dateKey`（roving tabindex の focusedDateKeyByMonth に積まれた値）が、
+ * 今の `weeks` において実在し、かつ操作可能セルであるかを判定する。
+ *
+ * 保存値の再検証（外部レビュー指摘: archived 解除や許容ウィンドウの移動で保存値が
+ * 無効になっても復旧しない問題）に使う。null / 未保存はここでは無効として扱い、
+ * 呼び出し元で `computeInitialFocusDateKey` へフォールバックさせる。
+ */
+function isValidFocusDateKey(
+  weeks: DayCell[][],
+  dateKey: string | null,
+  archived: boolean,
+  todayDateKey: string
+): boolean {
+  if (!dateKey) {
+    return false
+  }
+  const cell = findCellInWeeks(weeks, dateKey)
+  return cell !== undefined && !isCellTapDisabled(cell, archived, todayDateKey)
+}
+
+/**
+ * `fromDate` から `stepDays` ずつ日付を進め、その月の grid 内で最初に見つかった有効セルの
+ * dateKey を返す。無効セル（disabled）は読み飛ばして同じ方向へ探索を続ける。
+ * grid の外（padding の外）まで出た、または `maxSteps` に達した場合は null を返し、
+ * 呼び出し元はフォーカスを移動させず現在位置に留まる（月境界で wrap しない）。
+ */
+function findNextValidDateKey(
+  weeks: DayCell[][],
+  fromDate: Date,
+  stepDays: number,
+  archived: boolean,
+  todayDateKey: string,
+  maxSteps: number
+): string | null {
+  let current = fromDate
+  for (let i = 0; i < maxSteps; i++) {
+    current = addDays(current, stepDays)
+    const dateKey = formatDateKey(current)
+    const cell = findCellInWeeks(weeks, dateKey)
+    if (!cell) {
+      return null
+    }
+    if (!isCellTapDisabled(cell, archived, todayDateKey)) {
+      return dateKey
+    }
+  }
+  return null
+}
+
+/**
+ * `dateKey` が属する週（行）の最初／最後の操作可能セルの dateKey を返す。
+ * その週に操作可能なセルが1つも無ければ null（フォーカスは移動しない）。
+ */
+function findRowEdgeDateKey(
+  weeks: DayCell[][],
+  dateKey: string,
+  edge: 'first' | 'last',
+  archived: boolean,
+  todayDateKey: string
+): string | null {
+  const week = weeks.find((row) => row.some((cell) => cell.dateKey === dateKey))
+  if (!week) {
+    return null
+  }
+  const orderedCells = edge === 'first' ? week : [...week].reverse()
+  for (const cell of orderedCells) {
+    if (!isCellTapDisabled(cell, archived, todayDateKey)) {
+      return cell.dateKey
+    }
+  }
+  return null
+}
+
+// キー入力から「次にフォーカスすべき dateKey を探す関数」への対応表。ネストした条件分岐を避ける
+// ためのルックアップ。Enter/Space/Tab はここに含めない（ネイティブ button の標準挙動に委ねる）。
+const KEY_TO_FOCUS_MOVE: Record<
+  string,
+  (weeks: DayCell[][], cell: DayCell, archived: boolean, todayDateKey: string) => string | null
+> = {
+  ArrowDown: (weeks, cell, archived, todayDateKey) =>
+    findNextValidDateKey(weeks, cell.date, 7, archived, todayDateKey, MAX_WEEK_SEARCH_STEPS),
+  ArrowLeft: (weeks, cell, archived, todayDateKey) =>
+    findNextValidDateKey(weeks, cell.date, -1, archived, todayDateKey, MAX_DAY_SEARCH_STEPS),
+  ArrowRight: (weeks, cell, archived, todayDateKey) =>
+    findNextValidDateKey(weeks, cell.date, 1, archived, todayDateKey, MAX_DAY_SEARCH_STEPS),
+  ArrowUp: (weeks, cell, archived, todayDateKey) =>
+    findNextValidDateKey(weeks, cell.date, -7, archived, todayDateKey, MAX_WEEK_SEARCH_STEPS),
+  End: (weeks, cell, archived, todayDateKey) => findRowEdgeDateKey(weeks, cell.dateKey, 'last', archived, todayDateKey),
+  Home: (weeks, cell, archived, todayDateKey) =>
+    findRowEdgeDateKey(weeks, cell.dateKey, 'first', archived, todayDateKey),
+}
+
+/**
+ * 月の初期フォーカス位置（roving tabindex の起点）を求める。
+ * 当月なら今日（今日が何らかの理由で無効なら直近の操作可能日へフォールバック）、
+ * 過去月なら最後の操作可能日。操作可能セルが1つも無い月は null（tabIndex=0 が0個になる）。
+ */
+function computeInitialFocusDateKey(
+  weeks: DayCell[][],
+  isCurrentMonthView: boolean,
+  todayDateKey: string,
+  archived: boolean
+): string | null {
+  const enabledDateKeys: string[] = []
+  for (const week of weeks) {
+    for (const cell of week) {
+      if (cell.isCurrentMonth && !isCellTapDisabled(cell, archived, todayDateKey)) {
+        enabledDateKeys.push(cell.dateKey)
+      }
+    }
+  }
+  if (enabledDateKeys.length === 0) {
+    return null
+  }
+  if (!isCurrentMonthView) {
+    // dateKey は 'yyyy-MM-dd' 形式で辞書順=時系列順に並ぶため、末尾が最後の操作可能日
+    return enabledDateKeys.at(-1) ?? null
+  }
+  if (enabledDateKeys.includes(todayDateKey)) {
+    return todayDateKey
+  }
+  // today 自体が無効（許容ウィンドウ外など）な場合は、直近の操作可能日にフォールバックする
+  const pastOrToday = enabledDateKeys.filter((key) => key <= todayDateKey)
+  return pastOrToday.length > 0 ? (pastOrToday.at(-1) ?? null) : enabledDateKeys[0]
+}
+
 interface CalendarCellProps {
   accentColor: string
   cell: DayCell
+  descriptionId?: string
   disabled: boolean
   frequency: number
+  /** キー入力そのものと、その月のキーボード探索に必要な weeks・monthLabel をまとめて渡す */
+  monthLabel: string
+  /**
+   * ポインタ操作（クリック等）でこのセルにフォーカスが移ったときに roving tabindex の
+   * state を同期する。矢印キー移動（`onKeyDown` → `handleCellKeyDown`）はここを経由せず
+   * 直接 state を更新するが、その後に呼ぶ `.focus()` がこの `onFocus` も発火させる。
+   * `setFocusedDateKey` 側で同値なら更新をスキップするため、二重更新にはならない
+   * （外部レビュー指摘: ポインタでフォーカスした位置が roving state に反映されない問題）。
+   * mutation は起こさない（addCheckinAction 等は Enter/Space/click のみ）。
+   */
+  onFocus: (cell: DayCell, monthLabel: string) => void
+  onKeyDown: (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    cell: DayCell,
+    monthLabel: string,
+    weeks: DayCell[][]
+  ) => void
   onTap: (cell: DayCell) => void
+  /**
+   * button 要素への参照登録。`refKey`（`${monthLabel}:${dateKey}`）と、それを受け取る安定した
+   * コールバック（親の useRef を更新するだけで参照は変わらない）を分けて渡すことで、
+   * 親側で毎レンダー新しい関数リテラルを JSX に直接渡さずに済む（lint/performance/noJsxPropsBind 対策）。
+   */
+  refKey: string
+  registerCellRef: (key: string, el: HTMLButtonElement | null) => void
+  tabIndex: number | undefined
+  weeks: DayCell[][]
 }
 
-function CalendarCell({ cell, accentColor, frequency, disabled, onTap }: CalendarCellProps) {
+function CalendarCell({
+  cell,
+  accentColor,
+  frequency,
+  disabled,
+  onTap,
+  onKeyDown,
+  onFocus,
+  descriptionId,
+  monthLabel,
+  weeks,
+  refKey,
+  registerCellRef,
+  tabIndex,
+}: CalendarCellProps) {
   const title = getCellTitle(cell, frequency)
+  const ariaLabel = getCellAriaLabel(cell, frequency)
   const handleClick = useCallback(() => {
     onTap(cell)
   }, [cell, onTap])
+  const handleKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+      onKeyDown(event, cell, monthLabel, weeks)
+    },
+    [cell, monthLabel, onKeyDown, weeks]
+  )
+  const handleFocus = useCallback(() => {
+    onFocus(cell, monthLabel)
+  }, [cell, monthLabel, onFocus])
+  const handleRef = useCallback(
+    (el: HTMLButtonElement | null) => {
+      registerCellRef(refKey, el)
+    },
+    [refKey, registerCellRef]
+  )
 
   return (
     <button
-      aria-label={title}
+      aria-describedby={descriptionId}
+      aria-label={ariaLabel}
       className={cn(
         'aspect-square w-full appearance-none rounded-sm border-0 bg-transparent p-0',
         'disabled:cursor-not-allowed',
+        // フォーカスリング: `src/components/basics/Button.tsx` / `src/components/ui/` と同じ
+        // focus-visible + ring-* の語彙に揃える。セルの背景はアクセントカラーの濃淡で
+        // 習慣ごとに変わるため、ring 色は accentColor に依存しない固定トークン（ring-ring）を使い、
+        // ring-offset-background でオフセット部分をページ背景色にしてどの背景でも視認できるようにする。
+        // grid-cols-7 gap-1（4px）に対して ring-offset-2 + ring-2 は隣接セルの領域までは
+        // 届かないが、丸め誤差での被りに備えて focus 中だけ z-10 で最前面に出す。
+        'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         !disabled && 'cursor-pointer',
         !cell.isCurrentMonth && 'opacity-30',
         cell.isFuture && 'opacity-10',
@@ -260,7 +554,11 @@ function CalendarCell({ cell, accentColor, frequency, disabled, onTap }: Calenda
       disabled={disabled}
       key={cell.dateKey}
       onClick={handleClick}
+      onFocus={handleFocus}
+      onKeyDown={handleKeyDown}
+      ref={handleRef}
       style={{ ...getCellStyle(cell, accentColor, frequency), touchAction: 'manipulation' }}
+      tabIndex={tabIndex}
       title={title}
       type="button"
     />
@@ -595,6 +893,133 @@ export function HabitCalendarHeatmap({
     }
     return result
   }, [today, months])
+
+  // monthList のインデックスに対応する monthLabel の一覧。月境界をまたいだ props 更新
+  // （後述の focusedDateKeyByMonth 同期）で「どの月が新しく増えたか」を判定するために使う。
+  const monthLabels = useMemo(() => monthList.map((month) => format(month, 'yyyy年M月', { locale: ja })), [monthList])
+
+  // roving tabindex: 月ごとに「現在フォーカスされている dateKey」を1つだけ保持する。
+  // ref ではなく state にする理由は、tabIndex（0/-1）を実際に DOM へ反映させ、Tab で
+  // grid に再入場したときに正しい停止点へ戻れるようにするため（DOM の tabindex 属性が
+  // 実際に更新されていないと、ブラウザの Tab 順序計算に反映されない）。
+  //
+  // 初期値は月ごとに「当月なら今日、過去月なら最後の操作可能日」（computeInitialFocusDateKey）。
+  // 一度マウントされた後は、矢印キー操作でのみ更新する（props 更新時に再計算しない）ため、
+  // 「再入場時は最後にフォーカスした日を保持する」がそのまま実現される
+  // （tabIndex=0 を持つセルは常に1つで、それが Tab の戻り先になるため）。
+  const [focusedDateKeyByMonth, setFocusedDateKeyByMonth] = useState<Record<string, string | null>>(() => {
+    const map: Record<string, string | null> = {}
+    monthList.forEach((month, index) => {
+      const weeks = buildMonthGrid(month, confirmedCountsRef.current, confirmedSkipRef.current, today)
+      map[monthLabels[index]] = computeInitialFocusDateKey(weeks, index === 0, todayDateKey, archived)
+    })
+    return map
+  })
+
+  // props → state の同期は render 中の prev !== next 比較で行う（useEffect は使わない。
+  // `.claude/rules/optimistic-updates.md` 参照）。
+  //
+  // 保存された focusedDateKeyByMonth の値は、次のいずれの経路でも無効化されうる
+  // （外部レビュー指摘: 月一覧が変わらない props 更新では保存値の無効化に復旧しない）:
+  //   - 月境界をまたいで新しい `todayDateKey` が届き、`monthList`（延いては monthLabels）に
+  //     新しい当月が加わる（既存の greptile / Codex 指摘）
+  //   - `archived` が true→false（またはその逆）に変わり、同じ月一覧のまま全セルの
+  //     有効/無効が反転する
+  //   - `todayDateKey` が進み、保存済みの日が許容ウィンドウ（365日）から外れる
+  //
+  // これらすべてを一本化するため、`focusSyncKey`（monthLabels + archived + todayDateKey）
+  // が変化した時だけ、月ごとに保存値を再検証する:
+  //   - 保存値が現在の grid で実在し操作可能なセルを指していれば、そのまま引き継ぐ
+  //     （ユーザーが矢印キーで移動した位置を無条件にリセットしない）
+  //   - 保存値が無い/null/現在は無効、のいずれかなら初回マウント時と同じ起点算出ロジック
+  //     （`computeInitialFocusDateKey`）へフォールバックする
+  //   - monthList から外れた月は次の map に含めないため、自然に整理される（メモリの単調増加を防ぐ）
+  //
+  // この比較・計算は confirmedCountsRef/confirmedSkipRef の「読み取り」のみで、ref への
+  // 書き込みは行わない冪等な処理なので、StrictMode の二重 render でも安全（同じ入力に対して
+  // 同じ next を計算するだけで、2回目の実行が1回目の結果を潰すことはない）。
+  //
+  // 毎レンダーではなく focusSyncKey が変化した時だけ検証するのは、`isCellTapDisabled`
+  // （＝あるセルが操作可能かどうか）が `cell.isCurrentMonth` / `cell.isFuture` / `archived` /
+  // `isDateKeyWithinWindow(dateKey, todayDateKey)` にしか依存せず、これらはすべて
+  // `(monthList, archived, todayDateKey)` の関数だから。counts/skipSet は cell.count /
+  // cell.isSkip には影響するが disabled 判定には影響しないため、focusSyncKey が同じ間は
+  // 毎レンダー検証しても結果は変わらない（＝この間引きは検証結果を変えない）。
+  // このため `isCellTapDisabled` に無効条件を追加するときは、その条件が依存する値を
+  // focusSyncKey にも必ず加えること。加え忘れると、条件が変わっても再検証が走らず、
+  // 無効になったセルが tabIndex=0 のまま残る（または停止点が消える）。
+  const focusSyncKey = `${monthLabels.join('|')}|${archived}|${todayDateKey}`
+  const [prevFocusSyncKey, setPrevFocusSyncKey] = useState(focusSyncKey)
+  if (prevFocusSyncKey !== focusSyncKey) {
+    setPrevFocusSyncKey(focusSyncKey)
+    setFocusedDateKeyByMonth((prev) => {
+      const next: Record<string, string | null> = {}
+      monthList.forEach((month, index) => {
+        const monthLabel = monthLabels[index]
+        const weeks = buildMonthGrid(month, confirmedCountsRef.current, confirmedSkipRef.current, today)
+        const savedDateKey = monthLabel in prev ? prev[monthLabel] : null
+        next[monthLabel] = isValidFocusDateKey(weeks, savedDateKey, archived, todayDateKey)
+          ? savedDateKey
+          : computeInitialFocusDateKey(weeks, index === 0, todayDateKey, archived)
+      })
+      return next
+    })
+  }
+
+  const setFocusedDateKey = useCallback((monthLabel: string, dateKey: string) => {
+    // 既に同じ値であれば state 更新をスキップする。矢印キー移動は
+    // 「state 更新 → .focus()」の順で実行され、.focus() が発火させる onFocus
+    // （後述の handleCellFocus）が同じ (monthLabel, dateKey) で再度この関数を呼ぶため、
+    // 無条件に新しいオブジェクト参照を作ると無駄な再レンダーが発生する
+    setFocusedDateKeyByMonth((prev) => (prev[monthLabel] === dateKey ? prev : { ...prev, [monthLabel]: dateKey }))
+  }, [])
+
+  // 月ごとのセル button 要素への参照（`${monthLabel}:${dateKey}` をキーにする）。
+  // 矢印キー移動時に、tabIndex の state 更新（次の再レンダー）を待たず即座に .focus() を
+  // 呼ぶために使う（button はネイティブに focusable なので tabIndex=-1 でも .focus() は効く）。
+  const cellButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+
+  // cellButtonRefs への登録専用の安定したコールバック（依存なし）。CalendarCell 側で
+  // refKey と束ねてから ref に渡すため、ここでは `${monthLabel}:${dateKey}` 形式の
+  // key を受け取るだけでよい。
+  const registerCellRef = useCallback((key: string, el: HTMLButtonElement | null) => {
+    if (el) {
+      cellButtonRefs.current.set(key, el)
+    } else {
+      cellButtonRefs.current.delete(key)
+    }
+  }, [])
+
+  // 矢印キー/Home/End の共通ハンドラ（安定した参照）。CalendarCell から
+  // (event, cell, monthLabel, weeks) を受け取り、その月の grid 内で次にフォーカスすべき
+  // dateKey を探して roving tabindex の state を更新し、即座に .focus() する。
+  const handleCellKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLButtonElement>, cell: DayCell, monthLabel: string, weeks: DayCell[][]) => {
+      const move = KEY_TO_FOCUS_MOVE[event.key]
+      if (!move) {
+        return
+      }
+      event.preventDefault()
+      const nextDateKey = move(weeks, cell, archived, todayDateKey)
+      if (!nextDateKey) {
+        return
+      }
+      setFocusedDateKey(monthLabel, nextDateKey)
+      cellButtonRefs.current.get(`${monthLabel}:${nextDateKey}`)?.focus()
+    },
+    [archived, setFocusedDateKey, todayDateKey]
+  )
+
+  // ポインタ操作（クリック等）でセルにフォーカスが移ったときの roving tabindex 同期
+  // （安定した参照）。無効セル（disabled）はネイティブにフォーカスを受け取れないため、
+  // このハンドラは常に有効なセルに対してのみ呼ばれる。mutation は起こさない
+  // （外部レビュー指摘: ポインタでフォーカスした位置が roving state に反映されない問題）。
+  const handleCellFocus = useCallback(
+    (cell: DayCell, monthLabel: string) => {
+      setFocusedDateKey(monthLabel, cell.dateKey)
+    },
+    [setFocusedDateKey]
+  )
 
   // 成功したタップの後、同一画面の統計カード（総チェックイン・スキップ回数）など
   // サーバー算出値を取り込むためのリフレッシュ。連打中は最後の操作から一定時間後に1回だけ走らせ、
@@ -1009,39 +1434,90 @@ export function HabitCalendarHeatmap({
         )}
       </div>
 
+      {/*
+        各月の role="grid" が共通で参照する、キー操作の説明。個別セルの次の操作
+        （aria-describedby、getCellDescriptionText 参照）とは別に、grid 自体へ一度だけ関連付ける。
+      */}
+      <p className="sr-only" id={KEYBOARD_INSTRUCTIONS_ID}>
+        矢印キーで日付を移動します。左右は前後の日、上下は同じ曜日の前後の週です。Home
+        キーでその週の最初の操作可能日、End キーで最後の操作可能日に移動します。Enter
+        キーまたはスペースキーで選択した日の操作を実行します。
+      </p>
+
       {monthList.map((month) => {
         const weeks = buildMonthGrid(month, counts, skipSet, today)
         const monthLabel = format(month, 'yyyy年M月', { locale: ja })
+        const monthHeadingId = `habit-calendar-month-heading-${monthLabel}`
+        const focusedDateKey = focusedDateKeyByMonth[monthLabel] ?? null
+
+        const weekRows: HabitCalendarGridCellData[][] = weeks.map((week) =>
+          week.map((cell) => {
+            const disabled = isCellTapDisabled(cell, archived, todayDateKey)
+            const periodTotal = sumEffectiveCountOverPeriod(
+              cell.dateKey,
+              period,
+              weekStartDay,
+              (key) => counts.get(key) ?? 0
+            )
+            const descriptionText = getCellDescriptionText(cell, archived, todayDateKey, periodTotal >= frequency)
+            const descriptionId = descriptionText ? `habit-calendar-desc-${monthLabel}-${cell.dateKey}` : undefined
+            const isTabStop = !disabled && cell.dateKey === focusedDateKey
+            const refKey = `${monthLabel}:${cell.dateKey}`
+            // disabled セルはネイティブの disabled 属性だけでフォーカス対象から除外される。
+            // disabled な button に明示的な tabIndex（0 や -1）を与えると、一部の DOM 実装
+            // （jsdom を含む）で「disabled のはずなのに .focus() が効いてしまう」挙動になる
+            // ことが実測で確認できたため、disabled セルには tabIndex 自体を渡さない。
+            let cellTabIndex: number | undefined
+            if (disabled) {
+              cellTabIndex = undefined
+            } else {
+              cellTabIndex = isTabStop ? 0 : -1
+            }
+
+            return {
+              content: (
+                <>
+                  <CalendarCell
+                    accentColor={accentColor}
+                    cell={cell}
+                    descriptionId={descriptionId}
+                    disabled={disabled}
+                    frequency={frequency}
+                    monthLabel={monthLabel}
+                    onFocus={handleCellFocus}
+                    onKeyDown={handleCellKeyDown}
+                    onTap={enqueueTap}
+                    refKey={refKey}
+                    registerCellRef={registerCellRef}
+                    tabIndex={cellTabIndex}
+                    weeks={weeks}
+                  />
+                  {descriptionText ? (
+                    <span className="sr-only" id={descriptionId}>
+                      {descriptionText}
+                    </span>
+                  ) : null}
+                </>
+              ),
+              key: cell.dateKey,
+            }
+          })
+        )
 
         return (
           <div className="space-y-2" key={monthLabel}>
-            <div className="font-medium text-foreground text-sm">{monthLabel}</div>
-            {/* Weekday headers */}
-            <div className="grid grid-cols-7 gap-1">
-              {WEEKDAY_LABELS.map((label) => (
-                <div className="text-center text-muted-foreground text-xs" key={label}>
-                  {label}
-                </div>
-              ))}
+            <div className="font-medium text-foreground text-sm" id={monthHeadingId}>
+              {monthLabel}
             </div>
-            {/* Calendar grid */}
-            <div className="space-y-1">
-              {weeks.map((week, wi) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: stable week index
-                <div className="grid grid-cols-7 gap-1" key={wi}>
-                  {week.map((cell) => (
-                    <CalendarCell
-                      accentColor={accentColor}
-                      cell={cell}
-                      disabled={isCellTapDisabled(cell, archived, todayDateKey)}
-                      frequency={frequency}
-                      key={cell.dateKey}
-                      onTap={enqueueTap}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
+            {/* 月ごとに独立した grid にする（全体を1つの grid にしない）。構造マークアップ
+                （role="grid"/"row"/"columnheader"/"gridcell"）は HabitCalendarGridStructure
+                （biome.jsonc の scoped override 対象）へ切り出し済み */}
+            <HabitCalendarGridStructure
+              keyboardInstructionsId={KEYBOARD_INSTRUCTIONS_ID}
+              monthHeadingId={monthHeadingId}
+              weekdayLabels={WEEKDAY_LABELS}
+              weekRows={weekRows}
+            />
           </div>
         )
       })}

@@ -1,5 +1,6 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { format, subDays } from 'date-fns'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { addDays, format, subDays } from 'date-fns'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { HabitCalendarHeatmap } from './HabitCalendarHeatmap'
 
@@ -33,6 +34,7 @@ vi.mock('next/navigation', () => ({
 import { addCheckinAction } from '@/app/actions/habits/checkin'
 import { clearCheckinAction } from '@/app/actions/habits/clear-checkin'
 import { removeSkipAction } from '@/app/actions/habits/skip'
+import { parseDateKey } from '@/lib/utils/date'
 import { appToast } from '@/lib/utils/toast'
 
 /** scheduleRefresh のデバウンス（500ms）を過ぎさせ、保留中の setTimeout を発火させる */
@@ -438,12 +440,15 @@ describe('HabitCalendarHeatmap', () => {
       expect(clearCheckinAction).not.toHaveBeenCalled()
     })
 
-    it('両立セルの title / aria-label に回数とスキップの両方が含まれる', () => {
+    it('両立セルの title には回数とスキップの両方が含まれ、aria-label は年を含む自然言語で両方の状態を含む', () => {
       const targetDate = dateKey(1)
       renderHeatmap(new Map([[targetDate, 2]]), 3, [targetDate])
 
       const cell = screen.getByTitle(`${targetDate} 2/3回・スキップ`)
-      expect(cell).toHaveAttribute('aria-label', `${targetDate} 2/3回・スキップ`)
+      const expectedDateLabel = format(parseDateKey(targetDate), 'yyyy年M月d日')
+      expect(cell).toHaveAttribute('aria-label', `${expectedDateLabel}、目標3回中2回、スキップ`)
+      // 次の操作（スキップ解除）は aria-label に含めない
+      expect(cell.getAttribute('aria-label')).not.toContain('解除')
     })
 
     it('両立セルのスキップ解除が失敗すると、情報表示が両立状態＋スキップ解除ヒントへ戻る', async () => {
@@ -1754,6 +1759,627 @@ describe('HabitCalendarHeatmap', () => {
       await waitFor(() => {
         expect(addCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, tuesday, expect.any(String))
       })
+    })
+  })
+
+  describe('キーボード操作（WCAG 2.4.7 Focus Visible 対応の回帰防止）', () => {
+    // フォーカスリングの CSS 自体（見た目）はテストで検証できない（class 名の一致では
+    // 「実際にリングが描画されるか」を保証できないため）。ここでは `<button>` の標準挙動として
+    // キーボードのみでフォーカス・操作できることを振る舞いとして確認する。
+
+    it('セルはキーボードでフォーカスできる', () => {
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map(), 3)
+
+      const cell = screen.getByTitle(targetDate)
+      cell.focus()
+
+      expect(cell).toHaveFocus()
+    })
+
+    it('フォーカスしたセルで Enter を押すと、クリックと同じ操作（addCheckinAction）が実行される', async () => {
+      const user = userEvent.setup()
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map(), 3)
+
+      const cell = screen.getByTitle(targetDate)
+      cell.focus()
+      await user.keyboard('{Enter}')
+
+      await waitFor(() => {
+        expect(addCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, targetDate, expect.any(String))
+      })
+    })
+
+    it('フォーカスしたセルで Space を押すと、クリックと同じ操作（addCheckinAction）が実行される', async () => {
+      const user = userEvent.setup()
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map(), 3)
+
+      const cell = screen.getByTitle(targetDate)
+      cell.focus()
+      await user.keyboard('[Space]')
+
+      await waitFor(() => {
+        expect(addCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, targetDate, expect.any(String))
+      })
+    })
+
+    it('disabled なセルはキーボードでフォーカスできない', () => {
+      renderHeatmap(new Map(), 1, [], { archived: true })
+
+      const cell = screen.getByTitle(dateKey(0))
+      cell.focus()
+
+      expect(cell).not.toHaveFocus()
+    })
+  })
+
+  describe('role="grid" と roving tabindex', () => {
+    it('各月の grid には tabIndex=0 の有効セルがちょうど1つ存在する', () => {
+      renderHeatmap(new Map(), 3, [], { months: 2 })
+
+      const grids = screen.getAllByRole('grid')
+      expect(grids.length).toBe(2)
+      for (const grid of grids) {
+        const zeroTabButtons = within(grid)
+          .getAllByRole('button')
+          .filter((button) => button.getAttribute('tabindex') === '0')
+        expect(zeroTabButtons).toHaveLength(1)
+        expect(zeroTabButtons[0]).not.toBeDisabled()
+      }
+    })
+
+    it('すべてのセルが無効な月（archived）では tabIndex=0 のセルが0個になる', () => {
+      renderHeatmap(new Map(), 1, [], { archived: true })
+
+      const grid = screen.getByRole('grid')
+      const zeroTabButtons = within(grid)
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(zeroTabButtons).toHaveLength(0)
+    })
+
+    it('当月グリッドの初期フォーカス位置は今日のセルである', () => {
+      renderHeatmap(new Map(), 3)
+
+      const grid = screen.getByRole('grid')
+      const zeroTabButtons = within(grid)
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(zeroTabButtons).toHaveLength(1)
+      expect(zeroTabButtons[0]).toHaveAttribute('title', dateKey(0))
+    })
+
+    // greptile / Codex の外部レビューで指摘された不具合の回帰防止テスト。
+    // `focusedDateKeyByMonth` の初期化子は初回マウント時にしか走らないため、月境界を
+    // またいで新しい todayDateKey が props で届くと、monthList に新しく加わった当月の
+    // エントリが存在せず null のままになり、その月の全セルが tabIndex=-1 になって
+    // Tab で grid に入れなくなっていた。
+    it('月境界をまたいで新しい todayDateKey が届くと、新しく加わった当月の grid に tabIndex=0 のセルがちょうど1つ存在する', () => {
+      const initialToday = new Date(2026, 8, 15) // 2026-09-15
+      const initialTodayDateKey = format(initialToday, 'yyyy-MM-dd')
+      const nextToday = new Date(2026, 9, 15) // 2026-10-15（翌月）
+      const nextTodayDateKey = format(nextToday, 'yyyy-MM-dd')
+
+      const { rerender } = render(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={2}
+          todayDateKey={initialTodayDateKey}
+        />
+      )
+
+      rerender(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={2}
+          todayDateKey={nextTodayDateKey}
+        />
+      )
+
+      // grids[0] は常に当月（monthList の先頭は subMonths(today, 0)）
+      const grids = screen.getAllByRole('grid')
+      expect(grids).toHaveLength(2)
+      const currentMonthZeroTabButtons = within(grids[0])
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(currentMonthZeroTabButtons).toHaveLength(1)
+      expect(currentMonthZeroTabButtons[0]).not.toBeDisabled()
+      expect(currentMonthZeroTabButtons[0]).toHaveAttribute('title', nextTodayDateKey)
+    })
+
+    it('月境界をまたいでも、既存の月で移動済みのフォーカス位置は保持される', () => {
+      const initialToday = new Date(2026, 8, 15) // 2026-09-15
+      const initialTodayDateKey = format(initialToday, 'yyyy-MM-dd')
+      const nextToday = new Date(2026, 9, 15) // 2026-10-15（翌月）
+      const nextTodayDateKey = format(nextToday, 'yyyy-MM-dd')
+      // 当月（9月）は rerender 後に「既存の月」として残り続ける（過去月として）
+      const previousDayInCurrentMonth = format(subDays(initialToday, 1), 'yyyy-MM-dd')
+
+      const { rerender } = render(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={2}
+          todayDateKey={initialTodayDateKey}
+        />
+      )
+
+      // 当月（9月、grids[0]）の初期フォーカスは今日（9/15）。ArrowLeft で前日（9/14）へ動かし、
+      // 「ユーザーが移動した位置」を作る
+      const initialCell = screen.getByTitle(initialTodayDateKey)
+      initialCell.focus()
+      fireEvent.keyDown(initialCell, { key: 'ArrowLeft' })
+      expect(screen.getByTitle(previousDayInCurrentMonth)).toHaveFocus()
+
+      rerender(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={2}
+          todayDateKey={nextTodayDateKey}
+        />
+      )
+
+      // 9月は rerender 後 grids[1]（過去月）になるが、移動済みのフォーカス位置（9/14）が
+      // 維持されていること（過去月の既定値である月内最後の操作可能日へリセットされないこと）
+      const grids = screen.getAllByRole('grid')
+      expect(grids).toHaveLength(2)
+      const previousMonthZeroTabButtons = within(grids[1])
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(previousMonthZeroTabButtons).toHaveLength(1)
+      expect(previousMonthZeroTabButtons[0]).toHaveAttribute('title', previousDayInCurrentMonth)
+    })
+
+    it('全セルが無効な月では、todayDateKey の変化後も tabIndex=0 のセルが0個のままである', () => {
+      const initialToday = new Date(2026, 8, 15)
+      const initialTodayDateKey = format(initialToday, 'yyyy-MM-dd')
+      const nextToday = new Date(2026, 9, 15)
+      const nextTodayDateKey = format(nextToday, 'yyyy-MM-dd')
+
+      const { rerender } = render(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          archived
+          checkinCounts={new Map()}
+          frequency={1}
+          habitId={DEFAULT_HABIT_ID}
+          months={1}
+          todayDateKey={initialTodayDateKey}
+        />
+      )
+
+      rerender(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          archived
+          checkinCounts={new Map()}
+          frequency={1}
+          habitId={DEFAULT_HABIT_ID}
+          months={1}
+          todayDateKey={nextTodayDateKey}
+        />
+      )
+
+      const grid = screen.getByRole('grid')
+      const zeroTabButtons = within(grid)
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(zeroTabButtons).toHaveLength(0)
+    })
+
+    // 外部レビュー指摘1: 月一覧（monthLabelsKey）が変わらない props 更新でも、保存された
+    // フォーカス位置が無効化されていれば復旧しなければならない。
+    // 再現: archived=true でマウントすると全セルが無効になり保存値は null になる。その後
+    // 同じ monthList のまま archived=false へ更新されても、月一覧が変わらないという理由だけで
+    // 同期をスキップすると、有効になった全セルが tabIndex=-1 のまま Tab で入れなくなる。
+    it('archived が解除されると、同じ月一覧のままでも tabIndex=0 のセルが復旧する', () => {
+      const { rerender } = renderHeatmap(new Map(), 3, [], { archived: true })
+
+      rerender(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={1}
+          todayDateKey={todayDateKey}
+        />
+      )
+
+      const grid = screen.getByRole('grid')
+      const zeroTabButtons = within(grid)
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(zeroTabButtons).toHaveLength(1)
+      expect(zeroTabButtons[0]).not.toBeDisabled()
+    })
+
+    // 外部レビュー指摘1: 許容ウィンドウ（365日）の移動で保存値が無効になるケース。
+    // D を「今日」としてマウントすると、その月の初期フォーカスは D 自身になる。months=13
+    // により D の月（2025年9月）は当初 index0（当月）だが、todayDateKey を1年以上進めると
+    // 同じ月ラベルが index12（最も古い月）として monthList に残り続け、D はウィンドウ外になる。
+    // 「既存の月（同じ monthLabel）」の保存値が無効化される、という指摘の再現条件そのもの。
+    it('保存された日が許容ウィンドウ外になった場合、同じ月ラベルのままフォールバックする', () => {
+      const savedTodayDateKey = '2025-09-10'
+      const { rerender } = render(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={13}
+          todayDateKey={savedTodayDateKey}
+        />
+      )
+
+      // マウント直後、当月（2025年9月）の初期フォーカスは today 自身
+      expect(screen.getByTitle(savedTodayDateKey)).toHaveAttribute('tabindex', '0')
+
+      const advancedTodayDateKey = '2026-09-20'
+      rerender(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={13}
+          todayDateKey={advancedTodayDateKey}
+        />
+      )
+
+      // savedTodayDateKey（2025-09-10）は advancedTodayDateKey（2026-09-20）から375日前で
+      // 許容ウィンドウ（365日）外になっている
+      const staleCell = screen.getByTitle(savedTodayDateKey)
+      expect(staleCell).toBeDisabled()
+      expect(staleCell).not.toHaveAttribute('tabindex', '0')
+
+      // 2025年9月は monthList の最も古い月（index12）として残り続けており、その grid には
+      // tabIndex=0 のセルがちょうど1つ（フォールバック先）存在するはず
+      const grids = screen.getAllByRole('grid')
+      expect(grids).toHaveLength(13)
+      const staleMonthGrid = grids[12]
+      const zeroTabButtons = within(staleMonthGrid)
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(zeroTabButtons).toHaveLength(1)
+      expect(zeroTabButtons[0]).not.toBeDisabled()
+      expect(zeroTabButtons[0]).not.toHaveAttribute('title', savedTodayDateKey)
+    })
+
+    // 外部レビュー指摘1の裏側: 保存値が有効な間は、無関係な props 更新（矢印キー移動と関係ない
+    // 再レンダー）でリセットされてはならない
+    it('矢印キーで移動した有効なフォーカス位置は、無関係な props 更新後も保持される', () => {
+      const { rerender } = renderHeatmap(new Map(), 3)
+
+      const initialCell = screen.getByTitle(dateKey(0))
+      initialCell.focus()
+      fireEvent.keyDown(initialCell, { key: 'ArrowLeft' })
+      const movedDate = dateKey(1)
+      expect(screen.getByTitle(movedDate)).toHaveFocus()
+      expect(screen.getByTitle(movedDate)).toHaveAttribute('tabindex', '0')
+
+      // checkinCounts に新しい参照を渡すだけの、フォーカス位置とは無関係な再レンダー
+      rerender(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map([[dateKey(5), 1]])}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={1}
+          todayDateKey={todayDateKey}
+        />
+      )
+
+      const grid = screen.getByRole('grid')
+      const zeroTabButtons = within(grid)
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(zeroTabButtons).toHaveLength(1)
+      expect(zeroTabButtons[0]).toHaveAttribute('title', movedDate)
+    })
+
+    // 上のテストは checkinCounts のみを変えており、再検証の同期キー（focusSyncKey:
+    // monthLabels + archived + todayDateKey）自体は変化しないため、再検証ロジックを
+    // 素通りしても（例えば isValidFocusDateKey を常に false にしても）合格してしまう。
+    // 再検証が実際に走った上で「有効な保存値はそのまま残す」分岐を通ることを確かめるため、
+    // todayDateKey を1日だけ進めて focusSyncKey を変化させつつ、移動済みのフォーカス位置
+    // （9/14）は許容ウィンドウ内のまま有効に保たれるケースを検証する
+    it('todayDateKey が変わり再検証が走っても、有効な移動済みフォーカス位置はフォールバックされない', () => {
+      const { rerender } = renderHeatmap(new Map(), 3)
+
+      const initialCell = screen.getByTitle(dateKey(0))
+      initialCell.focus()
+      fireEvent.keyDown(initialCell, { key: 'ArrowLeft' })
+      const movedDate = dateKey(1)
+      expect(screen.getByTitle(movedDate)).toHaveFocus()
+
+      const advancedTodayDateKey = format(addDays(today, 1), 'yyyy-MM-dd')
+      rerender(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={3}
+          habitId={DEFAULT_HABIT_ID}
+          months={1}
+          todayDateKey={advancedTodayDateKey}
+        />
+      )
+
+      const grid = screen.getByRole('grid')
+      const zeroTabButtons = within(grid)
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('tabindex') === '0')
+      expect(zeroTabButtons).toHaveLength(1)
+      // フォールバック先（新しい todayDateKey 自身）ではなく、移動済みの9/14が保たれること
+      expect(zeroTabButtons[0]).toHaveAttribute('title', movedDate)
+    })
+  })
+
+  describe('ポインタ操作によるフォーカスが roving tabindex に反映される（外部レビュー指摘2）', () => {
+    it('tabIndex=0 でないセルにフォーカスすると、その月の tabIndex=0 がそのセルへ移る', () => {
+      renderHeatmap(new Map(), 3)
+      const initialCell = screen.getByTitle(dateKey(0))
+      const otherCell = screen.getByTitle(dateKey(7))
+      expect(initialCell).toHaveAttribute('tabindex', '0')
+      expect(otherCell).toHaveAttribute('tabindex', '-1')
+
+      act(() => {
+        otherCell.focus()
+      })
+
+      expect(otherCell).toHaveAttribute('tabindex', '0')
+      expect(initialCell).toHaveAttribute('tabindex', '-1')
+    })
+
+    it('onFocus だけでは addCheckinAction / clearCheckinAction / removeSkipAction が呼ばれない', () => {
+      renderHeatmap(new Map(), 3)
+      const cell = screen.getByTitle(dateKey(7))
+
+      act(() => {
+        cell.focus()
+      })
+
+      expect(addCheckinAction).not.toHaveBeenCalled()
+      expect(clearCheckinAction).not.toHaveBeenCalled()
+      expect(removeSkipAction).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('キーボードによるセル間移動（矢印キー・Home/End）', () => {
+    it('ArrowRight で翌日のセルへフォーカスが移る', () => {
+      renderHeatmap(new Map(), 3)
+      const startDate = dateKey(5)
+      const cell = screen.getByTitle(startDate)
+      cell.focus()
+
+      fireEvent.keyDown(cell, { key: 'ArrowRight' })
+
+      const nextDate = format(addDays(subDays(today, 5), 1), 'yyyy-MM-dd')
+      expect(screen.getByTitle(nextDate)).toHaveFocus()
+    })
+
+    it('ArrowLeft で前日のセルへフォーカスが移る', () => {
+      renderHeatmap(new Map(), 3)
+      const startDate = dateKey(5)
+      const cell = screen.getByTitle(startDate)
+      cell.focus()
+
+      fireEvent.keyDown(cell, { key: 'ArrowLeft' })
+
+      const prevDate = format(addDays(subDays(today, 5), -1), 'yyyy-MM-dd')
+      expect(screen.getByTitle(prevDate)).toHaveFocus()
+    })
+
+    it('ArrowDown で同じ曜日の翌週（+7日）のセルへフォーカスが移る', () => {
+      renderHeatmap(new Map(), 3)
+      const startDate = dateKey(10)
+      const cell = screen.getByTitle(startDate)
+      cell.focus()
+
+      fireEvent.keyDown(cell, { key: 'ArrowDown' })
+
+      const nextWeekDate = format(addDays(subDays(today, 10), 7), 'yyyy-MM-dd')
+      expect(screen.getByTitle(nextWeekDate)).toHaveFocus()
+    })
+
+    it('ArrowUp で同じ曜日の前週（-7日）のセルへフォーカスが移る', () => {
+      renderHeatmap(new Map(), 3)
+      const startDate = dateKey(3)
+      const cell = screen.getByTitle(startDate)
+      cell.focus()
+
+      fireEvent.keyDown(cell, { key: 'ArrowUp' })
+
+      const prevWeekDate = format(addDays(subDays(today, 3), -7), 'yyyy-MM-dd')
+      expect(screen.getByTitle(prevWeekDate)).toHaveFocus()
+    })
+
+    it('月初のセルで ArrowLeft を押しても前月へ移動せず、フォーカスは据え置かれる', () => {
+      renderHeatmap(new Map(), 1)
+      // dateKey(14) は today.getDate()-1 でクランプされるため、常に当月1日を指す
+      const firstOfMonth = dateKey(14)
+      const cell = screen.getByTitle(firstOfMonth)
+      cell.focus()
+
+      fireEvent.keyDown(cell, { key: 'ArrowLeft' })
+
+      expect(cell).toHaveFocus()
+    })
+
+    it('未来日は読み飛ばされ、これ以上有効なセルがなければフォーカスは据え置かれる', () => {
+      renderHeatmap(new Map(), 1)
+      // 今日より後は当月内・翌月パディングともすべて未来日で無効なため、
+      // ArrowRight を押しても移動先が見つからず今日のセルに留まる
+      const cell = screen.getByTitle(dateKey(0))
+      cell.focus()
+
+      fireEvent.keyDown(cell, { key: 'ArrowRight' })
+
+      expect(cell).toHaveFocus()
+    })
+
+    it('Home キーで現在の週の最初の操作可能日へフォーカスが移る', () => {
+      renderHeatmap(new Map(), 3)
+      // dateKey(5)=Sept10（木）は Sept7（月）〜Sept13（日）の週に属し、全日が過去日で有効
+      const cell = screen.getByTitle(dateKey(5))
+      cell.focus()
+
+      fireEvent.keyDown(cell, { key: 'Home' })
+
+      expect(screen.getByTitle(dateKey(8))).toHaveFocus() // Sept7（月）
+    })
+
+    it('End キーで現在の週の最後の操作可能日へフォーカスが移る', () => {
+      renderHeatmap(new Map(), 3)
+      const cell = screen.getByTitle(dateKey(5))
+      cell.focus()
+
+      fireEvent.keyDown(cell, { key: 'End' })
+
+      expect(screen.getByTitle(dateKey(2))).toHaveFocus() // Sept13（日）
+    })
+
+    it('矢印キー・Home・End では addCheckinAction / clearCheckinAction / removeSkipAction が呼ばれない', () => {
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map([[targetDate, 2]]), 3, [targetDate])
+      const cell = screen.getByTitle(`${targetDate} 2/3回・スキップ`)
+      cell.focus()
+
+      for (const key of ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End']) {
+        fireEvent.keyDown(document.activeElement as HTMLElement, { key })
+      }
+
+      expect(addCheckinAction).not.toHaveBeenCalled()
+      expect(clearCheckinAction).not.toHaveBeenCalled()
+      expect(removeSkipAction).not.toHaveBeenCalled()
+    })
+
+    it('矢印キーでフォーカス移動した後、Enter を押すとその新しいセルに対して1回だけ操作が実行される', async () => {
+      // fireEvent.keyDown は keydown イベントを発火するだけで、ネイティブ button の
+      // 「Enter で click する」既定動作までは再現しない。既存の Enter/Space テスト
+      // （キーボード操作セクション）と同様、その既定動作込みで検証するため userEvent を使う。
+      const user = userEvent.setup()
+      renderHeatmap(new Map(), 3)
+      const startDate = dateKey(5)
+      const cell = screen.getByTitle(startDate)
+      cell.focus()
+      fireEvent.keyDown(cell, { key: 'ArrowRight' })
+
+      const nextDate = format(addDays(subDays(today, 5), 1), 'yyyy-MM-dd')
+      const movedCell = screen.getByTitle(nextDate)
+      expect(movedCell).toHaveFocus()
+
+      await user.keyboard('{Enter}')
+
+      await waitFor(() => {
+        expect(addCheckinAction).toHaveBeenCalledTimes(1)
+      })
+      expect(addCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, nextDate, expect.any(String))
+    })
+  })
+
+  describe('aria-label（日付＋現在の状態のみ、次の操作は含まない）', () => {
+    it('未達成セルの aria-label は年を含む日付と「記録なし」を含む', () => {
+      renderHeatmap(new Map(), 1)
+      const cell = screen.getByTitle(dateKey(0))
+      const expectedDateLabel = format(parseDateKey(dateKey(0)), 'yyyy年M月d日')
+
+      expect(cell).toHaveAttribute('aria-label', `${expectedDateLabel}、記録なし`)
+    })
+
+    it('チェックイン済みセルの aria-label は「目標N回中M回」を自然言語で含む', () => {
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map([[targetDate, 2]]), 3)
+      const cell = screen.getByTitle(`${targetDate} 2/3回`)
+      const expectedDateLabel = format(parseDateKey(targetDate), 'yyyy年M月d日')
+
+      expect(cell).toHaveAttribute('aria-label', `${expectedDateLabel}、目標3回中2回`)
+    })
+
+    it('スキップ日の aria-label は「スキップ」を含み、次の操作（解除）を含まない', () => {
+      const targetDate = dateKey(2)
+      renderHeatmap(new Map(), 1, [targetDate])
+      const cell = screen.getByTitle(`${targetDate} スキップ`)
+
+      expect(cell.getAttribute('aria-label')).toContain('スキップ')
+      expect(cell.getAttribute('aria-label')).not.toContain('解除')
+    })
+  })
+
+  describe('aria-describedby（次の操作・無効理由）', () => {
+    function getDescription(cell: HTMLElement): HTMLElement | null {
+      const id = cell.getAttribute('aria-describedby')
+      if (!id) {
+        return null
+      }
+      // biome-ignore lint/style/noNonNullAssertion: id が存在すれば document 内に対応する要素があるはず
+      return document.getElementById(id)!
+    }
+
+    it('未達成セル（有効）の説明は「追加」を含む', () => {
+      renderHeatmap(new Map(), 3)
+      const cell = screen.getByTitle(dateKey(0))
+      const description = getDescription(cell)
+
+      expect(description).not.toBeNull()
+      expect(description?.textContent).toBe('追加')
+    })
+
+    it('上限到達セル（有効・削除対象）の説明は件数を含む破壊的操作の説明になる', () => {
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map([[targetDate, 2]]), 2)
+      const cell = screen.getByTitle(`${targetDate} 2/2回`)
+      const description = getDescription(cell)
+
+      expect(description?.textContent).toBe('この日の2件を削除')
+    })
+
+    it('スキップ日の説明は「スキップを解除」になる', () => {
+      const targetDate = dateKey(2)
+      renderHeatmap(new Map(), 1, [targetDate])
+      const cell = screen.getByTitle(`${targetDate} スキップ`)
+      const description = getDescription(cell)
+
+      expect(description?.textContent).toBe('スキップを解除')
+    })
+
+    it('未来日（無効セル）の説明は理由を含む', () => {
+      render(
+        <HabitCalendarHeatmap
+          accentColor="oklch(0.70 0.18 145)"
+          checkinCounts={new Map()}
+          frequency={1}
+          habitId={DEFAULT_HABIT_ID}
+          months={1}
+          todayDateKey={todayDateKey}
+        />
+      )
+      const futureDate = format(addDays(today, 1), 'yyyy-MM-dd')
+      const cell = screen.getByTitle(futureDate)
+      const description = getDescription(cell)
+
+      expect(description?.textContent).toBe('未来の日付のため操作できません')
+    })
+
+    it('archived な習慣（無効セル）の説明はアーカイブ理由を含む', () => {
+      renderHeatmap(new Map(), 1, [], { archived: true })
+      const cell = screen.getByTitle(dateKey(0))
+      const description = getDescription(cell)
+
+      expect(description?.textContent).toBe('この習慣はアーカイブ済みのため操作できません')
     })
   })
 })
