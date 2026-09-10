@@ -8,7 +8,7 @@ import { HabitCalendarHeatmap } from '@/components/habits/HabitCalendarHeatmap'
 import { PageShell } from '@/components/PageShell'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SIGN_IN_PATH } from '@/constants/auth'
-import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME } from '@/constants/habit'
+import { DEFAULT_HABIT_COLOR, PERIOD_DISPLAY_NAME, weekStartToDay } from '@/constants/habit'
 import { getColorById, getIconById } from '@/constants/habit-data'
 import { createRequestMeta, logInfo, logSpan, logSpanOptional } from '@/lib/logging'
 import { getHabitById } from '@/lib/queries/habit'
@@ -157,8 +157,10 @@ export default async function HabitDetailPage({ params }: HabitIdPageProps) {
             checkinCounts={checkinCounts}
             frequency={habit.frequency}
             habitId={habit.id}
+            period={habit.period}
             skipDates={skipDates}
             todayDateKey={todayDateKey}
+            weekStartDay={weekStartToDay(user.weekStart)}
           />
         </CardContent>
       </Card>

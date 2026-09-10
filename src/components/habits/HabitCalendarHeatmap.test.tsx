@@ -61,7 +61,13 @@ function renderHeatmap(
   checkinCounts: Map<string, number>,
   frequency: number,
   skipDates: string[] = [],
-  overrides: { archived?: boolean; habitId?: string; months?: number } = {}
+  overrides: {
+    archived?: boolean
+    habitId?: string
+    months?: number
+    period?: 'daily' | 'monthly' | 'weekly'
+    weekStartDay?: 0 | 1
+  } = {}
 ) {
   return render(
     <HabitCalendarHeatmap
@@ -71,8 +77,10 @@ function renderHeatmap(
       frequency={frequency}
       habitId={overrides.habitId ?? DEFAULT_HABIT_ID}
       months={overrides.months ?? 1}
+      period={overrides.period}
       skipDates={skipDates}
       todayDateKey={todayDateKey}
+      weekStartDay={overrides.weekStartDay}
     />
   )
 }
@@ -1140,22 +1148,21 @@ describe('HabitCalendarHeatmap', () => {
       expect(refreshMock).toHaveBeenCalledTimes(1)
     })
 
-    it('3セル同時進行で、登録順と異なる順に解決しても最後の1件が終わるまでrouter.refreshは走らない', async () => {
-      // markPending は setState の updater 内の副作用（React が同期実行を保証しない箇所）に
-      // 依存せず ref を source of truth として同期的に判定するため、この経路は
-      // タップの登録順・resolve順に関係なく成立するはずである。それを確認するテスト。
+    it('3セル連続タップで、単一チェーンにより投入順(A→B→C)に直列実行され、全て完了するまでrouter.refreshは走らない', async () => {
+      // habit 全体を単一チェーンで直列化する変更（PR #204 外部レビュー指摘の P2 対応）により、
+      // 別セルへの操作はもはや並行実行されない。以前はこのテストが「登録順と異なる順に解決しても
+      // 成立する」ことを検証していたが、単一チェーンでは実行順そのものが登録順に固定されるため、
+      // 検証すべき性質は「全タスクが完了するまで refresh を見送る」ことと「投入順どおりに
+      // サーバー呼び出しが直列実行される」ことに変わる。
       const dateA = dateKey(1)
       const dateB = dateKey(2)
       const dateC = dateKey(3)
-      const resolvers = new Map<
-        string,
-        (value: { data: { created: boolean; currentCount: number }; ok: true }) => void
-      >()
+      const resolvers: ((value: { data: { created: boolean; currentCount: number }; ok: true }) => void)[] = []
 
       vi.mocked(addCheckinAction).mockImplementation(
-        (_habitId, dateKeyArg) =>
+        () =>
           new Promise((resolve) => {
-            resolvers.set(dateKeyArg as string, resolve)
+            resolvers.push(resolve)
           })
       )
 
@@ -1169,32 +1176,43 @@ describe('HabitCalendarHeatmap', () => {
         await Promise.resolve()
       })
 
-      // どれも完了していないため、デバウンスを過ぎてもリフレッシュは走らない
+      // 単一チェーンで直列化されているため、A が解決するまで B・C の addCheckinAction は
+      // まだ呼ばれていない
+      expect(addCheckinAction).toHaveBeenCalledTimes(1)
       await flushRefreshTimer()
       expect(refreshMock).not.toHaveBeenCalled()
 
-      // 登録順（A→B→C）とは異なる順（B→A）で解決する。まだ C が残っているため refresh は起きない
+      // A が解決 → チェーンが進み、B の addCheckinAction が呼ばれる
       await act(async () => {
-        resolvers.get(dateB)?.({ data: { created: true, currentCount: 1 }, ok: true })
+        resolvers[0]?.({ data: { created: true, currentCount: 1 }, ok: true })
+        await Promise.resolve()
         await Promise.resolve()
       })
+      expect(addCheckinAction).toHaveBeenCalledTimes(2)
       await flushRefreshTimer()
       expect(refreshMock).not.toHaveBeenCalled()
 
+      // B が解決 → チェーンが進み、C の addCheckinAction が呼ばれる
       await act(async () => {
-        resolvers.get(dateA)?.({ data: { created: true, currentCount: 1 }, ok: true })
+        resolvers[1]?.({ data: { created: true, currentCount: 1 }, ok: true })
+        await Promise.resolve()
         await Promise.resolve()
       })
+      expect(addCheckinAction).toHaveBeenCalledTimes(3)
       await flushRefreshTimer()
       expect(refreshMock).not.toHaveBeenCalled()
 
       // 最後に残っていた C が解決 → pending が空になり refresh が取り直されて走る
       await act(async () => {
-        resolvers.get(dateC)?.({ data: { created: true, currentCount: 1 }, ok: true })
+        resolvers[2]?.({ data: { created: true, currentCount: 1 }, ok: true })
         await Promise.resolve()
       })
       await flushRefreshTimer()
       expect(refreshMock).toHaveBeenCalledTimes(1)
+
+      // 呼び出し順が投入順（A→B→C）どおりであることも確認する
+      const calledDateKeys = vi.mocked(addCheckinAction).mock.calls.map((call) => call[1])
+      expect(calledDateKeys).toEqual([dateA, dateB, dateC])
     })
 
     it('アンマウント時に保留中のリフレッシュタイマーを片付ける', async () => {
@@ -1567,6 +1585,175 @@ describe('HabitCalendarHeatmap', () => {
       renderHeatmap(new Map(), 1)
 
       expect(screen.getByText('セルをタップすると、日付と回数がここに表示されます')).toBeInTheDocument()
+    })
+  })
+
+  describe('期間（週次・月次）を考慮した操作判定', () => {
+    // today = 2026-09-15（火）固定。2026-09-07(月)〜09-13(日) は月曜始まりの1つの週で、
+    // かつ today より前・当月内に収まるため、週次テストの基準として使う
+    // （PR #204 外部レビューの再現条件と同じ曜日構成）。
+    const monday = '2026-09-07'
+    const tuesday = '2026-09-08'
+    const wednesday = '2026-09-09'
+
+    it('週次 frequency=3 で3つの別々の日に1件ずつあるとき、いずれかの日をタップすると期間合計で判定してclearが選ばれ、その日が0になる', async () => {
+      const counts = new Map([
+        [monday, 1],
+        [tuesday, 1],
+        [wednesday, 1],
+      ])
+      renderHeatmap(counts, 3, [], { period: 'weekly' })
+
+      // 火曜だけを見ると 1/3 で未達成に見えるが、週の合計は 3（frequency と同数）のため
+      // 削除（clear）が選ばれるべき
+      fireEvent.click(screen.getByTitle(`${tuesday} 1/3回`))
+
+      await waitFor(() => {
+        expect(clearCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, tuesday)
+      })
+      expect(addCheckinAction).not.toHaveBeenCalled()
+      await waitFor(() => {
+        expect(screen.getByTitle(tuesday)).toBeInTheDocument()
+      })
+      // 月曜・水曜は操作対象ではないため変化しない
+      expect(screen.getByTitle(`${monday} 1/3回`)).toBeInTheDocument()
+      expect(screen.getByTitle(`${wednesday} 1/3回`)).toBeInTheDocument()
+    })
+
+    it('clear で期間に空きができた後、同じ日を再度タップするとaddに戻る', async () => {
+      const counts = new Map([
+        [monday, 1],
+        [tuesday, 1],
+        [wednesday, 1],
+      ])
+      renderHeatmap(counts, 3, [], { period: 'weekly' })
+
+      fireEvent.click(screen.getByTitle(`${tuesday} 1/3回`))
+      await waitFor(() => expect(clearCheckinAction).toHaveBeenCalledTimes(1))
+      await waitFor(() => expect(screen.getByTitle(tuesday)).toBeInTheDocument())
+
+      // 週の合計は 1(月)+0(火)+1(水)=2 < 3 のため、今度は add が選ばれる
+      fireEvent.click(screen.getByTitle(tuesday))
+      await waitFor(() => expect(addCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, tuesday, expect.any(String)))
+    })
+
+    it('daily 習慣では他の日にチェックインがあっても期間合計の影響を受けず、従来どおり日別カウントで判定される', async () => {
+      // 同じ「週」に他の日のチェックインがあっても daily では無関係（period が daily のときは
+      // sumEffectiveCountOverPeriod の期間がその日1日だけになるため）
+      const counts = new Map([
+        [monday, 1],
+        [tuesday, 1],
+        [wednesday, 1],
+      ])
+      renderHeatmap(counts, 3, [], { period: 'daily' })
+
+      // 火曜は 1/3（未達成）なので add が選ばれるはず（週次なら 3/3 で clear になっていたはず）
+      fireEvent.click(screen.getByTitle(`${tuesday} 1/3回`))
+
+      await waitFor(() => {
+        expect(addCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, tuesday, expect.any(String))
+      })
+      expect(clearCheckinAction).not.toHaveBeenCalled()
+    })
+
+    it('月次 frequency=3 でも期間合計（月内の合計）で判定される', async () => {
+      const dayA = '2026-09-03'
+      const dayB = '2026-09-07'
+      const dayC = '2026-09-10'
+      const counts = new Map([
+        [dayA, 1],
+        [dayB, 1],
+        [dayC, 1],
+      ])
+      renderHeatmap(counts, 3, [], { period: 'monthly' })
+
+      fireEvent.click(screen.getByTitle(`${dayB} 1/3回`))
+
+      await waitFor(() => {
+        expect(clearCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, dayB)
+      })
+      expect(addCheckinAction).not.toHaveBeenCalled()
+    })
+
+    it('期間が満杯でその日のカウントが0のセルをタップするとaddが試みられ、created:falseで上限到達が通知される', async () => {
+      vi.mocked(addCheckinAction).mockResolvedValue({ data: { created: false, currentCount: 2 }, ok: true })
+      // 週の合計は既に 2（frequency と同数）。火曜(count=0)をタップする
+      const counts = new Map([
+        [monday, 1],
+        [wednesday, 1],
+      ])
+      renderHeatmap(counts, 2, [], { period: 'weekly' })
+
+      fireEvent.click(screen.getByTitle(tuesday))
+
+      await waitFor(() => {
+        expect(addCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, tuesday, expect.any(String))
+      })
+      expect(clearCheckinAction).not.toHaveBeenCalled()
+      await waitFor(() => {
+        expect(appToast.error).toHaveBeenCalled()
+      })
+      const errorCall = vi.mocked(appToast.error).mock.calls.at(-1)
+      expect(errorCall?.[0]).toContain('上限')
+      // created:false のため確定値へは反映されず、0のまま戻る
+      await waitFor(() => {
+        expect(screen.getByTitle(tuesday)).toBeInTheDocument()
+      })
+    })
+
+    it('選択日情報の「次の操作」表示が、期間満杯時に削除だと分かる内容になっていること', () => {
+      // 週の合計は既に 2（frequency と同数）。火曜(count=0)をタップすると add が選ばれ、
+      // 楽観適用後は週の合計が 3 になり期間満杯（isPeriodFull）かつ選択日の count>0 になるため、
+      // 情報表示は「次のタップで削除されます」を案内すべき
+      const counts = new Map([
+        [monday, 1],
+        [wednesday, 1],
+      ])
+      renderHeatmap(counts, 2, [], { period: 'weekly' })
+
+      fireEvent.click(screen.getByTitle(tuesday))
+
+      expect(screen.getByText(/1\/2回/)).toBeInTheDocument()
+      expect(screen.getByText('上限に達しています。次のタップで削除されます')).toBeInTheDocument()
+    })
+
+    it('同一期間内の別日への操作は投入順（直列）に実行される（月曜clear→火曜add）', async () => {
+      let resolveClear: ((value: { data: { deleted: boolean; deletedCount: number }; ok: true }) => void) | null = null
+      vi.mocked(clearCheckinAction).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveClear = resolve
+          })
+      )
+      const counts = new Map([
+        [monday, 1],
+        [tuesday, 1],
+        [wednesday, 1],
+      ])
+      renderHeatmap(counts, 3, [], { period: 'weekly' })
+
+      // 月曜: 週合計 3/3 のため clear が選ばれる（まだ解決しない）
+      fireEvent.click(screen.getByTitle(`${monday} 1/3回`))
+      await waitFor(() => expect(clearCheckinAction).toHaveBeenCalledTimes(1))
+
+      // 火曜: 月曜の clear が楽観適用済みのため週合計は 0(月)+1(火)+1(水)=2 < 3 となり add が選ばれる
+      fireEvent.click(screen.getByTitle(`${tuesday} 1/3回`))
+
+      // 単一チェーンで直列化されているため、月曜の clear が解決するまで火曜の add は呼ばれない
+      await act(async () => {
+        await Promise.resolve()
+      })
+      expect(addCheckinAction).not.toHaveBeenCalled()
+
+      await act(async () => {
+        resolveClear?.({ data: { deleted: true, deletedCount: 1 }, ok: true })
+        await Promise.resolve()
+      })
+
+      // 月曜の clear が解決した後にだけ、火曜の add が呼ばれる（投入順どおりの実行）
+      await waitFor(() => {
+        expect(addCheckinAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, tuesday, expect.any(String))
+      })
     })
   })
 })

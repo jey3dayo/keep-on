@@ -8,9 +8,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { addCheckinAction } from '@/app/actions/habits/checkin'
 import { clearCheckinAction } from '@/app/actions/habits/clear-checkin'
 import { removeSkipAction } from '@/app/actions/habits/skip'
+import type { Period, WeekStartDay } from '@/constants/habit'
 import { formatSerializableError, type SerializableHabitError } from '@/lib/errors/serializable'
+import { getPeriodDateRange } from '@/lib/queries/period'
 import { cn } from '@/lib/utils'
-import { isDateKeyWithinWindow, parseDateKey } from '@/lib/utils/date'
+import { formatDateKey, isDateKeyWithinWindow, parseDateKey } from '@/lib/utils/date'
 import { appToast } from '@/lib/utils/toast'
 
 interface HabitCalendarHeatmapProps {
@@ -21,12 +23,20 @@ interface HabitCalendarHeatmapProps {
   frequency: number
   habitId: string
   months?: number
+  /**
+   * frequency の上限は日別ではなく期間単位（daily/weekly/monthly）で強制される
+   * （`createCheckinWithLimit` 参照）。期間合計を求めるために必要。省略時は 'daily'
+   * （期間合計＝日別カウントなので、period を持たない旧来の呼び出しと同じ挙動になる）
+   */
+  period?: Period
   skipDates?: string[]
   /**
    * サーバーで算出した「今日」の dateKey（dayStartHour 考慮済み）。
    * client の `new Date()` を使うと記録先（サーバー算出の dateKey）と today 判定がズレる。
    */
   todayDateKey: string
+  /** 週次期間の起算曜日。省略時は月曜始まり（`DEFAULT_WEEK_START` と同じ既定） */
+  weekStartDay?: WeekStartDay
 }
 
 interface DayCell {
@@ -166,8 +176,19 @@ interface SelectedDateInfo {
 /**
  * カレンダー外に表示する「選択中の日」の情報テキストを組み立てる。
  * セル自体（CalendarCell）の見た目・aria-label は変更せず、この表示専用のテキストを別途導出する。
+ *
+ * `isPeriodFull`（選択日が属する期間の合計が frequency 以上か）は enqueueTap の kind 決定と
+ * 同じ規則を使う。日別カウントだけで「上限到達＝削除」と判定すると、週次・月次でチェックインが
+ * 複数日に散っている場合に、実際にはタップしても add が試みられる（サーバーに拒否される）のに
+ * 「次のタップで削除されます」と誤って案内してしまう。
  */
-function getSelectedDateInfo(dateKey: string, count: number, isSkip: boolean, frequency: number): SelectedDateInfo {
+function getSelectedDateInfo(
+  dateKey: string,
+  count: number,
+  isSkip: boolean,
+  frequency: number,
+  isPeriodFull: boolean
+): SelectedDateInfo {
   const dateLabel = format(parseDateKey(dateKey), 'M月d日', { locale: ja })
 
   if (isSkip && count === 0) {
@@ -186,7 +207,7 @@ function getSelectedDateInfo(dateKey: string, count: number, isSkip: boolean, fr
     }
   }
 
-  if (count >= frequency) {
+  if (count > 0 && isPeriodFull) {
     return {
       hint: '上限に達しています。次のタップで削除されます',
       primary: `${dateLabel}の情報: ${count}/${frequency}回`,
@@ -334,6 +355,34 @@ function computeEffectiveCount(
   return count
 }
 
+/**
+ * `dateKey` が属する期間（daily/weekly/monthly）の合計を、dateKey ごとの実効カウント
+ * アクセサ `getCount` を使って求める。
+ *
+ * frequency の上限は日別ではなく期間単位で強制される（`createCheckinWithLimit` 参照）ため、
+ * 「タップした日のカウント」だけを見て add/clear を決めると、週次・月次でチェックインが
+ * 複数日に散っているときに誤判定する（同日に frequency 分無くても期間が満杯ならタップは
+ * 拒否される）。呼び出し元によって「実効カウントの取得元」が異なる（enqueueTap は
+ * confirmedCountsRef + pendingOpsRef から同期的に、選択中日の表示ヒントは表示用の
+ * counts state から）ため、アクセサ関数として注入する。
+ *
+ * daily の場合は期間＝その日1日だけになるため、返り値は常に `getCount(dateKey)` と一致する
+ * （既存の「日別カウントで判定する」挙動を回帰させない）。
+ */
+function sumEffectiveCountOverPeriod(
+  dateKey: string,
+  period: Period,
+  weekStartDay: WeekStartDay,
+  getCount: (key: string) => number
+): number {
+  const { start, end } = getPeriodDateRange(dateKey, period, weekStartDay)
+  let total = 0
+  for (const day of eachDayOfInterval({ end, start })) {
+    total += getCount(formatDateKey(day))
+  }
+  return total
+}
+
 /** `dateKey` の「確定スキップ状態」に、未確定の removeSkip 操作を適用した実効状態を求める */
 function computeEffectiveIsSkip(
   dateKey: string,
@@ -402,7 +451,12 @@ export function HabitCalendarHeatmap({
   frequency,
   habitId,
   months = 6,
+  // 省略時は 'daily'。この場合 sumEffectiveCountOverPeriod の期間は当日1日だけになり、
+  // period を渡さない既存の呼び出し（テスト・ストーリー含む）と挙動が変わらない
+  period = 'daily',
   todayDateKey,
+  // 省略時は月曜始まり（`DEFAULT_WEEK_START` と同じ既定）。daily では期間計算に影響しない
+  weekStartDay = 1,
 }: HabitCalendarHeatmapProps) {
   const router = useRouter()
   const [, startTransition] = useTransition()
@@ -512,10 +566,19 @@ export function HabitCalendarHeatmap({
     }
   }
 
-  // 同一 dateKey へのタップは直列化しつつ、別の dateKey とは並行して進められるようにする
-  // キュー（dateKey ごとの promise チェーン）。「進行中のセルは再タップを無視する」と
-  // 実装すると連打が取りこぼされる（過去に実際に発生した不具合）ため、破棄はしない。
-  const taskChainsRef = useRef<Map<string, Promise<PerformResult>>>(new Map())
+  // このコンポーネントが扱う habit 全体で単一の promise チェーン。
+  //
+  // 以前は dateKey ごとに別チェーンを持ち、別日への操作は並行実行されていた。しかし
+  // frequency の上限は日別ではなく期間単位（週/月）で共有されるため、同一期間に属する
+  // 別日への操作が並行すると「月曜を clear → 火曜に add」のような投入順と実行順がズレ、
+  // add が先に走って上限拒否され、その後の clear で期間が空になる（チェックインが
+  // 移動しない）事故が起きる（Codex 外部レビュー指摘）。このコンポーネントは1つの
+  // habit だけを扱うため、直列化の粒度は「habit 全体で1本」で十分。より細かい粒度
+  // （期間ごとに分ける等）は必要になれば検討するが、複雑さに見合う実益がないため見送った。
+  //
+  // 「進行中のセルは再タップを無視する」と実装すると連打が取りこぼされる（過去に実際に
+  // 発生した不具合）ため、破棄はせずキューへ積み続ける。
+  const taskChainRef = useRef<Promise<PerformResult>>(Promise.resolve({ ok: true }))
   // dateKey ごとの未完了タスク数。0 でなければ「進行中」とみなし、リフレッシュを見送る
   const pendingCountRef = useRef<Map<string, number>>(new Map())
   // タイマーの生存管理専用（発火時に必ず null へ戻す）。「pending 中でリフレッシュを見送ったか」は
@@ -754,16 +817,31 @@ export function HabitCalendarHeatmap({
       setSelectedDateKey(dateKey)
       const currentCount = computeEffectiveCount(dateKey, confirmedCountsRef.current, pendingOpsRef.current)
       const isSkip = computeEffectiveIsSkip(dateKey, confirmedSkipRef.current, pendingOpsRef.current)
+      // frequency の上限は日別ではなく期間単位（daily/weekly/monthly）で強制される
+      // （`createCheckinWithLimit` 参照）。同一期間内の他日にチェックインが散っている場合、
+      // 「その日のカウント」だけでは期間が満杯かどうか判定できない
+      // （P1: 週次・月次でチェックインが削除できなくなる不具合の修正）。
+      const periodTotal = sumEffectiveCountOverPeriod(dateKey, period, weekStartDay, (key) =>
+        computeEffectiveCount(key, confirmedCountsRef.current, pendingOpsRef.current)
+      )
 
       // isSkip を count に関わらず最優先で見る: チェックインとスキップは排他ではなく、
       // 同一日にチェックイン済みかつスキップ済みという状態が通常操作（ダッシュボードで
       // 「今日チェックイン → スキップ」）で実際に発生しうる。この状態でのタップは
       // 「スキップ日はタップでスキップ解除のみ」という仕様どおりに解釈する必要があるため、
       // count による循環トグル（add/clear）より isSkip を先に判定する。
+      //
+      // clear の判定は「その日にカウントがあり、かつ期間が満杯」。period が daily のときは
+      // periodTotal === currentCount になるため、この条件は旧来の `currentCount >= frequency`
+      // と完全に一致する（回帰なし）。period total は常に currentCount 以上（当日ぶんを含む
+      // 合計のため）なので、`currentCount >= frequency` は `currentCount > 0 && periodTotal >=
+      // frequency` の部分集合であり、別条件として重複させる必要はない。
+      // 期間が満杯でもその日のカウントが0のセルは add を試み、サーバー側の created:false と
+      // トーストで「上限到達」を伝える（現状どおり）。
       let kind: PendingOp['kind']
       if (isSkip) {
         kind = 'removeSkip'
-      } else if (currentCount >= frequency) {
+      } else if (currentCount > 0 && periodTotal >= frequency) {
         kind = 'clear'
       } else {
         kind = 'add'
@@ -778,12 +856,14 @@ export function HabitCalendarHeatmap({
       recomputeDisplay()
 
       addPending(dateKey)
-      const previous = taskChainsRef.current.get(dateKey) ?? Promise.resolve<PerformResult>({ ok: true })
+      // habit 全体で単一チェーンに直列化する（taskChainRef 参照）。同一期間内の別日への
+      // 操作が並行実行されないため、投入順どおりに実行される。
+      const previous = taskChainRef.current
       // runTask は内部で例外を握りつぶす（try/catch 済み）ため、このチェーンが reject することはない
       const next = previous.then(() => runTask(dateKey, op))
-      taskChainsRef.current.set(dateKey, next)
+      taskChainRef.current = next
     },
-    [addPending, archived, frequency, recomputeDisplay, runTask, todayDateKey]
+    [addPending, archived, frequency, period, recomputeDisplay, runTask, todayDateKey, weekStartDay]
   )
 
   // undo トースト（performClear）から呼ばれる、削除件数ぶんの add を復元するキュー投入。
@@ -792,7 +872,7 @@ export function HabitCalendarHeatmap({
   // （上限到達なら clear、そうでなければ add という cycle 判定）。復元をそのまま
   // enqueueTap を count 回呼ぶ形にすると、途中で別のタップが割り込んで frequency に
   // 達した場合、以後の呼び出しが add ではなく clear になってしまう。そのため
-  // kind: 'add' を固定した PendingOp を直接 pendingOpsRef / taskChainsRef へ積む
+  // kind: 'add' を固定した PendingOp を直接 pendingOpsRef / taskChainRef へ積む
   // 専用ロジックにしている（enqueueTap の該当部分とほぼ同じ形だが kind 固定・count 回
   // ループする点だけが異なる）。
   const enqueueRestore = useCallback(
@@ -805,11 +885,13 @@ export function HabitCalendarHeatmap({
         recomputeDisplay()
 
         addPending(dateKey)
-        const previous = taskChainsRef.current.get(dateKey) ?? Promise.resolve<PerformResult>({ ok: true })
+        // enqueueTap と同じ単一チェーン（taskChainRef）に乗せる。undo からの復元も
+        // habit 全体の直列化に従うため、進行中の他日への操作と投入順がズレない。
+        const previous = taskChainRef.current
         // 復元中は個別トーストを抑制し、この関数末尾の集約トーストだけを出す
         // （個別トーストと集約トーストの二重通知を防ぐ）
         const next = previous.then(() => runTask(dateKey, op, { silent: true }))
-        taskChainsRef.current.set(dateKey, next)
+        taskChainRef.current = next
         results.push(next)
       }
 
@@ -865,13 +947,23 @@ export function HabitCalendarHeatmap({
     if (!selectedDateKey) {
       return null
     }
+    // 表示用の counts state（confirmedCounts + pendingOps を畳み込んだもの）から期間合計を
+    // 求める。enqueueTap の kind 決定と同じ「期間合計 >= frequency」規則で「次のタップは
+    // 削除」のヒントを出す（daily では periodTotal === その日の count になるため回帰なし）。
+    const periodTotal = sumEffectiveCountOverPeriod(
+      selectedDateKey,
+      period,
+      weekStartDay,
+      (key) => counts.get(key) ?? 0
+    )
     return getSelectedDateInfo(
       selectedDateKey,
       counts.get(selectedDateKey) ?? 0,
       skipSet.has(selectedDateKey),
-      frequency
+      frequency,
+      periodTotal >= frequency
     )
-  }, [counts, frequency, selectedDateKey, skipSet])
+  }, [counts, frequency, period, selectedDateKey, skipSet, weekStartDay])
 
   return (
     <div className="space-y-6">
