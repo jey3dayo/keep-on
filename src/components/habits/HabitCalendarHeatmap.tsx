@@ -127,8 +127,14 @@ function getLegendSteps(frequency: number): number[] {
 }
 
 function getCellStyle(cell: DayCell, accentColor: string, frequency: number) {
+  // チェックインとスキップは排他ではない（チェックイン後にスキップした日が実際に発生しうる。
+  // 詳細は enqueueTap 付近のコメント参照）。count > 0 かつ isSkip のセルは、どちらの状態も
+  // 見た目から読み取れるよう、チェックインの背景色とスキップの破線枠を両方適用する。
   if (cell.count > 0) {
-    return { backgroundColor: getCheckinColor(cell.count, frequency, accentColor) }
+    return {
+      backgroundColor: getCheckinColor(cell.count, frequency, accentColor),
+      ...(cell.isSkip ? { border: `2px dashed ${accentColor}` } : {}),
+    }
   }
   if (cell.isSkip) {
     return {
@@ -140,7 +146,9 @@ function getCellStyle(cell: DayCell, accentColor: string, frequency: number) {
 
 function getCellTitle(cell: DayCell, frequency: number): string {
   if (cell.count > 0) {
-    return `${cell.dateKey} ${cell.count}/${frequency}回`
+    return cell.isSkip
+      ? `${cell.dateKey} ${cell.count}/${frequency}回・スキップ`
+      : `${cell.dateKey} ${cell.count}/${frequency}回`
   }
   if (cell.isSkip) {
     return `${cell.dateKey} スキップ`
@@ -166,6 +174,15 @@ function getSelectedDateInfo(dateKey: string, count: number, isSkip: boolean, fr
     return {
       hint: 'タップでスキップを解除',
       primary: `${dateLabel}の情報: スキップ`,
+    }
+  }
+
+  // count > 0 かつ isSkip（チェックイン後にスキップした日）は、enqueueTap がスキップ解除を
+  // 優先するため、次のタップの意味は「上限到達なら削除」ではなく常に「スキップ解除」になる
+  if (isSkip) {
+    return {
+      hint: 'タップでスキップを解除',
+      primary: `${dateLabel}の情報: ${count}/${frequency}回・スキップ`,
     }
   }
 
@@ -738,8 +755,13 @@ export function HabitCalendarHeatmap({
       const currentCount = computeEffectiveCount(dateKey, confirmedCountsRef.current, pendingOpsRef.current)
       const isSkip = computeEffectiveIsSkip(dateKey, confirmedSkipRef.current, pendingOpsRef.current)
 
+      // isSkip を count に関わらず最優先で見る: チェックインとスキップは排他ではなく、
+      // 同一日にチェックイン済みかつスキップ済みという状態が通常操作（ダッシュボードで
+      // 「今日チェックイン → スキップ」）で実際に発生しうる。この状態でのタップは
+      // 「スキップ日はタップでスキップ解除のみ」という仕様どおりに解釈する必要があるため、
+      // count による循環トグル（add/clear）より isSkip を先に判定する。
       let kind: PendingOp['kind']
-      if (isSkip && currentCount === 0) {
+      if (isSkip) {
         kind = 'removeSkip'
       } else if (currentCount >= frequency) {
         kind = 'clear'

@@ -383,6 +383,84 @@ describe('HabitCalendarHeatmap', () => {
     })
   })
 
+  describe('チェックインとスキップが両立するセル', () => {
+    // createSkip はチェックインを削除せずスキップだけを INSERT するため、両テーブルに
+    // 同じ dateKey のレコードが両方存在する状態が通常操作で起こりうる
+    // （ダッシュボードで「今日チェックイン → スキップ」の順に操作した場合）。
+
+    it('両立セルをタップすると removeSkipAction が呼ばれ、addCheckinAction / clearCheckinAction は呼ばれない', async () => {
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map([[targetDate, 2]]), 3, [targetDate])
+
+      fireEvent.click(screen.getByTitle(`${targetDate} 2/3回・スキップ`))
+
+      await waitFor(() => {
+        expect(removeSkipAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, targetDate)
+      })
+      expect(addCheckinAction).not.toHaveBeenCalled()
+      expect(clearCheckinAction).not.toHaveBeenCalled()
+    })
+
+    it('上限に達している両立セルでも removeSkipAction が優先される（clearCheckinAction は呼ばれない）', async () => {
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map([[targetDate, 2]]), 2, [targetDate])
+
+      fireEvent.click(screen.getByTitle(`${targetDate} 2/2回・スキップ`))
+
+      await waitFor(() => {
+        expect(removeSkipAction).toHaveBeenCalledWith(DEFAULT_HABIT_ID, targetDate)
+      })
+      expect(clearCheckinAction).not.toHaveBeenCalled()
+      expect(addCheckinAction).not.toHaveBeenCalled()
+    })
+
+    it('両立セルのスキップ解除後、再度タップすると通常の循環トグル（add）に戻る', async () => {
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map([[targetDate, 2]]), 3, [targetDate])
+
+      fireEvent.click(screen.getByTitle(`${targetDate} 2/3回・スキップ`))
+      await waitFor(() => expect(removeSkipAction).toHaveBeenCalledTimes(1))
+      // スキップ解除後は count はそのまま維持され、スキップ表示だけが消える
+      await waitFor(() => {
+        expect(screen.getByTitle(`${targetDate} 2/3回`)).toBeInTheDocument()
+      })
+
+      fireEvent.click(screen.getByTitle(`${targetDate} 2/3回`))
+      await waitFor(() => expect(addCheckinAction).toHaveBeenCalledTimes(1))
+      expect(clearCheckinAction).not.toHaveBeenCalled()
+    })
+
+    it('両立セルの title / aria-label に回数とスキップの両方が含まれる', () => {
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map([[targetDate, 2]]), 3, [targetDate])
+
+      const cell = screen.getByTitle(`${targetDate} 2/3回・スキップ`)
+      expect(cell).toHaveAttribute('aria-label', `${targetDate} 2/3回・スキップ`)
+    })
+
+    it('両立セルのスキップ解除が失敗すると、情報表示が両立状態＋スキップ解除ヒントへ戻る', async () => {
+      // タップ直後は removeSkip の楽観適用で即座に非スキップ表示になるため、両立状態の
+      // ヒントを情報パネルで確認できるのは「解除が失敗して両立状態へ戻った後」になる
+      // （テスト339行目付近の「スキップ解除が失敗した場合はスキップ表示のままになる」と同じ形）
+      vi.mocked(removeSkipAction).mockResolvedValue({
+        error: { message: 'boom', name: 'DatabaseError' },
+        ok: false,
+      })
+      const targetDate = dateKey(1)
+      renderHeatmap(new Map([[targetDate, 2]]), 3, [targetDate])
+
+      fireEvent.click(screen.getByTitle(`${targetDate} 2/3回・スキップ`))
+
+      await waitFor(() => {
+        expect(removeSkipAction).toHaveBeenCalled()
+      })
+      await waitFor(() => {
+        expect(screen.getByText(/2\/3回・スキップ/)).toBeInTheDocument()
+      })
+      expect(screen.getByText('タップでスキップを解除')).toBeInTheDocument()
+    })
+  })
+
   describe('確定値（props）の再同期と未確定操作の非可換性への対応', () => {
     it('確定値の再同期（refresh 相当）の往復中に発生したタップは消えず、解決後にサーバー値+タップへ収束する', async () => {
       // scheduleRefresh は「タイマー発火時点」でしか pending を見ないため、router.refresh() を
