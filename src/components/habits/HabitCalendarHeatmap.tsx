@@ -335,6 +335,27 @@ function findCellInWeeks(weeks: DayCell[][], dateKey: string): DayCell | undefin
 }
 
 /**
+ * 保存された `dateKey`（roving tabindex の focusedDateKeyByMonth に積まれた値）が、
+ * 今の `weeks` において実在し、かつ操作可能セルであるかを判定する。
+ *
+ * 保存値の再検証（外部レビュー指摘: archived 解除や許容ウィンドウの移動で保存値が
+ * 無効になっても復旧しない問題）に使う。null / 未保存はここでは無効として扱い、
+ * 呼び出し元で `computeInitialFocusDateKey` へフォールバックさせる。
+ */
+function isValidFocusDateKey(
+  weeks: DayCell[][],
+  dateKey: string | null,
+  archived: boolean,
+  todayDateKey: string
+): boolean {
+  if (!dateKey) {
+    return false
+  }
+  const cell = findCellInWeeks(weeks, dateKey)
+  return cell !== undefined && !isCellTapDisabled(cell, archived, todayDateKey)
+}
+
+/**
  * `fromDate` から `stepDays` ずつ日付を進め、その月の grid 内で最初に見つかった有効セルの
  * dateKey を返す。無効セル（disabled）は読み飛ばして同じ方向へ探索を続ける。
  * grid の外（padding の外）まで出た、または `maxSteps` に達した場合は null を返し、
@@ -448,6 +469,15 @@ interface CalendarCellProps {
   frequency: number
   /** キー入力そのものと、その月のキーボード探索に必要な weeks・monthLabel をまとめて渡す */
   monthLabel: string
+  /**
+   * ポインタ操作（クリック等）でこのセルにフォーカスが移ったときに roving tabindex の
+   * state を同期する。矢印キー移動（`onKeyDown` → `handleCellKeyDown`）はここを経由せず
+   * 直接 state を更新するが、その後に呼ぶ `.focus()` がこの `onFocus` も発火させる。
+   * `setFocusedDateKey` 側で同値なら更新をスキップするため、二重更新にはならない
+   * （外部レビュー指摘: ポインタでフォーカスした位置が roving state に反映されない問題）。
+   * mutation は起こさない（addCheckinAction 等は Enter/Space/click のみ）。
+   */
+  onFocus: (cell: DayCell, monthLabel: string) => void
   onKeyDown: (
     event: ReactKeyboardEvent<HTMLButtonElement>,
     cell: DayCell,
@@ -473,6 +503,7 @@ function CalendarCell({
   disabled,
   onTap,
   onKeyDown,
+  onFocus,
   descriptionId,
   monthLabel,
   weeks,
@@ -491,6 +522,9 @@ function CalendarCell({
     },
     [cell, monthLabel, onKeyDown, weeks]
   )
+  const handleFocus = useCallback(() => {
+    onFocus(cell, monthLabel)
+  }, [cell, monthLabel, onFocus])
   const handleRef = useCallback(
     (el: HTMLButtonElement | null) => {
       registerCellRef(refKey, el)
@@ -520,6 +554,7 @@ function CalendarCell({
       disabled={disabled}
       key={cell.dateKey}
       onClick={handleClick}
+      onFocus={handleFocus}
       onKeyDown={handleKeyDown}
       ref={handleRef}
       style={{ ...getCellStyle(cell, accentColor, frequency), touchAction: 'manipulation' }}
@@ -884,41 +919,56 @@ export function HabitCalendarHeatmap({
   // props → state の同期は render 中の prev !== next 比較で行う（useEffect は使わない。
   // `.claude/rules/optimistic-updates.md` 参照）。
   //
-  // 月境界をまたいで新しい `todayDateKey` が届くと、`monthList`（延いては monthLabels）に
-  // 新しい当月が加わる。初回マウント時にしか走らない useState の初期化子だけでは、この
-  // 新しい月の focusedDateKeyByMonth エントリが存在せず null のままになり、その月の全セルが
-  // tabIndex=-1 になって Tab で入れなくなる（greptile / Codex 指摘）。
+  // 保存された focusedDateKeyByMonth の値は、次のいずれの経路でも無効化されうる
+  // （外部レビュー指摘: 月一覧が変わらない props 更新では保存値の無効化に復旧しない）:
+  //   - 月境界をまたいで新しい `todayDateKey` が届き、`monthList`（延いては monthLabels）に
+  //     新しい当月が加わる（既存の greptile / Codex 指摘）
+  //   - `archived` が true→false（またはその逆）に変わり、同じ月一覧のまま全セルの
+  //     有効/無効が反転する
+  //   - `todayDateKey` が進み、保存済みの日が許容ウィンドウ（365日）から外れる
   //
-  // monthLabelsKey（文字列化した monthLabels）が変化した時だけ、新しい monthLabels と
-  // 既存の focusedDateKeyByMonth を突き合わせて整合させる:
-  //   - 既存の月（ユーザーが矢印キーで移動済みかもしれない）はそのまま引き継ぐ
-  //   - 新しく加わった月には、初回マウント時と同じ起点算出ロジックで初期位置を設定する
+  // これらすべてを一本化するため、`focusSyncKey`（monthLabels + archived + todayDateKey）
+  // が変化した時だけ、月ごとに保存値を再検証する:
+  //   - 保存値が現在の grid で実在し操作可能なセルを指していれば、そのまま引き継ぐ
+  //     （ユーザーが矢印キーで移動した位置を無条件にリセットしない）
+  //   - 保存値が無い/null/現在は無効、のいずれかなら初回マウント時と同じ起点算出ロジック
+  //     （`computeInitialFocusDateKey`）へフォールバックする
   //   - monthList から外れた月は次の map に含めないため、自然に整理される（メモリの単調増加を防ぐ）
   //
   // この比較・計算は confirmedCountsRef/confirmedSkipRef の「読み取り」のみで、ref への
   // 書き込みは行わない冪等な処理なので、StrictMode の二重 render でも安全（同じ入力に対して
   // 同じ next を計算するだけで、2回目の実行が1回目の結果を潰すことはない）。
-  const monthLabelsKey = monthLabels.join('|')
-  const [prevMonthLabelsKey, setPrevMonthLabelsKey] = useState(monthLabelsKey)
-  if (prevMonthLabelsKey !== monthLabelsKey) {
-    setPrevMonthLabelsKey(monthLabelsKey)
+  //
+  // 毎レンダーではなく focusSyncKey が変化した時だけ検証するのは、`isCellTapDisabled`
+  // （＝あるセルが操作可能かどうか）が `cell.isCurrentMonth` / `cell.isFuture` / `archived` /
+  // `isDateKeyWithinWindow(dateKey, todayDateKey)` にしか依存せず、これらはすべて
+  // `(monthList, archived, todayDateKey)` の関数だから。counts/skipSet は cell.count /
+  // cell.isSkip には影響するが disabled 判定には影響しないため、focusSyncKey が同じ間は
+  // 毎レンダー検証しても結果は変わらない（＝この間引きは検証結果を変えない）。
+  const focusSyncKey = `${monthLabels.join('|')}|${archived}|${todayDateKey}`
+  const [prevFocusSyncKey, setPrevFocusSyncKey] = useState(focusSyncKey)
+  if (prevFocusSyncKey !== focusSyncKey) {
+    setPrevFocusSyncKey(focusSyncKey)
     setFocusedDateKeyByMonth((prev) => {
       const next: Record<string, string | null> = {}
       monthList.forEach((month, index) => {
         const monthLabel = monthLabels[index]
-        if (monthLabel in prev) {
-          next[monthLabel] = prev[monthLabel]
-        } else {
-          const weeks = buildMonthGrid(month, confirmedCountsRef.current, confirmedSkipRef.current, today)
-          next[monthLabel] = computeInitialFocusDateKey(weeks, index === 0, todayDateKey, archived)
-        }
+        const weeks = buildMonthGrid(month, confirmedCountsRef.current, confirmedSkipRef.current, today)
+        const savedDateKey = monthLabel in prev ? prev[monthLabel] : null
+        next[monthLabel] = isValidFocusDateKey(weeks, savedDateKey, archived, todayDateKey)
+          ? savedDateKey
+          : computeInitialFocusDateKey(weeks, index === 0, todayDateKey, archived)
       })
       return next
     })
   }
 
   const setFocusedDateKey = useCallback((monthLabel: string, dateKey: string) => {
-    setFocusedDateKeyByMonth((prev) => ({ ...prev, [monthLabel]: dateKey }))
+    // 既に同じ値であれば state 更新をスキップする。矢印キー移動は
+    // 「state 更新 → .focus()」の順で実行され、.focus() が発火させる onFocus
+    // （後述の handleCellFocus）が同じ (monthLabel, dateKey) で再度この関数を呼ぶため、
+    // 無条件に新しいオブジェクト参照を作ると無駄な再レンダーが発生する
+    setFocusedDateKeyByMonth((prev) => (prev[monthLabel] === dateKey ? prev : { ...prev, [monthLabel]: dateKey }))
   }, [])
 
   // 月ごとのセル button 要素への参照（`${monthLabel}:${dateKey}` をキーにする）。
@@ -955,6 +1005,17 @@ export function HabitCalendarHeatmap({
       cellButtonRefs.current.get(`${monthLabel}:${nextDateKey}`)?.focus()
     },
     [archived, setFocusedDateKey, todayDateKey]
+  )
+
+  // ポインタ操作（クリック等）でセルにフォーカスが移ったときの roving tabindex 同期
+  // （安定した参照）。無効セル（disabled）はネイティブにフォーカスを受け取れないため、
+  // このハンドラは常に有効なセルに対してのみ呼ばれる。mutation は起こさない
+  // （外部レビュー指摘: ポインタでフォーカスした位置が roving state に反映されない問題）。
+  const handleCellFocus = useCallback(
+    (cell: DayCell, monthLabel: string) => {
+      setFocusedDateKey(monthLabel, cell.dateKey)
+    },
+    [setFocusedDateKey]
   )
 
   // 成功したタップの後、同一画面の統計カード（総チェックイン・スキップ回数）など
@@ -1420,6 +1481,7 @@ export function HabitCalendarHeatmap({
                     disabled={disabled}
                     frequency={frequency}
                     monthLabel={monthLabel}
+                    onFocus={handleCellFocus}
                     onKeyDown={handleCellKeyDown}
                     onTap={enqueueTap}
                     refKey={refKey}
