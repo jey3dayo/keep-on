@@ -1,3 +1,11 @@
+---
+paths:
+  - "src/lib/cache/**"
+  - "src/constants/cache.ts"
+  - "src/schemas/cache.ts"
+  - "next.config.ts"
+---
+
 # キャッシュ戦略
 
 ## 概要
@@ -172,7 +180,7 @@ await kv.delete(key);
 pnpm cf:logs
 
 # キャッシュヒット/ミスの確認
-# habit-cache:hit, habit-cache:miss
+# habit-cache:set, habit-cache:invalidate:*（ヒット/ミスはログに出ない）
 # analytics-cache:hit, analytics-cache:miss
 ```
 

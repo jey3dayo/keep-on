@@ -1,3 +1,13 @@
+---
+paths:
+  - "assets/logos/**"
+  - "scripts/generate-logo.mjs"
+  - "scripts/generate-pwa-icons.mjs"
+  - "public/icon-*.png"
+  - "public/apple-touch-icon.png"
+  - "public/manifest.json"
+---
+
 # ロゴアセット管理ガイドライン
 
 ## ロゴファイルの配置

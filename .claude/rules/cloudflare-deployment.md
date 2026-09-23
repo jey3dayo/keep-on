@@ -122,17 +122,12 @@ Cloudflare Dashboard で確認：
 
 ### シークレットを更新したい
 
-```bash
-export CLOUDFLARE_API_TOKEN="..."
-export CLOUDFLARE_ACCOUNT_ID="..."
-
-echo '<new-value>' | pnpm wrangler secret put <SECRET_NAME>
-```
+後述の「Secrets登録方法」と同じ手順で上書き登録する。
 
 ### シークレット一覧を確認
 
 ```bash
-pnpm wrangler secret list
+pnpm cf:secret list
 ```
 
 ---

@@ -14,10 +14,6 @@ getCloudflareContext() → env.DB (D1Database) → drizzle(d1Database, { schema 
 - TCP 接続プールは不要（D1 バインディング経由）
 - `resetDb()` で `cachedDb = null` → 次回呼び出し時に再初期化
 
-### REMOVED（履歴）: PostgreSQL (postgres-js) 定数
-
-D1 移行前に `src/constants/db.ts` にあった postgres プール定数（`DB_CONNECTION_POOL_MAX`, `DB_IDLE_TIMEOUT`, `DB_CONNECT_TIMEOUT`, `DB_MAX_LIFETIME`, `DB_STATEMENT_TIMEOUT` 等）は **削除済み**。タイムアウトは `src/constants/request-timeout.ts` を正とする。
-
 ## リトライアーキテクチャ
 
 ### 1. `withDbRetry()` — 汎用リトライ
@@ -67,7 +63,7 @@ syncUser()
   └─ createUser() → upsertUser()
 ```
 
-`getUserByExternalId` / `claimUserByEmail` / `upsertUser` は `src/lib/queries/user.ts` に定義。`getUserByClerkId()` は **削除済み**（Clerk 認証時代の履歴）。
+`getUserByExternalId` / `claimUserByEmail` / `upsertUser` は `src/lib/queries/user.ts` に定義。
 
 ## タイムアウト階層
 
