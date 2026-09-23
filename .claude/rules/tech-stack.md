@@ -37,7 +37,7 @@ Cloudflare Workers で動作する軽量ORM。
 
 ### 制限事項
 
-- バンドルサイズ: 25MB gzipped 制限
+- Worker サイズ: 公式上限 64 MiB、CI の独自閾値 25MB（`cloudflare-deployment.md`「バンドルサイズ監視」）
 - nodejs_compat フラグ必須（wrangler.jsonc）
 - Node.js API は `nodejs_compat` が提供する範囲だけ使える
 

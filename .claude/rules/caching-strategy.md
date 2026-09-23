@@ -89,6 +89,25 @@ KeepOn アプリケーションでは、パフォーマンス最適化のため�
 
 - チェックイン実行後（`invalidateAnalyticsCache()`）
 
+#### User Cache（ユーザーキャッシュ）
+
+ファイル: `src/lib/cache/user-cache.ts`
+
+| 項目       | 設定                                            |
+| ---------- | ----------------------------------------------- |
+| TTL        | 300秒（5分）                                    |
+| キー形式   | `user:external:{externalId}`（Access の `sub`） |
+| データ構造 | `User`（`safeParseUser` で検証）                |
+
+##### キャッシュ戦略
+
+- `src/lib/user.ts` の `syncUser()` がキャッシュを先に引き、DB から取得・作成・更新した結果を書き戻す
+- スキーマ不一致（`user.cache:schema-mismatch`）はミス扱いで DB から取り直す
+
+##### 無効化タイミング
+
+- ユーザー設定の更新後（`invalidateUserCache()`、`src/lib/queries/user-settings.ts`）
+
 ### 3. Next.js Data Cache
 
 #### Next.js 16 の fetch キャッシュ
@@ -104,6 +123,7 @@ KeepOn アプリケーションでは、パフォーマンス最適化のため�
 | --------------------------- | -------------------- |
 | `habits:user:{userId}`      | ユーザーの習慣データ |
 | `analytics:total-checkins:` | 総チェックイン数     |
+| `user:external:`            | ユーザーレコード     |
 
 #### ルール
 
@@ -143,13 +163,14 @@ await kv.delete(key);
 
 ### 無効化のトリガー
 
-| アクション       | 無効化対象                     |
-| ---------------- | ------------------------------ |
-| チェックイン実行 | Habit Cache, Analytics Cache   |
-| 習慣作成         | Habit Cache                    |
-| 習慣更新         | Habit Cache                    |
-| 習慣削除         | Habit Cache                    |
-| 日付変更         | 自動（`dateKey` 不一致でミス） |
+| アクション       | 無効化対象                               |
+| ---------------- | ---------------------------------------- |
+| チェックイン実行 | Habit Cache, Analytics Cache             |
+| 習慣作成         | Habit Cache                              |
+| 習慣更新         | Habit Cache                              |
+| 習慣削除         | Habit Cache                              |
+| ユーザー設定更新 | User Cache, Habit Cache, Analytics Cache |
+| 日付変更         | 自動（`dateKey` 不一致でミス）           |
 
 ## パフォーマンス目標
 
@@ -182,6 +203,7 @@ pnpm cf:logs
 # キャッシュヒット/ミスの確認
 # habit-cache:set, habit-cache:invalidate:*（ヒット/ミスはログに出ない）
 # analytics-cache:hit, analytics-cache:miss
+# user.cache:hit, user.cache:miss
 ```
 
 ### Cloudflare Analytics
@@ -235,5 +257,6 @@ Cloudflare Dashboard → Analytics → Cache で確認：
 - `next.config.ts` - HTTP キャッシュヘッダー設定
 - `src/lib/cache/habit-cache.ts` - 習慣キャッシュ実装
 - `src/lib/cache/analytics-cache.ts` - アナリティクスキャッシュ実装
+- `src/lib/cache/user-cache.ts` - ユーザーキャッシュ実装
 - `src/constants/cache.ts` - キャッシュ定数
 - `src/schemas/cache.ts` - キャッシュスキーマ定義
