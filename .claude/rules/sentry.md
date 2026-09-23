@@ -1,3 +1,12 @@
+---
+paths:
+  - "src/lib/sentry.ts"
+  - "instrumentation.ts"
+  - "instrumentation-client.ts"
+  - "src/instrumentation.ts"
+  - "next.config.ts"
+---
+
 # Sentry 統合ガイド
 
 ## 概要

@@ -1,6 +1,6 @@
 # KeepOn Notes for Claude
 
-ルールの正本は `AGENTS.md`。
+@AGENTS.md
 
 ## Known Non-Issues（報告・修正不要）
 

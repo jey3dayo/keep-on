@@ -1,3 +1,10 @@
+---
+paths:
+  - "wrangler.jsonc"
+  - ".github/workflows/**"
+  - "package.json"
+---
+
 # Cloudflare Workers デプロイガイド
 
 ## Infrastructure as Code による環境変数管理

@@ -1,3 +1,10 @@
+---
+paths:
+  - "wrangler.jsonc"
+  - ".github/workflows/**"
+  - "package.json"
+---
+
 # Troubleshooting
 
 ## Cloudflare Workers デプロイエラー

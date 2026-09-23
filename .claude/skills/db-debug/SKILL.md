@@ -3,13 +3,13 @@ name: db-debug
 description: |
   [What] KeepOn の DB エラー診断・デバッグナレッジベース。エラー分類、リトライ挙動、ログ解析パターンをカバー。
   [When] Use when: DB エラーの調査、クエリタイムアウト、接続障害、ログ解析、リトライ挙動の理解が必要な時。
-  [Keywords] database, db, error, timeout, retry, connection, D1, SQLite, PostgreSQL, log, debug, query
+  [Keywords] database, db, error, timeout, retry, connection, D1, SQLite, log, debug, query
 ---
 
 # DB Debug Skill
 
 KeepOn の DB エラー診断ナレッジベース。
-D1(SQLite) / PostgreSQL エラーの分類、リトライ挙動、ログパターンの読み方をカバーする。
+D1(SQLite) エラーの分類、リトライ挙動、ログパターンの読み方をカバーする。
 
 ## エラー分類クイックリファレンス
 

@@ -1,3 +1,9 @@
+---
+paths:
+  - "src/lib/auth/access*.ts"
+  - "e2e/**"
+---
+
 # 認証テストガイド（Cloudflare Access）
 
 ## 概要

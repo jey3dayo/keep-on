@@ -1,6 +1,12 @@
+---
+paths:
+  - "src/app/**"
+  - "src/components/**"
+---
+
 # フロントエンドデバッグガイド
 
-KeepOn プロジェクトのブラウザデバッグ手順。汎用的なツール知識は `chrome-debug` skill を参照。
+KeepOn プロジェクトのブラウザデバッグ手順。汎用的なツール知識は `claude-in-chrome` skill を参照。
 
 ## ツール選択
 
