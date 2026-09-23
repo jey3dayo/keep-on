@@ -1,6 +1,10 @@
 ---
 paths:
   - "src/lib/cache/**"
+  - "src/lib/user.ts"
+  - "src/lib/queries/user-settings.ts"
+  - "src/lib/queries/habit-read.ts"
+  - "src/app/actions/habits/utils.ts"
   - "src/constants/cache.ts"
   - "src/schemas/cache.ts"
   - "next.config.ts"

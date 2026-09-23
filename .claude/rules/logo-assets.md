@@ -5,7 +5,7 @@ paths:
   - "scripts/generate-pwa-icons.mjs"
   - "public/icon-*.png"
   - "public/apple-touch-icon.png"
-  - "public/manifest.json"
+  - "src/app/manifest.ts"
 ---
 
 # ロゴアセット管理ガイドライン
@@ -185,14 +185,14 @@ git commit -m "chore: update logo and regenerate PWA icons
 #### 原因
 
 - ファイルパスが間違っている
-- manifest.json の設定が不正
+- `src/app/manifest.ts` の設定が不正
 - キャッシュが残っている
 
 #### 解決方法
 
 ```bash
-# manifest.json を確認
-cat public/manifest.json
+# manifest の定義を確認
+cat src/app/manifest.ts
 
 # 開発サーバーを再起動
 pnpm env:run -- pnpm dev
