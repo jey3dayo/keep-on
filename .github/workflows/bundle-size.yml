@@ -99,7 +99,7 @@ jobs:
 
             const body = `## 📦 Bundle Size Report
 
-            **Size:** ${size} MB (gzipped)
+            **Size:** ${size} MB (uncompressed, wrangler Total Upload)
             **Limit:** ${limit} MB
             **Usage:** ${percentage}%
 
