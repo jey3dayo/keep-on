@@ -66,10 +66,10 @@ cat <<EOF
 5. 通知先を追加
 6. Save をクリック
 
-詳細: .claude/rules/cloudflare-analytics.md を参照
+詳細: docs/cloudflare-analytics.md を参照
 EOF
 
 echo ""
 success "アラート設定ガイドを表示しました"
 echo ""
-echo "📚 詳細ドキュメント: .claude/rules/cloudflare-analytics.md"
+echo "📚 詳細ドキュメント: docs/cloudflare-analytics.md"
