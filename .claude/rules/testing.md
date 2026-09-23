@@ -2,8 +2,7 @@
 
 ## 概要
 
-このリポジトリの認証は Clerk から Cloudflare Access（Google ログイン）へ移行済み（2026-08）。
-以下は現時点の運用方針のメモ。
+このリポジトリの認証は Cloudflare Access（Google ログイン）。
 
 ## 手動テスト
 

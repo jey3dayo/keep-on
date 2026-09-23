@@ -184,136 +184,16 @@ curl -X POST https://api.cloudflare.com/client/v4/graphql \
 
 ---
 
-## Grafana ダッシュボード（オプション）
-
-### 前提条件
-
-- Grafana Cloud または Self-hosted Grafana
-- Cloudflare API トークン（Analytics Read 権限）
-
-### データソースの設定
-
-1. Grafana → **Configuration** → **Data Sources** → **Add data source**
-2. JSON API を選択（プラグインが必要な場合はインストール）
-3. URL: `https://api.cloudflare.com/client/v4/graphql`
-4. Custom HTTP Headers:
-   - `Authorization: Bearer YOUR_API_TOKEN`
-
-### パネル構成例
-
-#### 1. リクエスト数（時系列）
-
-- クエリ: GraphQL で `sum { requests }`
-- 可視化: Time series
-- Y軸: リクエスト数
-
-#### 2. CPU Time（ヒストグラム）
-
-- クエリ: GraphQL で `quantiles { cpuTimeP50 cpuTimeP99 }`
-- 可視化: Stat panel
-- 単位: ms
-
-#### 3. エラー率（時系列）
-
-- クエリ: GraphQL で `sum { errors } / sum { requests } * 100`
-- 可視化: Time series
-- Y軸: エラー率（%）
-
-#### 4. レスポンスタイム（時系列）
-
-- クエリ: GraphQL で `quantiles { durationP99 }`
-- 可視化: Time series
-- Y軸: レスポンスタイム（ms）
-
----
-
-## カスタムメトリクス
-
-### Workers Analytics Engine の使用
-
-Cloudflare Workers 内でカスタムメトリクスを送信：
-
-#### 設定
-
-`wrangler.jsonc` に追加：
-
-```jsonc
-{
-  "analytics_engine_datasets": [
-    {
-      "binding": "ANALYTICS",
-    },
-  ],
-}
-```
-
-#### コード例
-
-```typescript
-// src/lib/analytics.ts
-export function trackMetric(
-  analytics: AnalyticsEngineDataset,
-  name: string,
-  value: number,
-  metadata?: Record<string, string>,
-) {
-  analytics.writeDataPoint({
-    blobs: [name],
-    doubles: [value],
-    indexes: metadata ? Object.values(metadata) : [],
-  });
-}
-```
-
-#### 使用例
-
-```typescript
-// Server Action での使用
-import { trackMetric } from "@/lib/analytics";
-
-export async function createHabitAction(formData: FormData) {
-  const startTime = Date.now();
-
-  try {
-    const result = await createHabit(validInput);
-
-    // 成功メトリクスを記録
-    trackMetric(env.ANALYTICS, "habit.create.success", Date.now() - startTime, {
-      userId: validInput.userId,
-    });
-
-    return result;
-  } catch (error) {
-    // エラーメトリクスを記録
-    trackMetric(env.ANALYTICS, "habit.create.error", Date.now() - startTime);
-    throw error;
-  }
-}
-```
-
-### 収集すべきメトリクス例
-
-| メトリクス              | 説明                | 用途               |
-| ----------------------- | ------------------- | ------------------ |
-| `habit.create.duration` | 習慣作成の処理時間  | パフォーマンス監視 |
-| `habit.create.success`  | 習慣作成の成功数    | 成功率計算         |
-| `habit.create.error`    | 習慣作成の失敗数    | エラー率計算       |
-| `db.query.duration`     | DB クエリの処理時間 | DB パフォーマンス  |
-| `cache.hit`             | キャッシュヒット数  | キャッシュ効率     |
-| `cache.miss`            | キャッシュミス数    | キャッシュ効率     |
-
----
-
 ## コスト分析
 
 ### CPU Time による課金
 
-Cloudflare Workers は CPU Time で課金されます。
+料金の正本は [Workers Pricing](https://developers.cloudflare.com/workers/platform/pricing/)。2026-09-23 時点の値:
 
-| プラン | 無料枠                | 超過料金       |
-| ------ | --------------------- | -------------- |
-| Free   | 100,000 リクエスト/日 | -              |
-| Paid   | 10M CPU ms/月         | $0.02/M CPU ms |
+| プラン | リクエスト                             | CPU Time                                |
+| ------ | -------------------------------------- | --------------------------------------- |
+| Free   | 100,000/日                             | 1 呼び出しあたり 10ms まで              |
+| Paid   | 月 10M 込み、超過 $0.30/M（月額 $5〜） | 月 30M CPU ms 込み、超過 $0.02/M CPU ms |
 
 ### コスト最適化
 
@@ -328,15 +208,6 @@ Cloudflare Workers は CPU Time で課金されます。
 
 3. サンプリングレートの調整
    - Sentry のサンプリングレート: 10%
-   - Analytics Engine のサンプリング: 100%（軽量）
-
-### 月間コスト試算
-
-| リクエスト数 | 平均 CPU Time | CPU Time 合計 | 超過分 | 月額 |
-| ------------ | ------------- | ------------- | ------ | ---- |
-| 100,000      | 10ms          | 1,000,000ms   | 0      | $0   |
-| 1,000,000    | 10ms          | 10,000,000ms  | 0      | $0   |
-| 10,000,000   | 10ms          | 100,000,000ms | 90M ms | $1.8 |
 
 ---
 
@@ -379,7 +250,7 @@ cat wrangler.jsonc | grep observability
 
 # 再デプロイ
 pnpm build:cf
-pnpm wrangler deploy
+pnpm cf:deploy
 ```
 
 ### CPU Time が高い
@@ -416,5 +287,4 @@ pnpm wrangler deploy
 
 - [Cloudflare Workers Analytics](https://developers.cloudflare.com/workers/observability/analytics-engine/)
 - [Cloudflare GraphQL API](https://developers.cloudflare.com/api/operations/workers-analytics-get-analytics)
-- [Grafana Cloudflare Integration](https://grafana.com/grafana/plugins/cloudflare-cloudflare-datasource/)
 - [Workers Observability](https://developers.cloudflare.com/workers/observability/)

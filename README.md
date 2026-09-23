@@ -244,7 +244,7 @@ GitHub Secrets に以下を設定後、`main` ブランチへのプッシュで�
 ## 注意事項
 
 - Drizzle ORM: drizzle-kit でマイグレーション管理
-- Cloudflare Workers: バンドルサイズ 25MB gzipped 制限に注意
+- Cloudflare Workers: バンドルサイズは CI で 25MB を閾値に監視（公式上限は 64 MiB）
 - dotenvx: 本番運用時は `.env` を暗号化してコミット
 
 ## トラブルシューティング

@@ -122,17 +122,12 @@ Cloudflare Dashboard で確認：
 
 ### シークレットを更新したい
 
-```bash
-export CLOUDFLARE_API_TOKEN="..."
-export CLOUDFLARE_ACCOUNT_ID="..."
-
-echo '<new-value>' | pnpm wrangler secret put <SECRET_NAME>
-```
+後述の「Secrets登録方法」と同じ手順で上書き登録する。
 
 ### シークレット一覧を確認
 
 ```bash
-pnpm wrangler secret list
+pnpm cf:secret list
 ```
 
 ---
@@ -243,7 +238,7 @@ pnpm wrangler delete --name "keep-on-pr-123" --force
 
 ## バンドルサイズ監視
 
-Cloudflare Workers のバンドルサイズ制限（25MB gzipped）を超えないように、CI で自動監視しています。
+Worker サイズの公式上限は 64 MiB（[Limits](https://developers.cloudflare.com/workers/platform/limits/)、2026-09-23 確認）。CI はそれより厳しい独自閾値 25MB で `wrangler deploy --dry-run` の `Total Upload` を監視している。
 
 ### 自動チェック
 

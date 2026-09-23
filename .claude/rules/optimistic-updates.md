@@ -1,3 +1,14 @@
+---
+paths:
+  - "src/hooks/useHabitCheckinQueue.ts"
+  - "src/hooks/useBeforeUnload.ts"
+  - "src/app/(dashboard)/dashboard/DashboardWrapper.tsx"
+  - "src/components/habits/**"
+  - "src/contexts/SyncContext.tsx"
+  - "src/constants/dashboard.ts"
+  - "src/lib/queries/checkin.ts"
+---
+
 # 楽観的更新 実装パターン
 
 ## 概要

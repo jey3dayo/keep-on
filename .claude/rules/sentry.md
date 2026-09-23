@@ -45,7 +45,7 @@ GitHub リポジトリの Settings → Secrets and variables → Actions で設�
 
 | Secret名            | 説明                | 取得方法                                                                                                        |
 | ------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `SENTRY_AUTH_TOKEN` | Sentry API トークン | [Auth Tokens](https://sentry.io/settings/account/api/auth-tokens/) → Create New Token → `project:releases` 権限 |
+| `SENTRY_AUTH_TOKEN` | Sentry API トークン | Organization Auth Token（scope: `org:ci`）                                                                      |
 | `SENTRY_ORG`        | Sentry Organization | Dashboard の URL から取得（例: `yourcompany`）                                                                  |
 | `SENTRY_PROJECT`    | Sentry Project名    | プロジェクト名（例: `keep-on`）                                                                                 |
 
@@ -160,7 +160,7 @@ await withSentryScope(
 特定のエラーを Sentry に送信しない：
 
 ```typescript
-// instrumentation.ts
+// 例: instrumentation.ts の Sentry.init に追加する場合（現状は未設定）
 beforeSend(event) {
   // ユーザーキャンセルは無視
   if (event.exception?.values?.[0]?.value?.includes('user cancelled')) {
@@ -247,9 +247,8 @@ SENTRY_DSN is not set. Sentry will not be initialized.
 
 #### 解決方法
 
-1. [Auth Tokens](https://sentry.io/settings/account/api/auth-tokens/) で新しいトークンを作成
-2. `project:releases` 権限を付与
-3. GitHub Secrets に設定
+1. Sentry の Organization Auth Token（scope: `org:ci`）を発行する
+2. GitHub Secrets の `SENTRY_AUTH_TOKEN` を更新する
 
 ### エラーがSentryに表示されない
 
@@ -258,20 +257,13 @@ SENTRY_DSN is not set. Sentry will not be initialized.
 1. DSN が正しいか確認:
 
    ```bash
-   pnpm wrangler secret list | grep SENTRY_DSN
+   pnpm cf:secret list | grep SENTRY_DSN
    ```
 
 2. Sentry が初期化されているか確認:
-   - Cloudflare Workers のログに `✅ Sentry initialized for Edge Runtime` が出力されるか
+   - Workers のログに `SENTRY_DSN is not set. Sentry will not be initialized.` が出ていないか
 
-3. サンプリングレートを一時的に100%に:
-
-   ```typescript
-   // instrumentation.ts
-   tracesSampleRate: 1.0,  // すべてのエラーを記録
-   ```
-
-4. ローカルでテスト:
+3. ローカルでテスト:
 
    development では既定で Sentry 送信が無効（`enabled: false`）。ローカルから送信して検証する場合は
    フラグを明示する（サーバー側は `SENTRY_ENABLE_DEV`、クライアント側は `NEXT_PUBLIC_SENTRY_ENABLE_DEV`）。
@@ -296,7 +288,7 @@ captureException(error, {
 ### 2. 機密情報をフィルタリング
 
 ```typescript
-// instrumentation.ts
+// 例: instrumentation.ts の Sentry.init に追加する場合（現状は未設定）
 beforeSend(event) {
   // パスワードやトークンを削除
   if (event.request?.data) {

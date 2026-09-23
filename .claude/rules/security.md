@@ -130,9 +130,6 @@ dotenvx の秘密鍵（`DOTENV_PRIVATE_KEY`）は、リポジトリに含めず 
 3. Access 側のログ監視
    - Zero Trust → Logs → Access で認証試行・ブロックを確認
 
-（historical: 2026-08 に Clerk から Cloudflare Access へ移行。Clerk Dashboard での Sign-in/Sign-up レート制限や
-組み込み MFA 有効化計画は Clerk 利用時の記録として過去に存在したが、現行の認証基盤には適用されない）
-
 ## その他のセキュリティ対策
 
 ### 1. 入力検証

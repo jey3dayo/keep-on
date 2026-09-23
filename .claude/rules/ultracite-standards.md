@@ -66,41 +66,6 @@ off にしている（理由は `biome.jsonc` の該当 override コメントを
 
 - `src/components/ui/` - shadcn/ui の自動生成コンポーネント
 
-## コード生成時の注意
-
-AIがコードを生成する際は以下を遵守：
-
-1. シングルクォート: 文字列リテラルは `'string'` 形式
-2. セミコロンなし: 文末にセミコロンを付けない
-3. 120文字制限: 長い行は適切に改行
-4. ES5末尾カンマ: 配列・オブジェクトの最後の要素にカンマ
-
-### 良い例
-
-```tsx
-const config = {
-  name: "keep-on",
-  version: "0.1.0",
-};
-
-export function Button({ children }: { children: React.ReactNode }) {
-  return <button className="px-4 py-2">{children}</button>;
-}
-```
-
-### 悪い例
-
-```tsx
-const config = {
-  name: "keep-on";  // ❌ ダブルクォート、セミコロン
-  version: "0.1.0"  // ❌ 末尾カンマなし
-};
-
-export function Button({ children }: { children: React.ReactNode }) {
-  return <button className="px-4 py-2">{children}</button>;  // ❌ セミコロン
-}
-```
-
 ## Lint エラー修正
 
 エラーが発生した場合：
