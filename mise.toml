@@ -2,6 +2,10 @@
 # グローバル設定
 # ========================================
 
+[settings]
+# pnpm の版は package.json の packageManager が正本（CI の pnpm/action-setup と同じ所を読む）
+idiomatic_version_file_enable_tools = ["pnpm"]
+
 [env]
 _.file = [".env"]
 _.path = ["./node_modules/.bin"]
@@ -18,7 +22,6 @@ MD_EXCLUDE_WORKTREES = "#**/.worktrees/**"
 [tools]
 node = "24.13.0"
 # bootstrap のみ。正確なバージョンは package.json の packageManager が正本（pnpm self-management が切替）
-pnpm = "11"
 taplo = "0.10.0"
 "aqua:evilmartians/lefthook" = "latest"
 "pipx:yamllint" = "latest"
