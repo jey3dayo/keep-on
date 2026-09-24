@@ -15,6 +15,11 @@
 - **`src/components/ui/`（shadcn/ui）は直接編集しない**。カスタマイズは `src/components/` 直下か `basics/` にラッパーを作る。text 系フォーム入力は `@/components/basics/Input`（パスワードマネージャー対応済み。hidden / time など native 特殊 input は対象外）
 - **iOS standalone の表示は Chrome では検証できない**（`env(safe-area-inset-*)` が常に 0）。Xcode Simulator の実 WebKit で検証する。手順と既知の CSS 罠（`html`/`body` 両方に背景、`overflow-hidden` 内の `backdrop-filter`、`position: fixed` と safe-area）は `.claude/rules/debugging.md`
 
+## Known Non-Issues（報告・修正不要）
+
+- 依存の入れ替え直後に IDE 診断が `Cannot find module 'next'` を大量に出す → LSP の古い状態。`pnpm exec tsc --noEmit` の結果を正とする
+- biome バイナリ更新直後に `lint:biome` が一度だけ失敗する → 再実行で解消。連続失敗時のみ調査
+
 ## 検証ゲート
 
 作業中は touched file の format と関連テストのみ。push 前は pre-push フックが `lint:types` → `test:types` → `test:e2e:types` → `lint:biome` → `test:ci` → `test:storybook:ci` → `build:ci` を自動実行する。手動で回すなら `mise run check`（format + lint）/ `mise run ci`（CI 相当）。
