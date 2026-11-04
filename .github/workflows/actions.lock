@@ -14,7 +14,7 @@ workflows:
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-node@v7.1.0'
         - 'jdx/jactionlint@v2.3.0'
-        - 'jdx/mise-action@v4.3.0'
+        - 'jdx/mise-action@v5.2.4'
         - 'pnpm/action-setup@v6.1.0'
     '.github/workflows/dbdocs.yml':
         - 'actions/cache@v6.1.0'
@@ -74,9 +74,9 @@ dependencies:
         repo_id: 1404951382
         uses:
             - 'github/codeql-action@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2'
-    'jdx/mise-action@v4.3.0':
-        ref: 'v4.3.0'
-        commit: 'sha1-c2a87611a18de5b3828c5652fe268e992400cb5c'
+    'jdx/mise-action@v5.2.4':
+        ref: 'v5.2.4'
+        commit: 'sha1-6be3c7ed4c21d4f76b208d351d95aac273ebb76d'
         owner_id: 216188
         repo_id: 738284564
     'jey3dayo/pr-insights-labeler@v1.15.1':
