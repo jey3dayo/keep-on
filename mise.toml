@@ -25,6 +25,10 @@ node = "24.13.0"
 taplo = "0.10.0"
 "aqua:evilmartians/lefthook" = "latest"
 "pipx:yamllint" = "latest"
+gh-actions-lock = { version = "0.4.0", bin = "gh-actions-lock" }
+
+[tool_alias]
+gh-actions-lock = "github:github/gh-actions-lock"
 
 # ========================================
 # コマンド（実処理タスク）
@@ -61,6 +65,17 @@ run = "pnpm markdownlint-cli2 '${MD_GLOB}' ${MD_EXCLUDE_NODE_MODULES} ${MD_EXCLU
 [tasks."lint:yaml"]
 description = "YAMLのチェック"
 run = "yamllint -c .yamllint .github/"
+
+[tasks."actions-lock:generate"]
+description = "workflow の action 依存を .github/workflows/actions.lock に固定し直して upstream と照合（gh login が必要）"
+run = [
+  "gh-actions-lock --migrate-local-actions --no-interactive",
+  "gh-actions-lock --verify",
+]
+
+[tasks."actions-lock:verify"]
+description = "オフライン確認: すべての uses: に lockfile の entry がある"
+run = "gh-actions-lock --verify-local"
 
 [tasks."test:ci"]
 description = "CI向けテスト実行"
