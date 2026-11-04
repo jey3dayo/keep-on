@@ -16,11 +16,6 @@ workflows:
         - 'jdx/jactionlint@v2.3.0'
         - 'jdx/mise-action@v5.2.4'
         - 'pnpm/action-setup@v6.1.0'
-    '.github/workflows/dbdocs.yml':
-        - 'actions/cache@v6.1.0'
-        - 'actions/checkout@v7.0.1'
-        - 'actions/setup-node@v7.1.0'
-        - 'pnpm/action-setup@v6.1.0'
     '.github/workflows/deploy.yml':
         - 'actions/cache@v6.1.0'
         - 'actions/checkout@v7.0.1'

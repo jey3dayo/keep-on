@@ -137,18 +137,6 @@ description = "ローカルでCloudflare環境をプレビュー"
 run = "pnpm cf:preview"
 
 # ========================================
-# データベースドキュメント
-# ========================================
-
-[tasks."db:docs"]
-description = "DBMLを生成してdbdocsにデプロイ"
-run = ["pnpm db:docs:generate", "pnpm db:docs:push"]
-
-[tasks."db:docs:generate"]
-description = "DrizzleスキーマからDBMLを生成"
-run = "pnpm db:docs:generate"
-
-# ========================================
 # Git hooks（lefthook: commit 前整形 + push 前 CI 相当チェック）
 # ========================================
 
