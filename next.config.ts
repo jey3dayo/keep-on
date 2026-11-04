@@ -1,5 +1,5 @@
 import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
-import { withSentryConfig } from '@sentry/nextjs'
+import { withSentryConfig } from '@sentry/nextjs/config'
 import type { NextConfig } from 'next'
 
 // 開発環境でCloudflare Context APIを利用可能にする
