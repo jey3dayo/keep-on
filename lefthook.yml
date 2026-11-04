@@ -20,6 +20,9 @@ pre-commit:
     - name: yamllint
       glob: ".github/**/*.{yml,yaml}"
       run: mise exec -- yamllint -c .yamllint {staged_files}
+    - name: actions-lock
+      glob: ".github/**"
+      run: mise run actions-lock:verify
 
 # mise run ci（lint:types → lint:biome → test:ci → build:ci）と同じ段階を
 # ジョブ分割して実行する。順序は fail-fast のため ci の定義順に合わせる
