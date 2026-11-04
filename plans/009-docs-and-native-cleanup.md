@@ -85,7 +85,7 @@ Update AGENTS development steps and the two rule files accordingly.
 
 ### Step 3: Remove `@typescript/native` and refresh task tracking
 
-Run `pnpm remove @typescript/native -D`. Keep `@typescript/typescript6` (used by `scripts/lib/extract-jsdoc.ts`).
+Run `pnpm remove @typescript/native -D`.
 
 Update `todo.txt` / `done.txt` major-update entries to reflect current truth.
 
